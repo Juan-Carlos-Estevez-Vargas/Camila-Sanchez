@@ -1,0 +1,129 @@
+body {
+  margin: 0;
+  font-family: "Segoe UI", sans-serif;
+  background: linear-gradient(to bottom, #ffe6ec, #ffd6e8);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  overflow-x: hidden;
+  position: relative;
+}
+
+h1 {
+  font-size: 3rem;
+  color: #c2185b;
+  text-align: center;
+  margin: 0.5em 0;
+}
+
+p.subtitle {
+  font-size: 1.3rem;
+  color: #880e4f;
+  text-align: center;
+  margin: 0 1em;
+}
+
+.btn {
+  margin-top: 2em;
+  padding: 1em 2em;
+  background-color: #ec407a;
+  color: white;
+  border: none;
+  border-radius: 30px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.3s ease;
+}
+
+.btn:hover {
+  background-color: #d81b60;
+}
+
+#recuerdos {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 3em;
+  gap: 1.5em;
+  padding: 2em;
+}
+
+#toggle:checked ~ #recuerdos {
+  display: flex;
+}
+
+.card {
+  background: white;
+  padding: 1.5em;
+  border-radius: 20px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  max-width: 90vw;
+  width: 400px;
+  text-align: center;
+  color: #ad1457;
+  transition: transform 0.5s ease, opacity 0.5s ease;
+}
+
+.card h3 {
+  margin: 0 0 0.5em;
+}
+
+.gallery {
+  margin-top: 4em;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1.5em;
+  padding: 2em;
+}
+
+.photo {
+  width: 200px;
+  height: 250px;
+  background-size: cover;
+  background-position: center;
+  border: 8px solid #fff;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+  transform: rotate(calc(-5deg + 10deg * var(--r)));
+  transition: transform 0.3s ease;
+}
+
+.photo:hover {
+  transform: scale(1.05) rotate(0deg);
+  z-index: 2;
+}
+
+.floating {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: -1;
+}
+
+.floating span {
+  position: absolute;
+  font-size: 1.5rem;
+  animation: floatAnim linear infinite;
+  opacity: 0.8;
+}
+
+@keyframes floatAnim {
+  0% {
+    transform: translateY(100vh) scale(0.8);
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-10vh) scale(1.2);
+    opacity: 0;
+  }
+}
