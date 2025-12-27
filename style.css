@@ -127,3 +127,684 @@ p.subtitle {
     opacity: 0;
   }
 }
+
+/* Sección de mensajes */
+.mensajes {
+  margin: 4em 1em;
+  text-align: center;
+}
+
+.mensajes h2 {
+  color: #c2185b;
+  margin-bottom: 2em;
+}
+
+.mensajes-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2em;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.mensaje {
+  background: linear-gradient(135deg, #ffcdd2, #f8bbd9);
+  padding: 2em;
+  border-radius: 20px;
+  width: 300px;
+  box-shadow: 0 10px 20px rgba(194, 24, 91, 0.1);
+  transition: transform 0.3s ease;
+}
+
+.mensaje:hover {
+  transform: translateY(-10px);
+}
+
+.mensaje h3 {
+  color: #880e4f;
+  margin-bottom: 1em;
+}
+
+/* Contador de tiempo */
+.contador {
+  background: linear-gradient(135deg, #fce4ec, #f3e5f5);
+  padding: 3em 1em;
+  border-radius: 30px;
+  margin: 3em auto;
+  max-width: 800px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(194, 24, 91, 0.15);
+}
+
+.contador h2 {
+  color: #c2185b;
+  margin-bottom: 1.5em;
+}
+
+.tiempo-container {
+  display: flex;
+  justify-content: center;
+  gap: 2em;
+  flex-wrap: wrap;
+}
+
+.tiempo-box {
+  background: white;
+  padding: 1.5em;
+  border-radius: 15px;
+  min-width: 120px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.tiempo-box span {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #ec407a;
+  display: block;
+}
+
+.tiempo-box p {
+  color: #ad1457;
+  margin-top: 0.5em;
+  font-weight: 500;
+}
+
+/* Sección Navidad */
+.navidad {
+  background: linear-gradient(to bottom, #1a237e, #4a148c);
+  color: white;
+  padding: 4em 1em;
+  margin-top: 4em;
+  border-radius: 40px 40px 0 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.navidad::before {
+  content: "❄️";
+  position: absolute;
+  font-size: 2rem;
+  animation: caerNieve 10s linear infinite;
+  opacity: 0.7;
+}
+
+@keyframes caerNieve {
+  0% { transform: translateY(-100px) rotate(0deg); }
+  100% { transform: translateY(100vh) rotate(360deg); }
+}
+
+.navidad-header {
+  text-align: center;
+  margin-bottom: 3em;
+}
+
+.navidad-header h2 {
+  font-size: 2.5rem;
+  margin-bottom: 0.5em;
+  background: linear-gradient(45deg, #ffeb3b, #ff9800);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.navidad-subtitle {
+  font-size: 1.2rem;
+  opacity: 0.9;
+}
+
+/* Árbol de Navidad */
+.arbol-container {
+  display: flex;
+  justify-content: center;
+  margin: 3em 0;
+}
+
+.arbol-navidad {
+  position: relative;
+  width: 200px;
+  height: 300px;
+}
+
+.arbol {
+  position: absolute;
+  width: 0;
+  height: 0;
+  border-left: 100px solid transparent;
+  border-right: 100px solid transparent;
+  border-bottom: 200px solid #2e7d32;
+  bottom: 0;
+  left: 0;
+}
+
+.arbol::before {
+  content: '';
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  background: gold;
+  border-radius: 50%;
+  top: -180px;
+  left: -10px;
+  animation: brillar 2s infinite alternate;
+}
+
+.luces {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+
+.luz {
+  position: absolute;
+  width: 15px;
+  height: 15px;
+  background: var(--color, #ff4081);
+  border-radius: 50%;
+  animation: parpadear 1.5s infinite alternate;
+  animation-delay: calc(var(--i) * 0.2s);
+}
+
+.luz:nth-child(1) { top: 50px; left: 50px; --color: #ff4081; }
+.luz:nth-child(2) { top: 80px; left: 100px; --color: #c2185b; }
+.luz:nth-child(3) { top: 120px; left: 30px; --color: #ec407a; }
+.luz:nth-child(4) { top: 150px; left: 120px; --color: #ff9800; }
+.luz:nth-child(5) { top: 180px; left: 60px; --color: #4caf50; }
+.luz:nth-child(6) { top: 210px; left: 90px; --color: #2196f3; }
+.luz:nth-child(7) { top: 240px; left: 40px; --color: #9c27b0; }
+.luz:nth-child(8) { top: 270px; left: 110px; --color: #ffeb3b; }
+
+.regalos {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.regalo {
+  width: 40px;
+  height: 40px;
+  background: var(--color);
+  border-radius: 5px;
+  position: relative;
+}
+
+.regalo::before {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 15px;
+  background: rgba(255, 255, 255, 0.3);
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* Carta de Navidad */
+.carta-navidad {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  padding: 2em;
+  border-radius: 20px;
+  max-width: 600px;
+  margin: 3em auto;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.carta-navidad h3 {
+  text-align: center;
+  color: #ffeb3b;
+  margin-bottom: 1.5em;
+}
+
+.carta-contenido {
+  line-height: 1.8;
+  margin-bottom: 2em;
+}
+
+.carta-contenido ul {
+  text-align: left;
+  margin: 1em 0;
+  padding-left: 2em;
+}
+
+.carta-contenido li {
+  margin: 0.5em 0;
+}
+
+.firma {
+  text-align: right;
+  font-style: italic;
+  margin-top: 2em;
+  color: #ffcdd2;
+}
+
+.btn-navidad {
+  background: linear-gradient(45deg, #ff4081, #c2185b);
+  color: white;
+  border: none;
+  padding: 1em 2em;
+  border-radius: 30px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  display: block;
+  margin: 2em auto 0;
+  transition: transform 0.3s ease;
+}
+
+.btn-navidad:hover {
+  transform: scale(1.05);
+}
+
+/* Adornos navideños */
+.adornos {
+  display: flex;
+  justify-content: center;
+  gap: 2em;
+  margin-top: 3em;
+  flex-wrap: wrap;
+}
+
+.adorno {
+  font-size: 2rem;
+  animation: flotar 3s ease-in-out infinite alternate;
+}
+
+/* Botón música */
+.btn-musica {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: #4caf50;
+  color: white;
+  border: none;
+  padding: 0.8em 1.5em;
+  border-radius: 25px;
+  cursor: pointer;
+  z-index: 1000;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+/* Animaciones */
+@keyframes parpadear {
+  0%, 100% { opacity: 0.3; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes brillar {
+  0% { box-shadow: 0 0 5px gold; }
+  100% { box-shadow: 0 0 20px gold, 0 0 40px gold; }
+}
+
+@keyframes flotar {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-20px); }
+}
+
+/* Galería por meses */
+.galeria-meses {
+  margin: 5em 1em;
+  text-align: center;
+}
+
+.galeria-meses h2 {
+  color: #c2185b;
+  margin-bottom: 0.5em;
+}
+
+.linea-tiempo {
+  position: relative;
+  max-width: 1200px;
+  margin: 4em auto;
+  padding: 2em 0;
+}
+
+.linea-tiempo::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: linear-gradient(to bottom, #ff4081, #c2185b);
+  transform: translateX(-50%);
+  border-radius: 2px;
+}
+
+.meses-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 2em;
+  justify-items: center;
+  position: relative;
+  z-index: 2;
+}
+
+.mes-item {
+  background: white;
+  padding: 1.5em;
+  border-radius: 20px;
+  width: 140px;
+  cursor: pointer;
+  transition: all 0.4s ease;
+  box-shadow: 0 8px 20px rgba(194, 24, 91, 0.1);
+  position: relative;
+  text-align: center;
+}
+
+.mes-item:hover {
+  transform: translateY(-10px) scale(1.05);
+  box-shadow: 0 15px 30px rgba(194, 24, 91, 0.2);
+}
+
+.mes-item.activo {
+  background: linear-gradient(135deg, #ff4081, #c2185b);
+  color: white;
+  transform: scale(1.1);
+}
+
+.mes-nombre {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 0.3em;
+  color: #c2185b;
+}
+
+.mes-item.activo .mes-nombre {
+  color: white;
+}
+
+.mes-año {
+  font-size: 0.9rem;
+  opacity: 0.8;
+  color: #666;
+}
+
+.mes-item.activo .mes-año {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.mes-contador {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  background: #ff4081;
+  color: white;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+/* Carrusel Modal */
+.carrusel-modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.95);
+  z-index: 10000;
+  animation: aparecerModal 0.4s ease;
+}
+
+@keyframes aparecerModal {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.carrusel-contenido {
+  position: relative;
+  background: linear-gradient(135deg, #1a1a1a, #2d2d2d);
+  margin: 2em auto;
+  width: 90%;
+  max-width: 1000px;
+  height: 90vh;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+}
+
+.cerrar-carrusel {
+  position: absolute;
+  top: 20px;
+  right: 25px;
+  background: none;
+  border: none;
+  color: white;
+  font-size: 2.5rem;
+  cursor: pointer;
+  z-index: 10001;
+  transition: color 0.3s ease;
+}
+
+.cerrar-carrusel:hover {
+  color: #ff4081;
+}
+
+.carrusel-header {
+  text-align: center;
+  padding: 2em;
+  background: linear-gradient(to right, rgba(255, 64, 129, 0.2), rgba(194, 24, 91, 0.2));
+  color: white;
+}
+
+.carrusel-header h3 {
+  font-size: 2rem;
+  margin-bottom: 0.5em;
+  color: #ffcdd2;
+}
+
+.carrusel-header p {
+  font-size: 1.1rem;
+  opacity: 0.9;
+  color: #f8bbd9;
+}
+
+.carrusel-body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 60vh;
+  padding: 2em;
+  position: relative;
+}
+
+.carrusel-slide {
+  display: flex;
+  gap: 3em;
+  align-items: center;
+  width: 100%;
+  max-width: 900px;
+}
+
+.foto-ampliada {
+  flex: 2;
+  height: 400px;
+  background-size: cover;
+  background-position: center;
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  transition: transform 0.5s ease;
+}
+
+.foto-ampliada:hover {
+  transform: scale(1.02);
+}
+
+.foto-info {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  padding: 2em;
+  border-radius: 15px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.foto-info p {
+  color: white;
+  font-size: 1.2rem;
+  line-height: 1.6;
+  margin-bottom: 2em;
+  font-style: italic;
+}
+
+.contador-fotos {
+  color: #ff4081;
+  font-size: 1.5rem;
+  font-weight: bold;
+  text-align: center;
+  padding: 0.5em;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+
+.carrusel-btn {
+  background: rgba(255, 64, 129, 0.3);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  font-size: 2rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.carrusel-btn:hover {
+  background: rgba(255, 64, 129, 0.7);
+  border-color: #ff4081;
+  transform: translateY(-50%) scale(1.1);
+}
+
+.prev {
+  left: 20px;
+}
+
+.next {
+  right: 20px;
+}
+
+/* Miniaturas */
+.miniaturas {
+  display: flex;
+  justify-content: center;
+  gap: 1em;
+  padding: 1.5em;
+  background: rgba(0, 0, 0, 0.3);
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+.miniatura {
+  width: 80px;
+  height: 80px;
+  border-radius: 10px;
+  background-size: cover;
+  background-position: center;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+}
+
+.miniatura:hover {
+  opacity: 0.8;
+  transform: scale(1.1);
+}
+
+.miniatura.activa {
+  opacity: 1;
+  border-color: #ff4081;
+  transform: scale(1.15);
+  box-shadow: 0 5px 15px rgba(255, 64, 129, 0.5);
+}
+
+/* Efecto de corazón al hacer clic en fotos */
+.corazon-flotante {
+  position: absolute;
+  font-size: 2rem;
+  color: #ff4081;
+  pointer-events: none;
+  animation: flotarCorazon 1.5s ease-out forwards;
+  z-index: 1000;
+}
+
+@keyframes flotarCorazon {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(0.5);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(-50%, -150%) scale(1.2);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -250%) scale(1.5);
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .carrusel-contenido {
+    width: 95%;
+    height: 95vh;
+  }
+  
+  .carrusel-slide {
+    flex-direction: column;
+    gap: 2em;
+  }
+  
+  .foto-ampliada {
+    height: 300px;
+    width: 100%;
+  }
+  
+  .foto-info {
+    width: 100%;
+  }
+  
+  .meses-container {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1em;
+  }
+  
+  .mes-item {
+    width: 100px;
+    padding: 1em;
+  }
+  
+  .mes-nombre {
+    font-size: 1.2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .meses-container {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .carrusel-btn {
+    width: 50px;
+    height: 50px;
+    font-size: 1.5rem;
+  }
+  
+  .carrusel-header h3 {
+    font-size: 1.5rem;
+  }
+}

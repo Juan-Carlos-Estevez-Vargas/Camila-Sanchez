@@ -15,6 +15,131 @@
       para ti.
     </p>
 
+    <!-- Sección de mensajes especiales -->
+    <section class="mensajes">
+      <h2>💌 Mensajes del Corazón</h2>
+      <div class="mensajes-container">
+        <div class="mensaje">
+          <h3>Cuando pienso en ti...</h3>
+          <p>
+            Mi día se ilumina solo con recordar tu sonrisa. Eres mi razón para
+            sonreír cada mañana.
+          </p>
+        </div>
+        <div class="mensaje">
+          <h3>Lo que más amo de ti</h3>
+          <p>
+            Tu forma de ver la vida, tu bondad, y cómo haces que todo sea mejor
+            con tu presencia.
+          </p>
+        </div>
+        <div class="mensaje">
+          <h3>Promesas</h3>
+          <p>
+            Prometo estar a tu lado en cada paso, celebrar tus logros y secar
+            tus lágrimas.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Contador de tiempo juntos -->
+    <div class="contador">
+      <h2>⏳ Tiempo juntos</h2>
+      <div class="tiempo-container">
+        <div class="tiempo-box">
+          <span id="dias">0</span>
+          <p>Días</p>
+        </div>
+        <div class="tiempo-box">
+          <span id="horas">0</span>
+          <p>Horas</p>
+        </div>
+        <div class="tiempo-box">
+          <span id="minutos">0</span>
+          <p>Minutos</p>
+        </div>
+        <div class="tiempo-box">
+          <span id="segundos">0</span>
+          <p>Segundos</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sección de Navidad (NUEVA) -->
+    <section class="navidad" id="navidad">
+      <div class="navidad-header">
+        <h2>🎄 Mi Regalo de Navidad para Ti 🎁</h2>
+        <p class="navidad-subtitle">
+          Porque en esta Navidad, mi mayor deseo eres tú
+        </p>
+      </div>
+
+      <div class="arbol-container">
+        <div class="arbol-navidad">
+          <!-- Luces del árbol -->
+          <div class="luces">
+            <div class="luz" style="--i: 1"></div>
+            <div class="luz" style="--i: 2"></div>
+            <div class="luz" style="--i: 3"></div>
+            <div class="luz" style="--i: 4"></div>
+            <div class="luz" style="--i: 5"></div>
+            <div class="luz" style="--i: 6"></div>
+            <div class="luz" style="--i: 7"></div>
+            <div class="luz" style="--i: 8"></div>
+          </div>
+          <!-- Árbol -->
+          <div class="arbol"></div>
+          <!-- Regalos -->
+          <div class="regalos">
+            <div class="regalo" style="--color: #ff4081"></div>
+            <div class="regalo" style="--color: #c2185b"></div>
+            <div class="regalo" style="--color: #ec407a"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="carta-navidad">
+        <h3>🎅 Mi Carta para Ti</h3>
+        <div class="carta-contenido">
+          <p>Mi amor, en esta Navidad...</p>
+          <p>
+            Quiero recordarte que eres el mejor regalo que la vida me ha dado.
+            Cada día a tu lado es una bendición y en esta época especial, quiero
+            renovar mis promesas de amor eterno.
+          </p>
+          <p>Mis deseos para nosotros:</p>
+          <ul>
+            <li>❤️ Que cada Navidad la pasemos juntos</li>
+            <li>✨ Que nuestros sueños se hagan realidad</li>
+            <li>🎁 Que nuestro amor siga creciendo</li>
+            <li>🌟 Que creemos tradiciones juntos</li>
+          </ul>
+          <p class="firma">Con todo mi amor,<br />Tu novio</p>
+        </div>
+        <button class="btn-navidad" onclick="mostrarSorpresa()">
+          ✨ Abrir Regalo Sorpresa
+        </button>
+      </div>
+
+      <div class="adornos">
+        <div class="adorno">❄️</div>
+        <div class="adorno">🌟</div>
+        <div class="adorno">🦌</div>
+        <div class="adorno">🎅</div>
+        <div class="adorno">🕯️</div>
+      </div>
+    </section>
+
+    <!-- Música de fondo -->
+    <audio id="musica-navidad" loop>
+      <source
+        src="https://assets.mixkit.co/music/preview/mixkit-christmas-is-coming-163.mp3"
+        type="audio/mpeg"
+      />
+    </audio>
+    <button id="toggle-musica" class="btn-musica">🎵 Música Navideña</button>
+
     <input type="checkbox" id="toggle" style="display: none" />
     <label class="btn" for="toggle">Ver nuestros recuerdos</label>
 
@@ -69,6 +194,56 @@
     </div>
 
     <div class="gallery" id="galeria"></div>
+
+    <!-- Galería por meses -->
+    <section class="galeria-meses">
+      <h2>📅 Nuestro Año en Fotos</h2>
+      <p class="subtitle">
+        Haz clic en cualquier mes para ver nuestros recuerdos
+      </p>
+
+      <div class="linea-tiempo">
+        <div class="meses-container" id="meses-container">
+          <!-- Los meses se generan automáticamente con JavaScript -->
+        </div>
+      </div>
+    </section>
+
+    <!-- Carrusel Modal (oculto por defecto) -->
+    <div class="carrusel-modal" id="carruselModal">
+      <div class="carrusel-contenido">
+        <button class="cerrar-carrusel" id="cerrarCarrusel">&times;</button>
+
+        <div class="carrusel-header">
+          <h3 id="carruselMes">Diciembre 2023</h3>
+          <p id="carruselFecha">24 de Diciembre 2023</p>
+        </div>
+
+        <div class="carrusel-body">
+          <button class="carrusel-btn prev" id="prevBtn">‹</button>
+
+          <div class="carrusel-slide">
+            <div class="foto-ampliada" id="fotoAmpliada">
+              <!-- La foto se carga aquí -->
+            </div>
+            <div class="foto-info">
+              <p id="fotoMensaje">
+                Nuestra primera Navidad juntos, el mejor regalo eres tú
+              </p>
+              <div class="contador-fotos">
+                <span id="fotoActual">1</span> / <span id="totalFotos">5</span>
+              </div>
+            </div>
+          </div>
+
+          <button class="carrusel-btn next" id="nextBtn">›</button>
+        </div>
+
+        <div class="miniaturas" id="miniaturasContainer">
+          <!-- Miniaturas se generan aquí -->
+        </div>
+      </div>
+    </div>
 
     <script src="index.js"></script>
   </body>
