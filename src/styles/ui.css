@@ -96,6 +96,7 @@
 }
 .badge--muted { background: var(--c-surface-2); color: var(--c-muted); }
 .badge--success { background: color-mix(in srgb, var(--c-success) 14%, transparent); color: var(--c-success); }
+.badge--danger { background: color-mix(in srgb, var(--c-danger) 14%, transparent); color: var(--c-danger); }
 
 .counter-dot {
   min-width: 18px;
