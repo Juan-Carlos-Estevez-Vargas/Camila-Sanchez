@@ -1,8 +1,8 @@
 const fotos = [
-  "assets/img/CitaPostres.jpeg",
-  "assets/img/CitaPostres2.jpeg",
-  "assets/img/Flores.jpeg",
-  "assets/img/PalosTiros.jpeg",
+  "../public/assets/img/CitaPostres.jpeg",
+  "../public/assets/img/CitaPostres2.jpeg",
+  "../public/assets/img/Flores.jpeg",
+  "../public/assets/img/PalosTiros.jpeg",
 ];
 
 const galeria = document.getElementById("galeria");
@@ -242,13 +242,13 @@ const fotosPorAño = [
     fotos: {
       Mayo: [
         {
-          url: "assets/img/2025/mayo1.jpeg",
+          url: "../public/assets/img/2025/mayo1.jpeg",
           mensaje:
             "Aquí, aún no éramos novios pero el verte trabajar me alegraba mucho el alma",
           fecha: "10 de Mayo 2025",
         },
         {
-          url: "assets/img/2025/mayo2.jpeg",
+          url: "../public/assets/img/2025/mayo2.jpeg",
           mensaje:
             "Cómo olvidar el día en que con mucho nerviosismo, te pedí poder compartir una vida contigo y ser novios",
           fecha: "30 de Mayo 2025",
@@ -256,44 +256,44 @@ const fotosPorAño = [
       ],
       Junio: [
         {
-          url: "assets/img/2025/junio1.jpeg",
+          url: "../public/assets/img/2025/junio1.jpeg",
           mensaje:
             "Tus primeras flores, cómo olvidar la emoción que sentía al esperar tu reacción",
           fecha: "9 de Junio 2025",
         },
         {
-          url: "assets/img/2025/junio2.jpeg",
+          url: "../public/assets/img/2025/junio2.jpeg",
           mensaje: "Mi primer fondo de pantalla alusivo a tí",
           fecha: "10 de Junio 2025",
         },
         {
-          url: "assets/img/2025/junio3.jpeg",
+          url: "../public/assets/img/2025/junio3.jpeg",
           mensaje: "Lo hermosa que te ves enamorada de mí",
           fecha: "16 de Junio 2025",
         },
         {
-          url: "assets/img/2025/junio4.jpeg",
+          url: "../public/assets/img/2025/junio4.jpeg",
           mensaje:
             "Dedicarle el cielo a mi cielo, es y será siempre un detalle desde lo profundo de mi corazón",
           fecha: "18 de Junio 2025",
         },
         {
-          url: "assets/img/2025/junio5.jpeg",
+          url: "../public/assets/img/2025/junio5.jpeg",
           mensaje: "Lo hermoso de este momento no tiene comparación",
           fecha: "21 de Junio 2025",
         },
         {
-          url: "assets/img/2025/junio6.jpeg",
+          url: "../public/assets/img/2025/junio6.jpeg",
           mensaje: "Amo tus ocurrencias",
           fecha: "23 de Junio 2025",
         },
         {
-          url: "assets/img/2025/junio7.jpeg",
+          url: "../public/assets/img/2025/junio7.jpeg",
           mensaje: "El que se meta conmigo ya sabe, lleva bala jajajaja",
           fecha: "25 de Junio 2025",
         },
         {
-          url: "assets/img/2025/junio8.jpeg",
+          url: "../public/assets/img/2025/junio8.jpeg",
           mensaje:
             "Imposible olvidar nuestro primer viaje, todas las aventuras vividas y lo felices que fuimos",
           fecha: "28 de Junio 2025",
@@ -301,87 +301,87 @@ const fotosPorAño = [
       ],
       Julio: [
         {
-          url: "assets/img/2025/julio1.jpeg",
+          url: "../public/assets/img/2025/julio1.jpeg",
           mensaje:
             "Un paseito inolvidable, muchas aventuras, mucho amor y sobre todo un amor muy lindo",
           fecha: "4 de Julio 2025",
         },
         {
-          url: "assets/img/2025/julio2.jpeg",
+          url: "../public/assets/img/2025/julio2.jpeg",
           mensaje:
             "Desbordados de amor, amaba recogerte y que me recibieras con una sonrisa, un beso, un te amo y una pizza",
           fecha: "8 de Julio 2025",
         },
         {
-          url: "assets/img/2025/julio3.jpeg",
+          url: "../public/assets/img/2025/julio3.jpeg",
           mensaje: "Salidita a cenar, bailar y amarnos mucho mucho",
           fecha: "13 de Julio 2025",
         },
         {
-          url: "assets/img/2025/julio4.jpeg",
+          url: "../public/assets/img/2025/julio4.jpeg",
           mensaje: "Sesión de fotos en el parque con el primo",
           fecha: "15 de Julio 2025",
         },
         {
-          url: "assets/img/2025/julio5.jpeg",
+          url: "../public/assets/img/2025/julio5.jpeg",
           mensaje: "Salidita de novios, sesión de fotos y amor que se desborda",
           fecha: "22 de Julio 2025",
         },
         {
-          url: "assets/img/2025/julio6.jpeg",
+          url: "../public/assets/img/2025/julio6.jpeg",
           mensaje: "La dueña de las carreteras y dueña de mi corazón",
           fecha: "22 de Julio 2025",
         },
         {
-          url: "assets/img/2025/julio7.jpeg",
+          url: "../public/assets/img/2025/julio7.jpeg",
           mensaje:
             "No tengo palabras para describir lo orgulloso que me sentia en ese momento de que fueras mi novia",
           fecha: "25 de Julio 2025",
         },
         {
-          url: "assets/img/2025/julio8.jpeg",
+          url: "../public/assets/img/2025/julio8.jpeg",
           mensaje: "¿Recuerdas esa hamburguesa?",
           fecha: "25 de Julio 2025",
         },
       ],
       Agosto: [
         {
-          url: "assets/img/2025/agosto1.jpeg",
+          url: "../public/assets/img/2025/agosto1.jpeg",
           mensaje: "Ámame toda la vida",
           fecha: "11 de Agosto 2025",
         },
         {
-          url: "assets/img/2025/agosto2.jpeg",
+          url: "../public/assets/img/2025/agosto2.jpeg",
           mensaje: "Visitandote en el trabajo de tu mamá",
           fecha: "15 de Agosto 2025",
         },
         {
-          url: "assets/img/2025/agosto3.jpeg",
+          url: "../public/assets/img/2025/agosto3.jpeg",
           mensaje: "Felicidad en el cumple de 'Chofi'",
           fecha: "18 de Agosto 2025",
         },
         {
-          url: "assets/img/2025/agosto4.jpeg",
+          url: "../public/assets/img/2025/agosto4.jpeg",
           mensaje: "Simplemente divinos",
           fecha: "18 de Agosto 2025",
         },
         {
-          url: "assets/img/2025/agosto5.jpeg",
+          url: "../public/assets/img/2025/agosto5.jpeg",
           mensaje: "Visita al cementerio",
           fecha: "22 de Agosto 2025",
         },
         {
-          url: "assets/img/2025/agosto6.jpeg",
+          url: "../public/assets/img/2025/agosto6.jpeg",
           mensaje: "Increíble momento",
           fecha: "24 de Agosto 2025",
         },
         {
-          url: "assets/img/2025/agosto7.jpeg",
+          url: "../public/assets/img/2025/agosto7.jpeg",
           mensaje: "Me encanta hacerte feliz",
           fecha: "29 de Agosto 2025",
         },
         {
-          url: "assets/img/2025/agosto8.jpeg",
+          url: "../public/assets/img/2025/agosto8.jpeg",
           mensaje: "Día de picnic",
           fecha: "30 de Agosto 2025",
         },
@@ -861,7 +861,7 @@ function agregarFotos(año, mes, nuevasFotos) {
 // Ejemplo de uso:
 // agregarFotos(2024, "Enero", [
 //   {
-//     url: "assets/nueva-foto.jpg",
+//     url: "../public/assets/nueva-foto.jpg",
 //     mensaje: "Un nuevo recuerdo juntos",
 //     fecha: "25 de Enero 2024"
 //   }
