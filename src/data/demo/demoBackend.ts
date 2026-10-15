@@ -11,6 +11,7 @@
  */
 import { del as idbDel, get as idbGet, set as idbSet } from "idb-keyval";
 import { AccessPolicy, DEFAULT_ROLE_PERMISSIONS, PERMISSIONS, type Permission } from "@/domain/permissions";
+import { changesBeyondPalette } from "@/domain/palettes";
 import { AppError } from "@/core/errors";
 import type {
   AppNotification, AuditEntry, ChatMessage, ImportantDate, Interruption, Milestone, Note,
@@ -20,7 +21,8 @@ import type {
 import type { Backend, RealtimeChange, RealtimeTable } from "@/data/ports";
 import { SEED_DATES, SEED_MILESTONES, SEED_PHOTOS, SEED_SECTIONS, SEED_SETTINGS } from "./seed";
 
-const STORAGE_KEY = "love-demo-v1";
+// Cambia de versión cuando cambian los datos de fábrica (tema, permisos...).
+const STORAGE_KEY = "love-demo-v2";
 const SESSION_KEY = "love-demo-session";
 const CHANNEL = "love-demo";
 
@@ -60,6 +62,7 @@ const PERMISSION_DESCRIPTIONS: Record<Permission, string> = {
   "chat.use": "Usar el chat",
   "sections.manage": "Crear, ordenar y ocultar secciones",
   "theme.manage": "Cambiar colores, tipografías, efectos y animaciones",
+  "theme.palette": "Elegir la paleta de colores",
   "settings.manage": "Configuración general del sitio",
   "users.manage": "Gestionar usuarios, roles y permisos",
   "audit.view": "Ver el registro de auditoría",
@@ -297,7 +300,11 @@ export const demoBackend: Backend = {
     async updateSettings(patch) {
       const user = requireUser();
       const policy = policyOf(user);
-      if ((patch.theme || patch.effects) && !policy.can(PERMISSIONS.themeManage)) throw new AppError("No tienes permiso para cambiar el tema.");
+      if ((patch.theme || patch.effects) && !policy.can(PERMISSIONS.themeManage)) {
+        // Con theme.palette sólo se pueden cambiar los colores (igual que el trigger de la base de datos).
+        const onlyColors = !patch.effects && !!patch.theme && !changesBeyondPalette(database().state.settings.theme, patch.theme);
+        if (!(onlyColors && policy.can(PERMISSIONS.themePalette))) throw new AppError("No tienes permiso para cambiar el tema.");
+      }
       const { theme: _t, effects: _e, ...rest } = patch;
       if (Object.keys(rest).length && !policy.can(PERMISSIONS.settingsManage)) throw new AppError("No tienes permiso para cambiar la configuración.");
       const state = database().state;

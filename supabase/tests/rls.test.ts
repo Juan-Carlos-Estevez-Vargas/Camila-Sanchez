@@ -104,7 +104,7 @@ describe("roles y escalada de privilegios", () => {
     const rows = await as<{ p: string }>(CAMI, "select p from my_permissions() p order by p");
     expect(rows.map((r) => r.p)).toEqual([
       "chat.use", "content.edit", "dates.manage", "interruptions.manage",
-      "notes.send", "photos.manage", "site.view",
+      "notes.send", "photos.manage", "site.view", "theme.palette",
     ]);
   });
 });
@@ -138,10 +138,18 @@ describe("edición de contenido", () => {
     await expect(as(JUAN, "select reorder_items('profiles', array[]::uuid[])")).rejects.toThrow(/no permitida/);
   });
 
-  it("sólo theme.manage puede cambiar el tema", async () => {
-    expect(await as(CAMI, "update site_settings set theme = '{}' returning id")).toEqual([]);
-    const rows = await as(JUAN, `update site_settings set theme = theme || '{"primary":"#aa0000"}' returning theme->>'primary' as p`);
+  it("sólo theme.manage puede cambiar tipografías y efectos", async () => {
+    await expect(as(CAMI, `update site_settings set theme = theme || '{"fontDisplay":"Lora"}'`)).rejects.toThrow(/permiso para cambiar el tema/);
+    await expect(as(CAMI, `update site_settings set effects = '{"cursorHearts":true}'`)).rejects.toThrow(/permiso para cambiar el tema/);
+    expect(await as(GUEST, `update site_settings set theme = theme || '{"primary":"#aa0000"}' returning id`)).toEqual([]);
+    const rows = await as(JUAN, `update site_settings set theme = theme || '{"primary":"#aa0000","fontDisplay":"Lora"}' returning theme->>'primary' as p`);
     expect(rows).toEqual([{ p: "#aa0000" }]);
+  });
+
+  it("la editora puede elegir la paleta de colores (sólo colores válidos)", async () => {
+    const rows = await as(CAMI, `update site_settings set theme = theme || '{"primary":"#c2185b","background":"#ffe6ec"}' returning theme->>'background' as bg, theme->>'fontDisplay' as font`);
+    expect(rows).toEqual([{ bg: "#ffe6ec", font: "Lora" }]);
+    await expect(as(CAMI, `update site_settings set theme = theme || '{"primary":"red; background:url(x)"}'`)).rejects.toThrow(/Color no válido/);
   });
 });
 
