@@ -86,6 +86,7 @@ function crearNieve() {
 
 // Regalo sorpresa
 function mostrarSorpresa() {
+  if (document.querySelector(".sorpresa")) return;
   const sorpresa = document.createElement("div");
   sorpresa.className = "sorpresa";
   sorpresa.innerHTML = `
@@ -100,50 +101,6 @@ function mostrarSorpresa() {
 
   document.body.appendChild(sorpresa);
 
-  // Agregar estilos para la sorpresa
-  const estilo = document.createElement("style");
-  estilo.textContent = `
-    .sorpresa {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.9);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 10000;
-      animation: aparecer 0.5s ease;
-    }
-    
-    .sorpresa-contenido {
-      background: linear-gradient(135deg, #ff4081, #c2185b);
-      padding: 3em;
-      border-radius: 20px;
-      text-align: center;
-      max-width: 500px;
-      animation: latido 1s infinite alternate;
-    }
-    
-    .sorpresa-texto {
-      font-size: 2rem;
-      margin: 1em 0;
-      font-weight: bold;
-      color: #ffeb3b;
-    }
-    
-    @keyframes aparecer {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-    
-    @keyframes latido {
-      from { transform: scale(1); }
-      to { transform: scale(1.05); }
-    }
-  `;
-  document.head.appendChild(estilo);
 }
 
 function cerrarSorpresa() {
