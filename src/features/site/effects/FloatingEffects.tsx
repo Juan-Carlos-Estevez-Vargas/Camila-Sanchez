@@ -1,5 +1,6 @@
 import { memo, useEffect, useMemo, useState } from "react";
 import type { EffectsConfig } from "@/domain/types";
+import "./effects.scss";
 
 /**
  * Emojis flotando de fondo. Todo es CSS (transform/opacity, en GPU); JS sólo

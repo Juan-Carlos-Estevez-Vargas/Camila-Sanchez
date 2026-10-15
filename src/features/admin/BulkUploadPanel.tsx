@@ -10,6 +10,7 @@ import { useToast } from "@/state/ToastContext";
 import { Field, Switch } from "@/ui/Field";
 import { RomanticLoader } from "@/ui/RomanticLoader";
 import { useKeepAwake } from "@/ui/useKeepAwake";
+import styles from "./BulkUploadPanel.module.scss";
 
 type DateMode = "capture" | "fixed";
 
@@ -29,12 +30,12 @@ const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one :
 
 function SummaryCard({ summary, onRetry, onClose }: { summary: Summary; onRetry(): void; onClose(): void }) {
   return (
-    <div className="bulk-summary" role="status">
+    <div className={styles.summary} role="status">
       <div className="row-between">
         <strong>Resumen de la carga</strong>
         <button className="btn btn--icon btn--ghost btn--sm" aria-label="Cerrar resumen" onClick={onClose}>×</button>
       </div>
-      <div className="bulk-summary__stats">
+      <div className={styles.stats}>
         {summary.uploaded > 0
           ? <span className="badge badge--success">💖 {plural(summary.uploaded, "foto nueva", "fotos nuevas")}</span>
           : !summary.failures.length && <span className="badge">Todas ya estaban en el álbum</span>}
@@ -44,9 +45,9 @@ function SummaryCard({ summary, onRetry, onClose }: { summary: Summary; onRetry(
       </div>
       {summary.failures.length > 0 && (
         <>
-          <ul className="bulk-summary__failures">
+          <ul className={styles.failures}>
             {summary.failures.slice(0, 20).map((f, i) => (
-              <li key={i}><span>{f.file.name}</span><span className="muted">{f.reason}</span></li>
+              <li key={i}><span className={styles.fileName}>{f.file.name}</span><span className="muted">{f.reason}</span></li>
             ))}
             {summary.failures.length > 20 && <li className="muted">y {summary.failures.length - 20} más…</li>}
           </ul>
@@ -162,7 +163,7 @@ export function BulkUploadPanel({ onUploaded }: { onUploaded(): void }) {
         <div className="dropzone__icon" aria-hidden>{preparing ? "⏳" : "📸"}</div>
         <strong>{preparing ? "Buscando fotos en la carpeta…" : "Arrastra fotos o carpetas enteras aquí"}</strong>
         <span className="muted">Hasta {MAX_BATCH} a la vez. Se ajustan y se aligeran solas, sin perder calidad.</span>
-        <div className="row" style={{ justifyContent: "center" }} onClick={(e) => e.stopPropagation()}>
+        <div className={`row ${styles.pickers}`} onClick={(e) => e.stopPropagation()}>
           <button type="button" className="btn btn--sm" onClick={() => filesInput.current?.click()}>Elegir fotos</button>
           <button type="button" className="btn btn--sm btn--soft" onClick={() => folderInput.current?.click()}>Elegir una carpeta</button>
         </div>

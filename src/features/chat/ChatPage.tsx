@@ -6,7 +6,7 @@ import { useNotifications } from "@/state/NotificationsContext";
 import { useToast } from "@/state/ToastContext";
 import { EmptyState, PageLoader } from "@/ui/Feedback";
 import { EnableNotifications } from "@/features/messages/EnableNotifications";
-import "@/styles/messages.css";
+import "@/features/messages/styles/messages.scss";
 
 const PAGE = 40;
 const dayFormat = new Intl.DateTimeFormat("es-CO", { weekday: "long", day: "numeric", month: "long" });

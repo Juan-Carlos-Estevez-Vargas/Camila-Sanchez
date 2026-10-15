@@ -1,0 +1,5 @@
+// Punto de entrada de las herramientas Sass. No genera CSS: cualquier
+// módulo puede hacer `@use "abstracts" as *;` sin duplicar estilos.
+@forward "variables";
+@forward "functions";
+@forward "mixins";

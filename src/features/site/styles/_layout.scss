@@ -1,0 +1,50 @@
+@use "abstracts" as *;
+
+.site {
+  position: relative;
+  z-index: z("content");
+}
+
+.site-section {
+  padding-block: clamp(3.5rem, 9vw, 6.5rem);
+
+  & + & { border-top: 1px solid var(--c-border); }
+
+  &--hero { padding: 0; border: 0; }
+  &--quote { background: var(--c-primary-soft); }
+}
+
+.section-heading {
+  text-align: center;
+  margin-bottom: clamp(2rem, 5vw, 3rem);
+
+  h2 { margin-bottom: space(2); }
+  p { max-width: 56ch; margin-inline: auto; }
+
+  &__eyebrow {
+    display: inline-block;
+    margin-bottom: space(2);
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--c-primary);
+  }
+}
+
+.site-footer {
+  position: relative;
+  z-index: z("content");
+  padding: space(6) 0 space(7);
+  text-align: center;
+  color: var(--c-muted);
+  font-size: 0.9rem;
+}
+
+.music-toggle {
+  position: fixed;
+  z-index: z("music");
+  left: space(4);
+  bottom: calc(#{space(4)} + env(safe-area-inset-bottom));
+  box-shadow: var(--shadow);
+}

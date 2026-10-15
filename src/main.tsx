@@ -3,10 +3,7 @@ import { createRoot } from "react-dom/client";
 import { App } from "@/app/App";
 import { createBackend } from "@/data/backend";
 import { BackendProvider } from "@/state/BackendContext";
-import "@/styles/base.css";
-import "@/styles/ui.css";
-import "@/styles/site.css";
-import "@/styles/app.css";
+import "@/styles/main.scss";
 
 async function bootstrap() {
   const backend = await createBackend();

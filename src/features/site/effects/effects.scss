@@ -1,0 +1,50 @@
+// Efectos que se usan fuera de la página (lluvia de emojis en la cajita).
+@use "abstracts" as *;
+
+// Fondo animado (corazones, pétalos...) según el mes o el tema.
+.floating {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: z("floating");
+
+  span {
+    position: absolute;
+    bottom: -2rem;
+    opacity: 0;
+    animation-name: float-up;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+    will-change: transform, opacity;
+
+    &:nth-child(3n) { filter: blur(0.5px); }
+  }
+}
+
+// Lluvia de emojis al abrir una sorpresa.
+.burst {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: z("burst");
+  overflow: hidden;
+
+  span {
+    position: absolute;
+    top: -2rem;
+    animation: burst-fall 3.4s ease-in forwards;
+  }
+}
+
+.cursor-heart {
+  position: fixed;
+  pointer-events: none;
+  z-index: z("cursor");
+  font-size: 14px;
+  translate: -50% -50%;
+  animation: cursor-heart 1s ease-out forwards;
+}
+
+@keyframes burst-fall { to { transform: translateY(110vh) rotate(540deg); opacity: 0.2; } }
+@keyframes cursor-heart { to { transform: translateY(-40px) scale(1.4); opacity: 0; } }

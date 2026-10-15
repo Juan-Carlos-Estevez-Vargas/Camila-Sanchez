@@ -1,0 +1,49 @@
+// ==========================================================================
+// Variables de compilación (Sass). Lo que el tema cambia en tiempo de
+// ejecución vive en custom properties (ver base/_tokens.scss); aquí sólo va
+// lo que es fijo: escalas, puntos de quiebre y capas.
+// ==========================================================================
+
+$breakpoints: (
+  "sm": 520px,
+  "md": 720px,
+  "lg": 860px,
+  "xl": 1120px,
+);
+
+$spacing: (
+  1: 0.25rem,
+  2: 0.5rem,
+  3: 0.75rem,
+  4: 1rem,
+  5: 1.5rem,
+  6: 2rem,
+  7: 3rem,
+  8: 5rem,
+);
+
+// Capas: un único lugar para entender qué queda encima de qué.
+$z-layers: (
+  "floating": 0,
+  "content": 1,
+  "music": 50,
+  "banner": 90,
+  "header": 100,
+  "modal": 900,
+  "loader": 950,
+  "lightbox": 980,
+  "toast": 1000,
+  "burst": 1200,
+  "cursor": 1300,
+);
+
+$header-height: 64px;
+$container-width: 1120px;
+$narrow-width: 720px;
+$control-height: 44px;
+
+$font-display: "Fraunces", Georgia, "Times New Roman", serif;
+$font-body: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+$font-mono: ui-monospace, "SFMono-Regular", Menlo, monospace;
+
+$ease: cubic-bezier(0.22, 1, 0.36, 1);

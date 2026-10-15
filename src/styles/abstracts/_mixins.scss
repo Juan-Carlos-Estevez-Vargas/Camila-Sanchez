@@ -1,0 +1,92 @@
+@use "sass:map";
+@use "variables" as *;
+@use "functions" as *;
+
+/// Estilos para pantallas por debajo de un punto de quiebre (mobile-first inverso).
+@mixin below($name) {
+  @if not map.has-key($breakpoints, $name) {
+    @error "Punto de quiebre desconocido: #{$name}";
+  }
+  @media (max-width: map.get($breakpoints, $name)) {
+    @content;
+  }
+}
+
+@mixin above($name) {
+  @media (min-width: map.get($breakpoints, $name) + 1px) {
+    @content;
+  }
+}
+
+@mixin reduced-motion {
+  @media (prefers-reduced-motion: reduce) {
+    @content;
+  }
+}
+
+@mixin truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@mixin visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+@mixin focus-ring($offset: 2px) {
+  outline: 3px solid tint(var(--c-primary), 60%);
+  outline-offset: $offset;
+}
+
+/// Superficie tipo tarjeta (fondo, borde y radio del tema).
+@mixin surface($radius: var(--radius)) {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: $radius;
+}
+
+/// Píldora seleccionable (meses, tipos de nota...).
+@mixin chip {
+  border: 1px solid var(--c-border-strong);
+  background: var(--c-surface);
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+}
+
+@mixin chip-active {
+  background: var(--c-primary);
+  border-color: var(--c-primary);
+  color: var(--c-primary-contrast);
+}
+
+/// Icono cuadrado con fondo suave.
+@mixin icon-tile($size: 40px, $radius: 12px, $font-size: 1.2rem) {
+  width: $size;
+  height: $size;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border-radius: $radius;
+  background: var(--c-primary-soft);
+  font-size: $font-size;
+}
+
+/// Título con la tipografía de display.
+@mixin display-text($size: null, $weight: 600) {
+  font-family: var(--font-display);
+  font-weight: $weight;
+  @if $size {
+    font-size: $size;
+  }
+}
+
+/// Fondo romántico degradado del color principal al de acento.
+@mixin love-gradient($angle: 135deg) {
+  background: linear-gradient($angle, var(--c-primary), tint(var(--c-primary), 60%, var(--c-accent)));
+}

@@ -1,0 +1,54 @@
+@use "../abstracts" as *;
+
+// ==========================================================================
+// Tokens de diseño como custom properties. Colores, fuentes y radio se
+// sobreescriben en tiempo de ejecución desde site_settings.theme
+// (state/ThemeController.tsx), por eso no son variables Sass.
+// ==========================================================================
+:root {
+  --c-primary: #b0305a;
+  --c-primary-contrast: #ffffff;
+  --c-accent: #e8a33d;
+  --c-bg: #fff8f6;
+  --c-surface: #ffffff;
+  --c-text: #2b1720;
+  --c-muted: #7a5c66;
+
+  // Derivados con color-mix: cualquier paleta del panel sigue funcionando.
+  --c-primary-soft: #{tint(var(--c-primary), 12%, var(--c-surface))};
+  --c-primary-strong: #{tint(var(--c-primary), 82%, black)};
+  --c-border: #{tint(var(--c-text), 12%)};
+  --c-border-strong: #{tint(var(--c-text), 22%)};
+  --c-surface-2: #{tint(var(--c-text), 4%, var(--c-surface))};
+  --c-success: #2e7d5b;
+  --c-danger: #c0392b;
+  --c-warning: #b7791f;
+
+  --font-display: #{$font-display};
+  --font-body: #{$font-body};
+
+  --radius: 18px;
+  --radius-sm: calc(var(--radius) * 0.55);
+  --radius-pill: 999px;
+
+  --shadow-sm: 0 1px 2px #{tint(var(--c-text), 8%)};
+  --shadow: 0 10px 30px -12px #{tint(var(--c-primary), 30%)}, 0 2px 6px #{tint(var(--c-text), 6%)};
+  --shadow-lg: 0 30px 60px -20px #{tint(var(--c-primary), 35%)};
+
+  @each $step, $value in $spacing {
+    --space-#{$step}: #{$value};
+  }
+
+  --container: #{$container-width};
+  --ease: #{$ease};
+
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  --c-bg: #15111a;
+  --c-surface: #1f1925;
+  --c-text: #f3e9ef;
+  --c-muted: #b4a3ae;
+  color-scheme: dark;
+}

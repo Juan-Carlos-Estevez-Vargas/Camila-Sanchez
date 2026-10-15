@@ -7,6 +7,7 @@ import { Reveal } from "./effects/Reveal";
 import { InterruptionHost } from "./InterruptionHost";
 import { MusicToggle } from "./MusicToggle";
 import { renderSection } from "./sections/registry";
+import "./styles/site.scss";
 
 export default function SitePage() {
   const { status, content, photoUrls } = useSiteContent();

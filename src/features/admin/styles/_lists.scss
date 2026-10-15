@@ -1,0 +1,120 @@
+@use "abstracts" as *;
+
+.list {
+  display: grid;
+  gap: space(2);
+
+  &__item {
+    display: flex;
+    align-items: center;
+    gap: space(3);
+    padding: space(3) space(4);
+    width: 100%;
+    font: inherit;
+    color: inherit;
+    cursor: default;
+
+    @at-root button#{&} { cursor: pointer; }
+  }
+
+  &__icon { @include icon-tile; }
+  &__sub { display: block; font-size: 0.85rem; }
+}
+
+.stats {
+  display: grid;
+  gap: space(3);
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+.stat {
+  display: grid;
+  gap: 2px;
+  text-decoration: none;
+  color: inherit;
+
+  &__icon { font-size: 1.5rem; }
+
+  &__value {
+    @include display-text(2.2rem);
+    color: var(--c-primary);
+    line-height: 1.1;
+  }
+}
+
+// Arrastrar y soltar para reordenar.
+.sortable {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: space(2);
+
+  &__item {
+    display: flex;
+    gap: space(2);
+    align-items: stretch;
+    border-radius: var(--radius);
+    transition: opacity 0.2s, outline-color 0.2s;
+    outline: 2px dashed transparent;
+    outline-offset: 2px;
+
+    &.is-dragging { opacity: 0.4; }
+    &.is-over { outline-color: var(--c-primary); }
+  }
+
+  &__handle {
+    display: grid;
+    align-content: center;
+    gap: 2px;
+    cursor: grab;
+  }
+
+  &__body { flex: 1; min-width: 0; }
+}
+
+.table-wrap {
+  @include surface;
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+
+  th,
+  td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--c-border);
+    text-align: left;
+    vertical-align: middle;
+
+    &.center { text-align: center; }
+  }
+
+  th {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--c-muted);
+    background: var(--c-surface-2);
+    position: sticky;
+    top: 0;
+  }
+
+  tr:last-child td { border-bottom: 0; }
+}
+
+.json {
+  margin: 0;
+  max-height: 220px;
+  overflow: auto;
+  font-family: $font-mono;
+  font-size: 0.75rem;
+  background: var(--c-surface-2);
+  padding: space(3);
+  border-radius: var(--radius-sm);
+  white-space: pre-wrap;
+  word-break: break-word;
+}

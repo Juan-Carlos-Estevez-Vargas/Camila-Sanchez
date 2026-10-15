@@ -1,0 +1,73 @@
+@use "abstracts" as *;
+
+.gallery {
+  &__years { margin: 0 auto space(3); }
+  &__summary { margin-bottom: space(5); }
+}
+
+.months {
+  display: grid;
+  gap: space(3);
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+
+  @include below("sm") { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+.month {
+  @include surface;
+  position: relative;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  display: grid;
+  align-content: end;
+  justify-items: start;
+  gap: 2px;
+  padding: space(4);
+  text-align: left;
+  cursor: pointer;
+  color: #fff;
+  transition: transform 0.3s $ease, box-shadow 0.3s $ease;
+
+  &:not(.is-empty):hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow);
+
+    .month__cover { transform: scale(1.06); }
+  }
+
+  &__cover {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.6s $ease;
+  }
+
+  &__shade {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(transparent 35%, rgba(20, 6, 12, 0.78));
+  }
+
+  > span:not(.month__shade) { position: relative; }
+
+  &__icon {
+    position: absolute !important;
+    top: space(3);
+    right: space(3);
+    font-size: 1.3rem;
+  }
+
+  &__name { @include display-text(1.25rem); }
+  &__count { font-size: 0.8rem; opacity: 0.9; }
+
+  &.is-empty {
+    cursor: default;
+    color: var(--c-muted);
+    background: var(--c-surface-2);
+    border-style: dashed;
+
+    .month__shade { display: none; }
+  }
+}
