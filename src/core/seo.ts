@@ -12,10 +12,12 @@ export const OG_IMAGE_PATH = "/og-image.jpg";
 export const DESCRIPTION_MAX = 160;
 
 /** Rutas que nunca deben aparecer en buscadores. */
-export const PRIVATE_PREFIXES = ["/entrar", "/panel", "/super", "/mensajes", "/chat"] as const;
+export const PRIVATE_PREFIXES = ["/entrar", "/invitacion", "/cuenta", "/panel", "/super", "/mensajes", "/chat"] as const;
 
 const PAGE_TITLES: Record<string, string> = {
   "/entrar": "Entrar",
+  "/invitacion": "Invitación",
+  "/cuenta": "Mi cuenta",
   "/mensajes": "Cajita de mensajes",
   "/chat": "Chat",
   "/panel": "Mi panel",

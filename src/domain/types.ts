@@ -229,3 +229,15 @@ export interface SiteContent {
   dates: ImportantDate[];
   interruptions: Interruption[];
 }
+
+/** Rol que puede llevar un enlace de invitación (nunca super admin). */
+export type InvitableRole = Exclude<Role, "super_admin">;
+
+export interface Invitation {
+  id: Uuid;
+  role: InvitableRole;
+  note: string;
+  createdAt: IsoDateTime;
+  expiresAt: IsoDateTime;
+  usedAt: IsoDateTime | null;
+}

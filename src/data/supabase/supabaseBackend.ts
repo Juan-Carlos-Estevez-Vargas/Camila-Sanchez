@@ -1,8 +1,12 @@
+import { FunctionsHttpError } from "@supabase/supabase-js";
+import { AppError } from "@/core/errors";
 import type {
-  AuthGateway, Backend, ContentRepository, MessagingRepository, PhotoRepository, PushRepository,
-  RealtimeChange, RealtimeGateway, RealtimeTable, UserRepository,
+  AuthGateway, Backend, ContentRepository, InvitationRepository, MessagingRepository, PhotoRepository,
+  PushRepository, RealtimeChange, RealtimeGateway, RealtimeTable, UserRepository,
 } from "@/data/ports";
-import type { PhotoUrls, SessionUser, Uuid } from "@/domain/types";
+import { setRememberSession } from "@/data/sessionPersistence";
+import { expiryFromNow, generateInviteToken, hashInviteToken } from "@/domain/invitations";
+import type { InvitableRole, PhotoUrls, SessionUser, Uuid } from "@/domain/types";
 import { getSupabase, unwrap, type Row } from "./client";
 import * as map from "./mappers";
 
@@ -21,27 +25,40 @@ const redirectTo = (path: string) => `${window.location.origin}${path}`;
 const auth: AuthGateway = {
   async getSession() {
     const { data } = await sb().auth.getSession();
-    return toSessionUser(data.session?.user);
+    if (!data.session) return null;
+    // La sesión guardada se confirma con el servidor: si la revocaron (cerrar
+    // sesión en todos los dispositivos, cuenta desactivada) se descarta aquí.
+    const { data: verified, error } = await sb().auth.getUser();
+    if (error && error.status && error.status >= 400 && error.status < 500) {
+      await sb().auth.signOut({ scope: "local" });
+      return null;
+    }
+    return toSessionUser(verified.user ?? data.session.user);
   },
   onChange(listener) {
     const { data } = sb().auth.onAuthStateChange((_event, session) => listener(toSessionUser(session?.user)));
     return () => data.subscription.unsubscribe();
   },
-  async signInWithPassword(email, password) {
+  async signInWithPassword(email, password, options) {
+    setRememberSession(options?.remember ?? true);
     await unwrap(sb().auth.signInWithPassword({ email, password }));
   },
   async sendMagicLink(email) {
+    // El enlace se abre en otra pestaña: la sesión tiene que poder persistir.
+    setRememberSession(true);
     // shouldCreateUser: false → un enlace mágico nunca crea cuentas nuevas.
     await unwrap(sb().auth.signInWithOtp({ email, options: { shouldCreateUser: false, emailRedirectTo: redirectTo("/") } }));
   },
   async sendPasswordReset(email) {
+    setRememberSession(true);
     await unwrap(sb().auth.resetPasswordForEmail(email, { redirectTo: redirectTo("/entrar?recuperar=1") }));
   },
   async updatePassword(password) {
     await unwrap(sb().auth.updateUser({ password }));
   },
-  async signOut() {
-    await sb().auth.signOut();
+  async signOut(options) {
+    // "global" revoca los tokens de refresco de todos los dispositivos.
+    await sb().auth.signOut({ scope: options?.everywhere ? "global" : "local" });
   },
 };
 
@@ -216,11 +233,26 @@ const messaging: MessagingRepository = {
   },
 };
 
-/** Llama a la Edge Function admin-users (usa la service role en el servidor). */
+/**
+ * Llama a una Edge Function. Sus mensajes de error ya están en español y
+ * pensados para el usuario, así que se muestran tal cual.
+ */
+async function invokeFunction<T>(name: string, body: Record<string, unknown>): Promise<T> {
+  const { data, error } = await sb().functions.invoke<T & { error?: string }>(name, { body });
+  if (error) {
+    if (error instanceof FunctionsHttpError) {
+      const payload = (await (error.context as Response).json().catch(() => null)) as { error?: string } | null;
+      if (payload?.error) throw new AppError(payload.error, { cause: error });
+    }
+    throw new Error(error.message, { cause: error });
+  }
+  if (data?.error) throw new AppError(data.error);
+  return data as T;
+}
+
+/** Edge Function admin-users (usa la service role en el servidor). */
 async function adminUsers(body: Record<string, unknown>): Promise<void> {
-  const { data, error } = await sb().functions.invoke<{ error?: string }>("admin-users", { body });
-  if (error) throw new Error(error.message, { cause: error });
-  if (data?.error) throw new Error(data.error);
+  await invokeFunction("admin-users", body);
 }
 
 const users: UserRepository = {
@@ -270,6 +302,33 @@ const users: UserRepository = {
   },
 };
 
+const invitations: InvitationRepository = {
+  async list() {
+    const rows = await unwrap<Row[]>(sb().from("invitations").select("id, role, note, created_at, expires_at, used_at")
+      .order("created_at", { ascending: false }).limit(50));
+    return rows.map(map.toInvitation);
+  },
+  async create({ role, note, expiresInHours }) {
+    const token = generateInviteToken();
+    const row = await unwrap<Row>(sb().from("invitations").insert({
+      token_hash: await hashInviteToken(token),
+      role,
+      note: note.trim().slice(0, 80),
+      expires_at: expiryFromNow(expiresInHours),
+    }).select("id, role, note, created_at, expires_at, used_at").single());
+    return { invitation: map.toInvitation(row), token };
+  },
+  async revoke(id) {
+    await unwrap(sb().from("invitations").delete().eq("id", id));
+  },
+  async check(token) {
+    return invokeFunction<{ valid: boolean; role?: InvitableRole }>("redeem-invite", { action: "check", token });
+  },
+  async redeem(input) {
+    await invokeFunction("redeem-invite", { action: "redeem", ...input });
+  },
+};
+
 let channelSeq = 0;
 
 const realtime: RealtimeGateway = {
@@ -311,6 +370,7 @@ export const supabaseBackend: Backend = {
   photos,
   messaging,
   users,
+  invitations,
   realtime,
   push,
 };

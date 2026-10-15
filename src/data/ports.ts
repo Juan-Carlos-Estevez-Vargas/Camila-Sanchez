@@ -7,8 +7,8 @@
  * La fábrica de data/backend.ts elige uno al arrancar (patrón Strategy).
  */
 import type {
-  AppNotification, AuditEntry, ChatMessage, ImportantDate, Interruption, Milestone,
-  Note, NoteKind, PermissionDefinition, Photo, PhotoUrls, Profile, Role, RolePermission,
+  AppNotification, AuditEntry, ChatMessage, ImportantDate, Interruption, Invitation, InvitableRole,
+  Milestone, Note, NoteKind, PermissionDefinition, Photo, PhotoUrls, Profile, Role, RolePermission,
   Section, SessionUser, SiteSettings, Uuid,
 } from "@/domain/types";
 
@@ -17,11 +17,13 @@ export type Unsubscribe = () => void;
 export interface AuthGateway {
   getSession(): Promise<SessionUser | null>;
   onChange(listener: (user: SessionUser | null) => void): Unsubscribe;
-  signInWithPassword(email: string, password: string): Promise<void>;
+  /** remember=false: la sesión vive sólo en esta pestaña y termina al cerrarla. */
+  signInWithPassword(email: string, password: string, options?: { remember?: boolean }): Promise<void>;
   sendMagicLink(email: string): Promise<void>;
   sendPasswordReset(email: string): Promise<void>;
   updatePassword(password: string): Promise<void>;
-  signOut(): Promise<void>;
+  /** everywhere=true también revoca las sesiones de los demás dispositivos. */
+  signOut(options?: { everywhere?: boolean }): Promise<void>;
 }
 
 export type ReorderableTable = "sections" | "photos" | "milestones";
@@ -103,6 +105,29 @@ export interface UserRepository {
   listAudit(options: { page: number; pageSize: number; table?: string }): Promise<AuditEntry[]>;
 }
 
+export interface CreatedInvitation {
+  invitation: Invitation;
+  /** Token en claro: sólo existe en este momento, para armar el enlace. */
+  token: string;
+}
+
+export interface RedeemInvitationInput {
+  token: string;
+  email: string;
+  password: string;
+  displayName: string;
+}
+
+export interface InvitationRepository {
+  list(): Promise<Invitation[]>;
+  create(input: { role: InvitableRole; note: string; expiresInHours: number }): Promise<CreatedInvitation>;
+  revoke(id: Uuid): Promise<void>;
+  /** Público: ¿sirve todavía este enlace? (no lo consume). */
+  check(token: string): Promise<{ valid: boolean; role?: InvitableRole }>;
+  /** Público: crea la cuenta y consume el enlace. */
+  redeem(input: RedeemInvitationInput): Promise<void>;
+}
+
 export type RealtimeTable =
   | "site_settings" | "sections" | "photos" | "milestones" | "important_dates"
   | "interruptions" | "notes" | "chat_messages" | "notifications";
@@ -138,6 +163,7 @@ export interface Backend {
   readonly photos: PhotoRepository;
   readonly messaging: MessagingRepository;
   readonly users: UserRepository;
+  readonly invitations: InvitationRepository;
   readonly realtime: RealtimeGateway;
   readonly push: PushRepository;
 }

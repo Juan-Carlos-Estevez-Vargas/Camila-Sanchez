@@ -1,9 +1,12 @@
 import { useState, type FormEvent } from "react";
 import { Navigate, useSearchParams } from "react-router-dom";
 import { toUserMessage } from "@/core/errors";
+import { safeNextPath } from "@/core/safeRedirect";
+import { remembersSession } from "@/data/sessionPersistence";
+import { MIN_PASSWORD_LENGTH } from "@/domain/invitations";
 import { useAuth } from "@/state/AuthContext";
 import { useBackend } from "@/state/BackendContext";
-import { Field } from "@/ui/Field";
+import { Field, Switch } from "@/ui/Field";
 
 type Mode = "password" | "magic" | "reset" | "new-password";
 
@@ -14,11 +17,12 @@ export default function LoginPage() {
   const [mode, setMode] = useState<Mode>(params.get("recuperar") ? "new-password" : "password");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [remember, setRemember] = useState(remembersSession);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
 
-  if (user && mode !== "new-password") return <Navigate to={params.get("next") ?? "/"} replace />;
+  if (user && mode !== "new-password") return <Navigate to={safeNextPath(params.get("next"))} replace />;
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
@@ -26,7 +30,7 @@ export default function LoginPage() {
     setError(null);
     setInfo(null);
     try {
-      if (mode === "password") await backend.auth.signInWithPassword(email, password);
+      if (mode === "password") await backend.auth.signInWithPassword(email, password, { remember });
       if (mode === "magic") {
         await backend.auth.sendMagicLink(email);
         setInfo("Te envié un enlace mágico ✨ Revisa tu correo.");
@@ -36,7 +40,9 @@ export default function LoginPage() {
         setInfo("Te envié un correo para crear una contraseña nueva.");
       }
       if (mode === "new-password") {
-        if (password.length < 8) throw new Error("La contraseña debe tener al menos 8 caracteres.");
+        if (password.length < MIN_PASSWORD_LENGTH) {
+          throw new Error(`La contraseña debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres.`);
+        }
         await backend.auth.updatePassword(password);
         setInfo("¡Listo! Tu contraseña se actualizó.");
         setMode("password");
@@ -69,13 +75,19 @@ export default function LoginPage() {
           </Field>
         )}
         {(mode === "password" || mode === "new-password") && (
-          <Field label={mode === "new-password" ? "Contraseña nueva" : "Contraseña"} hint={mode === "new-password" ? "Mínimo 8 caracteres" : undefined}>
+          <Field label={mode === "new-password" ? "Contraseña nueva" : "Contraseña"} hint={mode === "new-password" ? `Mínimo ${MIN_PASSWORD_LENGTH} caracteres` : undefined}>
             {(id) => (
-              <input id={id} className="input" type="password" required minLength={mode === "new-password" ? 8 : undefined}
+              <input id={id} className="input" type="password" required minLength={mode === "new-password" ? MIN_PASSWORD_LENGTH : undefined}
                 autoComplete={mode === "new-password" ? "new-password" : "current-password"}
                 value={password} onChange={(e) => setPassword(e.target.value)} />
             )}
           </Field>
+        )}
+        {mode === "password" && backend.mode === "supabase" && (
+          <div className="stack" style={{ gap: 2 }}>
+            <Switch checked={remember} onChange={setRemember} label="Mantener la sesión iniciada" />
+            <span className="field__hint">Desactívalo en un computador compartido: la sesión se cerrará al cerrar la pestaña.</span>
+          </div>
         )}
         {error && <p className="field__error" role="alert">{error}</p>}
         {info && <p className="badge badge--success" role="status" style={{ justifySelf: "center" }}>{info}</p>}
