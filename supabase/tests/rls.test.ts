@@ -181,3 +181,46 @@ describe("sitio público", () => {
     expect(row?.n).toBeGreaterThan(0);
   });
 });
+
+describe("invitaciones", () => {
+  const HASH = "a".repeat(64);
+  const insert = (hash: string, role = "editor", extra = "") =>
+    `insert into invitations (token_hash, role, expires_at${extra ? ", " + extra.split("=")[0] : ""})
+     values ('${hash}', '${role}', now() + interval '1 day'${extra ? ", " + extra.split("=")[1] : ""})`;
+
+  it("sólo quien gestiona usuarios puede crearlas y verlas", async () => {
+    await expect(as(CAMI, insert(HASH))).rejects.toThrow(/row-level security/);
+    await as(JUAN, insert(HASH));
+    expect(await as(CAMI, "select count(*)::int as n from invitations")).toEqual([{ n: 0 }]);
+    expect(await as(null, "select count(*)::int as n from invitations")).toEqual([{ n: 0 }]);
+    expect(await as(JUAN, "select count(*)::int as n from invitations")).toEqual([{ n: 1 }]);
+  });
+
+  it("nunca pueden crear un super administrador", async () => {
+    await expect(as(JUAN, insert("b".repeat(64), "super_admin"))).rejects.toThrow(/check/);
+  });
+
+  it("no se pueden crear ya usadas ni marcarlas como usadas desde el navegador", async () => {
+    await expect(as(JUAN, insert("c".repeat(64), "editor", "used_at=now()"))).rejects.toThrow(/row-level security/);
+    await as(JUAN, `update invitations set used_at = now() where token_hash = '${HASH}'`);
+    expect(await as(JUAN, `select used_at from invitations where token_hash = '${HASH}'`)).toEqual([{ used_at: null }]);
+  });
+
+  it("caducan en 30 días como máximo", async () => {
+    await expect(as(JUAN, `insert into invitations (token_hash, role, expires_at)
+      values ('${"d".repeat(64)}', 'viewer', now() + interval '31 days')`)).rejects.toThrow(/invitations_expiry/);
+  });
+
+  it("al crear una cuenta con app_role del enlace, nace con ese rol", async () => {
+    const id = "44444444-4444-4444-4444-444444444444";
+    await db.exec(`insert into auth.users (id, email, raw_app_meta_data, raw_user_meta_data)
+      values ('${id}', 'nueva@example.com', '{"app_role":"editor"}', '{"display_name":"Camila"}')`);
+    const { rows } = await db.query(`select role::text, display_name from profiles where id = '${id}'`);
+    expect(rows).toEqual([{ role: "editor", display_name: "Camila" }]);
+  });
+
+  it("revocar borra la invitación", async () => {
+    await as(JUAN, `delete from invitations where token_hash = '${HASH}'`);
+    expect(await as(JUAN, "select count(*)::int as n from invitations")).toEqual([{ n: 0 }]);
+  });
+});
