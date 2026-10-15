@@ -1,0 +1,74 @@
+@use "abstracts" as *;
+
+.grid {
+  display: grid;
+  gap: space(3);
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+}
+
+.option {
+  @include surface;
+  display: grid;
+  gap: space(2);
+  padding: space(3);
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.2s $ease, box-shadow 0.2s $ease, border-color 0.2s;
+
+  &:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+
+  &[aria-pressed="true"] {
+    border-color: var(--c-primary);
+    box-shadow: 0 0 0 3px var(--c-primary-soft);
+  }
+}
+
+// Muestra en miniatura: fondo, tarjeta, título y botón con los colores reales.
+.sample {
+  display: grid;
+  gap: 6px;
+  padding: space(3);
+  border-radius: var(--radius-sm);
+  border: 1px solid tint(black, 6%);
+}
+
+.sampleTitle {
+  @include display-text(1.05rem);
+  line-height: 1.1;
+}
+
+.sampleCard {
+  height: 10px;
+  border-radius: 6px;
+}
+
+.sampleRow {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.sampleButton {
+  height: 14px;
+  width: 44px;
+  border-radius: 999px;
+}
+
+.sampleDot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+}
+
+.name {
+  font-weight: 600;
+  display: flex;
+  justify-content: space-between;
+  gap: space(2);
+}
+
+.description {
+  font-size: 0.8rem;
+  color: var(--c-muted);
+  line-height: 1.35;
+}
