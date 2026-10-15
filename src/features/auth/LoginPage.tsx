@@ -60,7 +60,7 @@ export default function LoginPage() {
 
   return (
     <main className="gate">
-      <form className="gate__card card stack" onSubmit={submit} noValidate>
+      <form className="gate__card card stack" onSubmit={submit} noValidate data-tour="login-form">
         <div className="gate__heart" aria-hidden>💗</div>
         <h1 style={{ fontSize: "2rem" }}>{titles[mode]}</h1>
         {backend.mode === "demo" && (
@@ -93,7 +93,7 @@ export default function LoginPage() {
         <button className="btn btn--block" disabled={busy}>
           {busy ? "Un momento…" : mode === "password" ? "Entrar" : "Enviar enlace"}
         </button>
-        <div className="row" style={{ justifyContent: "center" }}>
+        <div className="row" style={{ justifyContent: "center" }} data-tour="login-modes">
           {mode !== "password" && <button type="button" className="btn btn--sm btn--ghost" onClick={() => setMode("password")}>Usar contraseña</button>}
           {mode !== "magic" && <button type="button" className="btn btn--sm btn--ghost" onClick={() => setMode("magic")}>Enlace mágico</button>}
           {mode === "password" && <button type="button" className="btn btn--sm btn--ghost" onClick={() => setMode("reset")}>Olvidé mi contraseña</button>}

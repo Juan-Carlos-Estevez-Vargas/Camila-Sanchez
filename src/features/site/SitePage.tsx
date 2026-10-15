@@ -42,7 +42,7 @@ export default function SitePage() {
     <>
       <FloatingEffects effects={content.settings.effects} />
       <InterruptionHost items={content.interruptions} />
-      <main id="contenido-principal" className="site">
+      <main id="contenido-principal" className="site" data-tour="site">
         {sections.length === 0 && <EmptyState title="Aún no hay secciones">Agrégalas desde el panel de administración.</EmptyState>}
         {sections.map((section, index) => (
           <Reveal

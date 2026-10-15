@@ -37,7 +37,7 @@ export function AppFooter() {
   const version = config.appVersion;
 
   return (
-    <footer className="app-footer">
+    <footer className="app-footer" data-tour="footer">
       <div className="container app-footer__inner">
         <p className="app-footer__signature">
           Hecho con mucho amor <span className="app-footer__heart" aria-label="amor">💖</span> por <strong>{AUTHOR.name}</strong>
