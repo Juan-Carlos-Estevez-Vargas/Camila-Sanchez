@@ -1,0 +1,80 @@
+@use "../abstracts" as *;
+
+.app-footer {
+  position: relative;
+  z-index: z("content");
+  margin-top: space(6);
+  padding: space(6) 0 calc(#{space(7)} + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--c-border);
+  background: tint(var(--c-surface), 70%);
+  color: var(--c-muted);
+  text-align: center;
+
+  &__inner {
+    display: grid;
+    justify-items: center;
+    gap: space(2);
+  }
+
+  &__signature {
+    @include display-text(1.05rem);
+    margin: 0;
+    color: var(--c-text);
+  }
+
+  &__heart {
+    display: inline-block;
+    animation: heartbeat 1.6s ease-in-out infinite;
+
+    @include reduced-motion { animation: none; }
+  }
+
+  &__subtitle {
+    margin: 0;
+    font-size: 0.85rem;
+  }
+
+  &__social {
+    display: flex;
+    gap: space(2);
+    margin: space(2) 0 0;
+    padding: 0;
+    list-style: none;
+
+    a {
+      display: grid;
+      place-items: center;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      color: var(--c-primary);
+      background: tint(var(--c-primary), 10%);
+      transition: transform 0.2s ease, background 0.2s ease;
+
+      &:hover {
+        transform: translateY(-2px);
+        background: tint(var(--c-primary), 18%);
+      }
+
+      &:focus-visible { @include focus-ring; }
+    }
+
+    svg {
+      width: 20px;
+      height: 20px;
+    }
+  }
+
+  &__version {
+    margin-top: space(1);
+    padding: 2px space(2);
+    border-radius: 999px;
+    border: 1px solid var(--c-border);
+    font-size: 0.75rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--c-muted);
+    text-decoration: none;
+  }
+
+  a.app-footer__version:hover { color: var(--c-primary); }
+}

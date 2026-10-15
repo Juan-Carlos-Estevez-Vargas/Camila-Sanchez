@@ -2,6 +2,7 @@
 import { defineConfig, loadEnv, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
 import { fileURLToPath, URL } from "node:url";
+import { resolveAppVersion } from "./scripts/release.mjs";
 import { buildRobotsTxt, buildSitemapXml, normalizeSiteUrl, OG_IMAGE_PATH } from "./src/core/seo.ts";
 
 // La CSP sólo se inyecta en el build: en desarrollo Vite necesita scripts
@@ -59,6 +60,9 @@ const seoPlugin = (siteUrl: string, indexing: boolean): Plugin => ({
 });
 
 export default defineConfig(({ mode }) => {
+  // Versión SemVer del release que corresponde a este commit (pie de página).
+  // Vite expone en import.meta.env las variables VITE_* del entorno.
+  process.env.VITE_APP_VERSION ??= resolveAppVersion();
   const env = loadEnv(mode, process.cwd(), "VITE_");
   const siteUrl = normalizeSiteUrl(env.VITE_SITE_URL);
   const indexing = env.VITE_SEO_INDEX?.trim() !== "false";

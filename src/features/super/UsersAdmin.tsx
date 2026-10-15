@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { formatRelative } from "@/domain/dates";
+import { MIN_PASSWORD_LENGTH } from "@/domain/invitations";
 import { ROLE_LABELS } from "@/domain/permissions";
 import { ROLES, type Profile, type Role } from "@/domain/types";
 import type { NewUserInput } from "@/data/ports";
@@ -13,6 +14,7 @@ import { Modal } from "@/ui/Modal";
 import { useAsync } from "@/ui/useAsync";
 import { useConfirm } from "@/ui/useConfirm";
 import { InvitationsCard } from "./invitations/InvitationsCard";
+import { RecoveryLinkModal } from "./RecoveryLinkModal";
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -21,7 +23,7 @@ function NewUserModal({ onClose, onCreated }: { onClose(): void; onCreated(): vo
   const { run, busy } = useSaver();
   const [form, setForm] = useState<NewUserInput>({ email: "", displayName: "", role: "editor", password: "" });
   const [mode, setMode] = useState<"invite" | "password">("invite");
-  const valid = EMAIL.test(form.email) && form.displayName.trim() && (mode === "invite" || (form.password?.length ?? 0) >= 8);
+  const valid = EMAIL.test(form.email) && form.displayName.trim() && (mode === "invite" || (form.password?.length ?? 0) >= MIN_PASSWORD_LENGTH);
 
   const submit = async () => {
     const input = { ...form, password: mode === "password" ? form.password : undefined };
@@ -44,7 +46,7 @@ function NewUserModal({ onClose, onCreated }: { onClose(): void; onCreated(): vo
         <Field label="Nombre">{(id) => <input id={id} className="input" maxLength={80} value={form.displayName} onChange={(e) => setForm({ ...form, displayName: e.target.value })} />}</Field>
         <Field label="Correo">{(id) => <input id={id} className="input" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />}</Field>
         {mode === "password" && (
-          <Field label="Contraseña inicial" hint="Mínimo 8 caracteres. Pídele que la cambie al entrar.">
+          <Field label="Contraseña inicial" hint={`Mínimo ${MIN_PASSWORD_LENGTH} caracteres. Pídele que la cambie al entrar.`}>
             {(id) => <input id={id} className="input" type="password" autoComplete="new-password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />}
           </Field>
         )}
@@ -67,6 +69,7 @@ export default function UsersAdmin() {
   const [confirm, confirmElement] = useConfirm();
   const [creating, setCreating] = useState(false);
   const [renaming, setRenaming] = useState<Profile | null>(null);
+  const [recovering, setRecovering] = useState<Profile | null>(null);
   const { data: users, loading, reload } = useAsync(() => backend.users.listProfiles(), [backend]);
 
   const update = async (profile: Profile, patch: Partial<Profile>, message: string) => {
@@ -103,7 +106,11 @@ export default function UsersAdmin() {
                     </label>
                   </td>
                   <td className="muted">{u.createdAt ? formatRelative(u.createdAt) : "—"}</td>
-                  <td>
+                  <td style={{ whiteSpace: "nowrap" }}>
+                    {u.id !== me?.id && u.isActive && (
+                      <button className="btn btn--sm btn--ghost" aria-label={`Enlace de nueva contraseña para ${u.displayName}`}
+                        title="Enlace para crear una contraseña nueva" onClick={() => setRecovering(u)}>🔑</button>
+                    )}
                     {u.id !== me?.id && (
                       <button className="btn btn--sm btn--ghost" aria-label={`Eliminar ${u.displayName}`} onClick={async () => {
                         if (await confirm({ title: `¿Eliminar a ${u.displayName}?`, body: "Se borrará su cuenta y sus mensajes. No se puede deshacer.", confirmLabel: "Eliminar", danger: true })) {
@@ -120,6 +127,7 @@ export default function UsersAdmin() {
         </div>
       )}
       <InvitationsCard onChange={() => void reload()} />
+      {recovering && <RecoveryLinkModal profile={recovering} onClose={() => setRecovering(null)} />}
       {creating && <NewUserModal onClose={() => setCreating(false)} onCreated={() => void reload()} />}
       {renaming && (
         <RenameModal profile={renaming} onClose={() => setRenaming(null)} onSave={async (name) => {
