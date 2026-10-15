@@ -7,6 +7,7 @@ import { SiteContentProvider, useSiteContent } from "@/state/SiteContentStore";
 import { ThemeController } from "@/state/ThemeController";
 import { ToastProvider } from "@/state/ToastContext";
 import { EmptyState, PageLoader } from "@/ui/Feedback";
+import { AppFooter } from "./AppFooter";
 import { AppHeader } from "./AppHeader";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { appRoutes } from "./routes";
@@ -14,6 +15,7 @@ import { appRoutes } from "./routes";
 const SitePage = lazy(() => import("@/features/site/SitePage"));
 const LoginPage = lazy(() => import("@/features/auth/LoginPage"));
 const InvitePage = lazy(() => import("@/features/auth/InvitePage"));
+const RecoverPage = lazy(() => import("@/features/auth/RecoverPage"));
 
 function ThemedShell() {
   const { content } = useSiteContent();
@@ -29,11 +31,13 @@ function ThemedShell() {
             <Route path="/" element={<SitePage />} />
             <Route path="/entrar" element={<LoginPage />} />
             <Route path="/invitacion" element={<InvitePage />} />
+            <Route path="/recuperar" element={<RecoverPage />} />
             {appRoutes}
             <Route path="*" element={<EmptyState icon="🧭" title="Esta página no existe" />} />
           </Routes>
         </Suspense>
       </ErrorBoundary>
+      <AppFooter />
     </>
   );
 }
