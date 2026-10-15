@@ -8,6 +8,7 @@ export const PANEL_ITEMS: AdminNavItem[] = [
   { to: "/panel/hitos", label: "Hitos", icon: "🌟", visible: (p) => p.can(PERMISSIONS.contentEdit) },
   { to: "/panel/fechas", label: "Fechas importantes", icon: "📅", visible: (p) => p.can(PERMISSIONS.datesManage) },
   { to: "/panel/sorpresas", label: "Sorpresas", icon: "🎁", visible: (p) => p.can(PERMISSIONS.interruptionsManage) },
+  { to: "/panel/colores", label: "Colores", icon: "🎨", visible: (p) => p.can(PERMISSIONS.themePalette) },
 ];
 
 /** Panel de contenido (el de Camila). */

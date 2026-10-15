@@ -1,6 +1,7 @@
-import { useState, type CSSProperties } from "react";
-import { contrastRatio, isHexColor } from "@/core/validation";
-import { DEFAULT_EFFECTS, DEFAULT_THEME, FONT_OPTIONS, normalizeEffects, normalizeTheme, THEME_PRESETS } from "@/domain/defaults";
+import { useState } from "react";
+import { contrastRatio } from "@/core/validation";
+import { DEFAULT_EFFECTS, DEFAULT_THEME, FONT_OPTIONS, normalizeEffects, normalizeTheme } from "@/domain/defaults";
+import { applyPalette, matchPalette } from "@/domain/palettes";
 import type { EffectsConfig, ThemeTokens } from "@/domain/types";
 import { AdminPage } from "@/features/admin/AdminLayout";
 import { useSaver } from "@/features/admin/useSaver";
@@ -8,8 +9,9 @@ import { useBackend } from "@/state/BackendContext";
 import { useContentStore, useSiteContent } from "@/state/SiteContentStore";
 import { PageLoader } from "@/ui/Feedback";
 import { Field, Switch } from "@/ui/Field";
-// La vista previa reutiliza los estilos reales de la página.
-import "@/features/site/styles/site.scss";
+import { ColorInput } from "@/features/admin/theme/ColorInput";
+import { PalettePicker } from "@/features/admin/theme/PalettePicker";
+import { ThemePreview } from "@/features/admin/theme/ThemePreview";
 
 type ColorKey = "primary" | "primaryContrast" | "accent" | "background" | "surface" | "text" | "muted";
 
@@ -22,51 +24,6 @@ const COLOR_LABELS: Record<ColorKey, string> = {
   text: "Texto",
   muted: "Texto secundario",
 };
-
-function ColorInput({ label, value, onChange }: { label: string; value: string; onChange(v: string): void }) {
-  const [text, setText] = useState(value);
-  return (
-    <Field label={label}>
-      {(id) => (
-        <div className="color-row">
-          <input type="color" className="input" value={value} aria-label={label} onChange={(e) => { setText(e.target.value); onChange(e.target.value); }} />
-          <input id={id} className="input" value={text} maxLength={7}
-            onChange={(e) => { setText(e.target.value); if (isHexColor(e.target.value)) onChange(e.target.value); }} />
-        </div>
-      )}
-    </Field>
-  );
-}
-
-function Preview({ theme }: { theme: ThemeTokens }) {
-  const style = {
-    "--c-primary": theme.primary,
-    "--c-primary-contrast": theme.primaryContrast,
-    "--c-accent": theme.accent,
-    "--c-bg": theme.background,
-    "--c-surface": theme.surface,
-    "--c-text": theme.text,
-    "--c-muted": theme.muted,
-    "--radius": `${theme.radius}px`,
-    "--font-display": `"${theme.fontDisplay}", Georgia, serif`,
-    "--font-body": `"${theme.fontBody}", system-ui, sans-serif`,
-    background: theme.background,
-    color: theme.text,
-    fontFamily: "var(--font-body)",
-  } as CSSProperties;
-  return (
-    <div className="preview" style={style} aria-label="Vista previa">
-      <span className="section-heading__eyebrow" style={{ margin: 0 }}>Vista previa</span>
-      <h2 style={{ margin: 0, fontFamily: "var(--font-display)" }}>Para el amor de mi vida</h2>
-      <p style={{ margin: 0, color: theme.muted }}>Así se verán los textos, las tarjetas y los botones.</p>
-      <div className="card" style={{ background: theme.surface }}>
-        <strong style={{ color: theme.primary, fontFamily: "var(--font-display)", fontSize: "1.8rem" }}>228 días</strong>
-        <div style={{ color: theme.muted }}>para nuestro aniversario</div>
-      </div>
-      <div className="row"><button className="btn" type="button">Botón principal</button><button className="btn btn--soft" type="button">Secundario</button></div>
-    </div>
-  );
-}
 
 export default function ThemeAdmin() {
   const backend = useBackend();
@@ -102,16 +59,8 @@ export default function ThemeAdmin() {
       </>}>
       <div className="card stack">
         <h3 style={{ margin: 0 }}>Paletas listas</h3>
-        <div className="swatches">
-          {Object.entries(THEME_PRESETS).map(([name, preset]) => (
-            <button key={name} className="swatch" onClick={() => set({ ...DEFAULT_THEME, ...preset, fontDisplay: t.fontDisplay, fontBody: t.fontBody, radius: t.radius })}>
-              <span className="swatch__dots">
-                {[preset.primary, preset.accent, preset.background].map((c, i) => <i key={i} style={{ background: c }} />)}
-              </span>
-              {name}
-            </button>
-          ))}
-        </div>
+        <p className="muted" style={{ margin: 0 }}>Camila también puede cambiar la paleta desde su panel.</p>
+        <PalettePicker selectedId={matchPalette(t)?.id ?? null} onSelect={(p) => set(applyPalette(t, p.colors))} />
       </div>
 
       <div className="form-grid" style={{ alignItems: "start" }}>
@@ -149,7 +98,7 @@ export default function ThemeAdmin() {
             </Field>
           </div>
         </div>
-        <Preview theme={t} />
+        <ThemePreview theme={t} />
       </div>
 
       <div className="card stack">
