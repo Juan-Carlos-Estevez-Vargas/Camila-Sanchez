@@ -179,6 +179,7 @@ window.addEventListener("load", () => {
 
 // Variables globales para el carrusel
 let mesActual = null;
+let añoActual = 0;
 let fotoIndex = 0;
 let fotosDelMesActual = [];
 
@@ -747,7 +748,7 @@ function hexToRgb(hex) {
         g: parseInt(result[2], 16),
         b: parseInt(result[3], 16),
       }
-    : { r: 255, g: 64, g: 129 }; // Color por defecto
+    : { r: 255, g: 64, b: 129 }; // Color por defecto
 }
 
 // Efecto especial según el mes
@@ -787,6 +788,30 @@ function lanzarCorazones(container) {
     setTimeout(() => corazon.remove(), 5000);
   }
 }
+
+// Lluvia genérica de emojis usada por los efectos de cada mes
+function lanzarEmojis(container, emoji, cantidad = 30) {
+  for (let i = 0; i < cantidad; i++) {
+    const item = document.createElement("div");
+    item.textContent = emoji;
+    item.style.cssText = `
+      position: absolute;
+      font-size: ${Math.random() * 20 + 15}px;
+      top: -30px;
+      left: ${Math.random() * 100}%;
+      animation: caerCorazon ${Math.random() * 3 + 2}s linear forwards;
+      z-index: 10001;
+      pointer-events: none;
+    `;
+    container.appendChild(item);
+    setTimeout(() => item.remove(), 5000);
+  }
+}
+
+const lanzarSoles = (container) => lanzarEmojis(container, "☀️");
+const lanzarGotasLluvia = (container) => lanzarEmojis(container, "💧");
+const lanzarCalabazas = (container) => lanzarEmojis(container, "🎃");
+const lanzarEstrellas = (container) => lanzarEmojis(container, "✨");
 
 function lanzarCoposNieve(container) {
   for (let i = 0; i < 40; i++) {
