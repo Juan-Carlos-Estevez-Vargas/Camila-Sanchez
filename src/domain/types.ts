@@ -125,6 +125,8 @@ export interface Photo {
   width: number | null;
   height: number | null;
   bytes: number | null;
+  /** SHA-256 del archivo original; sirve para no subir dos veces la misma foto. */
+  sourceHash?: string | null;
   createdAt: IsoDateTime;
 }
 

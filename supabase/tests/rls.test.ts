@@ -126,6 +126,14 @@ describe("edición de contenido", () => {
     expect(first?.position).toBe(0);
   });
 
+  it("la huella de una foto sólo acepta SHA-256 en hexadecimal", async () => {
+    const hash = "a".repeat(64);
+    const rows = await as(CAMI, `insert into photos (storage_path, source_hash) values ('x/1.webp', '${hash}') returning source_hash`);
+    expect(rows).toEqual([{ source_hash: hash }]);
+    await expect(as(CAMI, "insert into photos (storage_path, source_hash) values ('x/2.webp', 'no-es-un-hash')"))
+      .rejects.toThrow(/source_hash/);
+  });
+
   it("reorder_items rechaza tablas fuera de la lista blanca", async () => {
     await expect(as(JUAN, "select reorder_items('profiles', array[]::uuid[])")).rejects.toThrow(/no permitida/);
   });
