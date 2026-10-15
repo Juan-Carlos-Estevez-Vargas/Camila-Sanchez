@@ -1,0 +1,164 @@
+/* ==========================================================================
+   Tokens de diseño. Los colores, fuentes y radio se sobreescriben en tiempo
+   de ejecución desde site_settings.theme (ver state/ThemeController.tsx).
+   ========================================================================== */
+:root {
+  --c-primary: #b0305a;
+  --c-primary-contrast: #ffffff;
+  --c-accent: #e8a33d;
+  --c-bg: #fff8f6;
+  --c-surface: #ffffff;
+  --c-text: #2b1720;
+  --c-muted: #7a5c66;
+
+  /* Derivados: se calculan con color-mix para que cualquier paleta funcione */
+  --c-primary-soft: color-mix(in srgb, var(--c-primary) 12%, var(--c-surface));
+  --c-primary-strong: color-mix(in srgb, var(--c-primary) 82%, black);
+  --c-border: color-mix(in srgb, var(--c-text) 12%, transparent);
+  --c-border-strong: color-mix(in srgb, var(--c-text) 22%, transparent);
+  --c-surface-2: color-mix(in srgb, var(--c-text) 4%, var(--c-surface));
+  --c-success: #2e7d5b;
+  --c-danger: #c0392b;
+  --c-warning: #b7791f;
+
+  --font-display: "Fraunces", Georgia, "Times New Roman", serif;
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  --radius: 18px;
+  --radius-sm: calc(var(--radius) * 0.55);
+  --radius-pill: 999px;
+
+  --shadow-sm: 0 1px 2px color-mix(in srgb, var(--c-text) 8%, transparent);
+  --shadow: 0 10px 30px -12px color-mix(in srgb, var(--c-primary) 30%, transparent),
+    0 2px 6px color-mix(in srgb, var(--c-text) 6%, transparent);
+  --shadow-lg: 0 30px 60px -20px color-mix(in srgb, var(--c-primary) 35%, transparent);
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 5rem;
+
+  --container: 1120px;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  --c-bg: #15111a;
+  --c-surface: #1f1925;
+  --c-text: #f3e9ef;
+  --c-muted: #b4a3ae;
+  color-scheme: dark;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  background: var(--c-bg);
+  color: var(--c-text);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  line-height: 1.15;
+  margin: 0 0 var(--space-3);
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+h1 { font-size: clamp(2.3rem, 6vw, 4.2rem); }
+h2 { font-size: clamp(1.7rem, 4vw, 2.6rem); }
+h3 { font-size: 1.25rem; }
+
+p { margin: 0 0 var(--space-3); text-wrap: pretty; }
+
+a { color: var(--c-primary); text-underline-offset: 3px; }
+
+img { max-width: 100%; display: block; }
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--c-primary) 60%, transparent);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--c-primary) 25%, transparent);
+}
+
+.container {
+  width: min(100% - 2rem, var(--container));
+  margin-inline: auto;
+}
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.muted { color: var(--c-muted); }
+.center { text-align: center; }
+.stack { display: grid; gap: var(--space-4); }
+.row { display: flex; gap: var(--space-3); align-items: center; flex-wrap: wrap; }
+.row-between { display: flex; gap: var(--space-3); align-items: center; justify-content: space-between; flex-wrap: wrap; }
+.grow { flex: 1; }
+
+.skip-link {
+  position: absolute;
+  left: var(--space-3);
+  top: -100px;
+  z-index: 1000;
+  background: var(--c-surface);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-sm);
+}
+.skip-link:focus { top: var(--space-3); }
+
+/* Respeta a quien prefiere menos movimiento */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
