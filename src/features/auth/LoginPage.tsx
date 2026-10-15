@@ -1,20 +1,22 @@
 import { useState, type FormEvent } from "react";
 import { Navigate, useSearchParams } from "react-router-dom";
-import { toUserMessage } from "@/core/errors";
+import { AppError, toUserMessage } from "@/core/errors";
 import { safeNextPath } from "@/core/safeRedirect";
 import { remembersSession } from "@/data/sessionPersistence";
-import { MIN_PASSWORD_LENGTH } from "@/domain/invitations";
+import { RECOVERY_PATH } from "@/domain/recovery";
 import { useAuth } from "@/state/AuthContext";
 import { useBackend } from "@/state/BackendContext";
 import { Field, Switch } from "@/ui/Field";
 
-type Mode = "password" | "magic" | "reset" | "new-password";
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+type Mode = "password" | "magic" | "reset";
 
 export default function LoginPage() {
   const backend = useBackend();
   const { user } = useAuth();
   const [params] = useSearchParams();
-  const [mode, setMode] = useState<Mode>(params.get("recuperar") ? "new-password" : "password");
+  const [mode, setMode] = useState<Mode>(params.get("modo") === "recuperar" ? "reset" : "password");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [remember, setRemember] = useState(remembersSession);
@@ -22,7 +24,9 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
 
-  if (user && mode !== "new-password") return <Navigate to={safeNextPath(params.get("next"))} replace />;
+  // Enlaces de recuperación antiguos (/entrar?recuperar=1) ahora van a /recuperar.
+  if (params.get("recuperar")) return <Navigate to={RECOVERY_PATH} replace />;
+  if (user) return <Navigate to={safeNextPath(params.get("next"))} replace />;
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
@@ -36,19 +40,13 @@ export default function LoginPage() {
         setInfo("Te envié un enlace mágico ✨ Revisa tu correo.");
       }
       if (mode === "reset") {
-        await backend.auth.sendPasswordReset(email);
-        setInfo("Te envié un correo para crear una contraseña nueva.");
-      }
-      if (mode === "new-password") {
-        if (password.length < MIN_PASSWORD_LENGTH) {
-          throw new Error(`La contraseña debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres.`);
-        }
-        await backend.auth.updatePassword(password);
-        setInfo("¡Listo! Tu contraseña se actualizó.");
-        setMode("password");
+        if (!EMAIL.test(email.trim())) throw new AppError("Escribe un correo válido.");
+        await backend.auth.sendPasswordReset(email.trim());
+        // Mismo mensaje exista o no la cuenta: no revela qué correos están registrados.
+        setInfo("Si ese correo tiene cuenta, te llegará un enlace para crear una contraseña nueva. Revisa también el spam.");
       }
     } catch (err) {
-      setError(err instanceof Error && err.message.startsWith("La contraseña") ? err.message : toUserMessage(err));
+      setError(toUserMessage(err));
     } finally {
       setBusy(false);
     }
@@ -58,7 +56,6 @@ export default function LoginPage() {
     password: "Bienvenida de nuevo",
     magic: "Entrar con enlace mágico",
     reset: "Recuperar contraseña",
-    "new-password": "Crea tu contraseña",
   };
 
   return (
@@ -69,16 +66,18 @@ export default function LoginPage() {
         {backend.mode === "demo" && (
           <p className="badge" style={{ justifySelf: "center" }}>Modo demo · juan@demo.local o camila@demo.local · demo1234</p>
         )}
-        {mode !== "new-password" && (
-          <Field label="Correo">
-            {(id) => <input id={id} className="input" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />}
-          </Field>
+        {mode === "reset" && (
+          <p className="muted" style={{ margin: 0, textAlign: "center" }}>
+            Escribe el correo de tu cuenta y te enviaré un enlace para crear una contraseña nueva.
+          </p>
         )}
-        {(mode === "password" || mode === "new-password") && (
-          <Field label={mode === "new-password" ? "Contraseña nueva" : "Contraseña"} hint={mode === "new-password" ? `Mínimo ${MIN_PASSWORD_LENGTH} caracteres` : undefined}>
+        <Field label="Correo">
+          {(id) => <input id={id} className="input" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />}
+        </Field>
+        {mode === "password" && (
+          <Field label="Contraseña">
             {(id) => (
-              <input id={id} className="input" type="password" required minLength={mode === "new-password" ? MIN_PASSWORD_LENGTH : undefined}
-                autoComplete={mode === "new-password" ? "new-password" : "current-password"}
+              <input id={id} className="input" type="password" required autoComplete="current-password"
                 value={password} onChange={(e) => setPassword(e.target.value)} />
             )}
           </Field>
@@ -92,13 +91,18 @@ export default function LoginPage() {
         {error && <p className="field__error" role="alert">{error}</p>}
         {info && <p className="badge badge--success" role="status" style={{ justifySelf: "center" }}>{info}</p>}
         <button className="btn btn--block" disabled={busy}>
-          {busy ? "Un momento…" : mode === "password" ? "Entrar" : mode === "new-password" ? "Guardar" : "Enviar enlace"}
+          {busy ? "Un momento…" : mode === "password" ? "Entrar" : "Enviar enlace"}
         </button>
         <div className="row" style={{ justifyContent: "center" }}>
           {mode !== "password" && <button type="button" className="btn btn--sm btn--ghost" onClick={() => setMode("password")}>Usar contraseña</button>}
-          {mode !== "magic" && mode !== "new-password" && <button type="button" className="btn btn--sm btn--ghost" onClick={() => setMode("magic")}>Enlace mágico</button>}
+          {mode !== "magic" && <button type="button" className="btn btn--sm btn--ghost" onClick={() => setMode("magic")}>Enlace mágico</button>}
           {mode === "password" && <button type="button" className="btn btn--sm btn--ghost" onClick={() => setMode("reset")}>Olvidé mi contraseña</button>}
         </div>
+        {mode === "reset" && (
+          <p className="field__hint" style={{ margin: 0, textAlign: "center" }}>
+            ¿No te llega? Quien administra la página puede darte un enlace o QR para recuperarla.
+          </p>
+        )}
       </form>
     </main>
   );
