@@ -7,7 +7,11 @@ project_id = "camila-love-app"
 enable_signup = false
 site_url = "http://localhost:5173"
 additional_redirect_urls = ["http://localhost:5173/entrar"]
-minimum_password_length = 8
+minimum_password_length = 10
+# Cada refresco entrega un token nuevo y el anterior deja de servir.
+enable_refresh_token_rotation = true
+refresh_token_reuse_interval = 10
+jwt_expiry = 3600
 
 [auth.email]
 enable_signup = false
@@ -18,4 +22,8 @@ verify_jwt = true
 
 [functions.send-push]
 # La invoca un Database Webhook con su propio secreto, no un usuario.
+verify_jwt = false
+
+[functions.redeem-invite]
+# La llama quien todavía no tiene cuenta; la protege el token de la invitación.
 verify_jwt = false
