@@ -59,6 +59,8 @@ src/
   state/      contextos: backend, auth, contenido (store observable), tema, notificaciones
   ui/         componentes reutilizables (modal, campos, toasts, cargador romántico)
   features/   site · auth · admin (panel) · super · messages · chat
+              (cada una con sus estilos en features/<x>/styles)
+  styles/     sistema de diseño en SCSS: abstracts · base · components · layout
 supabase/
   migrations/ esquema, RLS, triggers de auditoría y notificaciones, bucket privado
   functions/  admin-users (gestión de cuentas) · send-push (Web Push)
@@ -78,6 +80,43 @@ supabase/
 almacenamiento privado con URLs firmadas, tiempo real y funciones en el borde
 en un solo servicio con plan gratuito. La seguridad vive en la base de datos,
 no en el navegador.
+
+### Estilos (SCSS)
+
+Los estilos están en SCSS con el sistema de módulos de Sass (`@use`/`@forward`):
+
+```
+src/styles/
+  abstracts/   variables (breakpoints, espacios, capas z-index), funciones y mixins; no generan CSS
+  base/        tokens del tema como custom properties, reset, tipografía, utilidades, animaciones
+  components/  botones, formularios, tarjetas, insignias, modal, toasts, pestañas (BEM)
+  layout/      cabecera, campana de notificaciones, pantallas de acceso, banner
+  main.scss    hoja global
+src/features/site/styles/      un parcial por sección de la página (hero, galería, hitos...)
+src/features/admin/styles/     estructura de los paneles, listas, fotos, editor de tema
+src/features/messages/styles/  cajita de mensajes y chat
+*.module.scss                  CSS Modules para componentes aislados (cargador, resumen de carga)
+```
+
+- Cualquier archivo puede hacer `@use "abstracts" as *;` para usar `space(4)`,
+  `z("modal")`, `@include below("md")`, `@include surface`, etc.
+- Los estilos de cada funcionalidad se cargan con su ruta: quien sólo ve la
+  página no descarga los del panel.
+- Los colores siguen siendo custom properties para que el super admin los
+  cambie en vivo desde *Apariencia*.
+
+### SEO
+
+- Título, descripción, `robots`, URL canónica, Open Graph, Twitter Card y datos
+  estructurados (JSON-LD `WebSite`) por ruta (`src/core/seo.ts`).
+- La portada sólo se indexa si el sitio es público (*Super admin → Ajustes*);
+  entrar, paneles, cajita, chat y páginas inexistentes son siempre `noindex`,
+  también con la cabecera `X-Robots-Tag`.
+- El build genera `robots.txt` y `sitemap.xml` con `VITE_SITE_URL`, y deja en
+  `index.html` la imagen para compartir (`public/og-image.jpg`, 1200×630, sin
+  fotos personales) en URL absoluta para que WhatsApp o Facebook muestren la
+  vista previa.
+- `VITE_SEO_INDEX=false` apaga la indexación por completo.
 
 ### Seguridad
 
@@ -124,8 +163,10 @@ Ningún secreto va en el repositorio. Necesitas Node 20+ y la
    `send-push`, con la cabecera `x-webhook-secret: <tu PUSH_WEBHOOK_SECRET>`.
 6. **Publicar la web** en Vercel o Netlify (ya están `vercel.json` y
    `public/_headers`/`_redirects`). Variables de entorno:
-   `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` (Project Settings → API) y
-   `VITE_VAPID_PUBLIC_KEY`.
+   `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` (Project Settings → API),
+   `VITE_VAPID_PUBLIC_KEY` y, para el SEO, `VITE_SITE_URL` con tu dominio
+   (p. ej. `https://nuestro-rincon.netlify.app`). Si no quieres aparecer en
+   Google agrega `VITE_SEO_INDEX=false`.
 7. **URLs de autenticación:** en *Authentication → URL Configuration* pon tu
    dominio como *Site URL* y agrega `https://TU-DOMINIO/**` en *Redirect URLs*.
 8. **Cuenta de Camila:** entra a `/super/usuarios`, invítala por correo con el
