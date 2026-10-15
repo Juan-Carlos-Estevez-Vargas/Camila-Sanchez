@@ -3,3 +3,19 @@
   X-Frame-Options: DENY
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=()
+
+# Las zonas privadas nunca deben aparecer en buscadores.
+/entrar
+  X-Robots-Tag: noindex, nofollow
+/mensajes
+  X-Robots-Tag: noindex, nofollow
+/chat
+  X-Robots-Tag: noindex, nofollow
+/panel
+  X-Robots-Tag: noindex, nofollow
+/panel/*
+  X-Robots-Tag: noindex, nofollow
+/super
+  X-Robots-Tag: noindex, nofollow
+/super/*
+  X-Robots-Tag: noindex, nofollow
