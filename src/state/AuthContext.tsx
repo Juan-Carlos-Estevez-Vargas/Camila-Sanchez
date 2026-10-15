@@ -9,7 +9,8 @@ interface AuthState {
   profile: Profile | null;
   policy: AccessPolicy;
   refresh(): Promise<void>;
-  signOut(): Promise<void>;
+  /** everywhere=true cierra también la sesión en los demás dispositivos. */
+  signOut(options?: { everywhere?: boolean }): Promise<void>;
 }
 
 const AuthContext = createContext<AuthState | null>(null);
@@ -62,8 +63,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     profile,
     policy,
     refresh: () => backend.auth.getSession().then(load),
-    signOut: async () => {
-      await backend.auth.signOut();
+    signOut: async (options) => {
+      await backend.auth.signOut(options);
       await load(null);
     },
   }), [backend, load, loading, policy, profile, user]);

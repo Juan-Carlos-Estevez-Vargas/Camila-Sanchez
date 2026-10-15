@@ -1,12 +1,16 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { config } from "@/core/config";
+import { sessionAwareStorage } from "@/data/sessionPersistence";
 
 let client: SupabaseClient | null = null;
 
 /** Cliente único (Singleton) de Supabase, creado bajo demanda. */
 export function getSupabase(): SupabaseClient {
   client ??= createClient(config.supabaseUrl, config.supabaseAnonKey, {
-    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, flowType: "pkce" },
+    auth: {
+      persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, flowType: "pkce",
+      storage: sessionAwareStorage,
+    },
     realtime: { params: { eventsPerSecond: 10 } },
   });
   return client;

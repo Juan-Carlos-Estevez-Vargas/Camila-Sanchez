@@ -6,8 +6,8 @@ import {
   normalizeAnimation, normalizeEffects, normalizeSectionContent, normalizeTheme, safeMusicUrl,
 } from "@/domain/defaults";
 import type {
-  AppNotification, AuditEntry, ChatMessage, ImportantDate, Interruption, Milestone, Note,
-  Photo, Profile, Section, SectionKind, SiteSettings,
+  AppNotification, AuditEntry, ChatMessage, ImportantDate, Interruption, Invitation, InvitableRole,
+  Milestone, Note, Photo, Profile, Section, SectionKind, SiteSettings,
 } from "@/domain/types";
 import type { Row } from "./client";
 
@@ -164,6 +164,15 @@ export const toProfile = (r: Row): Profile => ({
   role: (["super_admin", "editor", "viewer"].includes(str(r.role)) ? r.role : "viewer") as Profile["role"],
   isActive: r.is_active !== false,
   createdAt: str(r.created_at),
+});
+
+export const toInvitation = (r: Row): Invitation => ({
+  id: str(r.id),
+  role: (r.role === "viewer" ? "viewer" : "editor") as InvitableRole,
+  note: str(r.note),
+  createdAt: str(r.created_at),
+  expiresAt: str(r.expires_at),
+  usedAt: strOrNull(r.used_at),
 });
 
 export const toNote = (r: Row): Note => ({

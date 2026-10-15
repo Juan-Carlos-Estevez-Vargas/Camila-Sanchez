@@ -12,6 +12,7 @@ import { Field } from "@/ui/Field";
 import { Modal } from "@/ui/Modal";
 import { useAsync } from "@/ui/useAsync";
 import { useConfirm } from "@/ui/useConfirm";
+import { InvitationsCard } from "./invitations/InvitationsCard";
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -118,6 +119,7 @@ export default function UsersAdmin() {
           </table>
         </div>
       )}
+      <InvitationsCard onChange={() => void reload()} />
       {creating && <NewUserModal onClose={() => setCreating(false)} onCreated={() => void reload()} />}
       {renaming && (
         <RenameModal profile={renaming} onClose={() => setRenaming(null)} onSave={async (name) => {
