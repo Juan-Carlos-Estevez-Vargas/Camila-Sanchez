@@ -42,6 +42,12 @@ reintentos con *backoff* y cancelación sube los archivos mientras se muestra el
 cargador romántico (corazón que late, anillo de progreso, frases y bytes
 ahorrados).
 
+**Carga masiva:** se pueden elegir muchas fotos, una carpeta entera o
+arrastrar carpetas con subcarpetas (hasta 1000 fotos por tanda). Cada foto
+se ubica sola en el mes en que se tomó (fecha EXIF de la cámara), las
+repetidas se saltan gracias a una huella SHA-256, la pantalla no se apaga
+mientras sube y al final un resumen permite reintentar las que fallaron.
+
 ## Arquitectura
 
 ```
