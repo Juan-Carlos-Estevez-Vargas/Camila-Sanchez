@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
+import { estimateRemainingMs, formatRemaining } from "@/services/images/bulk";
 import { formatBytes } from "@/services/images/sizing";
 import type { UploadSnapshot } from "@/services/images/PhotoUploader";
 
@@ -15,6 +16,9 @@ const PHRASES = [
 
 const SPARKLES = ["💗", "✨", "💕", "🌸", "💖", "⭐"];
 
+/** Con tandas grandes sólo listamos lo que está en curso y lo que falló. */
+const MAX_VISIBLE_FILES = 6;
+
 interface Props {
   tasks: UploadSnapshot[];
   onCancel?(): void;
@@ -26,20 +30,38 @@ interface Props {
  */
 export function RomanticLoader({ tasks, onCancel }: Props) {
   const [phrase, setPhrase] = useState(0);
+  const [startedAt] = useState(() => Date.now());
+  const [now, setNow] = useState(startedAt);
 
   useEffect(() => {
-    const timer = setInterval(() => setPhrase((p) => (p + 1) % PHRASES.length), 2600);
+    const timer = setInterval(() => {
+      setPhrase((p) => (p + 1) % PHRASES.length);
+      setNow(Date.now());
+    }, 2600);
     return () => clearInterval(timer);
   }, []);
 
   const stats = useMemo(() => {
     const total = tasks.length;
-    const done = tasks.filter((t) => t.status === "done").length;
-    const failed = tasks.filter((t) => t.status === "error").length;
-    const progress = total ? tasks.reduce((sum, t) => sum + (t.status === "done" ? 1 : t.progress), 0) / total : 0;
-    const saved = tasks.reduce((sum, t) => sum + (t.result ? t.result.originalBytes - t.result.finalBytes : 0), 0);
-    return { total, done, failed, progress, saved };
+    let done = 0, failed = 0, duplicates = 0, finished = 0, progress = 0, saved = 0;
+    for (const t of tasks) {
+      if (t.status === "done") {
+        done++;
+        if (t.result?.kind === "duplicate") duplicates++;
+        if (t.result?.kind === "uploaded") saved += t.result.originalBytes - t.result.finalBytes;
+      }
+      if (t.status === "error") failed++;
+      if (t.status !== "queued" && t.status !== "running") finished++;
+      progress += t.status === "queued" || t.status === "running" ? t.progress : 1;
+    }
+    return { total, done, failed, duplicates, finished, progress: total ? progress / total : 0, saved };
   }, [tasks]);
+
+  const remaining = formatRemaining(estimateRemainingMs(stats.finished, stats.total, now - startedAt));
+  const visible = useMemo(
+    () => tasks.filter((t) => t.status === "running" || t.status === "error").slice(0, MAX_VISIBLE_FILES),
+    [tasks],
+  );
 
   const radius = 74;
   const circumference = 2 * Math.PI * radius;
@@ -82,12 +104,14 @@ export function RomanticLoader({ tasks, onCancel }: Props) {
         <p key={phrase} className="love-loader__phrase">{PHRASES[phrase]}</p>
         <div className="love-loader__meta">
           {stats.done} de {stats.total} {stats.total === 1 ? "foto" : "fotos"} lista{stats.total === 1 ? "" : "s"}
+          {stats.duplicates > 0 && ` · ${stats.duplicates} ya estaban`}
           {stats.saved > 0 && ` · ${formatBytes(stats.saved)} más livianas`}
           {stats.failed > 0 && ` · ${stats.failed} con problemas`}
+          {remaining && <><br />Falta {remaining}</>}
         </div>
-        {tasks.length > 1 && (
+        {tasks.length > 1 && visible.length > 0 && (
           <div className="love-loader__files">
-            {tasks.map((t) => (
+            {visible.map((t) => (
               <div key={t.id} className="love-loader__file">
                 <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.label}</span>
                 <span>{t.stage}</span>
