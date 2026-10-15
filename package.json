@@ -11,7 +11,8 @@
     "lint": "eslint .",
     "test": "vitest run",
     "check": "npm run typecheck && npm run lint && npm run test",
-    "db:setup-sql": "node scripts/build-setup-sql.mjs"
+    "db:setup-sql": "node scripts/build-setup-sql.mjs",
+    "release:preview": "node scripts/release.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.117.3",
