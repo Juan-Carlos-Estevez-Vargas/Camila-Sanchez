@@ -14,6 +14,8 @@ const TextsAdmin = lazy(() => import("@/features/admin/TextsAdmin"));
 const MilestonesAdmin = lazy(() => import("@/features/admin/MilestonesAdmin"));
 const DatesAdmin = lazy(() => import("@/features/admin/DatesAdmin"));
 const InterruptionsAdmin = lazy(() => import("@/features/admin/InterruptionsAdmin"));
+const MessagesPage = lazy(() => import("@/features/messages/MessagesPage"));
+const ChatPage = lazy(() => import("@/features/chat/ChatPage"));
 const SuperLayout = lazy(() => import("@/features/super/SuperLayout"));
 const SuperHome = lazy(() => import("@/features/super/SuperHome"));
 const UsersAdmin = lazy(() => import("@/features/super/UsersAdmin"));
@@ -25,6 +27,8 @@ const AuditAdmin = lazy(() => import("@/features/super/AuditAdmin"));
 
 export const appRoutes = (
   <>
+    <Route path="/mensajes" element={<RequirePermission check={(p) => p.can(PERMISSIONS.notesSend)}><MessagesPage /></RequirePermission>} />
+    <Route path="/chat" element={<RequirePermission check={(p) => p.can(PERMISSIONS.chatUse)}><ChatPage /></RequirePermission>} />
     <Route path="/panel" element={<RequirePermission check={(p) => p.canUseContentPanel}><PanelLayout /></RequirePermission>}>
       <Route index element={<PanelHome />} />
       <Route path="fotos" element={<RequirePermission check={(p) => p.can(PERMISSIONS.photosManage)}><PhotosAdmin /></RequirePermission>} />
