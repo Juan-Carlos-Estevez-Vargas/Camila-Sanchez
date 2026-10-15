@@ -40,6 +40,12 @@ button.list__item { cursor: pointer; }
 .dropzone.is-over { border-color: var(--c-primary); background: var(--c-primary-soft); }
 .dropzone__icon { font-size: 2.2rem; }
 
+.bulk-summary { display: grid; gap: var(--space-3); padding: var(--space-4); border-radius: var(--radius-sm); background: var(--c-surface-2); border: 1px solid var(--c-border); animation: slide-up 0.35s var(--ease); }
+.bulk-summary__stats { display: flex; gap: var(--space-2); flex-wrap: wrap; }
+.bulk-summary__failures { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; max-height: 220px; overflow: auto; font-size: 0.85rem; }
+.bulk-summary__failures li { display: flex; justify-content: space-between; gap: var(--space-3); }
+.bulk-summary__failures li span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+
 .month-pills { display: flex; gap: var(--space-2); flex-wrap: wrap; }
 .month-pill { border: 1px solid var(--c-border-strong); background: var(--c-surface); border-radius: var(--radius-pill); padding: 0.35rem 0.8rem; font-size: 0.85rem; cursor: pointer; display: inline-flex; gap: 6px; }
 .month-pill span { color: var(--c-muted); }
