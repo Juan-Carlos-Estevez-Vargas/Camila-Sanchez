@@ -1,0 +1,10 @@
+# Netlify compila la app con Vite y publica dist/. Las cabeceras de seguridad
+# y la regla de la SPA viven en public/_headers y public/_redirects.
+# Las variables VITE_* se ponen en Netlify → Site configuration → Environment
+# variables (nunca en este archivo: el repositorio es público).
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"

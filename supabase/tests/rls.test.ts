@@ -10,27 +10,12 @@ import { PGlite } from "@electric-sql/pglite";
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { beforeAll, describe, expect, it } from "vitest";
+import { SUPABASE_STUB } from "./supabaseStub";
 
 const ROOT = join(__dirname, "..");
 const JUAN = "11111111-1111-1111-1111-111111111111";
 const CAMI = "22222222-2222-2222-2222-222222222222";
 const GUEST = "33333333-3333-3333-3333-333333333333";
-
-const SUPABASE_STUB = `
-  create role anon; create role authenticated; create role service_role;
-  create schema auth; create schema storage;
-  create table auth.users (
-    id uuid primary key, email text,
-    raw_user_meta_data jsonb default '{}', raw_app_meta_data jsonb default '{}'
-  );
-  create function auth.uid() returns uuid language sql stable as
-    $$ select nullif(current_setting('request.jwt.sub', true), '')::uuid $$;
-  create table storage.buckets (id text primary key, name text, public bool,
-    file_size_limit bigint, allowed_mime_types text[]);
-  create table storage.objects (id uuid default gen_random_uuid(), bucket_id text, name text);
-  create publication supabase_realtime;
-  grant usage on schema public, auth, storage to anon, authenticated;
-`;
 
 let db: PGlite;
 
