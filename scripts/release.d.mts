@@ -25,3 +25,4 @@ export function buildReleaseNotes(input: {
   runUrl?: string;
   date?: string;
 }): string;
+export function resolveAppVersion(): string;

@@ -3,7 +3,8 @@
 # Las variables VITE_* se ponen en Netlify → Site configuration → Environment
 # variables (nunca en este archivo: el repositorio es público).
 [build]
-  command = "npm run build"
+  # Los tags vX.Y.Z dan la versión que muestra el pie de página.
+  command = "(git fetch --unshallow --tags --force --quiet || git fetch --tags --force --quiet || true) && npm run build"
   publish = "dist"
 
 [build.environment]

@@ -14,6 +14,8 @@ export const config = {
   siteUrl: normalizeSiteUrl(env.VITE_SITE_URL as string | undefined),
   /** Poner VITE_SEO_INDEX=false para que ningún buscador indexe el sitio. */
   seoIndexing: (env.VITE_SEO_INDEX as string | undefined)?.trim() !== "false",
+  /** Versión de la app, calculada al compilar (scripts/release.mjs). */
+  appVersion: (env.VITE_APP_VERSION as string | undefined) ?? "dev",
 } as const;
 
 /**
