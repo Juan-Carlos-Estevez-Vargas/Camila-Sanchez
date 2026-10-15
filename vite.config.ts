@@ -97,7 +97,7 @@ export default defineConfig(({ mode }) => {
     },
     test: {
       environment: "node",
-      include: ["src/**/*.test.ts", "supabase/tests/**/*.test.ts"],
+      include: ["src/**/*.test.ts", "supabase/tests/**/*.test.ts", "scripts/**/*.test.ts"],
     },
   };
 });
