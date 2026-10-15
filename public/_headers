@@ -23,6 +23,9 @@
 /invitacion
   X-Robots-Tag: noindex, nofollow
   Cache-Control: no-store
+/recuperar
+  X-Robots-Tag: noindex, nofollow
+  Cache-Control: no-store
 /panel
   X-Robots-Tag: noindex, nofollow
 /panel/*

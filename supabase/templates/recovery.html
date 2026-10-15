@@ -1,0 +1,17 @@
+<div style="font-family: Georgia, 'Times New Roman', serif; max-width: 480px; margin: 0 auto; padding: 32px 24px; background: #fff7f9; border-radius: 18px; color: #880e4f; text-align: center;">
+  <p style="font-size: 40px; margin: 0;">🔑</p>
+  <h1 style="font-size: 24px; margin: 12px 0;">Crea tu contraseña nueva</h1>
+  <p style="font-size: 16px; line-height: 1.5; color: #ad1457;">
+    Alguien (esperamos que tú) pidió recuperar la contraseña de esta cuenta.
+    Toca el botón para elegir una nueva.
+  </p>
+  <p style="margin: 28px 0;">
+    <a href="{{ .SiteURL }}/recuperar#token_hash={{ .TokenHash }}"
+       style="display: inline-block; padding: 14px 28px; background: #c2185b; color: #ffffff; text-decoration: none; border-radius: 999px; font-family: Arial, sans-serif; font-weight: bold;">
+      Crear contraseña nueva
+    </a>
+  </p>
+  <p style="font-size: 13px; color: #ad1457;">
+    El enlace sirve una sola vez y vence en 1 hora. Si no lo pediste, ignora este correo: tu contraseña sigue igual.
+  </p>
+</div>

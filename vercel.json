@@ -14,7 +14,7 @@
       ]
     },
     {
-      "source": "/(entrar|mensajes|chat|cuenta|invitacion|panel|panel/.*|super|super/.*)",
+      "source": "/(entrar|mensajes|chat|cuenta|invitacion|recuperar|panel|panel/.*|super|super/.*)",
       "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
     },
     {

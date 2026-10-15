@@ -148,6 +148,11 @@ puede revocar y nunca puede crear un super administrador.
   descarta.
 - *Mi cuenta* permite cambiar la contraseña y **cerrar sesión en todos los
   dispositivos** (revoca los tokens de refresco de todos lados).
+- **Recuperar contraseña** (`/recuperar`): el enlace lleva un token de un solo
+  uso que vence en 1 hora, viaja en el `#fragmento` (no queda en registros) y
+  se borra de la barra al abrirlo. Al guardar la contraseña nueva se cierran
+  las sesiones de los demás dispositivos. El formulario responde igual exista
+  o no el correo, para no revelar qué cuentas hay.
 - Inicio de sesión con PKCE y sin redirecciones abiertas (`?next=` sólo acepta
   rutas internas).
 - Cabeceras en producción (`public/_headers` y `vercel.json`, iguales y
@@ -246,6 +251,29 @@ release anterior:
 El primer release toma la versión de `package.json` (2.0.0). Para forzar un
 salto, sube la versión en `package.json`. `npm run release:preview` muestra en
 local la versión y las notas que saldrían.
+
+### Recuperar contraseña
+
+Hay dos caminos, y el primero funciona desde ya:
+
+- **Enlace o QR desde el panel.** En *Administración → Usuarios*, el botón 🔑
+  de cada persona crea un enlace para que elija una contraseña nueva. No usa
+  el correo: se lo muestras o se lo mandas tú. Sirve una vez y dura 1 hora.
+- **"Olvidé mi contraseña" en `/entrar`.** Envía un correo con el enlace.
+  Supabase, con su correo por defecto, sólo envía a los miembros de tu equipo
+  de Supabase (o sea, a ti) y limita a unos pocos correos por hora. Para que le
+  llegue a Camila, conecta un correo propio, por ejemplo Gmail:
+  1. En tu cuenta de Google activa la verificación en dos pasos y crea una
+     *contraseña de aplicación* en <https://myaccount.google.com/apppasswords>.
+  2. En GitHub, *Settings → Secrets and variables → Actions → New repository
+     secret*, crea:
+     `SMTP_HOST` = `smtp.gmail.com`, `SMTP_PORT` = `465`,
+     `SMTP_USER` = tu Gmail, `SMTP_PASS` = la contraseña de aplicación
+     (16 letras, sin espacios) y, si quieres, `SMTP_SENDER_EMAIL`.
+  3. Vuelve a ejecutar el flujo *Deploy* (pestaña *Actions → Deploy → Run
+     workflow*). Desde ahí los correos salen de tu Gmail con una plantilla
+     bonita (`supabase/templates/recovery.html`) y el enlace funciona aunque se
+     abra en otro celular.
 
 ### Opcional: notificaciones push al celular
 

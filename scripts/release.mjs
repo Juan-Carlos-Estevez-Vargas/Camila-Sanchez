@@ -163,9 +163,29 @@ function commitsSince(tag) {
     });
 }
 
+function readPackageVersion() {
+  return JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8")).version;
+}
+
+/**
+ * Versión que muestra la app (pie de página). Se calcula al compilar con la
+ * misma regla que el release, así que coincide con el tag que el flujo Deploy
+ * crea para ese mismo commit. Sin historial de git, usa package.json.
+ */
+export function resolveAppVersion() {
+  const packageVersion = readPackageVersion();
+  try {
+    const lastTag = lastReleaseTag();
+    const version = nextVersion({ lastTag, packageVersion, commits: commitsSince(lastTag) });
+    return version ?? parseVersion(lastTag ?? packageVersion).join(".");
+  } catch {
+    return packageVersion;
+  }
+}
+
 function main() {
   const env = process.env;
-  const { version: packageVersion } = JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8"));
+  const packageVersion = readPackageVersion();
   const lastTag = lastReleaseTag();
   const commits = commitsSince(lastTag);
   const version = nextVersion({ lastTag, packageVersion, commits });
