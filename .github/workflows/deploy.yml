@@ -81,8 +81,17 @@ jobs:
         if: steps.config.outputs.ready == 'true'
         run: |
           site="${SITE_URL%/}"
-          body=$(jq -n --arg site "$site" \
-            '{site_url: $site, uri_allow_list: ($site + "/**"), disable_signup: true}')
+          # Registro cerrado, contraseñas de 10+ caracteres, tokens de 1 h y
+          # rotación de tokens de refresco (uno robado deja de servir al usarse).
+          body=$(jq -n --arg site "$site" '{
+            site_url: $site,
+            uri_allow_list: ($site + "/**"),
+            disable_signup: true,
+            password_min_length: 10,
+            jwt_exp: 3600,
+            refresh_token_rotation_enabled: true,
+            security_refresh_token_reuse_interval: 10
+          }')
           curl --fail-with-body -sS -X PATCH \
             "https://api.supabase.com/v1/projects/$PROJECT_REF/config/auth" \
             -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
@@ -99,6 +108,7 @@ jobs:
         run: |
           supabase secrets set --project-ref "$PROJECT_REF" "ALLOWED_ORIGIN=${SITE_URL%/}"
           supabase functions deploy admin-users --project-ref "$PROJECT_REF" --use-api
+          supabase functions deploy redeem-invite --project-ref "$PROJECT_REF" --use-api --no-verify-jwt
           if [ -n "$VAPID_PRIVATE_KEY" ] && [ -n "$PUSH_WEBHOOK_SECRET" ]; then
             supabase secrets set --project-ref "$PROJECT_REF" \
               "VAPID_PUBLIC_KEY=$VAPID_PUBLIC_KEY" "VAPID_PRIVATE_KEY=$VAPID_PRIVATE_KEY" \

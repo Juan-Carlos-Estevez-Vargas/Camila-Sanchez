@@ -122,11 +122,40 @@ src/features/messages/styles/  cajita de mensajes y chat
 
 - Toda tabla tiene RLS; los permisos se resuelven en SQL (`has_permission`).
 - Triggers impiden escalar privilegios y borrar o degradar al último super admin.
-- Registro público desactivado: sólo el super admin crea cuentas.
+- Registro público desactivado: sólo entra quien crea el super admin o quien
+  recibe un **enlace de invitación**.
 - Las notificaciones y la auditoría sólo las escriben triggers.
 - Fotos nuevas en un bucket **privado** (5 MB, sólo imágenes) servidas con URLs firmadas.
-- CSP y cabeceras de seguridad en producción (`vercel.json`, `public/_headers`).
 - La `service_role` key sólo existe dentro de las Edge Functions.
+
+**Invitaciones por enlace o QR** (*Administración → Usuarios → Crear enlace*):
+el token tiene 256 bits al azar, se genera en el navegador de quien invita y
+en la base sólo se guarda su SHA-256. Viaja en el `#fragmento` de la URL (los
+navegadores no lo mandan a ningún servidor ni queda en registros) y la página
+lo borra de la barra de direcciones al abrirla. Es de un solo uso (se consume
+de forma atómica en la función `redeem-invite`), vence en 24 h a 7 días, se
+puede revocar y nunca puede crear un super administrador.
+
+**Sesiones y cookies:**
+
+- La app no usa cookies. Supabase Auth guarda la sesión en el navegador: con
+  *Mantener la sesión iniciada* en `localStorage`; sin ella, en
+  `sessionStorage`, y se borra al cerrar la pestaña (para equipos compartidos).
+- Tokens de acceso de 1 hora con **rotación de tokens de refresco**: un token
+  robado deja de servir en cuanto se usa el legítimo. Contraseñas de 10+
+  caracteres. Todo esto lo aplica el flujo `Deploy` en Supabase.
+- Al abrir la app la sesión se confirma con el servidor: si se revocó, se
+  descarta.
+- *Mi cuenta* permite cambiar la contraseña y **cerrar sesión en todos los
+  dispositivos** (revoca los tokens de refresco de todos lados).
+- Inicio de sesión con PKCE y sin redirecciones abiertas (`?next=` sólo acepta
+  rutas internas).
+- Cabeceras en producción (`public/_headers` y `vercel.json`, iguales y
+  vigiladas por una prueba): **Content-Security-Policy** estricta (sólo
+  scripts del propio sitio, conexiones sólo a Supabase, sin iframes), HSTS,
+  `X-Frame-Options`, `nosniff`, `Referrer-Policy`, `Permissions-Policy` y
+  `Cross-Origin-Opener-Policy`. La CSP es lo que protege el token guardado en
+  el navegador frente a scripts inyectados.
 
 ## Puesta en marcha real (pasos que debes hacer tú)
 
@@ -166,15 +195,17 @@ el inicio de sesión y publica las Edge Functions.
 ### 3. Cuentas de Juan y Camila
 
 1. Supabase → *Authentication → Users → Add user → Create new user*: crea tu
-   cuenta y la de Camila con su correo y una contraseña, marcando
-   *Auto Confirm User*. Las contraseñas las eligen ustedes; no se las des a
-   nadie.
-2. *SQL Editor* → pega `supabase/cuentas.sql`, cambia `CORREO_DE_JUAN` y
-   `CORREO_DE_CAMILA` por los correos reales (sólo ahí, no en el repo) →
-   *Run*. Quedas como **super administrador**, Camila como **editora** y la
+   cuenta con tu correo y una contraseña, marcando *Auto Confirm User*.
+2. *SQL Editor* → pega `supabase/cuentas.sql`, cambia `CORREO_DE_JUAN` por tu
+   correo (sólo ahí, no en el repo) y deja `CORREO_DE_CAMILA` vacío si
+   todavía no tiene cuenta → *Run*. Quedas como **super administrador** y la
    página queda **pública** (cambia `sitio_publico` a `false` si prefieres que
    sólo entren personas con cuenta; también se cambia luego en
    *Super admin → Ajustes*).
+3. Para Camila no necesitas su correo: entra a la página, ve a
+   *Administración → Usuarios → Crear enlace* y mándale el enlace o muéstrale
+   el código QR. Ella elige su nombre, correo y contraseña y entra como
+   **Editora**.
 
 ### 4. Conectar la web (Netlify)
 
