@@ -130,49 +130,85 @@ src/features/messages/styles/  cajita de mensajes y chat
 
 ## Puesta en marcha real (pasos que debes hacer tú)
 
-Ningún secreto va en el repositorio. Necesitas Node 20+ y la
-[CLI de Supabase](https://supabase.com/docs/guides/cli).
+Ningún secreto va en el repositorio: las claves sólo se pegan en los paneles de
+Supabase y Netlify. No hace falta instalar nada en tu computador.
 
-1. **Crear el proyecto** en [supabase.com](https://supabase.com) (región cercana, p. ej. São Paulo).
-2. **Aplicar migraciones y datos iniciales:**
-   ```bash
-   npx supabase login
-   npx supabase link --project-ref TU_REF
-   npx supabase db push
-   ```
-   Luego pega el contenido de `supabase/seed.sql` en el SQL Editor y ejecútalo.
-3. **Crear tu usuario:** en *Authentication → Users → Add user* crea tu correo
-   con contraseña. Después, en el SQL Editor:
-   ```sql
-   update public.profiles set role = 'super_admin'
-   where id = (select id from auth.users where email = 'TU_CORREO');
-   ```
-4. **Desplegar las funciones y sus secretos:**
-   ```bash
-   npx web-push generate-vapid-keys        # genera la pareja de claves VAPID
-   npx supabase secrets set \
-     ALLOWED_ORIGIN=https://TU-DOMINIO \
-     VAPID_PUBLIC_KEY=... VAPID_PRIVATE_KEY=... \
-     VAPID_SUBJECT=mailto:TU_CORREO \
-     PUSH_WEBHOOK_SECRET=$(openssl rand -hex 32)
-   npx supabase functions deploy admin-users
-   npx supabase functions deploy send-push --no-verify-jwt
-   ```
-5. **Webhook de notificaciones push:** *Database → Webhooks → Create*, tabla
-   `notifications`, evento `INSERT`, tipo *Supabase Edge Function* →
-   `send-push`, con la cabecera `x-webhook-secret: <tu PUSH_WEBHOOK_SECRET>`.
-6. **Publicar la web** en Vercel o Netlify (ya están `vercel.json` y
-   `public/_headers`/`_redirects`). Variables de entorno:
-   `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` (Project Settings → API),
-   `VITE_VAPID_PUBLIC_KEY` y, para el SEO, `VITE_SITE_URL` con tu dominio
-   (p. ej. `https://nuestro-rincon.netlify.app`). Si no quieres aparecer en
-   Google agrega `VITE_SEO_INDEX=false`.
-7. **URLs de autenticación:** en *Authentication → URL Configuration* pon tu
-   dominio como *Site URL* y agrega `https://TU-DOMINIO/**` en *Redirect URLs*.
-8. **Cuenta de Camila:** entra a `/super/usuarios`, invítala por correo con el
-   rol *Editora*. Desde `/super/ajustes` decides si la página es pública o sólo
-   para personas con cuenta, y en *Fechas importantes* pones la fecha real de
-   su cumpleaños (quedó un marcador oculto).
+### 1. Base de datos (Supabase, plan gratuito)
+
+1. En [supabase.com](https://supabase.com) → *New project*. Nombre libre,
+   una contraseña de base de datos fuerte (guárdala tú) y región cercana
+   (p. ej. *South America (São Paulo)*).
+2. *SQL Editor* → *New query* → pega **todo** `supabase/setup.sql` → *Run*.
+   Crea tablas, permisos, seguridad (RLS), el bucket privado de fotos y el
+   contenido de la versión 1. Se ejecuta una sola vez.
+3. *Authentication → Sign In / Providers → Email*: desactiva
+   *Allow new users to sign up* (sólo tú creas cuentas).
+4. *Authentication → Users → Add user → Create new user*: crea tu cuenta y la
+   de Camila con su correo y una contraseña, marcando *Auto Confirm User*.
+5. *SQL Editor* → pega `supabase/roles.sql`, cambia `CORREO_DE_JUAN` y
+   `CORREO_DE_CAMILA` por los correos reales (sólo ahí, no en el repo) →
+   *Run*. Quedas como **super administrador**, Camila como **editora** y la
+   página queda **pública** (cambia `sitio_publico` a `false` si prefieres que
+   sólo entren personas con cuenta; también se cambia luego en
+   *Super admin → Ajustes*).
+6. *Project Settings → API*: copia la **Project URL** y la clave **anon
+   public**. La anon key es pública por diseño; la `service_role` **nunca** se
+   pone en la web.
+
+### 2. Web (Netlify)
+
+1. *Site configuration → Build & deploy*: el repositorio ya trae
+   `netlify.toml` (compila con `npm run build` y publica `dist/`), así que no
+   hay que llenar nada. La rama de producción es `master`.
+2. *Site configuration → Environment variables* → agrega:
+
+   | Variable | Valor |
+   | --- | --- |
+   | `VITE_SUPABASE_URL` | la Project URL |
+   | `VITE_SUPABASE_ANON_KEY` | la clave anon public |
+   | `VITE_SITE_URL` | tu dominio sin `/` final, p. ej. `https://camila-sanchez.netlify.app` |
+   | `VITE_SEO_INDEX` | `true` (o `false` si no quieres aparecer en Google) |
+
+3. *Deploys → Trigger deploy → Deploy site*. Sin estas variables la web
+   arranca en modo demo (todo se guarda sólo en el navegador de quien la abre).
+
+### 3. Conectar el inicio de sesión con tu dominio
+
+En Supabase → *Authentication → URL Configuration*: pon tu dominio como
+*Site URL* y agrega `https://TU-DOMINIO/**` en *Redirect URLs*.
+
+Listo: cualquiera abre la página, y tú y Camila entran por `/entrar` con su
+correo y contraseña. Tú ves *Administración* (`/super`) y ella *Mi panel*
+(`/panel`).
+
+### Opcional: invitar cuentas desde la app y notificaciones push
+
+La página *Super admin → Usuarios* (crear o invitar cuentas desde la web) y
+las notificaciones push al celular usan dos Edge Functions. Necesitan la
+[CLI de Supabase](https://supabase.com/docs/guides/cli) y Node 20+:
+
+```bash
+npx supabase login
+npx supabase link --project-ref TU_REF
+npx web-push generate-vapid-keys        # genera la pareja de claves VAPID
+npx supabase secrets set \
+  ALLOWED_ORIGIN=https://TU-DOMINIO \
+  VAPID_PUBLIC_KEY=... VAPID_PRIVATE_KEY=... \
+  VAPID_SUBJECT=mailto:TU_CORREO \
+  PUSH_WEBHOOK_SECRET=$(openssl rand -hex 32)
+npx supabase functions deploy admin-users
+npx supabase functions deploy send-push --no-verify-jwt
+```
+
+Luego, en *Database → Webhooks → Create*: tabla `notifications`, evento
+`INSERT`, tipo *Supabase Edge Function* → `send-push`, con la cabecera
+`x-webhook-secret: <tu PUSH_WEBHOOK_SECRET>`; y en Netlify agrega
+`VITE_VAPID_PUBLIC_KEY`. Sin esto, la cajita, el chat y la campana de
+notificaciones dentro de la app funcionan igual (en tiempo real).
+
+Si usas la CLI, `npx supabase db push` aplica las migraciones en lugar del
+paso 1.2 (después ejecuta igual `seed.sql` y `roles.sql`). Si cambias una
+migración, regenera el archivo único con `npm run db:setup-sql`.
 
 ### Sobre la privacidad del repositorio
 
