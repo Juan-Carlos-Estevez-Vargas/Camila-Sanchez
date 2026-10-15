@@ -1,0 +1,184 @@
+# Manual de usuario
+
+Guía para usar la app día a día. Hay tres tipos de personas:
+
+| Quién | Rol | Qué puede hacer |
+| --- | --- | --- |
+| Visitante | Sin cuenta | Ver la página si es pública |
+| Invitado | `viewer` | Ver la página, escribir en la cajita y usar el chat |
+| Camila | `editor` | Lo anterior, más cambiar el contenido desde **Mi panel** |
+| Juan | `super_admin` | Todo, más **Administración**: usuarios, permisos, apariencia y ajustes |
+
+> **¿Te perdiste?** En la cabecera de todas las páginas está el botón
+> **? Tutorial**. Tócalo y te muestra, paso a paso, para qué sirve cada parte
+> de la página en la que estás. Avanza con **Siguiente** (o la flecha →),
+> vuelve con **Anterior** (o ←) y sal cuando quieras con **Cerrar**, la ✕ o la
+> tecla Esc. El recorrido cambia según la página y según lo que tu cuenta
+> puede hacer.
+
+## 1. Entrar
+
+1. Toca **Entrar** en la cabecera.
+2. Escribe tu correo y tu contraseña.
+3. Deja activado **Mantener la sesión iniciada** en tu celular o computador.
+   Si estás en un equipo compartido, desactívalo: la sesión se cerrará al
+   cerrar la pestaña.
+
+Otras formas de entrar, debajo del botón:
+
+- **Enlace mágico:** te llega un correo con un enlace para entrar sin
+  contraseña.
+- **Olvidé mi contraseña:** ver la sección 7.
+
+### Si te invitaron
+
+Juan puede mandarte un enlace o un código QR. Ábrelo, escribe tu nombre, tu
+correo y una contraseña de al menos 10 caracteres y listo. El enlace sirve una
+sola vez y caduca (24 horas, 3 o 7 días, según lo que eligió Juan).
+
+## 2. La página principal
+
+Es la historia de los dos. Desplázate hacia abajo para ver:
+
+- la portada con el contador de tiempo juntos,
+- las cuentas regresivas a las próximas fechas importantes,
+- las notitas de amor, la línea de tiempo de hitos,
+- la galería de fotos por año y mes (toca una foto para verla en grande),
+- cartas y frases.
+
+Si hay música, el botón ♪ abajo a la izquierda la pone o la pausa. A veces
+aparece una **sorpresa** en una ventanita: es un mensaje que Camila o Juan
+dejaron programado.
+
+## 3. Cajita de mensajes
+
+Notitas que se guardan para siempre. Entra desde **Cajita** en la cabecera.
+
+- **Recibidas:** las notitas nuevas tienen la etiqueta *Nueva*. Toca una para
+  abrirla como carta.
+- **Enviadas:** lo que tú escribiste; dice *leída ✓* cuando la otra persona la
+  abrió.
+- **✍️ Escribir:** elige el tipo (💌 Te amo, 🥺 Perdón, ✉️ Notita,
+  🎁 Sorpresa o ⏰ Recordatorio), a quién va, un título opcional y el
+  mensaje. A la otra persona le llega un aviso al instante.
+
+Toca **Activar avisos** para que el celular te avise aunque tengas la app
+cerrada.
+
+## 4. Chat
+
+Para hablar en tiempo real. Entra desde **Chat**.
+
+- Escribe abajo y pulsa **Enter** (o **Enviar 💌**). Con **Mayúsculas + Enter**
+  haces un salto de línea.
+- Los mensajes nuevos aparecen solos, sin recargar.
+- Sube en la conversación y toca **Ver mensajes anteriores** para leer lo
+  viejo.
+- El punto junto a **Chat** en la cabecera indica que hay mensajes sin leer.
+
+## 5. Notificaciones
+
+La campanita 🔔 de la cabecera cuenta los avisos sin leer. Tócala para verlos;
+cada uno te lleva directo a la notita o al chat. **Marcar todo leído** los
+limpia.
+
+Si la pestaña está abierta pero en segundo plano, el sistema operativo
+también te avisa. Para avisos con la app cerrada, activa los avisos en la
+cajita (necesita que Juan haya configurado las notificaciones push).
+
+## 6. Mi cuenta
+
+- **Cambiar contraseña:** al menos 10 caracteres, escrita dos veces.
+- **Cerrar sesión aquí:** sólo en este dispositivo.
+- **Cerrar en todos los dispositivos:** úsalo si perdiste el celular o entraste
+  en un equipo ajeno.
+
+## 7. Recuperar la contraseña
+
+1. En **Entrar**, toca **Olvidé mi contraseña** y escribe tu correo.
+2. Abre el enlace del correo (vence en 1 hora y sirve una sola vez).
+3. Escribe la contraseña nueva dos veces y guárdala. Las sesiones en otros
+   dispositivos se cierran.
+
+Si el correo no llega, pídele a Juan un **enlace de recuperación** (ver
+sección 9): te lo puede mandar por WhatsApp o mostrártelo como QR.
+
+## 8. Mi panel (Camila y Juan)
+
+Desde **Mi panel** se cambia todo lo que se ve en la página. Los cambios se
+guardan solos y se ven al instante.
+
+| Opción | Para qué |
+| --- | --- |
+| 🏠 Inicio | Resumen: cuántas fotos, hitos, fechas y notitas sin leer |
+| 📸 Fotos | Subir, ordenar, describir y borrar fotos |
+| ✍️ Textos y animaciones | Título, subtítulo y texto de cada sección, y su animación al aparecer |
+| 🌟 Hitos | Momentos importantes con fecha, icono y foto opcional |
+| 📅 Fechas importantes | Aniversarios y cumpleaños (se repiten cada año si quieres) |
+| 🎁 Sorpresas | Mensajes que aparecen en una ventanita, banner, confeti o corazones |
+| 🎨 Colores | La paleta de toda la página (Rosa suave, Durazno, Lavanda, Menta, Cielo, Rosa vino, Medianoche) |
+
+### Subir fotos
+
+1. Ve a **📸 Fotos**.
+2. Elige fotos, una carpeta entera o arrástralas al recuadro (hasta 1000 por
+   tanda).
+3. Mientras suben verás el cargador del corazón con el progreso. No cierres la
+   pestaña; la pantalla no se apaga mientras tanto.
+4. Al final aparece un resumen: cuántas se subieron, cuántas repetidas se
+   omitieron y un botón para **reintentar las que fallaron**.
+
+Cada foto se optimiza antes de subir (más liviana y sin datos de ubicación) y
+cae sola en el mes en que se tomó. Para cambiar el orden, arrástralas o usa
+↑ ↓. Para borrar varias, márcalas y toca **Borrar**.
+
+### Programar una sorpresa
+
+1. Ve a **🎁 Sorpresas → + Nueva sorpresa**.
+2. Escribe el título y el mensaje y elige el estilo.
+3. Indica desde cuándo (y opcionalmente hasta cuándo) se muestra.
+4. Deja activado **Mostrar sólo una vez a cada persona** si no quieres que se
+   repita.
+
+## 9. Administración (Juan)
+
+| Opción | Para qué |
+| --- | --- |
+| 🧭 Resumen | Cifras del sitio |
+| 👥 Usuarios | Crear cuentas, invitar, cambiar roles, desactivar, borrar y enlaces de recuperación |
+| 🔐 Roles y permisos | Qué puede hacer cada rol |
+| 🎨 Apariencia | Colores, tipografías, bordes, modo oscuro y efectos animados |
+| 🧩 Secciones | Agregar, ordenar, ocultar o quitar secciones de la página |
+| ⚙️ Ajustes del sitio | Título, fecha en que empezó todo, música y si la página es pública |
+| 📜 Auditoría | Quién cambió qué y cuándo |
+
+### Invitar a alguien
+
+1. **Usuarios → Invitar con enlace o QR → Crear enlace**.
+2. Elige el rol, una nota para recordar a quién es y cuánto dura.
+3. Copia el enlace o muestra el QR. Puedes **Revocar** la invitación mientras
+   no se haya usado.
+
+### Ayudar a alguien que olvidó su contraseña
+
+En **Usuarios**, toca 🔑 junto a la persona. Sale un enlace y un QR que vencen
+en 1 hora; mándaselo por donde quieras. No depende del correo.
+
+## 10. Preguntas frecuentes
+
+**No veo «Mi panel» o «Administración».** Tu cuenta no tiene esos permisos;
+pídeselos a Juan.
+
+**Dice «Esta parte no está disponible para tu cuenta».** Igual que arriba: el
+enlace existe pero tu rol no puede usarlo.
+
+**Subí una foto y no aparece.** Revisa el mes en la galería: se ubica por la
+fecha en que se tomó, no por la de hoy.
+
+**No me llegan los avisos al celular.** Toca **Activar avisos** en la cajita y
+acepta el permiso del navegador. En iPhone, primero agrega la app a la
+pantalla de inicio.
+
+**¿Puedo probar la app sin cuenta?** En el modo demo (sin Supabase
+configurado) entra con `juan@demo.local` o `camila@demo.local` y la contraseña
+`demo1234`. Los datos sólo se guardan en ese navegador.
