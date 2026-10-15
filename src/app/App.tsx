@@ -2,6 +2,7 @@ import { lazy, Suspense } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { AuthProvider } from "@/state/AuthContext";
 import { NotificationsProvider } from "@/state/NotificationsContext";
+import { SeoController } from "@/state/SeoController";
 import { SiteContentProvider, useSiteContent } from "@/state/SiteContentStore";
 import { ThemeController } from "@/state/ThemeController";
 import { ToastProvider } from "@/state/ToastContext";
@@ -18,6 +19,7 @@ function ThemedShell() {
   return (
     <>
       <ThemeController theme={content?.settings.theme} />
+      <SeoController />
       <a className="skip-link" href="#contenido-principal">Saltar al contenido</a>
       <AppHeader />
       <ErrorBoundary>
