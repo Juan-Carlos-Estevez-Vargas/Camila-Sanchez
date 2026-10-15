@@ -1,0 +1,112 @@
+@use "abstracts" as *;
+
+.dropzone {
+  display: grid;
+  justify-items: center;
+  gap: space(1);
+  padding: space(6) space(4);
+  border: 2px dashed var(--c-border-strong);
+  border-radius: var(--radius);
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+
+  &:hover,
+  &.is-over { border-color: var(--c-primary); background: var(--c-primary-soft); }
+
+  &__icon { font-size: 2.2rem; }
+}
+
+.month-pills {
+  display: flex;
+  gap: space(2);
+  flex-wrap: wrap;
+}
+
+.month-pill {
+  @include chip;
+  padding: 0.35rem 0.8rem;
+  font-size: 0.85rem;
+  display: inline-flex;
+  gap: 6px;
+
+  span { color: var(--c-muted); }
+
+  &.is-active {
+    @include chip-active;
+
+    span { color: inherit; opacity: 0.8; }
+  }
+
+  &:disabled { opacity: 0.4; cursor: default; }
+}
+
+.photo-grid {
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: space(3);
+
+  .sortable__item { flex-direction: column; }
+  .sortable__handle { display: flex; justify-content: flex-end; order: 2; }
+}
+
+.photo-card {
+  @include surface;
+  position: relative;
+  overflow: hidden;
+  height: 100%;
+  display: grid;
+  grid-template-rows: auto 1fr;
+
+  &.is-selected { outline: 3px solid var(--c-primary); }
+
+  img,
+  &__ph { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; }
+
+  &__check {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    background: var(--c-surface);
+    border-radius: 8px;
+    padding: 4px 6px;
+    box-shadow: var(--shadow-sm);
+  }
+
+  &__body {
+    padding: space(3);
+    display: grid;
+    gap: space(2);
+    align-content: start;
+  }
+
+  &__caption { min-height: 64px; font-size: 0.9rem; }
+  &__date { width: auto; min-height: 36px; padding: 0.3rem 0.5rem; font-size: 0.85rem; }
+  &__meta { font-size: 0.75rem; }
+}
+
+// Selector de foto (hitos, portada...).
+.photo-picker {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+  gap: space(2);
+  max-height: 260px;
+  overflow: auto;
+
+  &__item {
+    aspect-ratio: 1;
+    padding: 0;
+    border: 2px solid var(--c-border);
+    border-radius: 10px;
+    overflow: hidden;
+    cursor: pointer;
+    background: var(--c-surface-2);
+    font-size: 0.75rem;
+
+    img { width: 100%; height: 100%; object-fit: cover; }
+
+    &.is-active {
+      border-color: var(--c-primary);
+      box-shadow: 0 0 0 3px var(--c-primary-soft);
+    }
+  }
+}

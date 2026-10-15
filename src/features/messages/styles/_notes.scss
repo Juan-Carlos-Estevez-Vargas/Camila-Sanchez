@@ -1,0 +1,69 @@
+@use "abstracts" as *;
+
+// Cajita de mensajes: elegir tipo de nota, sobres y carta abierta.
+.kind-picker {
+  display: flex;
+  gap: space(2);
+  flex-wrap: wrap;
+}
+
+.kind-chip {
+  @include chip;
+  padding: 0.5rem 0.9rem;
+  font-weight: 500;
+  transition: all 0.2s $ease;
+
+  &.is-active {
+    @include chip-active;
+    transform: translateY(-1px);
+    box-shadow: var(--shadow);
+  }
+}
+
+.envelope {
+  display: flex;
+  align-items: center;
+  gap: space(2);
+  padding: space(2) space(3);
+
+  &__open {
+    display: flex;
+    align-items: center;
+    gap: space(3);
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    background: none;
+    padding: space(2);
+    text-align: left;
+    cursor: pointer;
+    color: inherit;
+  }
+
+  &__icon { @include icon-tile(48px, 14px, 1.5rem); }
+  &__meta { display: block; font-size: 0.85rem; }
+  &__preview { @include truncate; display: block; color: var(--c-muted); font-size: 0.9rem; }
+
+  &.is-unread {
+    border-color: var(--c-primary);
+    box-shadow: 0 0 0 3px var(--c-primary-soft);
+
+    .envelope__icon { animation: heartbeat 1.6s ease-in-out infinite; }
+  }
+}
+
+.letter-paper {
+  @include display-text(1.15rem, 400);
+  padding: space(5);
+  border-radius: var(--radius-sm);
+  background: tint(var(--c-accent), 8%, var(--c-surface));
+  line-height: 1.6;
+  white-space: pre-wrap;
+
+  &__from {
+    text-align: right;
+    font-style: italic;
+    color: var(--c-muted);
+    margin: space(4) 0 0;
+  }
+}

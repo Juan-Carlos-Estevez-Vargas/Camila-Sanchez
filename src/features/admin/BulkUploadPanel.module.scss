@@ -1,0 +1,44 @@
+@use "abstracts" as *;
+
+// Resumen al terminar una carga masiva (CSS Module del componente).
+.summary {
+  display: grid;
+  gap: space(3);
+  padding: space(4);
+  border-radius: var(--radius-sm);
+  background: var(--c-surface-2);
+  border: 1px solid var(--c-border);
+  animation: global-keyframes(slide-up) 0.35s $ease;
+}
+
+.stats {
+  display: flex;
+  gap: space(2);
+  flex-wrap: wrap;
+}
+
+.failures {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 4px;
+  max-height: 220px;
+  overflow: auto;
+  font-size: 0.85rem;
+
+  li {
+    display: flex;
+    justify-content: space-between;
+    gap: space(3);
+  }
+}
+
+.fileName {
+  @include truncate;
+  min-width: 0;
+}
+
+.pickers {
+  justify-content: center;
+}

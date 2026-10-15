@@ -1,0 +1,41 @@
+@use "../abstracts" as *;
+
+.btn {
+  --btn-bg: var(--c-primary);
+  --btn-fg: var(--c-primary-contrast);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: space(2);
+  min-height: $control-height;
+  padding: 0.6rem 1.2rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
+  background: var(--btn-bg);
+  color: var(--btn-fg);
+  font-weight: 600;
+  font-size: 0.95rem;
+  line-height: 1;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 0.2s $ease, box-shadow 0.2s $ease, background 0.2s;
+  white-space: nowrap;
+
+  &:hover { transform: translateY(-1px); box-shadow: var(--shadow); }
+  &:active { transform: translateY(0); }
+  &:disabled { opacity: 0.55; cursor: not-allowed; transform: none; box-shadow: none; }
+
+  &--ghost {
+    --btn-bg: transparent;
+    --btn-fg: var(--c-text);
+    border-color: var(--c-border-strong);
+
+    &:hover { background: var(--c-surface-2); box-shadow: none; }
+  }
+
+  &--soft { --btn-bg: var(--c-primary-soft); --btn-fg: var(--c-primary-strong); }
+  &--danger { --btn-bg: var(--c-danger); --btn-fg: #fff; }
+  &--sm { min-height: 34px; padding: 0.4rem 0.8rem; font-size: 0.85rem; }
+  &--icon { min-width: 40px; min-height: 40px; padding: 0; border-radius: 50%; }
+  &--block { width: 100%; }
+}

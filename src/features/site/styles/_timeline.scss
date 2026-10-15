@@ -1,0 +1,80 @@
+@use "abstracts" as *;
+
+// Hitos en línea de tiempo alternada (izquierda/derecha).
+.timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  position: relative;
+  display: grid;
+  gap: space(5);
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 2px;
+    translate: -1px 0;
+    background: linear-gradient(var(--c-primary-soft), var(--c-primary), var(--c-primary-soft));
+  }
+
+  &__item {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr 56px 1fr;
+    align-items: start;
+
+    &.is-left .timeline__card { grid-column: 1; grid-row: 1; text-align: right; }
+    &.is-right .timeline__card { grid-column: 3; grid-row: 1; }
+  }
+
+  &__dot {
+    grid-column: 2;
+    justify-self: center;
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: var(--c-surface);
+    border: 2px solid var(--c-primary);
+    box-shadow: var(--shadow);
+    font-size: 1.2rem;
+    z-index: 1;
+  }
+
+  &__date {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--c-primary);
+    margin-bottom: space(1);
+  }
+
+  &__photo {
+    margin-top: space(3);
+    border-radius: var(--radius-sm);
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    width: 100%;
+  }
+
+  // En pantallas angostas todo va a la derecha de la línea.
+  @include below("md") {
+    &::before { left: 22px; }
+
+    &__item {
+      grid-template-columns: 44px 1fr;
+      gap: space(3);
+
+      &.is-left .timeline__card,
+      &.is-right .timeline__card { grid-column: 2; text-align: left; }
+    }
+
+    &__dot { grid-column: 1; }
+  }
+}

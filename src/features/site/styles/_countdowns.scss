@@ -1,0 +1,46 @@
+@use "abstracts" as *;
+
+// "Faltan X días para tu cumple".
+.countdowns {
+  display: grid;
+  gap: space(4);
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+}
+
+.countdown {
+  text-align: center;
+  display: grid;
+  gap: space(1);
+  justify-items: center;
+
+  &__icon { font-size: 2.2rem; }
+
+  &__days {
+    @include display-text(3rem);
+    color: var(--c-primary);
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+
+    small { font-size: 1rem; color: var(--c-muted); font-family: var(--font-body); }
+  }
+
+  &__title { margin: 0; }
+
+  &__date {
+    margin: 0;
+    font-size: 0.9rem;
+
+    &::first-letter { text-transform: uppercase; }
+  }
+
+  &__message { margin: space(2) 0 0; font-style: italic; }
+
+  &.is-today {
+    @include love-gradient;
+    color: var(--c-primary-contrast);
+    border: 0;
+
+    .countdown__days,
+    .muted { color: inherit; }
+  }
+}

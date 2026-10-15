@@ -1,0 +1,24 @@
+@use "../abstracts" as *;
+
+// Pantallas de acceso (entrar, sitio privado, sin permiso).
+.gate {
+  min-height: calc(100dvh - #{$header-height});
+  display: grid;
+  place-items: center;
+  padding: space(5) space(4);
+  background: radial-gradient(900px 500px at 50% 0%, tint(var(--c-primary), 16%), transparent 70%);
+
+  &__card {
+    width: min(440px, 100%);
+    text-align: center;
+    padding: clamp(1.5rem, 5vw, 2.5rem);
+    box-shadow: var(--shadow-lg);
+
+    .field { text-align: left; }
+  }
+
+  &__heart {
+    font-size: 2.6rem;
+    animation: heartbeat 1.6s ease-in-out infinite;
+  }
+}

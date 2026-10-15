@@ -1,0 +1,107 @@
+@use "abstracts" as *;
+
+$lightbox-bg: rgba(12, 4, 8, 0.96);
+$glass: rgba(255, 255, 255, 0.12);
+
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: z("lightbox");
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  background: $lightbox-bg;
+  color: #fff;
+  animation: fade-in 0.25s $ease;
+
+  &__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: space(3);
+    padding: space(3) space(4);
+    font-weight: 600;
+  }
+
+  &__close { color: #fff; border-color: rgba(255, 255, 255, 0.3); }
+
+  &__stage {
+    position: relative;
+    display: grid;
+    place-items: center;
+    min-height: 0;
+    padding: 0 space(4);
+  }
+
+  &__figure {
+    margin: 0;
+    display: grid;
+    gap: space(3);
+    justify-items: center;
+    max-height: 100%;
+    animation: pop-in 0.35s $ease;
+
+    img {
+      max-height: calc(100dvh - 260px);
+      max-width: min(100%, 1100px);
+      object-fit: contain;
+      border-radius: var(--radius-sm);
+      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+    }
+
+    figcaption {
+      text-align: center;
+      max-width: 60ch;
+
+      p { @include display-text(1.15rem, 400); margin: 0 0 4px; }
+    }
+
+    time { font-size: 0.8rem; opacity: 0.7; }
+  }
+
+  &__placeholder { width: min(80vw, 700px); aspect-ratio: 4 / 3; }
+
+  &__nav {
+    position: absolute;
+    top: 50%;
+    translate: 0 -50%;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: 0;
+    background: $glass;
+    color: #fff;
+    font-size: 2rem;
+    line-height: 1;
+    cursor: pointer;
+    z-index: 2;
+
+    &:hover { background: rgba(255, 255, 255, 0.25); }
+    &.is-prev { left: space(3); }
+    &.is-next { right: space(3); }
+  }
+
+  &__thumbs {
+    display: flex;
+    gap: space(2);
+    overflow-x: auto;
+    padding: space(3) space(4) calc(#{space(3)} + env(safe-area-inset-bottom));
+    scrollbar-width: thin;
+  }
+
+  &__thumb {
+    flex: 0 0 64px;
+    height: 64px;
+    padding: 0;
+    border: 2px solid transparent;
+    border-radius: 10px;
+    overflow: hidden;
+    cursor: pointer;
+    opacity: 0.55;
+    background: rgba(255, 255, 255, 0.08);
+    transition: opacity 0.2s, border-color 0.2s;
+
+    img { width: 100%; height: 100%; object-fit: cover; }
+
+    &.is-active { opacity: 1; border-color: #ff8fb1; }
+  }
+}
