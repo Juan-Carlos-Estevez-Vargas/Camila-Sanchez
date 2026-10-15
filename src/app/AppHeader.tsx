@@ -69,6 +69,7 @@ export function AppHeader() {
           )}
           {policy.canUseContentPanel && <NavLink to="/panel" onClick={close}>Mi panel</NavLink>}
           {policy.canUseSuperPanel && <NavLink to="/super" onClick={close}>Administración</NavLink>}
+          {user && <NavLink to="/cuenta" onClick={close}>Mi cuenta</NavLink>}
           {user ? (
             <button className="btn btn--sm btn--ghost" onClick={() => { close(); void signOut(); }}>
               Salir{profile ? ` (${profile.displayName})` : ""}

@@ -13,8 +13,11 @@ import { del as idbDel, get as idbGet, set as idbSet } from "idb-keyval";
 import { AccessPolicy, DEFAULT_ROLE_PERMISSIONS, PERMISSIONS, type Permission } from "@/domain/permissions";
 import { changesBeyondPalette } from "@/domain/palettes";
 import { AppError } from "@/core/errors";
+import {
+  expiryFromNow, generateInviteToken, hashInviteToken, invitationStatus, isInviteToken, MIN_PASSWORD_LENGTH,
+} from "@/domain/invitations";
 import type {
-  AppNotification, AuditEntry, ChatMessage, ImportantDate, Interruption, Milestone, Note,
+  AppNotification, AuditEntry, ChatMessage, ImportantDate, Interruption, Invitation, Milestone, Note,
   PermissionDefinition, Photo, PhotoUrls, Profile, Role, RolePermission, Section, SessionUser,
   SiteSettings, Uuid,
 } from "@/domain/types";
@@ -36,6 +39,10 @@ interface DemoUser extends Profile {
   password: string;
 }
 
+interface DemoInvitation extends Invitation {
+  tokenHash: string;
+}
+
 interface DemoState {
   settings: SiteSettings;
   sections: Section[];
@@ -48,6 +55,7 @@ interface DemoState {
   chat: ChatMessage[];
   notifications: AppNotification[];
   users: DemoUser[];
+  invitations: DemoInvitation[];
   rolePermissions: RolePermission[];
   audit: AuditEntry[];
 }
@@ -88,6 +96,7 @@ function initialState(): DemoState {
       id: uuid(), email: a.email, password: a.password, displayName: a.displayName,
       role: a.role, isActive: true, avatarUrl: null, createdAt: created,
     })),
+    invitations: [],
     rolePermissions: (["editor", "viewer"] as const).flatMap((role) =>
       DEFAULT_ROLE_PERMISSIONS[role].map((permission) => ({ role, permission })),
     ),
@@ -253,6 +262,13 @@ function notify(userId: Uuid, kind: AppNotification["kind"], title: string, body
   const n: AppNotification = { id: uuid(), userId, kind, title, body: body.slice(0, 140), link, readAt: null, createdAt: nowIso() };
   database().state.notifications.unshift(n);
   database().commit({ table: "notifications", type: "INSERT", record: n as never });
+}
+
+async function findPendingInvitation(token: string): Promise<DemoInvitation | null> {
+  if (!isInviteToken(token)) return null;
+  const hash = await hashInviteToken(token);
+  const invitation = database().state.invitations.find((i) => i.tokenHash === hash);
+  return invitation && invitationStatus(invitation) === "pending" ? invitation : null;
 }
 
 const NOTE_TITLES: Record<Note["kind"], string> = {
@@ -604,6 +620,54 @@ export const demoBackend: Backend = {
       require(PERMISSIONS.auditView);
       const rows = database().state.audit.filter((a) => !table || a.tableName === table);
       return clone(rows.slice(page * pageSize, (page + 1) * pageSize));
+    },
+  },
+
+  invitations: {
+    async list() {
+      require(PERMISSIONS.usersManage);
+      return clone(database().state.invitations.map(({ tokenHash: _hash, ...rest }) => rest))
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    },
+    async create({ role, note, expiresInHours }) {
+      require(PERMISSIONS.usersManage);
+      const token = generateInviteToken();
+      const invitation: DemoInvitation = {
+        id: uuid(), role, note: note.trim().slice(0, 80), createdAt: nowIso(),
+        expiresAt: expiryFromNow(expiresInHours), usedAt: null, tokenHash: await hashInviteToken(token),
+      };
+      database().state.invitations.push(invitation);
+      audit("INSERT", "invitations", invitation.id, null, { role, note: invitation.note });
+      database().commit({ table: "site_settings", type: "UPDATE", record: null });
+      const { tokenHash: _hash, ...visible } = invitation;
+      return { invitation: visible, token };
+    },
+    async revoke(id) {
+      require(PERMISSIONS.usersManage);
+      const state = database().state;
+      state.invitations = state.invitations.filter((i) => i.id !== id);
+      audit("DELETE", "invitations", id, null, null);
+      database().commit({ table: "site_settings", type: "UPDATE", record: null });
+    },
+    async check(token) {
+      const invitation = await findPendingInvitation(token);
+      return invitation ? { valid: true, role: invitation.role } : { valid: false };
+    },
+    async redeem({ token, email, password, displayName }) {
+      const invitation = await findPendingInvitation(token);
+      if (!invitation) throw new AppError("Este enlace ya no es válido. Pide uno nuevo.");
+      const state = database().state;
+      const normalized = email.trim().toLowerCase();
+      if (state.users.some((u) => u.email === normalized)) throw new AppError("Ya existe una cuenta con ese correo.");
+      if (password.length < MIN_PASSWORD_LENGTH) throw new AppError(`La contraseña debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres.`);
+      const user: DemoUser = {
+        id: uuid(), email: normalized, password, displayName: displayName.trim().slice(0, 80), role: invitation.role,
+        isActive: true, avatarUrl: null, createdAt: nowIso(),
+      };
+      state.users.push(user);
+      invitation.usedAt = nowIso();
+      audit("INSERT", "profiles", user.id, null, toProfile(user));
+      database().commit({ table: "site_settings", type: "UPDATE", record: null });
     },
   },
 

@@ -13,6 +13,7 @@ import { appRoutes } from "./routes";
 
 const SitePage = lazy(() => import("@/features/site/SitePage"));
 const LoginPage = lazy(() => import("@/features/auth/LoginPage"));
+const InvitePage = lazy(() => import("@/features/auth/InvitePage"));
 
 function ThemedShell() {
   const { content } = useSiteContent();
@@ -27,6 +28,7 @@ function ThemedShell() {
           <Routes>
             <Route path="/" element={<SitePage />} />
             <Route path="/entrar" element={<LoginPage />} />
+            <Route path="/invitacion" element={<InvitePage />} />
             {appRoutes}
             <Route path="*" element={<EmptyState icon="🧭" title="Esta página no existe" />} />
           </Routes>

@@ -22,11 +22,15 @@ begin
     raise exception 'No encontré la cuenta de Juan (%). ¿La creaste en Authentication → Users?', juan_email;
   end if;
 
-  update public.profiles
-     set role = 'editor', display_name = 'Camila', is_active = true
-   where id = (select id from auth.users where lower(email) = lower(camila_email));
-  if not found then
-    raise exception 'No encontré la cuenta de Camila (%). ¿La creaste en Authentication → Users?', camila_email;
+  -- Vacío ('') si Camila aún no tiene cuenta: se la puede invitar con un
+  -- enlace o QR desde Administración → Usuarios.
+  if camila_email <> '' then
+    update public.profiles
+       set role = 'editor', display_name = 'Camila', is_active = true
+     where id = (select id from auth.users where lower(email) = lower(camila_email));
+    if not found then
+      raise exception 'No encontré la cuenta de Camila (%). ¿La creaste en Authentication → Users?', camila_email;
+    end if;
   end if;
 
   update public.site_settings set is_public = sitio_publico where id = 1;
