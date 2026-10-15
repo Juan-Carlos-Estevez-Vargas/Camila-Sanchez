@@ -1,170 +1,8 @@
 const fotos = [
-  "assets/img/CitaPostres.jpeg",
-  "assets/img/CitaPostres2.jpeg",
-  "assets/img/Flores.jpeg",
-  "assets/img/PalosTiros.jpeg",
-];
-
-// Datos organizados por meses con fotos y mensajes
-const fotosPorMes = [
-  {
-    mes: "Enero",
-    año: "2023",
-    fotos: [
-      {
-        url: "assets/img/enero1.jpg",
-        mensaje: "Empezamos el año juntos, nuestro primer amanecer del 2023",
-        fecha: "1 de Enero 2023",
-      },
-      {
-        url: "assets/img/enero2.jpg",
-        mensaje: "Esa tarde de risas interminables en el parque",
-        fecha: "15 de Enero 2023",
-      },
-    ],
-  },
-  {
-    mes: "Febrero",
-    año: "2023",
-    fotos: [
-      {
-        url: "assets/img/febrero1.jpg",
-        mensaje: "San Valentín contigo, el mejor regalo",
-        fecha: "14 de Febrero 2023",
-      },
-    ],
-  },
-  {
-    mes: "Marzo",
-    año: "2023",
-    fotos: [
-      {
-        url: "assets/img/marzo1.jpg",
-        mensaje: "Nuestra primera salida a la montaña juntos",
-        fecha: "5 de Marzo 2023",
-      },
-    ],
-  },
-  {
-    mes: "Abril",
-    año: "2023",
-    fotos: [
-      {
-        url: "assets/img/abril1.jpg",
-        mensaje:
-          "Celebrando tu cumpleaños, el día que el mundo se volvió más brillante",
-        fecha: "20 de Abril 2023",
-      },
-    ],
-  },
-  {
-    mes: "Mayo",
-    año: "2023",
-    fotos: [
-      {
-        url: "assets/img/mayo1.jpg",
-        mensaje: "Esa lluviosa tarde de películas y abrazos",
-        fecha: "10 de Mayo 2023",
-      },
-    ],
-  },
-  {
-    mes: "Junio",
-    año: "2023",
-    fotos: [
-      {
-        url: "assets/img/junio1.jpg",
-        mensaje: "Nuestro primer viaje juntos, momentos inolvidables",
-        fecha: "3 de Junio 2023",
-      },
-    ],
-  },
-  {
-    mes: "Julio",
-    año: "2023",
-    fotos: [
-      {
-        url: "assets/img/julio1.jpg",
-        mensaje: "Verano contigo es mi estación favorita",
-        fecha: "15 de Julio 2023",
-      },
-    ],
-  },
-  {
-    mes: "Agosto",
-    año: "2023",
-    fotos: [
-      {
-        url: "assets/img/agosto1.jpg",
-        mensaje: "Atardeceres de agosto, contigo todo es más hermoso",
-        fecha: "22 de Agosto 2023",
-      },
-    ],
-  },
-  {
-    mes: "Septiembre",
-    año: "2023",
-    fotos: [
-      {
-        url: "assets/img/septiembre1.jpg",
-        mensaje: "Celebrando nuestro aniversario de meses",
-        fecha: "5 de Septiembre 2023",
-      },
-    ],
-  },
-  {
-    mes: "Octubre",
-    año: "2023",
-    fotos: [
-      {
-        url: "assets/img/octubre1.jpg",
-        mensaje: "Halloween juntos, disfraces y dulces compartidos",
-        fecha: "31 de Octubre 2023",
-      },
-    ],
-  },
-  {
-    mes: "Noviembre",
-    año: "2023",
-    fotos: [
-      {
-        url: "assets/img/noviembre1.jpg",
-        mensaje: "Día de gracias, agradecido por tenerte en mi vida",
-        fecha: "23 de Noviembre 2023",
-      },
-    ],
-  },
-  {
-    mes: "Diciembre",
-    año: "2023",
-    fotos: [
-      {
-        url: "assets/img/diciembre1.jpg",
-        mensaje: "Nuestra primera Navidad juntos, el mejor regalo eres tú",
-        fecha: "24 de Diciembre 2023",
-      },
-      {
-        url: "assets/img/CitaPostres.jpeg",
-        mensaje: "Nuestra cita de postres, dulces momentos compartidos",
-        fecha: "15 de Diciembre 2023",
-      },
-      {
-        url: "assets/img/CitaPostres2.jpeg",
-        mensaje: "Risas y postres, la combinación perfecta contigo",
-        fecha: "15 de Diciembre 2023",
-      },
-      {
-        url: "assets/img/Flores.jpeg",
-        mensaje: "Las flores que te regalé, tan hermosas como tú",
-        fecha: "10 de Diciembre 2023",
-      },
-      {
-        url: "assets/img/PalosTiros.jpeg",
-        mensaje: "Aventuras y juegos, contigo todo es divertido",
-        fecha: "20 de Diciembre 2023",
-      },
-    ],
-  },
+  "../public/assets/img/CitaPostres.jpeg",
+  "../public/assets/img/CitaPostres2.jpeg",
+  "../public/assets/img/Flores.jpeg",
+  "../public/assets/img/PalosTiros.jpeg",
 ];
 
 const galeria = document.getElementById("galeria");
@@ -248,6 +86,7 @@ function crearNieve() {
 
 // Regalo sorpresa
 function mostrarSorpresa() {
+  if (document.querySelector(".sorpresa")) return;
   const sorpresa = document.createElement("div");
   sorpresa.className = "sorpresa";
   sorpresa.innerHTML = `
@@ -262,50 +101,6 @@ function mostrarSorpresa() {
 
   document.body.appendChild(sorpresa);
 
-  // Agregar estilos para la sorpresa
-  const estilo = document.createElement("style");
-  estilo.textContent = `
-    .sorpresa {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.9);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 10000;
-      animation: aparecer 0.5s ease;
-    }
-    
-    .sorpresa-contenido {
-      background: linear-gradient(135deg, #ff4081, #c2185b);
-      padding: 3em;
-      border-radius: 20px;
-      text-align: center;
-      max-width: 500px;
-      animation: latido 1s infinite alternate;
-    }
-    
-    .sorpresa-texto {
-      font-size: 2rem;
-      margin: 1em 0;
-      font-weight: bold;
-      color: #ffeb3b;
-    }
-    
-    @keyframes aparecer {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-    
-    @keyframes latido {
-      from { transform: scale(1); }
-      to { transform: scale(1.05); }
-    }
-  `;
-  document.head.appendChild(estilo);
 }
 
 function cerrarSorpresa() {
@@ -341,63 +136,9 @@ window.addEventListener("load", () => {
 
 // Variables globales para el carrusel
 let mesActual = null;
+let añoActual = 0;
 let fotoIndex = 0;
 let fotosDelMesActual = [];
-
-// Generar la línea de tiempo por meses
-function generarLineaTiempo() {
-  const container = document.getElementById("meses-container");
-  container.innerHTML = "";
-
-  fotosPorMes.forEach((mesData, index) => {
-    const mesItem = document.createElement("div");
-    mesItem.className = "mes-item";
-    mesItem.dataset.mesIndex = index;
-
-    // Agregar clase activa al mes actual
-    const fechaActual = new Date();
-    const mesActualNum = fechaActual.getMonth();
-    if (index === mesActualNum) {
-      mesItem.classList.add("activo");
-    }
-
-    mesItem.innerHTML = `
-      <div class="mes-nombre">${mesData.mes}</div>
-      <div class="mes-año">${mesData.año}</div>
-      <div class="mes-contador">${mesData.fotos.length}</div>
-    `;
-
-    mesItem.addEventListener("click", () => abrirCarrusel(index));
-    container.appendChild(mesItem);
-  });
-}
-
-// Abrir carrusel con las fotos de un mes específico
-function abrirCarrusel(mesIndex) {
-  mesActual = mesIndex;
-  fotoIndex = 0;
-  fotosDelMesActual = fotosPorMes[mesIndex].fotos;
-
-  // Actualizar UI del carrusel
-  document.getElementById(
-    "carruselMes"
-  ).textContent = `${fotosPorMes[mesIndex].mes} ${fotosPorMes[mesIndex].año}`;
-
-  // Cargar la primera foto
-  cargarFotoCarrusel(0);
-
-  // Generar miniaturas
-  generarMiniaturas();
-
-  // Mostrar modal
-  document.getElementById("carruselModal").style.display = "block";
-  document.body.style.overflow = "hidden"; // Prevenir scroll
-
-  // Efecto de aparición
-  setTimeout(() => {
-    crearCorazonFlotante();
-  }, 300);
-}
 
 // Cargar foto específica en el carrusel
 function cargarFotoCarrusel(index) {
@@ -493,154 +234,21 @@ function cerrarCarrusel() {
   document.body.style.overflow = "auto"; // Restaurar scroll
 }
 
-// Inicialización
-document.addEventListener("DOMContentLoaded", () => {
-  // Generar línea de tiempo
-  generarLineaTiempo();
-
-  // Event listeners para el carrusel
-  document
-    .getElementById("cerrarCarrusel")
-    .addEventListener("click", cerrarCarrusel);
-  document
-    .getElementById("prevBtn")
-    .addEventListener("click", () => navegarCarrusel(-1));
-  document
-    .getElementById("nextBtn")
-    .addEventListener("click", () => navegarCarrusel(1));
-
-  // Cerrar con Escape
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") {
-      cerrarCarrusel();
-    } else if (e.key === "ArrowLeft") {
-      navegarCarrusel(-1);
-    } else if (e.key === "ArrowRight") {
-      navegarCarrusel(1);
-    }
-  });
-
-  // Cerrar al hacer clic fuera del contenido
-  document.getElementById("carruselModal").addEventListener("click", (e) => {
-    if (e.target === document.getElementById("carruselModal")) {
-      cerrarCarrusel();
-    }
-  });
-
-  // Abrir automáticamente el mes actual al cargar
-  setTimeout(() => {
-    const fechaActual = new Date();
-    const mesActualNum = fechaActual.getMonth();
-    const mesActualItem = document.querySelector(
-      `.mes-item[data-mes-index="${mesActualNum}"]`
-    );
-    if (mesActualItem) {
-      mesActualItem.classList.add("activo");
-    }
-  }, 1000);
-});
-
-// Función para agregar una foto nueva (opcional)
-function agregarFoto(mes, año, url, mensaje, fecha) {
-  const mesIndex = fotosPorMes.findIndex((m) => m.mes === mes && m.año === año);
-
-  if (mesIndex !== -1) {
-    fotosPorMes[mesIndex].fotos.push({ url, mensaje, fecha });
-  } else {
-    fotosPorMes.push({
-      mes,
-      año,
-      fotos: [{ url, mensaje, fecha }],
-    });
-  }
-
-  // Actualizar la vista
-  generarLineaTiempo();
-}
-// Para el archivo JavaScript principal, agrega esto al final:
-
-// Efecto de confeti al abrir carrusel
-function lanzarConfeti() {
-  const colores = ["#ff4081", "#c2185b", "#ec407a", "#ff9800", "#4caf50"];
-  const modal = document.getElementById("carruselModal");
-
-  for (let i = 0; i < 50; i++) {
-    const confeti = document.createElement("div");
-    confeti.className = "confeti";
-    confeti.style.cssText = `
-      position: absolute;
-      width: 10px;
-      height: 10px;
-      background: ${colores[Math.floor(Math.random() * colores.length)]};
-      top: -20px;
-      left: ${Math.random() * 100}%;
-      border-radius: ${Math.random() > 0.5 ? "50%" : "0"};
-      animation: caerConfeti ${Math.random() * 3 + 2}s linear forwards;
-      z-index: 10001;
-    `;
-
-    modal.appendChild(confeti);
-
-    // Remover después de la animación
-    setTimeout(() => confeti.remove(), 5000);
-  }
-}
-
-// Agregar estilo para el confeti
-const estiloConfeti = document.createElement("style");
-estiloConfeti.textContent = `
-  @keyframes caerConfeti {
-    0% {
-      transform: translateY(0) rotate(0deg);
-      opacity: 1;
-    }
-    100% {
-      transform: translateY(100vh) rotate(360deg);
-      opacity: 0;
-    }
-  }
-`;
-document.head.appendChild(estiloConfeti);
-
-// Actualizar la función abrirCarrusel para incluir confeti
-function abrirCarrusel(mesIndex) {
-  // ... código anterior ...
-
-  // Lanzar confeti
-  setTimeout(() => {
-    lanzarConfeti();
-  }, 500);
-}
-
 // Datos organizados por años y meses
 const fotosPorAño = [
   {
     año: "2025",
     color: "#ff4081", // Color distintivo para cada año
     fotos: {
-      Marzo: [
-        {
-          url: "assets/img/2025/marzo1.jpg",
-          mensaje: "Primera primavera juntos del año, todo florece a tu lado",
-          fecha: "20 de Marzo 2024",
-        },
-      ],
-      Abril: [
-        {
-          url: "assets/img/2024/abril1.jpg",
-          mensaje: "Celebrando tu cumpleaños, cada año a tu lado es un regalo",
-          fecha: "20 de Abril 2024",
-        },
-      ],
       Mayo: [
         {
-          url: "assets/img/2025/mayo1.jpeg",
+          url: "../public/assets/img/2025/mayo1.jpeg",
           mensaje:
             "Aquí, aún no éramos novios pero el verte trabajar me alegraba mucho el alma",
           fecha: "10 de Mayo 2025",
         },
         {
-          url: "assets/img/2025/mayo2.jpeg",
+          url: "../public/assets/img/2025/mayo2.jpeg",
           mensaje:
             "Cómo olvidar el día en que con mucho nerviosismo, te pedí poder compartir una vida contigo y ser novios",
           fecha: "30 de Mayo 2025",
@@ -648,44 +256,44 @@ const fotosPorAño = [
       ],
       Junio: [
         {
-          url: "assets/img/2025/junio1.jpeg",
+          url: "../public/assets/img/2025/junio1.jpeg",
           mensaje:
             "Tus primeras flores, cómo olvidar la emoción que sentía al esperar tu reacción",
           fecha: "9 de Junio 2025",
         },
         {
-          url: "assets/img/2025/junio2.jpeg",
+          url: "../public/assets/img/2025/junio2.jpeg",
           mensaje: "Mi primer fondo de pantalla alusivo a tí",
           fecha: "10 de Junio 2025",
         },
         {
-          url: "assets/img/2025/junio3.jpeg",
+          url: "../public/assets/img/2025/junio3.jpeg",
           mensaje: "Lo hermosa que te ves enamorada de mí",
           fecha: "16 de Junio 2025",
         },
         {
-          url: "assets/img/2025/junio4.jpeg",
+          url: "../public/assets/img/2025/junio4.jpeg",
           mensaje:
             "Dedicarle el cielo a mi cielo, es y será siempre un detalle desde lo profundo de mi corazón",
           fecha: "18 de Junio 2025",
         },
         {
-          url: "assets/img/2025/junio5.jpeg",
+          url: "../public/assets/img/2025/junio5.jpeg",
           mensaje: "Lo hermoso de este momento no tiene comparación",
           fecha: "21 de Junio 2025",
         },
         {
-          url: "assets/img/2025/junio6.jpeg",
+          url: "../public/assets/img/2025/junio6.jpeg",
           mensaje: "Amo tus ocurrencias",
           fecha: "23 de Junio 2025",
         },
         {
-          url: "assets/img/2025/junio7.jpeg",
+          url: "../public/assets/img/2025/junio7.jpeg",
           mensaje: "El que se meta conmigo ya sabe, lleva bala jajajaja",
           fecha: "25 de Junio 2025",
         },
         {
-          url: "assets/img/2025/junio8.jpeg",
+          url: "../public/assets/img/2025/junio8.jpeg",
           mensaje:
             "Imposible olvidar nuestro primer viaje, todas las aventuras vividas y lo felices que fuimos",
           fecha: "28 de Junio 2025",
@@ -693,118 +301,89 @@ const fotosPorAño = [
       ],
       Julio: [
         {
-          url: "assets/img/2025/julio1.jpeg",
+          url: "../public/assets/img/2025/julio1.jpeg",
           mensaje:
             "Un paseito inolvidable, muchas aventuras, mucho amor y sobre todo un amor muy lindo",
           fecha: "4 de Julio 2025",
         },
         {
-          url: "assets/img/2025/julio2.jpeg",
+          url: "../public/assets/img/2025/julio2.jpeg",
           mensaje:
             "Desbordados de amor, amaba recogerte y que me recibieras con una sonrisa, un beso, un te amo y una pizza",
           fecha: "8 de Julio 2025",
         },
         {
-          url: "assets/img/2025/julio3.jpeg",
+          url: "../public/assets/img/2025/julio3.jpeg",
           mensaje: "Salidita a cenar, bailar y amarnos mucho mucho",
           fecha: "13 de Julio 2025",
         },
         {
-          url: "assets/img/2025/julio4.jpeg",
+          url: "../public/assets/img/2025/julio4.jpeg",
           mensaje: "Sesión de fotos en el parque con el primo",
           fecha: "15 de Julio 2025",
         },
         {
-          url: "assets/img/2025/julio5.jpeg",
+          url: "../public/assets/img/2025/julio5.jpeg",
           mensaje: "Salidita de novios, sesión de fotos y amor que se desborda",
           fecha: "22 de Julio 2025",
         },
         {
-          url: "assets/img/2025/julio6.jpeg",
+          url: "../public/assets/img/2025/julio6.jpeg",
           mensaje: "La dueña de las carreteras y dueña de mi corazón",
           fecha: "22 de Julio 2025",
         },
         {
-          url: "assets/img/2025/julio7.jpeg",
+          url: "../public/assets/img/2025/julio7.jpeg",
           mensaje:
             "No tengo palabras para describir lo orgulloso que me sentia en ese momento de que fueras mi novia",
           fecha: "25 de Julio 2025",
         },
         {
-          url: "assets/img/2025/julio8.jpeg",
+          url: "../public/assets/img/2025/julio8.jpeg",
           mensaje: "¿Recuerdas esa hamburguesa?",
           fecha: "25 de Julio 2025",
         },
       ],
       Agosto: [
         {
-          url: "assets/img/2025/agosto1.jpeg",
+          url: "../public/assets/img/2025/agosto1.jpeg",
           mensaje: "Ámame toda la vida",
           fecha: "11 de Agosto 2025",
         },
         {
-          url: "assets/img/2025/agosto2.jpeg",
+          url: "../public/assets/img/2025/agosto2.jpeg",
           mensaje: "Visitandote en el trabajo de tu mamá",
           fecha: "15 de Agosto 2025",
         },
         {
-          url: "assets/img/2025/agosto3.jpeg",
+          url: "../public/assets/img/2025/agosto3.jpeg",
           mensaje: "Felicidad en el cumple de 'Chofi'",
           fecha: "18 de Agosto 2025",
         },
         {
-          url: "assets/img/2025/agosto4.jpeg",
+          url: "../public/assets/img/2025/agosto4.jpeg",
           mensaje: "Simplemente divinos",
           fecha: "18 de Agosto 2025",
         },
         {
-          url: "assets/img/2025/agosto5.jpeg",
+          url: "../public/assets/img/2025/agosto5.jpeg",
           mensaje: "Visita al cementerio",
           fecha: "22 de Agosto 2025",
         },
         {
-          url: "assets/img/2025/agosto6.jpeg",
+          url: "../public/assets/img/2025/agosto6.jpeg",
           mensaje: "Increíble momento",
           fecha: "24 de Agosto 2025",
         },
         {
-          url: "assets/img/2025/agosto7.jpeg",
+          url: "../public/assets/img/2025/agosto7.jpeg",
           mensaje: "Me encanta hacerte feliz",
           fecha: "29 de Agosto 2025",
         },
         {
-          url: "assets/img/2025/agosto8.jpeg",
+          url: "../public/assets/img/2025/agosto8.jpeg",
           mensaje: "Día de picnic",
           fecha: "30 de Agosto 2025",
-        },
-      ],
-      Septiembre: [
-        {
-          url: "assets/img/2024/septiembre1.jpg",
-          mensaje:
-            "Aniversario de meses, cada día contigo es un motivo para celebrar",
-          fecha: "5 de Septiembre 2024",
-        },
-      ],
-      Octubre: [
-        {
-          url: "assets/img/2024/octubre1.jpg",
-          mensaje: "Halloween 2024, disfraces y dulces compartidos una vez más",
-          fecha: "31 de Octubre 2024",
-        },
-      ],
-      Noviembre: [
-        {
-          url: "assets/img/2024/noviembre1.jpg",
-          mensaje: "Día de gracias, agradeciendo otro año de amor y compañía",
-          fecha: "28 de Noviembre 2024",
-        },
-      ],
-      Diciembre: [
-        {
-          url: "assets/img/2024/diciembre1.jpg",
-          mensaje: "Navidad 2024, nuestra tradición de amor crece cada año",
-          fecha: "24 de Diciembre 2024",
         },
       ],
     },
@@ -1083,7 +662,7 @@ function hexToRgb(hex) {
         g: parseInt(result[2], 16),
         b: parseInt(result[3], 16),
       }
-    : { r: 255, g: 64, g: 129 }; // Color por defecto
+    : { r: 255, g: 64, b: 129 }; // Color por defecto
 }
 
 // Efecto especial según el mes
@@ -1123,6 +702,30 @@ function lanzarCorazones(container) {
     setTimeout(() => corazon.remove(), 5000);
   }
 }
+
+// Lluvia genérica de emojis usada por los efectos de cada mes
+function lanzarEmojis(container, emoji, cantidad = 30) {
+  for (let i = 0; i < cantidad; i++) {
+    const item = document.createElement("div");
+    item.textContent = emoji;
+    item.style.cssText = `
+      position: absolute;
+      font-size: ${Math.random() * 20 + 15}px;
+      top: -30px;
+      left: ${Math.random() * 100}%;
+      animation: caerCorazon ${Math.random() * 3 + 2}s linear forwards;
+      z-index: 10001;
+      pointer-events: none;
+    `;
+    container.appendChild(item);
+    setTimeout(() => item.remove(), 5000);
+  }
+}
+
+const lanzarSoles = (container) => lanzarEmojis(container, "☀️");
+const lanzarGotasLluvia = (container) => lanzarEmojis(container, "💧");
+const lanzarCalabazas = (container) => lanzarEmojis(container, "🎃");
+const lanzarEstrellas = (container) => lanzarEmojis(container, "✨");
 
 function lanzarCoposNieve(container) {
   for (let i = 0; i < 40; i++) {
@@ -1258,7 +861,7 @@ function agregarFotos(año, mes, nuevasFotos) {
 // Ejemplo de uso:
 // agregarFotos(2024, "Enero", [
 //   {
-//     url: "assets/nueva-foto.jpg",
+//     url: "../public/assets/nueva-foto.jpg",
 //     mensaje: "Un nuevo recuerdo juntos",
 //     fecha: "25 de Enero 2024"
 //   }

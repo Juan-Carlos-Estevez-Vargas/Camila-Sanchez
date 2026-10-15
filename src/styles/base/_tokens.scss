@@ -1,0 +1,58 @@
+@use "../abstracts" as *;
+
+// ==========================================================================
+// Tokens de diseño como custom properties. Colores, fuentes y radio se
+// sobreescriben en tiempo de ejecución desde site_settings.theme
+// (state/ThemeController.tsx), por eso no son variables Sass.
+// ==========================================================================
+:root {
+  // Paleta "Rosa suave" de la versión 1 (domain/palettes.ts → V1_PALETTE),
+  // para que el primer pintado ya tenga los colores correctos.
+  --c-primary: #c2185b;
+  --c-primary-contrast: #ffffff;
+  --c-accent: #ff4081;
+  --c-bg: #ffe6ec;
+  --c-surface: #fff7f9;
+  --c-text: #880e4f;
+  --c-muted: #ad1457;
+
+  // Derivados con color-mix: cualquier paleta del panel sigue funcionando.
+  --c-primary-soft: #{tint(var(--c-primary), 12%, var(--c-surface))};
+  --c-primary-strong: #{tint(var(--c-primary), 82%, black)};
+  --c-border: #{tint(var(--c-text), 12%)};
+  --c-border-strong: #{tint(var(--c-text), 22%)};
+  --c-surface-2: #{tint(var(--c-text), 4%, var(--c-surface))};
+  // Fondo en degradado suave, como en la versión 1.
+  --c-bg-deep: #{tint(var(--c-primary), 6%, var(--c-bg))};
+  --c-success: #2e7d5b;
+  --c-danger: #c0392b;
+  --c-warning: #b7791f;
+
+  --font-display: #{$font-display};
+  --font-body: #{$font-body};
+
+  --radius: 18px;
+  --radius-sm: calc(var(--radius) * 0.55);
+  --radius-pill: 999px;
+
+  --shadow-sm: 0 1px 2px #{tint(var(--c-text), 8%)};
+  --shadow: 0 10px 30px -12px #{tint(var(--c-primary), 30%)}, 0 2px 6px #{tint(var(--c-text), 6%)};
+  --shadow-lg: 0 30px 60px -20px #{tint(var(--c-primary), 35%)};
+
+  @each $step, $value in $spacing {
+    --space-#{$step}: #{$value};
+  }
+
+  --container: #{$container-width};
+  --ease: #{$ease};
+
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  --c-bg: #15111a;
+  --c-surface: #1f1925;
+  --c-text: #f3e9ef;
+  --c-muted: #b4a3ae;
+  color-scheme: dark;
+}

@@ -1,0 +1,36 @@
+@use "../abstracts" as *;
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--c-primary-soft);
+  color: var(--c-primary-strong);
+  font-size: 0.75rem;
+  font-weight: 600;
+
+  &--muted { background: var(--c-surface-2); color: var(--c-muted); }
+
+  // Variantes de estado generadas desde un mapa.
+  @each $tone in (success, danger, warning) {
+    &--#{$tone} {
+      background: tint(var(--c-#{$tone}), 14%);
+      color: var(--c-#{$tone});
+    }
+  }
+}
+
+.counter-dot {
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--c-primary);
+  color: var(--c-primary-contrast);
+  font-size: 0.7rem;
+  font-weight: 700;
+  display: inline-grid;
+  place-items: center;
+}

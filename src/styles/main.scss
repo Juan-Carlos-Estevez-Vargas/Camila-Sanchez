@@ -1,0 +1,13 @@
+// ==========================================================================
+// Hoja global (arquitectura 7-1 simplificada):
+//   abstracts/  herramientas Sass sin salida (variables, funciones, mixins)
+//   base/       tokens del tema, reset, tipografía, utilidades, animaciones
+//   components/ piezas reutilizables con clases BEM (botones, formularios...)
+//   layout/     estructura de la app (cabecera, campana, accesos, banner)
+// Los estilos de cada funcionalidad viven junto a ella (features/*/styles)
+// y se cargan con su ruta; los de componentes aislados son CSS Modules
+// (*.module.scss) para que sus clases no choquen con nada.
+// ==========================================================================
+@use "base";
+@use "components";
+@use "layout";

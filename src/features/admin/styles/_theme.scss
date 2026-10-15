@@ -1,0 +1,18 @@
+@use "abstracts" as *;
+
+// Editor de apariencia (super admin).
+.color-row {
+  display: flex;
+  align-items: center;
+  gap: space(2);
+
+  .input:not([type="color"]) { font-family: $font-mono; }
+}
+
+.preview {
+  border-radius: var(--radius);
+  padding: space(5);
+  border: 1px solid var(--c-border);
+  display: grid;
+  gap: space(3);
+}

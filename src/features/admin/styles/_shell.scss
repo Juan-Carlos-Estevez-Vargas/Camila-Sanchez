@@ -1,0 +1,92 @@
+@use "abstracts" as *;
+
+// Estructura de los paneles: menú lateral + contenido.
+.admin {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  gap: space(6);
+  padding-block: space(6) space(8);
+  align-items: start;
+
+  &__side {
+    position: sticky;
+    top: $header-height + 24px;
+    display: grid;
+    gap: space(4);
+  }
+
+  &__title {
+    display: grid;
+    gap: 2px;
+    padding: 0 space(3);
+
+    strong { @include display-text(1.3rem); }
+    span { font-size: 0.85rem; }
+  }
+
+  &__nav {
+    display: grid;
+    gap: 2px;
+
+    a {
+      display: flex;
+      gap: space(2);
+      align-items: center;
+      padding: 0.6rem 0.9rem;
+      border-radius: var(--radius-sm);
+      color: var(--c-muted);
+      text-decoration: none;
+      font-weight: 500;
+
+      &:hover { background: var(--c-surface-2); color: var(--c-text); }
+      &.active { background: var(--c-primary-soft); color: var(--c-primary-strong); font-weight: 600; }
+    }
+  }
+
+  &__main { min-width: 0; }
+
+  // En móvil el menú pasa a ser una fila de pestañas desplazable.
+  @include below("lg") {
+    grid-template-columns: 1fr;
+    gap: space(4);
+    padding-top: space(4);
+
+    &__side { position: static; }
+
+    &__nav {
+      display: flex;
+      overflow-x: auto;
+      gap: space(1);
+      padding-bottom: 4px;
+      scrollbar-width: none;
+
+      a {
+        white-space: nowrap;
+        border: 1px solid var(--c-border);
+        border-radius: var(--radius-pill);
+        padding: 0.45rem 0.85rem;
+        font-size: 0.9rem;
+      }
+    }
+  }
+}
+
+.admin-page {
+  display: grid;
+  gap: space(5);
+
+  &__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: end;
+    gap: space(4);
+    flex-wrap: wrap;
+
+    p { margin: 0; }
+  }
+
+  &__title {
+    font-size: clamp(1.7rem, 4vw, 2.3rem);
+    margin: 0 0 space(1);
+  }
+}
