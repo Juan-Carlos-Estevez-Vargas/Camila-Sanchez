@@ -230,6 +230,23 @@ Listo: cualquiera abre la página, y tú y Camila entran por `/entrar` con su
 correo y contraseña. Tú ves *Administración* (`/super`) y ella *Mi panel*
 (`/panel`).
 
+### Versiones y releases
+
+Cada despliegue termina creando un release `vX.Y.Z` en la pestaña *Releases*
+de GitHub, con las notas de lo que cambió agrupadas por tipo. La versión sigue
+[SemVer](https://semver.org/lang/es/) según los mensajes de commit desde el
+release anterior:
+
+| Commits desde el último release            | Ejemplo         |
+| ------------------------------------------- | --------------- |
+| `feat!:` o `BREAKING CHANGE` en el cuerpo   | 2.4.1 → 3.0.0   |
+| Algún `feat:`                               | 2.4.1 → 2.5.0   |
+| Sólo `fix:`, `docs:`, `ci:`, etc.           | 2.4.1 → 2.4.2   |
+
+El primer release toma la versión de `package.json` (2.0.0). Para forzar un
+salto, sube la versión en `package.json`. `npm run release:preview` muestra en
+local la versión y las notas que saldrían.
+
 ### Opcional: notificaciones push al celular
 
 La cajita, el chat y la campana funcionan en tiempo real sin esto. Para que
