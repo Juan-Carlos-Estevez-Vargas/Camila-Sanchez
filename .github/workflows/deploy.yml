@@ -4,6 +4,7 @@
 #      inicial de seed.sql la primera vez).
 #   2. Ajusta el inicio de sesión: dominio, URLs de retorno y registro cerrado.
 #   3. Publica las Edge Functions.
+#   4. Crea un release vX.Y.Z en GitHub con las notas de lo que cambió.
 #
 # La web la vuelve a publicar Netlify sola con cada merge (integración con Git
 # y netlify.toml).
@@ -117,3 +118,42 @@ jobs:
           else
             echo "::notice::Notificaciones push sin configurar: send-push no se publicó."
           fi
+
+  # Después de desplegar: versión SemVer calculada a partir de los commits,
+  # tag vX.Y.Z y release en GitHub con las notas de lo que cambió
+  # (scripts/release.mjs). Si no hay commits nuevos desde el último tag, no
+  # crea nada.
+  release:
+    needs: supabase
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Calcular versión y notas
+        id: version
+        env:
+          SITE_URL: ${{ vars.SITE_URL }}
+        run: node scripts/release.mjs
+
+      - name: Crear release
+        if: steps.version.outputs.version != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: v${{ steps.version.outputs.version }}
+          NOTES: ${{ steps.version.outputs.notes }}
+        run: |
+          gh release create "$VERSION" \
+            --target "$GITHUB_SHA" \
+            --title "$VERSION" \
+            --notes-file "$NOTES" \
+            --latest
+          echo "::notice::Release $VERSION publicado."
