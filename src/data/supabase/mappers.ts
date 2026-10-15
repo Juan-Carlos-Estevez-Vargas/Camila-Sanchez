@@ -77,6 +77,7 @@ export const toPhoto = (r: Row): Photo => ({
   width: numOrNull(r.width),
   height: numOrNull(r.height),
   bytes: numOrNull(r.bytes),
+  sourceHash: strOrNull(r.source_hash),
   createdAt: str(r.created_at),
 });
 
@@ -91,6 +92,7 @@ export const fromPhoto = (p: Partial<Photo>): Row => ({
   width: p.width,
   height: p.height,
   bytes: p.bytes,
+  source_hash: p.sourceHash,
 });
 
 export const toMilestone = (r: Row): Milestone => ({
