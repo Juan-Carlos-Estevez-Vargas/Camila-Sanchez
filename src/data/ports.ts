@@ -1,0 +1,143 @@
+/**
+ * Puertos (interfaces) de la capa de datos — arquitectura hexagonal.
+ *
+ * La UI sólo conoce estas interfaces. Hay dos adaptadores:
+ *   - data/supabase: producción (Postgres + RLS, Auth, Storage, Realtime).
+ *   - data/demo:     todo en el navegador, para probar sin backend.
+ * La fábrica de data/backend.ts elige uno al arrancar (patrón Strategy).
+ */
+import type {
+  AppNotification, AuditEntry, ChatMessage, ImportantDate, Interruption, Milestone,
+  Note, NoteKind, PermissionDefinition, Photo, PhotoUrls, Profile, Role, RolePermission,
+  Section, SessionUser, SiteSettings, Uuid,
+} from "@/domain/types";
+
+export type Unsubscribe = () => void;
+
+export interface AuthGateway {
+  getSession(): Promise<SessionUser | null>;
+  onChange(listener: (user: SessionUser | null) => void): Unsubscribe;
+  signInWithPassword(email: string, password: string): Promise<void>;
+  sendMagicLink(email: string): Promise<void>;
+  sendPasswordReset(email: string): Promise<void>;
+  updatePassword(password: string): Promise<void>;
+  signOut(): Promise<void>;
+}
+
+export type ReorderableTable = "sections" | "photos" | "milestones";
+
+export interface ContentRepository {
+  getSettings(): Promise<SiteSettings>;
+  updateSettings(patch: Partial<Omit<SiteSettings, "updatedAt">>): Promise<SiteSettings>;
+
+  listSections(): Promise<Section[]>;
+  saveSection(section: Omit<Section, "id"> & { id?: Uuid }): Promise<Section>;
+  deleteSection(id: Uuid): Promise<void>;
+
+  listMilestones(): Promise<Milestone[]>;
+  saveMilestone(milestone: Omit<Milestone, "id"> & { id?: Uuid }): Promise<Milestone>;
+  deleteMilestone(id: Uuid): Promise<void>;
+
+  listDates(): Promise<ImportantDate[]>;
+  saveDate(date: Omit<ImportantDate, "id"> & { id?: Uuid }): Promise<ImportantDate>;
+  deleteDate(id: Uuid): Promise<void>;
+
+  /** Activas ahora (página pública) o todas (panel). */
+  listInterruptions(scope: "active" | "all"): Promise<Interruption[]>;
+  saveInterruption(item: Omit<Interruption, "id"> & { id?: Uuid }): Promise<Interruption>;
+  deleteInterruption(id: Uuid): Promise<void>;
+  markInterruptionSeen(id: Uuid): Promise<void>;
+  listSeenInterruptions(): Promise<Uuid[]>;
+
+  reorder(table: ReorderableTable, orderedIds: Uuid[]): Promise<void>;
+}
+
+export interface UploadedImage {
+  storagePath: string;
+  thumbPath: string;
+}
+
+export interface PhotoRepository {
+  list(): Promise<Photo[]>;
+  save(photo: Omit<Photo, "id" | "createdAt"> & { id?: Uuid }): Promise<Photo>;
+  delete(photo: Photo): Promise<void>;
+  /** Sube el archivo optimizado y su miniatura. */
+  upload(full: Blob, thumb: Blob, extension: string): Promise<UploadedImage>;
+  /** URLs listas para <img>, resueltas en lote (una petición). */
+  resolveUrls(photos: Photo[]): Promise<Map<Uuid, PhotoUrls>>;
+}
+
+export interface MessagingRepository {
+  listNotes(): Promise<Note[]>;
+  sendNote(note: { recipientId: Uuid; kind: NoteKind; title: string; body: string }): Promise<Note>;
+  markNoteRead(id: Uuid): Promise<void>;
+  deleteNote(id: Uuid): Promise<void>;
+
+  listChat(options?: { before?: string; limit?: number }): Promise<ChatMessage[]>;
+  sendChat(body: string): Promise<ChatMessage>;
+  deleteChat(id: Uuid): Promise<void>;
+
+  listNotifications(limit?: number): Promise<AppNotification[]>;
+  markNotificationRead(id: Uuid): Promise<void>;
+  markAllNotificationsRead(kind?: AppNotification["kind"]): Promise<void>;
+}
+
+export interface NewUserInput {
+  email: string;
+  displayName: string;
+  role: Role;
+  /** Si se omite se envía una invitación por correo. */
+  password?: string;
+}
+
+export interface UserRepository {
+  getProfile(id: Uuid): Promise<Profile | null>;
+  listProfiles(): Promise<Profile[]>;
+  updateProfile(id: Uuid, patch: Partial<Pick<Profile, "displayName" | "avatarUrl" | "role" | "isActive">>): Promise<Profile>;
+  myPermissions(): Promise<string[]>;
+  listPermissions(): Promise<PermissionDefinition[]>;
+  listRolePermissions(): Promise<RolePermission[]>;
+  setRolePermission(role: Role, permission: string, granted: boolean): Promise<void>;
+  createUser(input: NewUserInput): Promise<void>;
+  deleteUser(id: Uuid): Promise<void>;
+  listAudit(options: { page: number; pageSize: number; table?: string }): Promise<AuditEntry[]>;
+}
+
+export type RealtimeTable =
+  | "site_settings" | "sections" | "photos" | "milestones" | "important_dates"
+  | "interruptions" | "notes" | "chat_messages" | "notifications";
+
+export interface RealtimeChange<T = Record<string, unknown>> {
+  table: RealtimeTable;
+  type: "INSERT" | "UPDATE" | "DELETE";
+  record: T | null;
+  old: Partial<T> | null;
+}
+
+export interface RealtimeGateway {
+  subscribe(tables: RealtimeTable[], listener: (change: RealtimeChange) => void): Unsubscribe;
+}
+
+export interface PushSubscriptionInput {
+  endpoint: string;
+  p256dh: string;
+  auth: string;
+  userAgent: string;
+}
+
+export interface PushRepository {
+  register(subscription: PushSubscriptionInput): Promise<void>;
+  unregister(endpoint: string): Promise<void>;
+}
+
+/** Agregado con todos los puertos: lo que la app recibe por contexto. */
+export interface Backend {
+  readonly mode: "supabase" | "demo";
+  readonly auth: AuthGateway;
+  readonly content: ContentRepository;
+  readonly photos: PhotoRepository;
+  readonly messaging: MessagingRepository;
+  readonly users: UserRepository;
+  readonly realtime: RealtimeGateway;
+  readonly push: PushRepository;
+}
