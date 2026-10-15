@@ -1,7 +1,8 @@
 -- =============================================================================
 -- Contenido inicial migrado desde la página original (legacy/).
--- Se ejecuta una sola vez después de las migraciones. Todo se puede editar
--- luego desde los paneles.
+-- Se ejecuta una sola vez después de las migraciones (el flujo Deploy lo hace
+-- solo). Todo se edita luego desde los paneles: no cambies este archivo después
+-- del primer despliegue, porque si cambia la CLI lo vuelve a ejecutar.
 -- =============================================================================
 
 update public.site_settings set

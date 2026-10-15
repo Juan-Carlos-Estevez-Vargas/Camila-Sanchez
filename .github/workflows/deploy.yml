@@ -1,0 +1,109 @@
+# Despliegue automático del backend en cada merge a main o master.
+#
+#   1. Aplica las migraciones nuevas de supabase/migrations (y el contenido
+#      inicial de seed.sql la primera vez).
+#   2. Ajusta el inicio de sesión: dominio, URLs de retorno y registro cerrado.
+#   3. Publica las Edge Functions.
+#
+# La web la vuelve a publicar Netlify sola con cada merge (integración con Git
+# y netlify.toml).
+#
+# Configuración (Settings → Secrets and variables → Actions), una sola vez:
+#   Secrets:   SUPABASE_ACCESS_TOKEN, SUPABASE_DB_PASSWORD
+#              (opcionales, para push: VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY,
+#               VAPID_SUBJECT, PUSH_WEBHOOK_SECRET)
+#   Variables: SUPABASE_PROJECT_REF, SITE_URL (p. ej. https://camila-sanchez.netlify.app)
+# Mientras falten, el flujo termina en verde avisando qué falta.
+name: Deploy
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  supabase:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+      PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
+      SITE_URL: ${{ vars.SITE_URL }}
+    steps:
+      - name: Revisar configuración
+        id: config
+        run: |
+          missing=""
+          [ -n "$SUPABASE_ACCESS_TOKEN" ] || missing="$missing secreto SUPABASE_ACCESS_TOKEN,"
+          [ -n "$SUPABASE_DB_PASSWORD" ] || missing="$missing secreto SUPABASE_DB_PASSWORD,"
+          [ -n "$PROJECT_REF" ] || missing="$missing variable SUPABASE_PROJECT_REF,"
+          [ -n "$SITE_URL" ] || missing="$missing variable SITE_URL,"
+          if [ -n "$missing" ]; then
+            echo "::notice::Supabase aún no está configurado (falta:${missing%,}). No se desplegó nada."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v4
+        if: steps.config.outputs.ready == 'true'
+
+      - uses: actions/setup-node@v4
+        if: steps.config.outputs.ready == 'true'
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Pruebas (incluidas las de seguridad de la base de datos)
+        if: steps.config.outputs.ready == 'true'
+        run: npm ci && npm run check
+
+      - uses: supabase/setup-cli@v1
+        if: steps.config.outputs.ready == 'true'
+        with:
+          version: 2.121.0
+
+      - name: Aplicar migraciones
+        if: steps.config.outputs.ready == 'true'
+        run: |
+          supabase link --project-ref "$PROJECT_REF" --password "$SUPABASE_DB_PASSWORD"
+          supabase db push --include-seed --password "$SUPABASE_DB_PASSWORD" --yes
+
+      - name: Configurar inicio de sesión
+        if: steps.config.outputs.ready == 'true'
+        run: |
+          site="${SITE_URL%/}"
+          body=$(jq -n --arg site "$site" \
+            '{site_url: $site, uri_allow_list: ($site + "/**"), disable_signup: true}')
+          curl --fail-with-body -sS -X PATCH \
+            "https://api.supabase.com/v1/projects/$PROJECT_REF/config/auth" \
+            -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "$body" > /dev/null
+
+      - name: Publicar Edge Functions
+        if: steps.config.outputs.ready == 'true'
+        env:
+          VAPID_PUBLIC_KEY: ${{ secrets.VAPID_PUBLIC_KEY }}
+          VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
+          VAPID_SUBJECT: ${{ secrets.VAPID_SUBJECT }}
+          PUSH_WEBHOOK_SECRET: ${{ secrets.PUSH_WEBHOOK_SECRET }}
+        run: |
+          supabase secrets set --project-ref "$PROJECT_REF" "ALLOWED_ORIGIN=${SITE_URL%/}"
+          supabase functions deploy admin-users --project-ref "$PROJECT_REF" --use-api
+          if [ -n "$VAPID_PRIVATE_KEY" ] && [ -n "$PUSH_WEBHOOK_SECRET" ]; then
+            supabase secrets set --project-ref "$PROJECT_REF" \
+              "VAPID_PUBLIC_KEY=$VAPID_PUBLIC_KEY" "VAPID_PRIVATE_KEY=$VAPID_PRIVATE_KEY" \
+              "VAPID_SUBJECT=$VAPID_SUBJECT" "PUSH_WEBHOOK_SECRET=$PUSH_WEBHOOK_SECRET"
+            supabase functions deploy send-push --project-ref "$PROJECT_REF" --use-api --no-verify-jwt
+          else
+            echo "::notice::Notificaciones push sin configurar: send-push no se publicó."
+          fi
