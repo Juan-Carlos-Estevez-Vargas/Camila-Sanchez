@@ -14,6 +14,14 @@ const TextsAdmin = lazy(() => import("@/features/admin/TextsAdmin"));
 const MilestonesAdmin = lazy(() => import("@/features/admin/MilestonesAdmin"));
 const DatesAdmin = lazy(() => import("@/features/admin/DatesAdmin"));
 const InterruptionsAdmin = lazy(() => import("@/features/admin/InterruptionsAdmin"));
+const SuperLayout = lazy(() => import("@/features/super/SuperLayout"));
+const SuperHome = lazy(() => import("@/features/super/SuperHome"));
+const UsersAdmin = lazy(() => import("@/features/super/UsersAdmin"));
+const RolesAdmin = lazy(() => import("@/features/super/RolesAdmin"));
+const ThemeAdmin = lazy(() => import("@/features/super/ThemeAdmin"));
+const SectionsManager = lazy(() => import("@/features/super/SectionsManager"));
+const SettingsAdmin = lazy(() => import("@/features/super/SettingsAdmin"));
+const AuditAdmin = lazy(() => import("@/features/super/AuditAdmin"));
 
 export const appRoutes = (
   <>
@@ -24,6 +32,15 @@ export const appRoutes = (
       <Route path="hitos" element={<RequirePermission check={(p) => p.can(PERMISSIONS.contentEdit)}><MilestonesAdmin /></RequirePermission>} />
       <Route path="fechas" element={<RequirePermission check={(p) => p.can(PERMISSIONS.datesManage)}><DatesAdmin /></RequirePermission>} />
       <Route path="sorpresas" element={<RequirePermission check={(p) => p.can(PERMISSIONS.interruptionsManage)}><InterruptionsAdmin /></RequirePermission>} />
+    </Route>
+    <Route path="/super" element={<RequirePermission check={(p) => p.canUseSuperPanel}><SuperLayout /></RequirePermission>}>
+      <Route index element={<SuperHome />} />
+      <Route path="usuarios" element={<RequirePermission check={(p) => p.can(PERMISSIONS.usersManage)}><UsersAdmin /></RequirePermission>} />
+      <Route path="permisos" element={<RequirePermission check={(p) => p.can(PERMISSIONS.usersManage)}><RolesAdmin /></RequirePermission>} />
+      <Route path="apariencia" element={<RequirePermission check={(p) => p.can(PERMISSIONS.themeManage)}><ThemeAdmin /></RequirePermission>} />
+      <Route path="secciones" element={<RequirePermission check={(p) => p.can(PERMISSIONS.sectionsManage)}><SectionsManager /></RequirePermission>} />
+      <Route path="ajustes" element={<RequirePermission check={(p) => p.can(PERMISSIONS.settingsManage)}><SettingsAdmin /></RequirePermission>} />
+      <Route path="auditoria" element={<RequirePermission check={(p) => p.can(PERMISSIONS.auditView)}><AuditAdmin /></RequirePermission>} />
     </Route>
   </>
 );

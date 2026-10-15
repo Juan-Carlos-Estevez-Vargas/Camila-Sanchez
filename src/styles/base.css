@@ -109,6 +109,12 @@ textarea {
   color: inherit;
 }
 
+input[type="checkbox"],
+input[type="radio"],
+input[type="range"] {
+  accent-color: var(--c-primary);
+}
+
 :focus-visible {
   outline: 3px solid color-mix(in srgb, var(--c-primary) 60%, transparent);
   outline-offset: 2px;
