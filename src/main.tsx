@@ -20,3 +20,10 @@ async function bootstrap() {
 }
 
 void bootstrap();
+
+// El service worker sólo en producción (en desarrollo estorba al hot reload).
+if (import.meta.env.PROD && "serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js").catch((error) => console.warn("[sw]", error));
+  });
+}
