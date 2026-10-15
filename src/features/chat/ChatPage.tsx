@@ -132,6 +132,7 @@ export default function ChatPage() {
       <div
         ref={scroller}
         className="chat__scroller card"
+        data-tour="chat-thread"
         onScroll={(e) => {
           const el = e.currentTarget;
           stickToBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
@@ -166,7 +167,7 @@ export default function ChatPage() {
           </>
         )}
       </div>
-      <form className="chat__composer" onSubmit={send}>
+      <form className="chat__composer" onSubmit={send} data-tour="chat-composer">
         <textarea
           className="textarea" rows={1} maxLength={2000} placeholder="Escribe algo bonito…" value={text} aria-label="Mensaje"
           onChange={(e) => setText(e.target.value)}

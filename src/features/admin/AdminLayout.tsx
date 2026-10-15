@@ -22,7 +22,7 @@ export function AdminLayout({ title, subtitle, items }: { title: string; subtitl
           <strong>{title}</strong>
           <span className="muted">{subtitle}{profile ? ` · ${profile.displayName}` : ""}</span>
         </div>
-        <nav className="admin__nav" aria-label={title}>
+        <nav className="admin__nav" aria-label={title} data-tour="admin-nav">
           {visible.map((item) => (
             <NavLink key={item.to} to={item.to} end={item.end}>
               <span aria-hidden>{item.icon}</span> {item.label}
@@ -30,7 +30,7 @@ export function AdminLayout({ title, subtitle, items }: { title: string; subtitl
           ))}
         </nav>
       </aside>
-      <main id="contenido-principal" className="admin__main">
+      <main id="contenido-principal" className="admin__main" data-tour="admin-main">
         <Outlet />
       </main>
     </div>

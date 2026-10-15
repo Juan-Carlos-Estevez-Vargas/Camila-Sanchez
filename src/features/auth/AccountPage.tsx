@@ -50,7 +50,7 @@ export default function AccountPage() {
         {profile?.displayName} · {user?.email}{profile ? ` · ${ROLE_LABELS[profile.role]}` : ""}
       </p>
 
-      <form className="card stack" onSubmit={changePassword} noValidate>
+      <form className="card stack" onSubmit={changePassword} noValidate data-tour="account-password">
         <h2 style={{ margin: 0, fontSize: "1.1rem" }}>Cambiar contraseña</h2>
         <Field label="Contraseña nueva" hint={`Mínimo ${MIN_PASSWORD_LENGTH} caracteres`}>
           {(id) => <input id={id} className="input" type="password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} />}
@@ -62,7 +62,7 @@ export default function AccountPage() {
         <button className="btn" style={{ justifySelf: "start" }} disabled={busy || !password}>Guardar contraseña</button>
       </form>
 
-      <section className="card stack" style={{ marginTop: 16 }}>
+      <section className="card stack" style={{ marginTop: 16 }} data-tour="account-sessions">
         <h2 style={{ margin: 0, fontSize: "1.1rem" }}>Sesiones</h2>
         <p className="muted" style={{ margin: 0 }}>
           Si perdiste un celular o entraste desde un equipo que no es tuyo, cierra la sesión en todos lados.

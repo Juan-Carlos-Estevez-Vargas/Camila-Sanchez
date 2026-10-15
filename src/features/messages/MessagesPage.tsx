@@ -152,7 +152,7 @@ export default function MessagesPage() {
         <p className="muted">Notitas, perdones, “te amo” y sorpresas. Les llega un aviso al instante.</p>
       </header>
       <EnableNotifications />
-      <div className="tabs" role="tablist">
+      <div className="tabs" role="tablist" data-tour="notes-tabs">
         <button role="tab" className="tab" aria-selected={tab === "inbox"} onClick={() => setTab("inbox")}>Recibidas {unread > 0 && <span className="counter-dot">{unread}</span>}</button>
         <button role="tab" className="tab" aria-selected={tab === "sent"} onClick={() => setTab("sent")}>Enviadas</button>
         <button role="tab" className="tab" aria-selected={tab === "write"} onClick={() => setTab("write")}>✍️ Escribir</button>
