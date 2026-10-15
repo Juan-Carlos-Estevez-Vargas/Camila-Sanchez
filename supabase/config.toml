@@ -1,0 +1,21 @@
+# Configuración para la CLI de Supabase (supabase link / db push / functions deploy).
+project_id = "camila-love-app"
+
+[auth]
+# Sólo el super administrador crea cuentas (desde el panel): nadie puede
+# registrarse por su cuenta.
+enable_signup = false
+site_url = "http://localhost:5173"
+additional_redirect_urls = ["http://localhost:5173/entrar"]
+minimum_password_length = 8
+
+[auth.email]
+enable_signup = false
+enable_confirmations = true
+
+[functions.admin-users]
+verify_jwt = true
+
+[functions.send-push]
+# La invoca un Database Webhook con su propio secreto, no un usuario.
+verify_jwt = false
