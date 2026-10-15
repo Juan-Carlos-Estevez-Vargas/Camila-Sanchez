@@ -17,6 +17,12 @@ jwt_expiry = 3600
 enable_signup = false
 enable_confirmations = true
 
+# Correo de recuperación con enlace a /recuperar#token_hash=… (sirve en otro
+# dispositivo). En producción lo aplica el flujo Deploy cuando hay SMTP propio.
+[auth.email.template.recovery]
+subject = "Crea tu contraseña nueva 🔑"
+content_path = "./supabase/templates/recovery.html"
+
 [functions.admin-users]
 verify_jwt = true
 
