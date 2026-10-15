@@ -1,8 +1,15 @@
+# Cabeceras de seguridad (las mismas que en vercel.json; una prueba lo vigila).
+# La CSP sólo deja cargar código del propio sitio y hablar con Supabase: aunque
+# alguien lograra inyectar HTML, el navegador no ejecutaría scripts ajenos ni
+# podría mandar la sesión a otro servidor.
 /*
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; style-src-attr 'unsafe-inline'; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; media-src 'self' blob: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; worker-src 'self' blob:; manifest-src 'self'; frame-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'; upgrade-insecure-requests
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+  Cross-Origin-Opener-Policy: same-origin
   X-Content-Type-Options: nosniff
   X-Frame-Options: DENY
   Referrer-Policy: strict-origin-when-cross-origin
-  Permissions-Policy: camera=(), microphone=(), geolocation=()
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), browsing-topics=()
 
 # Las zonas privadas nunca deben aparecer en buscadores.
 /entrar
@@ -11,6 +18,11 @@
   X-Robots-Tag: noindex, nofollow
 /chat
   X-Robots-Tag: noindex, nofollow
+/cuenta
+  X-Robots-Tag: noindex, nofollow
+/invitacion
+  X-Robots-Tag: noindex, nofollow
+  Cache-Control: no-store
 /panel
   X-Robots-Tag: noindex, nofollow
 /panel/*
