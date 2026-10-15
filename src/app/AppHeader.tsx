@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { formatRelative } from "@/domain/dates";
 import { PERMISSIONS } from "@/domain/permissions";
+import { GuidedTour } from "@/features/tour/GuidedTour";
 import { useAuth } from "@/state/AuthContext";
 import { useNotifications } from "@/state/NotificationsContext";
 import { useSiteContent } from "@/state/SiteContentStore";
@@ -10,7 +11,7 @@ function NotificationBell() {
   const { items, unread, markAllRead, markRead } = useNotifications();
   const [open, setOpen] = useState(false);
   return (
-    <div className="bell">
+    <div className="bell" data-tour="bell">
       <button className="btn btn--icon btn--ghost" aria-label={`Notificaciones (${unread} sin leer)`} aria-expanded={open} onClick={() => setOpen((o) => !o)}>
         <span aria-hidden>🔔</span>
         {unread > 0 && <span className="counter-dot bell__dot">{unread > 9 ? "9+" : unread}</span>}
@@ -50,34 +51,35 @@ export function AppHeader() {
   return (
     <header className="app-header">
       <div className="container app-header__inner">
-        <Link to="/" className="brand" onClick={close}>
+        <Link to="/" className="brand" data-tour="brand" onClick={close}>
           <span className="brand__mark" aria-hidden>♥</span>
           <span className="brand__name">{title}</span>
         </Link>
-        <button className="btn btn--icon btn--ghost app-header__burger" aria-label="Menú" aria-expanded={menu} onClick={() => setMenu((m) => !m)}>☰</button>
+        <button className="btn btn--icon btn--ghost app-header__burger" data-tour="menu" aria-label="Menú" aria-expanded={menu} onClick={() => setMenu((m) => !m)}>☰</button>
         <nav className={`app-nav${menu ? " is-open" : ""}`} aria-label="Principal">
           <NavLink to="/" end onClick={close}>Inicio</NavLink>
           {user && policy.can(PERMISSIONS.notesSend) && (
-            <NavLink to="/mensajes" onClick={close}>
+            <NavLink to="/mensajes" data-tour="nav-mensajes" onClick={close}>
               Cajita {unreadByKind.note > 0 && <span className="counter-dot">{unreadByKind.note}</span>}
             </NavLink>
           )}
           {user && policy.can(PERMISSIONS.chatUse) && (
-            <NavLink to="/chat" onClick={close}>
+            <NavLink to="/chat" data-tour="nav-chat" onClick={close}>
               Chat {unreadByKind.chat > 0 && <span className="counter-dot">•</span>}
             </NavLink>
           )}
-          {policy.canUseContentPanel && <NavLink to="/panel" onClick={close}>Mi panel</NavLink>}
-          {policy.canUseSuperPanel && <NavLink to="/super" onClick={close}>Administración</NavLink>}
-          {user && <NavLink to="/cuenta" onClick={close}>Mi cuenta</NavLink>}
+          {policy.canUseContentPanel && <NavLink to="/panel" data-tour="nav-panel" onClick={close}>Mi panel</NavLink>}
+          {policy.canUseSuperPanel && <NavLink to="/super" data-tour="nav-super" onClick={close}>Administración</NavLink>}
+          {user && <NavLink to="/cuenta" data-tour="nav-cuenta" onClick={close}>Mi cuenta</NavLink>}
           {user ? (
             <button className="btn btn--sm btn--ghost" onClick={() => { close(); void signOut(); }}>
               Salir{profile ? ` (${profile.displayName})` : ""}
             </button>
           ) : (
-            <NavLink to="/entrar" className="btn btn--sm" onClick={close}>Entrar</NavLink>
+            <NavLink to="/entrar" className="btn btn--sm" data-tour="nav-entrar" onClick={close}>Entrar</NavLink>
           )}
         </nav>
+        <GuidedTour />
         {user && <NotificationBell />}
       </div>
     </header>

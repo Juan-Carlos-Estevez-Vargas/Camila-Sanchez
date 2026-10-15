@@ -7,6 +7,17 @@ regresiva y subida de fotos que se optimizan solas.
 > La versión original (HTML/JS estático) quedó en [`legacy/`](legacy/README.md)
 > con sus errores corregidos.
 
+## Documentación
+
+| Documento | Para quién |
+| --- | --- |
+| [Manual de usuario](docs/MANUAL_DE_USUARIO.md) | Quien usa la app: visitantes, Camila y Juan |
+| [Manual de arquitectura](docs/ARQUITECTURA.md) | Quien mantiene o extiende el código |
+| [Diagramas](docs/DIAGRAMAS.md) | Flujos, secuencias, despliegue, modelo de datos y permisos (Mermaid) |
+
+Dentro de la app, el botón **? Tutorial** de la cabecera hace un recorrido
+guiado por la página en la que estés, según lo que tu cuenta puede usar.
+
 ## Probarlo ya (modo demo, sin cuentas)
 
 ```bash
@@ -32,6 +43,7 @@ que puedes probar el chat y las notificaciones abriendo dos ventanas.
 | Chat en tiempo real | `/chat` | `chat.use` |
 | Panel de contenido: fotos, textos y animaciones, hitos, fechas importantes, sorpresas/interrupciones, paleta de colores (por defecto la rosa suave de la versión 1) | `/panel` | Editora y super admin |
 | Super admin: usuarios, roles y permisos, apariencia (colores, fuentes, efectos, música), secciones, ajustes, auditoría | `/super` | Super admin |
+| Tutorial guiado: botón fijo en la cabecera que recorre la página actual paso a paso | todas | Todos |
 
 **Fotos:** cada imagen se procesa en un *pool* de Web Workers (OffscreenCanvas):
 se corrige la orientación EXIF, se quitan metadatos (GPS incluido), se reduce
@@ -58,12 +70,12 @@ src/
   services/   cola de tareas, pipeline de imágenes (workers), notificaciones
   state/      contextos: backend, auth, contenido (store observable), tema, notificaciones
   ui/         componentes reutilizables (modal, campos, toasts, cargador romántico)
-  features/   site · auth · admin (panel) · super · messages · chat
+  features/   site · auth · admin (panel) · super · messages · chat · tour
               (cada una con sus estilos en features/<x>/styles)
   styles/     sistema de diseño en SCSS: abstracts · base · components · layout
 supabase/
   migrations/ esquema, RLS, triggers de auditoría y notificaciones, bucket privado
-  functions/  admin-users (gestión de cuentas) · send-push (Web Push)
+  functions/  admin-users (cuentas) · redeem-invite (invitaciones) · send-push (Web Push)
   tests/      pruebas de RLS sobre PGlite
 ```
 

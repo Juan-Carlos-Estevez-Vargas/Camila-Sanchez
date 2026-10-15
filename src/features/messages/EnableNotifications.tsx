@@ -10,7 +10,7 @@ export function EnableNotifications() {
   const [permission, setPermission] = useState(notificationPermission);
   if (permission === "unsupported" || permission === "granted") return null;
   return (
-    <div className="card row-between notify-cta">
+    <div className="card row-between notify-cta" data-tour="push">
       <span>🔔 Activa los avisos para enterarte al instante cuando te escriban.</span>
       <button
         className="btn btn--sm"
