@@ -52,6 +52,8 @@
   background: var(--c-surface);
   transition: border-color 0.2s, box-shadow 0.2s;
 }
+.input:not([type="color"]),
+.select { height: 44px; }
 .textarea { min-height: 110px; resize: vertical; line-height: 1.5; }
 .input:focus,
 .select:focus,
