@@ -1,0 +1,129 @@
+@use "../abstracts" as *;
+
+// Tutorial guiado: botón fijo en la cabecera, resaltado y tarjeta del paso.
+
+.tour-launcher {
+  flex: 0 0 auto;
+  gap: space(1);
+
+  &__icon {
+    display: inline-grid;
+    place-items: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--c-primary);
+    color: var(--c-primary-contrast);
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+
+  // En móvil sólo el icono, para dejar sitio a la marca y al menú.
+  @include below("sm") {
+    &__label { @include visually-hidden; }
+  }
+
+  // Hasta que se abre por primera vez, late suavemente para que se note.
+  &.is-new { animation: tour-pulse 2.4s ease-in-out infinite; }
+
+  @include reduced-motion {
+    &.is-new { animation: none; }
+  }
+}
+
+@keyframes tour-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 tint(var(--c-primary), 0%); }
+  50% { box-shadow: 0 0 0 6px tint(var(--c-primary), 25%); }
+}
+
+.tour {
+  position: fixed;
+  inset: 0;
+  z-index: z("tour");
+
+  &__backdrop {
+    position: absolute;
+    inset: 0;
+
+    &.is-dim {
+      background: tint(#12070c, 55%);
+      animation: fade-in 0.25s $ease;
+    }
+  }
+
+  &__spot {
+    position: absolute;
+    border-radius: var(--radius-sm);
+    // La sombra gigante oscurece todo lo demás y deja el destino a la vista.
+    box-shadow: 0 0 0 4px tint(var(--c-primary), 70%), 0 0 0 200vmax tint(#12070c, 55%);
+    pointer-events: none;
+    transition: top 0.3s $ease, left 0.3s $ease, width 0.3s $ease, height 0.3s $ease;
+
+    @include reduced-motion { transition: none; }
+  }
+
+  &__card {
+    position: absolute;
+    width: min(380px, calc(100vw - 24px));
+    padding: space(4);
+    box-shadow: var(--shadow-lg);
+    animation: pop-in 0.25s $ease;
+
+    &--sheet { width: calc(100vw - 24px); }
+
+    @include reduced-motion { animation: none; }
+  }
+
+  &__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: -#{space(1)} -#{space(1)} 0 0;
+  }
+
+  &__progress {
+    font-size: 0.8rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--c-primary);
+  }
+
+  &__title {
+    @include display-text(1.25rem);
+    margin: space(1) 0 space(2);
+  }
+
+  &__body {
+    margin: 0;
+    color: var(--c-muted);
+    line-height: 1.55;
+  }
+
+  &__dots {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: space(3);
+
+    span {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--c-border-strong);
+      transition: width 0.2s $ease;
+
+      &.is-active {
+        width: 18px;
+        border-radius: 999px;
+        background: var(--c-primary);
+      }
+    }
+  }
+
+  &__actions {
+    display: flex;
+    align-items: center;
+    gap: space(2);
+    margin-top: space(4);
+  }
+}
