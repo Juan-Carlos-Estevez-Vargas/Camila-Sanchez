@@ -283,20 +283,6 @@ const fotosPorAño = [
     año: "2025",
     color: "#ff4081", // Color distintivo para cada año
     fotos: {
-      Marzo: [
-        {
-          url: "assets/img/2025/marzo1.jpg",
-          mensaje: "Primera primavera juntos del año, todo florece a tu lado",
-          fecha: "20 de Marzo 2024",
-        },
-      ],
-      Abril: [
-        {
-          url: "assets/img/2024/abril1.jpg",
-          mensaje: "Celebrando tu cumpleaños, cada año a tu lado es un regalo",
-          fecha: "20 de Abril 2024",
-        },
-      ],
       Mayo: [
         {
           url: "assets/img/2025/mayo1.jpeg",
@@ -441,35 +427,6 @@ const fotosPorAño = [
           url: "assets/img/2025/agosto8.jpeg",
           mensaje: "Día de picnic",
           fecha: "30 de Agosto 2025",
-        },
-      ],
-      Septiembre: [
-        {
-          url: "assets/img/2024/septiembre1.jpg",
-          mensaje:
-            "Aniversario de meses, cada día contigo es un motivo para celebrar",
-          fecha: "5 de Septiembre 2024",
-        },
-      ],
-      Octubre: [
-        {
-          url: "assets/img/2024/octubre1.jpg",
-          mensaje: "Halloween 2024, disfraces y dulces compartidos una vez más",
-          fecha: "31 de Octubre 2024",
-        },
-      ],
-      Noviembre: [
-        {
-          url: "assets/img/2024/noviembre1.jpg",
-          mensaje: "Día de gracias, agradeciendo otro año de amor y compañía",
-          fecha: "28 de Noviembre 2024",
-        },
-      ],
-      Diciembre: [
-        {
-          url: "assets/img/2024/diciembre1.jpg",
-          mensaje: "Navidad 2024, nuestra tradición de amor crece cada año",
-          fecha: "24 de Diciembre 2024",
         },
       ],
     },
