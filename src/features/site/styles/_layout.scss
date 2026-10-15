@@ -32,15 +32,6 @@
   }
 }
 
-.site-footer {
-  position: relative;
-  z-index: z("content");
-  padding: space(6) 0 space(7);
-  text-align: center;
-  color: var(--c-muted);
-  font-size: 0.9rem;
-}
-
 .music-toggle {
   position: fixed;
   z-index: z("music");
