@@ -9,18 +9,19 @@ update public.site_settings set
   site_subtitle      = 'Esta página es un reflejo de lo mucho que te amo. Cada detalle está hecho para ti.',
   relationship_start = '2025-05-31',
   is_public          = false,
+  -- Paleta "Rosa suave" de la versión 1; Camila puede cambiarla desde su panel.
   theme = '{
-    "primary": "#b0305a",
+    "primary": "#c2185b",
     "primaryContrast": "#ffffff",
-    "accent": "#e8a33d",
-    "background": "#fff8f6",
-    "surface": "#ffffff",
-    "text": "#2b1720",
-    "muted": "#7a5c66",
+    "accent": "#ff4081",
+    "background": "#ffe6ec",
+    "surface": "#fff7f9",
+    "text": "#880e4f",
+    "muted": "#ad1457",
     "fontDisplay": "Fraunces",
     "fontBody": "Inter",
     "radius": 18,
-    "darkMode": "auto"
+    "darkMode": "light"
   }'::jsonb,
   effects = '{
     "floating": { "enabled": true, "emojis": ["❤️", "💖", "🌸", "🌷", "✨"], "density": 14 },

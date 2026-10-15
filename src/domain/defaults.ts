@@ -5,34 +5,21 @@ import {
   SECTION_ANIMATIONS, type EffectsConfig, type Section, type SectionAnimation,
   type SectionContentMap, type SectionKind, type ThemeTokens,
 } from "./types";
+import { V1_PALETTE } from "./palettes";
 
+/** Tema de fábrica: los colores suaves de la versión 1, siempre en modo claro. */
 export const DEFAULT_THEME: ThemeTokens = {
-  primary: "#b0305a",
-  primaryContrast: "#ffffff",
-  accent: "#e8a33d",
-  background: "#fff8f6",
-  surface: "#ffffff",
-  text: "#2b1720",
-  muted: "#7a5c66",
+  ...V1_PALETTE.colors,
   fontDisplay: "Fraunces",
   fontBody: "Inter",
   radius: 18,
-  darkMode: "auto",
+  darkMode: "light",
 };
 
 export const DEFAULT_EFFECTS: EffectsConfig = {
   floating: { enabled: true, emojis: ["❤️", "💖", "🌸", "🌷", "✨"], density: 14 },
   cursorHearts: false,
   reduceOnMobile: true,
-};
-
-/** Paletas listas para el editor de apariencia. */
-export const THEME_PRESETS: Record<string, Partial<ThemeTokens>> = {
-  "Rosa vino": { primary: "#b0305a", accent: "#e8a33d", background: "#fff8f6", text: "#2b1720", muted: "#7a5c66" },
-  "Lavanda": { primary: "#6b4fa0", accent: "#e88aa8", background: "#faf7ff", text: "#231a33", muted: "#6c6180" },
-  "Atardecer": { primary: "#c4512b", accent: "#f2b544", background: "#fff9f2", text: "#2e1a12", muted: "#7f6152" },
-  "Bosque": { primary: "#2f6b4f", accent: "#d9a441", background: "#f6faf6", text: "#16241d", muted: "#5b6f63" },
-  "Medianoche": { primary: "#e05a84", accent: "#f0c674", background: "#16121c", surface: "#211b29", text: "#f4eaf0", muted: "#b3a2ad" },
 };
 
 export const FONT_OPTIONS = {
