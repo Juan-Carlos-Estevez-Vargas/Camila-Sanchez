@@ -34,6 +34,18 @@ export default defineConfig({
   resolve: {
     alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) },
   },
+  css: {
+    preprocessorOptions: {
+      scss: {
+        // `@use "abstracts" as *;` funciona desde cualquier archivo .scss.
+        loadPaths: [fileURLToPath(new URL("./src/styles", import.meta.url))],
+      },
+    },
+    modules: {
+      // Clases de CSS Modules legibles en desarrollo y cortas en producción.
+      generateScopedName: process.env.NODE_ENV === "production" ? "[hash:base64:6]" : "[name]__[local]__[hash:base64:4]",
+    },
+  },
   worker: { format: "es" },
   build: {
     target: "es2022",

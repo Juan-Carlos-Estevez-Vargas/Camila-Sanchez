@@ -1,0 +1,13 @@
+@use "../abstracts" as *;
+
+.card {
+  @include surface;
+  padding: space(5);
+  box-shadow: var(--shadow-sm);
+
+  &--interactive {
+    transition: transform 0.25s $ease, box-shadow 0.25s $ease;
+
+    &:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
+  }
+}

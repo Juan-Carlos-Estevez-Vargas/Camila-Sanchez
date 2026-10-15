@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { estimateRemainingMs, formatRemaining } from "@/services/images/bulk";
 import { formatBytes } from "@/services/images/sizing";
 import type { UploadSnapshot } from "@/services/images/PhotoUploader";
+import styles from "./RomanticLoader.module.scss";
 
 const PHRASES = [
   "Guardando este recuerdo con todo mi amor…",
@@ -77,14 +78,14 @@ export function RomanticLoader({ tasks, onCancel }: Props) {
   );
 
   return createPortal(
-    <div className="love-loader" role="alertdialog" aria-live="polite" aria-label="Guardando fotos">
-      <div className="love-loader__sparkles" aria-hidden>
+    <div className={styles.overlay} role="alertdialog" aria-live="polite" aria-label="Guardando fotos">
+      <div className={styles.sparkles} aria-hidden>
         {sparkles.map((s, i) => (
-          <span key={i} style={{ left: s.left, bottom: 0, animationDelay: s.delay }}>{s.emoji}</span>
+          <span key={i} style={{ left: s.left, animationDelay: s.delay }}>{s.emoji}</span>
         ))}
       </div>
-      <div className="love-loader__inner">
-        <div className="love-loader__ring">
+      <div className={styles.inner}>
+        <div className={styles.ring}>
           <svg viewBox="0 0 168 168" aria-hidden>
             <defs>
               <linearGradient id="love-gradient" x1="0" x2="1">
@@ -92,17 +93,17 @@ export function RomanticLoader({ tasks, onCancel }: Props) {
                 <stop offset="100%" stopColor="#ffd29a" />
               </linearGradient>
             </defs>
-            <circle className="love-loader__track" cx="84" cy="84" r={radius} fill="none" strokeWidth="10" />
+            <circle className={styles.track} cx="84" cy="84" r={radius} fill="none" strokeWidth="10" />
             <circle
-              className="love-loader__bar" cx="84" cy="84" r={radius} fill="none" strokeWidth="10"
+              className={styles.bar} cx="84" cy="84" r={radius} fill="none" strokeWidth="10"
               strokeDasharray={circumference} strokeDashoffset={circumference * (1 - stats.progress)}
             />
           </svg>
-          <div className="love-loader__heart" aria-hidden>💖</div>
+          <div className={styles.heart} aria-hidden>💖</div>
         </div>
-        <div className="love-loader__percent">{percent}%</div>
-        <p key={phrase} className="love-loader__phrase">{PHRASES[phrase]}</p>
-        <div className="love-loader__meta">
+        <div className={styles.percent}>{percent}%</div>
+        <p key={phrase} className={styles.phrase}>{PHRASES[phrase]}</p>
+        <div className={styles.meta}>
           {stats.done} de {stats.total} {stats.total === 1 ? "foto" : "fotos"} lista{stats.total === 1 ? "" : "s"}
           {stats.duplicates > 0 && ` · ${stats.duplicates} ya estaban`}
           {stats.saved > 0 && ` · ${formatBytes(stats.saved)} más livianas`}
@@ -110,18 +111,18 @@ export function RomanticLoader({ tasks, onCancel }: Props) {
           {remaining && <><br />Falta {remaining}</>}
         </div>
         {tasks.length > 1 && visible.length > 0 && (
-          <div className="love-loader__files">
+          <div className={styles.files}>
             {visible.map((t) => (
-              <div key={t.id} className="love-loader__file">
-                <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.label}</span>
+              <div key={t.id} className={styles.file}>
+                <span className={styles.fileName}>{t.label}</span>
                 <span>{t.stage}</span>
-                <div className="love-loader__file-bar"><span style={{ width: `${Math.round((t.status === "done" ? 1 : t.progress) * 100)}%` }} /></div>
+                <div className={styles.fileBar}><span style={{ width: `${Math.round((t.status === "done" ? 1 : t.progress) * 100)}%` }} /></div>
               </div>
             ))}
           </div>
         )}
         {onCancel && (
-          <button className="btn btn--ghost btn--sm" style={{ color: "#fff", borderColor: "rgba(255,255,255,.3)" }} onClick={onCancel}>
+          <button className={`btn btn--ghost btn--sm ${styles.cancel}`} onClick={onCancel}>
             Cancelar
           </button>
         )}

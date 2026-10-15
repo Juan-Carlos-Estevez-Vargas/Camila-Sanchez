@@ -1,0 +1,17 @@
+@use "../abstracts" as *;
+
+// Aviso fijo bajo la cabecera (sorpresas tipo "banner").
+.banner {
+  position: sticky;
+  top: $header-height;
+  z-index: z("banner");
+  background: linear-gradient(90deg, var(--c-primary), tint(var(--c-primary), 60%, var(--c-accent)));
+  color: var(--c-primary-contrast);
+  padding: space(2) 0;
+  animation: slide-up 0.4s $ease;
+
+  .btn--ghost {
+    color: inherit;
+    border-color: tint(currentColor, 40%);
+  }
+}

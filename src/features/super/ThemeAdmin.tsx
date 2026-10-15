@@ -8,6 +8,8 @@ import { useBackend } from "@/state/BackendContext";
 import { useContentStore, useSiteContent } from "@/state/SiteContentStore";
 import { PageLoader } from "@/ui/Feedback";
 import { Field, Switch } from "@/ui/Field";
+// La vista previa reutiliza los estilos reales de la página.
+import "@/features/site/styles/site.scss";
 
 type ColorKey = "primary" | "primaryContrast" | "accent" | "background" | "surface" | "text" | "muted";
 

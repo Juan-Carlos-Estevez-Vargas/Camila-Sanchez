@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from "react-router-dom";
-import "@/styles/admin.css";
+import "./styles/admin.scss";
 import type { AccessPolicy } from "@/domain/permissions";
 import { useAuth } from "@/state/AuthContext";
 

@@ -1,0 +1,77 @@
+@use "../abstracts" as *;
+
+.field {
+  display: grid;
+  gap: space(1);
+
+  &__label { font-size: 0.85rem; font-weight: 600; color: var(--c-muted); }
+  &__hint { font-size: 0.8rem; color: var(--c-muted); }
+  &__error { font-size: 0.8rem; color: var(--c-danger); }
+}
+
+.input,
+.select,
+.textarea {
+  width: 100%;
+  min-height: $control-height;
+  padding: 0.6rem 0.85rem;
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--c-surface);
+  transition: border-color 0.2s, box-shadow 0.2s;
+
+  &:focus {
+    outline: none;
+    border-color: var(--c-primary);
+    box-shadow: 0 0 0 4px tint(var(--c-primary), 15%);
+  }
+}
+
+.input:not([type="color"]),
+.select { height: $control-height; }
+
+.input[type="color"] { padding: 4px; width: 56px; cursor: pointer; }
+
+.textarea { min-height: 110px; resize: vertical; line-height: 1.5; }
+
+.form-grid {
+  display: grid;
+  gap: space(4);
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.switch {
+  display: inline-flex;
+  align-items: center;
+  gap: space(2);
+  cursor: pointer;
+  user-select: none;
+
+  input {
+    appearance: none;
+    width: 42px;
+    height: 24px;
+    border-radius: 999px;
+    background: var(--c-border-strong);
+    position: relative;
+    transition: background 0.2s;
+    cursor: pointer;
+    margin: 0;
+
+    &::after {
+      content: "";
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #fff;
+      transition: transform 0.2s $ease;
+      box-shadow: var(--shadow-sm);
+    }
+
+    &:checked { background: var(--c-primary); }
+    &:checked::after { transform: translateX(18px); }
+  }
+}

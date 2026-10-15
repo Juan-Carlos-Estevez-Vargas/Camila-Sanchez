@@ -1,0 +1,32 @@
+@use "../abstracts" as *;
+
+.toasts {
+  position: fixed;
+  z-index: z("toast");
+  right: space(4);
+  bottom: calc(#{space(4)} + env(safe-area-inset-bottom));
+  display: grid;
+  gap: space(2);
+  width: min(380px, calc(100% - 2rem));
+}
+
+.toast {
+  display: flex;
+  gap: space(3);
+  align-items: start;
+  padding: space(3) space(4);
+  border-radius: var(--radius-sm);
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-left: 4px solid var(--c-primary);
+  box-shadow: var(--shadow);
+  animation: slide-up 0.35s $ease;
+
+  &--error { border-left-color: var(--c-danger); }
+  &--success { border-left-color: var(--c-success); }
+
+  &__title { font-weight: 600; }
+  &__body { font-size: 0.9rem; color: var(--c-muted); }
+
+  button { margin-left: auto; }
+}

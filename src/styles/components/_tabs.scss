@@ -1,0 +1,30 @@
+@use "../abstracts" as *;
+
+.tabs {
+  display: flex;
+  gap: space(1);
+  padding: 4px;
+  background: var(--c-surface-2);
+  border-radius: var(--radius-pill);
+  width: fit-content;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.tab {
+  border: 0;
+  background: transparent;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--c-muted);
+  white-space: nowrap;
+
+  &[aria-selected="true"] {
+    background: var(--c-surface);
+    color: var(--c-text);
+    box-shadow: var(--shadow-sm);
+  }
+}

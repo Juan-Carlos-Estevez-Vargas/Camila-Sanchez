@@ -1,0 +1,31 @@
+@use "sass:map";
+@use "abstracts" as *;
+
+// Animaciones de entrada configurables por sección (Panel → Textos).
+$reveal-from: (
+  "fade-up": translateY(32px),
+  "zoom-in": scale(0.94),
+  "slide-left": translateX(-48px),
+  "slide-right": translateX(48px),
+);
+
+.reveal {
+  transition: opacity 0.9s $ease, transform 0.9s $ease;
+
+  @each $name, $transform in $reveal-from {
+    &--#{$name}:not(.is-visible) {
+      opacity: 0;
+      transform: $transform;
+    }
+  }
+
+  &--float:not(.is-visible),
+  &--heartbeat:not(.is-visible) { opacity: 0; }
+
+  &--float.is-visible > .container { animation: float-soft 6s ease-in-out infinite; }
+
+  &--heartbeat.is-visible .section-heading h2 {
+    display: inline-block;
+    animation: heartbeat 2.4s ease-in-out infinite;
+  }
+}

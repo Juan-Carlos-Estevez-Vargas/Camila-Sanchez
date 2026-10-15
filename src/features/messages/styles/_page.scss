@@ -1,0 +1,22 @@
+@use "abstracts" as *;
+
+// Estructura compartida por la cajita y el chat.
+.messages,
+.chat {
+  padding-block: space(6) space(7);
+  display: grid;
+  gap: space(4);
+  max-width: 820px;
+}
+
+.messages__header,
+.chat__header {
+  h1 { font-size: clamp(1.8rem, 5vw, 2.6rem); margin-bottom: space(1); }
+  p { margin: 0; }
+}
+
+.notify-cta {
+  padding: space(3) space(4);
+  background: var(--c-primary-soft);
+  border: 0;
+}

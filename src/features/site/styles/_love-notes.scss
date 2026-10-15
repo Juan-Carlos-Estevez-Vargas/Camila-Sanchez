@@ -1,0 +1,28 @@
+@use "abstracts" as *;
+
+.notes-grid {
+  display: grid;
+  gap: space(4);
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.love-card {
+  position: relative;
+  overflow: hidden;
+
+  // Círculo decorativo en la esquina.
+  &::after {
+    content: "";
+    position: absolute;
+    inset: auto -40% -60% auto;
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    background: var(--c-primary-soft);
+    z-index: 0;
+  }
+
+  > * { position: relative; z-index: 1; }
+
+  &__icon { font-size: 1.8rem; margin-bottom: space(2); }
+}

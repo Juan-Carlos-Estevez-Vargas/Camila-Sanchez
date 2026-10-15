@@ -1,0 +1,47 @@
+@use "abstracts" as *;
+
+// Editor de apariencia (super admin).
+.swatches {
+  display: flex;
+  gap: space(2);
+  flex-wrap: wrap;
+}
+
+.swatch {
+  @include chip;
+  display: inline-flex;
+  align-items: center;
+  gap: space(2);
+  padding: 0.4rem 0.8rem 0.4rem 0.4rem;
+  font-size: 0.85rem;
+
+  &__dots {
+    display: inline-flex;
+
+    i {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 2px solid var(--c-surface);
+      margin-left: -6px;
+
+      &:first-child { margin-left: 0; }
+    }
+  }
+}
+
+.color-row {
+  display: flex;
+  align-items: center;
+  gap: space(2);
+
+  .input:not([type="color"]) { font-family: $font-mono; }
+}
+
+.preview {
+  border-radius: var(--radius);
+  padding: space(5);
+  border: 1px solid var(--c-border);
+  display: grid;
+  gap: space(3);
+}

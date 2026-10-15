@@ -1,0 +1,32 @@
+@use "sass:string";
+@use "sass:map";
+@use "variables" as *;
+
+/// Espacio de la escala: space(4) → var(--space-4)
+@function space($step) {
+  @if not map.has-key($spacing, $step) {
+    @error "Paso de espacio desconocido: #{$step}";
+  }
+  @return var(--space-#{$step});
+}
+
+/// Capa con nombre: z("modal") → 900
+@function z($layer) {
+  @if not map.has-key($z-layers, $layer) {
+    @error "Capa desconocida: #{$layer}";
+  }
+  @return map.get($z-layers, $layer);
+}
+
+/// Mezcla un color del tema con otro: tint(var(--c-primary), 12%)
+@function tint($color, $amount, $with: transparent) {
+  @return color-mix(in srgb, #{$color} $amount, #{$with});
+}
+
+/// Nombre de una animación global (base/_animations) usado desde un CSS
+/// Module, para que no se renombre como si fuera local (sintaxis global()
+/// de CSS Modules):
+/// animation: global-keyframes(fade-in) 0.3s;
+@function global-keyframes($name) {
+  @return string.unquote("global(#{$name})");
+}

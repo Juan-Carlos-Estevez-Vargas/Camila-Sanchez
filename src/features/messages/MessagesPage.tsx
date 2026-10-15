@@ -12,7 +12,7 @@ import { useAsync } from "@/ui/useAsync";
 import { useConfirm } from "@/ui/useConfirm";
 import { burst } from "@/features/site/effects/FloatingEffects";
 import { EnableNotifications } from "./EnableNotifications";
-import "@/styles/messages.css";
+import "./styles/messages.scss";
 
 export const NOTE_KIND_META: Record<NoteKind, { icon: string; label: string; placeholder: string }> = {
   love: { icon: "💌", label: "Te amo", placeholder: "Hoy te quiero decir que…" },
