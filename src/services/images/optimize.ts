@@ -8,8 +8,10 @@
  * - Redimensiona por pasos para conservar nitidez.
  * - Codifica en WebP (o JPEG si el navegador no sabe WebP) bajando la calidad
  *   poco a poco sólo hasta alcanzar el peso objetivo.
- * - Si el original ya era más liviano, se queda con el original.
+ * - Si el original ya era más liviano y no trae metadatos, se queda con el
+ *   original (nunca con uno que tenga EXIF: podría llevar la ubicación GPS).
  */
+import { EXIF_SCAN_BYTES, hasExifMetadata } from "./exif";
 import { downscaleSteps, fitWithin, qualityLadder, type ImageOptions } from "./sizing";
 
 export interface OptimizedImage {
@@ -116,7 +118,10 @@ export async function optimizeImage(file: Blob, options: ImageOptions, factory: 
     let finalMime = mime;
     let finalExt = extension;
     const fitsAlready = Math.max(bitmap.width, bitmap.height) <= options.maxEdge;
-    if (fitsAlready && file.size <= full.size && (file.type === "image/jpeg" || file.type === "image/webp")) {
+    if (
+      fitsAlready && file.size <= full.size && (file.type === "image/jpeg" || file.type === "image/webp") &&
+      !hasExifMetadata(await file.slice(0, EXIF_SCAN_BYTES).arrayBuffer())
+    ) {
       // El original ya estaba optimizado: no lo empeoramos.
       full = file;
       finalMime = file.type;
