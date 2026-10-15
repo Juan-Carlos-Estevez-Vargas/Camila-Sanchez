@@ -1,0 +1,17 @@
+{
+  "name": "Nuestro rincón",
+  "short_name": "Nosotros",
+  "description": "Nuestros recuerdos, fechas especiales, notitas y chat.",
+  "lang": "es",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#fff8f6",
+  "theme_color": "#b0305a",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "/icons/heart.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}
