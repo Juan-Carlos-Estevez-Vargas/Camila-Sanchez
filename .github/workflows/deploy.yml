@@ -13,6 +13,9 @@
 #   Secrets:   SUPABASE_ACCESS_TOKEN, SUPABASE_DB_PASSWORD
 #              (opcionales, para push: VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY,
 #               VAPID_SUBJECT, PUSH_WEBHOOK_SECRET)
+#              (opcionales, para que los correos de recuperación lleguen a
+#               cualquiera: SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS,
+#               SMTP_SENDER_EMAIL)
 #   Variables: SUPABASE_PROJECT_REF, SITE_URL (p. ej. https://camila-sanchez.netlify.app)
 # Mientras falten, el flujo termina en verde avisando qué falta.
 name: Deploy
@@ -80,6 +83,12 @@ jobs:
 
       - name: Configurar inicio de sesión
         if: steps.config.outputs.ready == 'true'
+        env:
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          SMTP_SENDER_EMAIL: ${{ secrets.SMTP_SENDER_EMAIL }}
         run: |
           site="${SITE_URL%/}"
           # Registro cerrado, contraseñas de 10+ caracteres, tokens de 1 h y
@@ -93,6 +102,24 @@ jobs:
             refresh_token_rotation_enabled: true,
             security_refresh_token_reuse_interval: 10
           }')
+          # Con un servidor de correo propio, los correos de recuperación llegan a
+          # cualquier cuenta y su enlace (/recuperar#token_hash=…) sirve aunque se
+          # abra en otro dispositivo. Sin él, Supabase sólo envía a los miembros
+          # de su equipo y el enlace exige el mismo navegador.
+          if [ -n "$SMTP_HOST" ] && [ -n "$SMTP_USER" ] && [ -n "$SMTP_PASS" ]; then
+            body=$(jq --arg host "$SMTP_HOST" --arg port "${SMTP_PORT:-465}" \
+              --arg user "$SMTP_USER" --arg pass "$SMTP_PASS" \
+              --arg sender "${SMTP_SENDER_EMAIL:-$SMTP_USER}" \
+              --rawfile template supabase/templates/recovery.html '. + {
+                smtp_host: $host, smtp_port: $port, smtp_user: $user, smtp_pass: $pass,
+                smtp_admin_email: $sender, smtp_sender_name: "Nuestro rincón",
+                rate_limit_email_sent: 30,
+                mailer_subjects_recovery: "Crea tu contraseña nueva 🔑",
+                mailer_templates_recovery_content: $template
+              }' <<< "$body")
+          else
+            echo "::notice::Sin SMTP propio: los correos de recuperación sólo llegan a los miembros del equipo de Supabase. Usa el enlace 🔑 de Administración → Usuarios para los demás."
+          fi
           curl --fail-with-body -sS -X PATCH \
             "https://api.supabase.com/v1/projects/$PROJECT_REF/config/auth" \
             -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
