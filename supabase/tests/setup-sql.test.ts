@@ -1,6 +1,6 @@
 /**
  * El archivo único `supabase/setup.sql` (para quien no usa la CLI) debe estar
- * al día con las migraciones y crear una base que funcione junto a roles.sql.
+ * al día con las migraciones y crear una base que funcione junto a cuentas.sql.
  */
 import { PGlite } from "@electric-sql/pglite";
 import { readFileSync } from "node:fs";
@@ -13,7 +13,7 @@ const ROOT = join(__dirname, "..");
 const read = (file: string) => readFileSync(join(ROOT, file), "utf8");
 
 const rolesFor = (juan: string, camila: string) =>
-  read("roles.sql").replace("CORREO_DE_JUAN", juan).replace("CORREO_DE_CAMILA", camila);
+  read("cuentas.sql").replace("CORREO_DE_JUAN", juan).replace("CORREO_DE_CAMILA", camila);
 
 async function freshDatabase() {
   const db = new PGlite();
@@ -30,7 +30,7 @@ describe("setup.sql", () => {
     expect(read("setup.sql")).toBe(buildSetupSql(ROOT));
   });
 
-  it("junto con roles.sql deja a Juan como super admin, a Camila como editora y el sitio público", async () => {
+  it("junto con cuentas.sql deja a Juan como super admin, a Camila como editora y el sitio público", async () => {
     const db = await freshDatabase();
     await db.exec(rolesFor("Juan@example.com", "camila@example.com"));
     const { rows } = await db.query<{ display_name: string; role: string }>(
@@ -45,7 +45,7 @@ describe("setup.sql", () => {
     await db.close();
   }, 60_000);
 
-  it("roles.sql avisa si una cuenta no existe", async () => {
+  it("cuentas.sql avisa si una cuenta no existe", async () => {
     const db = await freshDatabase();
     await expect(db.exec(rolesFor("juan@example.com", "nadie@example.com"))).rejects.toThrow(/Camila/);
     await db.close();
