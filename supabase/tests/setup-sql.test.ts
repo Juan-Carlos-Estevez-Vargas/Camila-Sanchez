@@ -45,6 +45,16 @@ describe("setup.sql", () => {
     await db.close();
   }, 60_000);
 
+  it("cuentas.sql deja a Camila para después si su correo va vacío", async () => {
+    const db = await freshDatabase();
+    await db.exec(rolesFor("juan@example.com", ""));
+    const { rows } = await db.query<{ role: string }>(
+      "select role::text from public.profiles p join auth.users u on u.id = p.id where u.email = 'juan@example.com'",
+    );
+    expect(rows).toEqual([{ role: "super_admin" }]);
+    await db.close();
+  }, 60_000);
+
   it("cuentas.sql avisa si una cuenta no existe", async () => {
     const db = await freshDatabase();
     await expect(db.exec(rolesFor("juan@example.com", "nadie@example.com"))).rejects.toThrow(/Camila/);
