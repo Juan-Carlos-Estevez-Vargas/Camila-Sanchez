@@ -6,6 +6,7 @@ import type {
 } from "@/data/ports";
 import { setRememberSession } from "@/data/sessionPersistence";
 import { expiryFromNow, generateInviteToken, hashInviteToken } from "@/domain/invitations";
+import { RECOVERY_PATH } from "@/domain/recovery";
 import type { InvitableRole, PhotoUrls, SessionUser, Uuid } from "@/domain/types";
 import { getSupabase, unwrap, type Row } from "./client";
 import * as map from "./mappers";
@@ -51,10 +52,17 @@ const auth: AuthGateway = {
   },
   async sendPasswordReset(email) {
     setRememberSession(true);
-    await unwrap(sb().auth.resetPasswordForEmail(email, { redirectTo: redirectTo("/entrar?recuperar=1") }));
+    // La plantilla del correo (flujo Deploy) apunta a /recuperar#token_hash=…;
+    // redirectTo cubre la plantilla por defecto mientras no se haya aplicado.
+    await unwrap(sb().auth.resetPasswordForEmail(email, { redirectTo: redirectTo(RECOVERY_PATH) }));
   },
-  async updatePassword(password) {
+  async verifyRecovery(tokenHash) {
+    setRememberSession(true);
+    await unwrap(sb().auth.verifyOtp({ token_hash: tokenHash, type: "recovery" }));
+  },
+  async updatePassword(password, options) {
     await unwrap(sb().auth.updateUser({ password }));
+    if (options?.signOutOthers) await sb().auth.signOut({ scope: "others" });
   },
   async signOut(options) {
     // "global" revoca los tokens de refresco de todos los dispositivos.
@@ -294,6 +302,10 @@ const users: UserRepository = {
   },
   createUser: (input) => adminUsers({ action: input.password ? "create" : "invite", ...input, redirectTo: redirectTo("/entrar") }),
   deleteUser: (id) => adminUsers({ action: "delete", userId: id }),
+  async createRecoveryLink(id) {
+    const { tokenHash } = await invokeFunction<{ tokenHash: string }>("admin-users", { action: "recovery_link", userId: id });
+    return tokenHash;
+  },
   async listAudit({ page, pageSize, table }) {
     let query = sb().from("audit_log").select("*").order("created_at", { ascending: false })
       .range(page * pageSize, page * pageSize + pageSize - 1);

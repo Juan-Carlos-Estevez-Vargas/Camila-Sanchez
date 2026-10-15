@@ -20,8 +20,12 @@ export interface AuthGateway {
   /** remember=false: la sesión vive sólo en esta pestaña y termina al cerrarla. */
   signInWithPassword(email: string, password: string, options?: { remember?: boolean }): Promise<void>;
   sendMagicLink(email: string): Promise<void>;
+  /** Correo con un enlace a /recuperar. */
   sendPasswordReset(email: string): Promise<void>;
-  updatePassword(password: string): Promise<void>;
+  /** Abre la sesión de recuperación con el token del enlace (un solo uso). */
+  verifyRecovery(tokenHash: string): Promise<void>;
+  /** signOutOthers=true cierra las sesiones de los demás dispositivos. */
+  updatePassword(password: string, options?: { signOutOthers?: boolean }): Promise<void>;
   /** everywhere=true también revoca las sesiones de los demás dispositivos. */
   signOut(options?: { everywhere?: boolean }): Promise<void>;
 }
@@ -102,6 +106,8 @@ export interface UserRepository {
   setRolePermission(role: Role, permission: string, granted: boolean): Promise<void>;
   createUser(input: NewUserInput): Promise<void>;
   deleteUser(id: Uuid): Promise<void>;
+  /** Token para un enlace de recuperación de contraseña, sin enviar correo. */
+  createRecoveryLink(id: Uuid): Promise<string>;
   listAudit(options: { page: number; pageSize: number; table?: string }): Promise<AuditEntry[]>;
 }
 

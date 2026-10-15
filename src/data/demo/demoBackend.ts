@@ -16,6 +16,7 @@ import { AppError } from "@/core/errors";
 import {
   expiryFromNow, generateInviteToken, hashInviteToken, invitationStatus, isInviteToken, MIN_PASSWORD_LENGTH,
 } from "@/domain/invitations";
+import { RECOVERY_LINK_HOURS } from "@/domain/recovery";
 import type {
   AppNotification, AuditEntry, ChatMessage, ImportantDate, Interruption, Invitation, Milestone, Note,
   PermissionDefinition, Photo, PhotoUrls, Profile, Role, RolePermission, Section, SessionUser,
@@ -43,6 +44,12 @@ interface DemoInvitation extends Invitation {
   tokenHash: string;
 }
 
+interface DemoRecovery {
+  tokenHash: string;
+  userId: Uuid;
+  expiresAt: string;
+}
+
 interface DemoState {
   settings: SiteSettings;
   sections: Section[];
@@ -56,6 +63,7 @@ interface DemoState {
   notifications: AppNotification[];
   users: DemoUser[];
   invitations: DemoInvitation[];
+  recoveries: DemoRecovery[];
   rolePermissions: RolePermission[];
   audit: AuditEntry[];
 }
@@ -97,6 +105,7 @@ function initialState(): DemoState {
       role: a.role, isActive: true, avatarUrl: null, createdAt: created,
     })),
     invitations: [],
+    recoveries: [],
     rolePermissions: (["editor", "viewer"] as const).flatMap((role) =>
       DEFAULT_ROLE_PERMISSIONS[role].map((permission) => ({ role, permission })),
     ),
@@ -300,7 +309,17 @@ export const demoBackend: Backend = {
       throw new AppError("En el modo demo usa la contraseña: demo1234");
     },
     async sendPasswordReset() {
-      throw new AppError("En el modo demo la contraseña es demo1234");
+      throw new AppError("En el modo demo no se envían correos: pide el enlace en Administración → Usuarios.");
+    },
+    async verifyRecovery(tokenHash) {
+      const state = database().state;
+      const now = nowIso();
+      const recovery = state.recoveries.find((r) => r.tokenHash === tokenHash && r.expiresAt > now);
+      state.recoveries = state.recoveries.filter((r) => r !== recovery && r.expiresAt > now);
+      database().commit({ table: "site_settings", type: "UPDATE", record: null });
+      const user = state.users.find((u) => u.id === recovery?.userId && u.isActive);
+      if (!user) throw new AppError("Este enlace ya no es válido. Pide uno nuevo.");
+      setSession(user);
     },
     async updatePassword(password) {
       requireUser().password = password;
@@ -615,6 +634,14 @@ export const demoBackend: Backend = {
       state.users = state.users.filter((u) => u.id !== id);
       audit("DELETE", "profiles", id, user ? toProfile(user) : null, null);
       database().commit({ table: "site_settings", type: "UPDATE", record: null });
+    },
+    async createRecoveryLink(id) {
+      require(PERMISSIONS.usersManage);
+      if (!database().state.users.some((u) => u.id === id)) throw new AppError("Ese usuario no existe.");
+      const tokenHash = generateInviteToken();
+      database().state.recoveries.push({ tokenHash, userId: id, expiresAt: expiryFromNow(RECOVERY_LINK_HOURS) });
+      database().commit({ table: "site_settings", type: "UPDATE", record: null });
+      return tokenHash;
     },
     async listAudit({ page, pageSize, table }) {
       require(PERMISSIONS.auditView);
