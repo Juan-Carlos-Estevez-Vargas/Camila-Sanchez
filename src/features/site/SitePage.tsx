@@ -55,9 +55,6 @@ export default function SitePage() {
           </Reveal>
         ))}
       </main>
-      <footer className="site-footer">
-        <p>Hecho con 💖 para ti</p>
-      </footer>
       {content.settings.musicUrl && <MusicToggle url={content.settings.musicUrl} />}
     </>
   );
