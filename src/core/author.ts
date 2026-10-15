@@ -5,8 +5,8 @@ export const AUTHOR = {
   name: "Juan Carlos Estevez Vargas",
   links: {
     github: "https://github.com/Juan-Carlos-Estevez-Vargas",
-    linkedin: "",
-    instagram: "",
+    linkedin: "https://www.linkedin.com/in/juan-carlos-estevez-vargas/",
+    instagram: "https://www.instagram.com/juankestevez/",
   },
   repository: "https://github.com/Juan-Carlos-Estevez-Vargas/Camila-Sanchez",
 } as const;
