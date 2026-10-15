@@ -5,7 +5,7 @@
  * nunca la ve. Cada llamada verifica primero, con el token de quien llama,
  * que tenga el permiso users.manage.
  *
- * Acciones: invite | create | delete | set_active
+ * Acciones: invite | create | delete | set_active | recovery_link
  */
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders, json } from "../_shared/cors.ts";
@@ -73,7 +73,7 @@ Deno.serve(async (req) => {
           userId = data.user.id;
         } else {
           const password = typeof body.password === "string" ? body.password : "";
-          if (password.length < 8) return json({ error: "La contraseña debe tener al menos 8 caracteres" }, 400);
+          if (password.length < 10) return json({ error: "La contraseña debe tener al menos 10 caracteres" }, 400);
           const { data, error } = await admin.auth.admin.createUser({
             email, password, email_confirm: true, user_metadata: { display_name: displayName },
           });
@@ -105,6 +105,20 @@ Deno.serve(async (req) => {
         if (error) throw error;
         await admin.from("profiles").update({ is_active: active }).eq("id", userId);
         return json({ ok: true });
+      }
+
+      case "recovery_link": {
+        // Enlace para crear una contraseña nueva sin depender del correo: se
+        // genera aquí (no se envía nada) y quien administra lo comparte en
+        // persona. Sólo vale una vez y vence como cualquier enlace de Supabase.
+        const userId = str(body.userId, 64);
+        if (!userId) return json({ error: "Falta el usuario" }, 400);
+        const { data: target, error: getError } = await admin.auth.admin.getUserById(userId);
+        if (getError || !target.user?.email) return json({ error: "Ese usuario no existe" }, 404);
+        const { data, error } = await admin.auth.admin.generateLink({ type: "recovery", email: target.user.email });
+        if (error) throw error;
+        console.log("[admin-users] recovery_link", { by: callerId, for: userId });
+        return json({ tokenHash: data.properties.hashed_token });
       }
 
       default:
