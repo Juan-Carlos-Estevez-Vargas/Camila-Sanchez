@@ -975,6 +975,459 @@ create policy "invitations: revocar" on public.invitations
 create trigger invitations_audit after insert or update or delete on public.invitations
   for each row execute function public.audit_row();
 
+-- >>> migrations/20261020000100_chat_replies_presence.sql
+-- =============================================================================
+-- 008 · Chat tipo WhatsApp: responder citando, última conexión y visto
+-- =============================================================================
+
+-- Un mensaje puede responder a otro. Si el original se borra, la respuesta
+-- se queda sin cita en vez de desaparecer.
+alter table public.chat_messages
+  add column reply_to uuid references public.chat_messages (id) on delete set null;
+
+create index chat_messages_reply_idx on public.chat_messages (reply_to) where reply_to is not null;
+
+-- chat_reads pasa a guardar, por persona, cuándo estuvo conectada por última
+-- vez y hasta qué momento leyó el chat (null: todavía no lo ha abierto).
+alter table public.chat_reads
+  add column last_seen_at timestamptz not null default now();
+alter table public.chat_reads
+  alter column last_read_at drop not null,
+  alter column last_read_at drop default;
+
+-- Quien usa el chat ve la conexión y los vistos de los demás. Nadie escribe
+-- la fila directamente: sólo con chat_presence(), que usa auth.uid(), así
+-- nadie puede marcar como visto en nombre de otra persona.
+drop policy "chat_reads: propios" on public.chat_reads;
+create policy "chat_reads: ver" on public.chat_reads
+  for select to authenticated using (public.has_permission('chat.use'));
+
+create or replace function public.chat_presence(p_read boolean default false)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_now timestamptz := now();
+begin
+  if auth.uid() is null or not public.has_permission('chat.use') then
+    raise exception 'No tienes permiso para usar el chat' using errcode = '42501';
+  end if;
+  insert into public.chat_reads (user_id, last_seen_at, last_read_at)
+  values (auth.uid(), v_now, case when p_read then v_now end)
+  on conflict (user_id) do update
+     set last_seen_at = v_now,
+         last_read_at = case when p_read then v_now else public.chat_reads.last_read_at end;
+end;
+$$;
+
+revoke execute on function public.chat_presence(boolean) from public, anon;
+grant execute on function public.chat_presence(boolean) to authenticated;
+
+-- Los vistos y la conexión llegan en vivo.
+alter publication supabase_realtime add table public.chat_reads;
+
+-- >>> migrations/20261020000200_chat_media.sql
+-- =============================================================================
+-- 009 · Fotos y stickers en el chat
+-- =============================================================================
+
+create type public.chat_kind as enum ('text', 'image', 'sticker');
+
+-- Las fotos viven en el bucket privado chat-media, en una carpeta por persona
+-- (<user_id>/<id>.webp y su miniatura <user_id>/<id>.thumb.webp).
+alter table public.chat_messages
+  add column kind public.chat_kind not null default 'text',
+  add column image_path text
+    check (image_path is null or image_path ~ '^[0-9a-f-]{36}/[0-9a-f-]{36}\.(webp|jpg|png)$'),
+  add column thumb_path text
+    check (thumb_path is null or thumb_path ~ '^[0-9a-f-]{36}/[0-9a-f-]{36}\.thumb\.(webp|jpg|png)$'),
+  add column image_width integer check (image_width is null or image_width between 1 and 10000),
+  add column image_height integer check (image_height is null or image_height between 1 and 10000),
+  -- Id de un sticker del catálogo de la app.
+  add column sticker text check (sticker is null or sticker ~ '^[a-z0-9-]{1,40}$');
+
+-- El texto deja de ser obligatorio: una foto puede ir sin pie y un sticker
+-- no lleva texto. Cada tipo exige lo suyo.
+alter table public.chat_messages drop constraint chat_messages_body_check;
+alter table public.chat_messages
+  add constraint chat_messages_body_length check (char_length(body) <= 2000),
+  add constraint chat_messages_content check (
+    (kind = 'text' and char_length(btrim(body)) >= 1 and image_path is null and sticker is null)
+    or (kind = 'image' and image_path is not null and thumb_path is not null and sticker is null)
+    or (kind = 'sticker' and sticker is not null and image_path is null and char_length(btrim(body)) = 0)
+  );
+alter table public.chat_messages alter column body set default '';
+
+-- Una foto sólo puede apuntar a la carpeta de quien la envía.
+drop policy "chat: escribir" on public.chat_messages;
+create policy "chat: escribir" on public.chat_messages
+  for insert to authenticated
+  with check (
+    sender_id = auth.uid()
+    and public.has_permission('chat.use')
+    and (image_path is null or (
+      split_part(image_path, '/', 1) = auth.uid()::text
+      and split_part(thumb_path, '/', 1) = auth.uid()::text
+    ))
+  );
+
+-- El aviso dice «te mandó una foto» o «un sticker» en vez de un texto vacío.
+create or replace function public.notify_new_chat_message()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  sender_name text;
+  preview text;
+begin
+  select display_name into sender_name from public.profiles where id = new.sender_id;
+  preview := case new.kind
+    when 'image' then '📷 Foto' || coalesce(nullif(': ' || btrim(new.body), ': '), '')
+    when 'sticker' then '✨ Sticker'
+    else new.body
+  end;
+  -- Evita inundar de avisos: sólo se notifica si el destinatario no tiene ya
+  -- un aviso de chat sin leer.
+  insert into public.notifications (user_id, kind, title, body, link)
+  select p.id, 'chat', coalesce(sender_name, 'Alguien') || ' te escribió 💬', left(preview, 140), '/chat'
+    from public.profiles p
+   where p.id <> new.sender_id
+     and p.is_active
+     and (p.role = 'super_admin' or exists (
+           select 1 from public.role_permissions rp
+            where rp.role = p.role and rp.permission = 'chat.use'))
+     and not exists (
+           select 1 from public.notifications n
+            where n.user_id = p.id and n.kind = 'chat' and n.read_at is null);
+  return new;
+end;
+$$;
+
+-- -----------------------------------------------------------------------------
+-- Bucket privado de fotos del chat: sólo imágenes de hasta 5 MB, servidas con
+-- URLs firmadas. Lo ve quien usa el chat; cada persona sube y borra sólo en
+-- su carpeta.
+-- -----------------------------------------------------------------------------
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('chat-media', 'chat-media', false, 5242880, array['image/webp', 'image/jpeg', 'image/png'])
+on conflict (id) do nothing;
+
+create policy "chat-media: ver" on storage.objects
+  for select to authenticated
+  using (bucket_id = 'chat-media' and public.has_permission('chat.use'));
+create policy "chat-media: subir a mi carpeta" on storage.objects
+  for insert to authenticated
+  with check (
+    bucket_id = 'chat-media'
+    and public.has_permission('chat.use')
+    and split_part(name, '/', 1) = auth.uid()::text
+  );
+create policy "chat-media: borrar de mi carpeta" on storage.objects
+  for delete to authenticated
+  using (bucket_id = 'chat-media' and split_part(name, '/', 1) = auth.uid()::text);
+
+-- >>> migrations/20261020000300_personal_colors.sql
+-- =============================================================================
+-- 010 · Colores por persona
+-- =============================================================================
+-- Cada persona elige su paleta sin cambiarle los colores a nadie más. Los
+-- colores de site_settings.theme quedan como los de la página pública: los
+-- ve quien entra sin cuenta y quien no eligió los suyos. Sólo theme.manage
+-- (el super administrador) los cambia.
+
+-- ¿Es un objeto sólo con colores de la paleta, cada uno en formato #rrggbb?
+create or replace function public.is_valid_theme_colors(colors jsonb)
+returns boolean
+language sql
+immutable
+set search_path = public
+as $$
+  select colors is null or (
+    jsonb_typeof(colors) = 'object'
+    and not exists (
+      select 1 from jsonb_each(colors) e
+       where e.key <> all (array['primary', 'primaryContrast', 'accent', 'background', 'surface', 'text', 'muted'])
+          or jsonb_typeof(e.value) <> 'string'
+          or (e.value #>> '{}') !~ '^#[0-9a-fA-F]{6}$'
+    )
+  );
+$$;
+
+alter table public.profiles
+  add column theme_colors jsonb
+    constraint profiles_theme_colors_valid check (public.is_valid_theme_colors(theme_colors));
+
+-- Los colores de cada persona sólo los cambia ella misma.
+create or replace function public.guard_profile_changes()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if (new.role is distinct from old.role or new.is_active is distinct from old.is_active) then
+    -- auth.uid() es null en el editor SQL y con la service role: se permite.
+    if auth.uid() is not null and not public.has_permission('users.manage') then
+      raise exception 'No tienes permiso para cambiar roles o estados' using errcode = '42501';
+    end if;
+
+    if old.role = 'super_admin' and old.is_active
+       and (new.role <> 'super_admin' or not new.is_active)
+       and (select count(*) from public.profiles
+             where role = 'super_admin' and is_active and id <> old.id) = 0 then
+      raise exception 'Debe existir al menos un super administrador activo' using errcode = '23514';
+    end if;
+  end if;
+  if new.theme_colors is distinct from old.theme_colors
+     and auth.uid() is not null and auth.uid() <> old.id then
+    raise exception 'Sólo cada persona puede cambiar sus colores' using errcode = '42501';
+  end if;
+  new.id := old.id;
+  new.created_at := old.created_at;
+  return new;
+end;
+$$;
+
+-- La paleta de la página ya no se cambia desde el panel de contenido.
+delete from public.permissions where key = 'theme.palette';
+
+create or replace function public.guard_site_settings()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if auth.uid() is null then
+    return new;
+  end if;
+
+  if (new.theme is distinct from old.theme or new.effects is distinct from old.effects)
+     and not public.has_permission('theme.manage') then
+    raise exception 'No tienes permiso para cambiar el tema' using errcode = '42501';
+  end if;
+
+  if (new.site_title, new.site_subtitle, new.relationship_start, new.is_public, new.music_url)
+     is distinct from
+     (old.site_title, old.site_subtitle, old.relationship_start, old.is_public, old.music_url)
+     and not public.has_permission('settings.manage') then
+    raise exception 'No tienes permiso para cambiar la configuración' using errcode = '42501';
+  end if;
+  new.updated_by := auth.uid();
+  return new;
+end;
+$$;
+
+drop policy "site_settings: edición" on public.site_settings;
+create policy "site_settings: edición" on public.site_settings
+  for update to authenticated
+  using (public.has_permission('settings.manage') or public.has_permission('theme.manage'))
+  with check (public.has_permission('settings.manage') or public.has_permission('theme.manage'));
+
+-- Quien entra sin cuenta ve la paleta «Rosa vino».
+update public.site_settings
+   set theme = theme || '{"primary": "#b0305a", "primaryContrast": "#ffffff", "accent": "#e8a33d",
+                          "background": "#fff8f6", "surface": "#ffffff", "text": "#2b1720", "muted": "#7a5c66"}'::jsonb;
+
+-- >>> migrations/20261020000400_device_push.sql
+-- =============================================================================
+-- 011 · Avisos en la pantalla de notificaciones del celular
+-- =============================================================================
+-- Cada fila nueva de notifications (o un aviso de chat sin leer que se
+-- actualiza con el último mensaje) llama a la Edge Function send-push, que
+-- manda el Web Push a los dispositivos de esa persona.
+--
+-- La URL de la función y su secreto viven en Supabase Vault
+-- (push_function_url y push_webhook_secret); el flujo Deploy los crea. Sin
+-- ellos no se envía nada y la app sigue funcionando igual.
+
+do $$
+begin
+  if exists (select 1 from pg_available_extensions where name = 'pg_net') then
+    create extension if not exists pg_net with schema extensions;
+  end if;
+end;
+$$;
+
+create or replace function public.dispatch_push()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_url text;
+  v_secret text;
+begin
+  if new.read_at is not null then
+    return new;
+  end if;
+  -- En una actualización sólo avisa si llegó algo nuevo (no al marcar leído).
+  if tg_op = 'UPDATE' and (new.title, new.body, new.created_at) is not distinct from (old.title, old.body, old.created_at) then
+    return new;
+  end if;
+  select decrypted_secret into v_url from vault.decrypted_secrets where name = 'push_function_url';
+  select decrypted_secret into v_secret from vault.decrypted_secrets where name = 'push_webhook_secret';
+  if v_url is null or v_secret is null then
+    return new;
+  end if;
+  perform net.http_post(
+    url := v_url,
+    headers := jsonb_build_object('Content-Type', 'application/json', 'x-webhook-secret', v_secret),
+    body := jsonb_build_object(
+      'type', 'INSERT',
+      'record', jsonb_build_object('user_id', new.user_id, 'kind', new.kind, 'title', new.title, 'body', new.body, 'link', new.link)
+    ),
+    timeout_milliseconds := 5000
+  );
+  return new;
+exception when others then
+  -- Un fallo del push nunca debe impedir que se guarde el aviso.
+  return new;
+end;
+$$;
+
+revoke execute on function public.dispatch_push() from public, anon, authenticated;
+
+create trigger notifications_push after insert or update on public.notifications
+  for each row execute function public.dispatch_push();
+
+-- -----------------------------------------------------------------------------
+-- Chat como en WhatsApp: cada mensaje avisa. Para no llenar la campana, si ya
+-- hay un aviso de chat sin leer se actualiza con el último mensaje (y eso
+-- también dispara el push) en vez de crear otro.
+-- -----------------------------------------------------------------------------
+create or replace function public.notify_new_chat_message()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_title text;
+  v_preview text;
+begin
+  select coalesce(display_name, 'Alguien') || ' te escribió 💬' into v_title from public.profiles where id = new.sender_id;
+  v_title := coalesce(v_title, 'Alguien te escribió 💬');
+  v_preview := left(case new.kind
+    when 'image' then '📷 Foto' || coalesce(nullif(': ' || btrim(new.body), ': '), '')
+    when 'sticker' then '✨ Sticker'
+    else new.body
+  end, 140);
+
+  with recipients as (
+    select p.id
+      from public.profiles p
+     where p.id <> new.sender_id
+       and p.is_active
+       and (p.role = 'super_admin' or exists (
+             select 1 from public.role_permissions rp
+              where rp.role = p.role and rp.permission = 'chat.use'))
+  ), updated as (
+    update public.notifications n
+       set title = v_title, body = v_preview, created_at = now()
+      from recipients r
+     where n.user_id = r.id and n.kind = 'chat' and n.read_at is null
+    returning n.user_id
+  )
+  insert into public.notifications (user_id, kind, title, body, link)
+  select r.id, 'chat', v_title, v_preview, '/chat'
+    from recipients r
+   where r.id not in (select user_id from updated);
+  return new;
+end;
+$$;
+
+-- -----------------------------------------------------------------------------
+-- Sorpresas: avisa a quienes pueden ver la página cuando se publica una que
+-- ya está activa. Las programadas para más adelante aparecen al entrar.
+-- -----------------------------------------------------------------------------
+create or replace function public.notify_new_interruption()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_author text;
+begin
+  if not new.is_active or new.starts_at > now() or (new.ends_at is not null and new.ends_at <= now()) then
+    return new;
+  end if;
+  select display_name into v_author from public.profiles where id = new.created_by;
+  insert into public.notifications (user_id, kind, title, body, link)
+  select p.id, 'system', coalesce(v_author, 'Alguien') || ' te dejó una sorpresa 🎁', left(new.title, 140), '/'
+    from public.profiles p
+   where p.id is distinct from new.created_by
+     and p.is_active
+     and (p.role = 'super_admin' or exists (
+           select 1 from public.role_permissions rp
+            where rp.role = p.role and rp.permission = 'site.view'));
+  return new;
+end;
+$$;
+
+create trigger interruptions_notify after insert on public.interruptions
+  for each row execute function public.notify_new_interruption();
+
+-- -----------------------------------------------------------------------------
+-- Suscripciones push: un celular pertenece a quien inició sesión por última
+-- vez en él (si otra persona entra en el mismo equipo, deja de recibir los
+-- avisos de la anterior).
+-- -----------------------------------------------------------------------------
+create or replace function public.register_push_subscription(
+  p_endpoint text, p_p256dh text, p_auth text, p_user_agent text default null
+)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if auth.uid() is null then
+    raise exception 'Necesitas iniciar sesión' using errcode = '42501';
+  end if;
+  insert into public.push_subscriptions (user_id, endpoint, p256dh, auth, user_agent)
+  values (auth.uid(), p_endpoint, p_p256dh, p_auth, left(p_user_agent, 200))
+  on conflict (endpoint) do update
+    set user_id = excluded.user_id, p256dh = excluded.p256dh, auth = excluded.auth,
+        user_agent = excluded.user_agent, created_at = now();
+end;
+$$;
+
+revoke execute on function public.register_push_subscription(text, text, text, text) from public, anon;
+grant execute on function public.register_push_subscription(text, text, text, text) to authenticated;
+
+-- Aviso de prueba para comprobar que llegan al celular (uno por minuto).
+create or replace function public.send_test_notification()
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if auth.uid() is null then
+    raise exception 'Necesitas iniciar sesión' using errcode = '42501';
+  end if;
+  if exists (
+    select 1 from public.notifications
+     where user_id = auth.uid() and kind = 'system' and link = '/cuenta'
+       and created_at > now() - interval '1 minute'
+  ) then
+    raise exception 'Espera un minuto antes de probar otra vez' using errcode = 'P0001';
+  end if;
+  insert into public.notifications (user_id, kind, title, body, link)
+  values (auth.uid(), 'system', 'Así te llegarán los avisos 💖', 'Si ves esto en tu celular, ya quedaron activados.', '/cuenta');
+end;
+$$;
+
+revoke execute on function public.send_test_notification() from public, anon;
+grant execute on function public.send_test_notification() to authenticated;
+
 -- >>> seed.sql
 -- =============================================================================
 -- Contenido inicial migrado desde la página original (legacy/).

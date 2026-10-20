@@ -89,7 +89,7 @@ describe("roles y escalada de privilegios", () => {
     const rows = await as<{ p: string }>(CAMI, "select p from my_permissions() p order by p");
     expect(rows.map((r) => r.p)).toEqual([
       "chat.use", "content.edit", "dates.manage", "interruptions.manage",
-      "notes.send", "photos.manage", "site.view", "theme.palette",
+      "notes.send", "photos.manage", "site.view",
     ]);
   });
 });
@@ -124,17 +124,43 @@ describe("edición de contenido", () => {
   });
 
   it("sólo theme.manage puede cambiar tipografías y efectos", async () => {
-    await expect(as(CAMI, `update site_settings set theme = theme || '{"fontDisplay":"Lora"}'`)).rejects.toThrow(/permiso para cambiar el tema/);
-    await expect(as(CAMI, `update site_settings set effects = '{"cursorHearts":true}'`)).rejects.toThrow(/permiso para cambiar el tema/);
+    expect(await as(CAMI, `update site_settings set theme = theme || '{"fontDisplay":"Lora"}' returning id`)).toEqual([]);
+    expect(await as(CAMI, `update site_settings set effects = '{"cursorHearts":true}' returning id`)).toEqual([]);
     expect(await as(GUEST, `update site_settings set theme = theme || '{"primary":"#aa0000"}' returning id`)).toEqual([]);
     const rows = await as(JUAN, `update site_settings set theme = theme || '{"primary":"#aa0000","fontDisplay":"Lora"}' returning theme->>'primary' as p`);
     expect(rows).toEqual([{ p: "#aa0000" }]);
   });
 
-  it("la editora puede elegir la paleta de colores (sólo colores válidos)", async () => {
-    const rows = await as(CAMI, `update site_settings set theme = theme || '{"primary":"#c2185b","background":"#ffe6ec"}' returning theme->>'background' as bg, theme->>'fontDisplay' as font`);
-    expect(rows).toEqual([{ bg: "#ffe6ec", font: "Lora" }]);
-    await expect(as(CAMI, `update site_settings set theme = theme || '{"primary":"red; background:url(x)"}'`)).rejects.toThrow(/Color no válido/);
+  it("la editora ya no cambia los colores de la página", async () => {
+    expect(await as(CAMI, `update site_settings set theme = theme || '{"primary":"#123456"}' returning id`)).toEqual([]);
+    const [row] = await as<{ p: string }>(JUAN, "select theme->>'primary' as p from site_settings");
+    expect(row?.p).toBe("#aa0000");
+  });
+});
+
+describe("colores por persona", () => {
+  it("cada persona guarda sus colores sin tocar los de la página", async () => {
+    const rows = await as(CAMI, `update profiles set theme_colors = '{"primary":"#7e4fb5","background":"#f6f0ff"}' where id = '${CAMI}' returning theme_colors->>'primary' as p`);
+    expect(rows).toEqual([{ p: "#7e4fb5" }]);
+    const [site] = await as<{ p: string }>(JUAN, "select theme->>'primary' as p from site_settings");
+    expect(site?.p).toBe("#aa0000");
+    expect(await as(CAMI, `update profiles set theme_colors = null where id = '${CAMI}' returning theme_colors`)).toEqual([{ theme_colors: null }]);
+  });
+
+  it("nadie cambia los colores de otra persona, ni siquiera el super administrador", async () => {
+    expect(await as(GUEST, `update profiles set theme_colors = '{"primary":"#000000"}' where id = '${CAMI}' returning id`)).toEqual([]);
+    await expect(as(JUAN, `update profiles set theme_colors = '{"primary":"#000000"}' where id = '${CAMI}'`))
+      .rejects.toThrow(/Sólo cada persona/);
+  });
+
+  it("sólo acepta colores de la paleta en formato #rrggbb", async () => {
+    for (const bad of ['{"primary":"red; background:url(x)"}', '{"fontBody":"#000000"}', '{"primary":"#abc"}', '["#000000"]', '{"primary":1}']) {
+      await expect(as(GUEST, `update profiles set theme_colors = '${bad}' where id = '${GUEST}'`)).rejects.toThrow(/theme_colors/);
+    }
+  });
+
+  it("el permiso theme.palette ya no existe", async () => {
+    expect(await as(JUAN, "select key from permissions where key = 'theme.palette'")).toEqual([]);
   });
 });
 
@@ -161,8 +187,86 @@ describe("mensajes y notificaciones", () => {
   it("un mensaje de chat avisa al resto una sola vez mientras no lo lean", async () => {
     await as(CAMI, "insert into chat_messages (body) values ('te amo')");
     await as(CAMI, "insert into chat_messages (body) values ('mucho')");
-    const rows = await as(JUAN, "select count(*)::int as n from notifications where kind = 'chat'");
-    expect(rows).toEqual([{ n: 1 }]);
+    const rows = await as(JUAN, "select count(*)::int as n, max(body) as body from notifications where kind = 'chat'");
+    expect(rows).toEqual([{ n: 1, body: "mucho" }]);
+  });
+});
+
+describe("chat: respuestas, conexión y vistos", () => {
+  it("un mensaje puede responder a otro y la cita se suelta si el original se borra", async () => {
+    const [original] = await as<{ id: string }>(JUAN, "insert into chat_messages (body) values ('¿cenamos?') returning id");
+    const [reply] = await as<{ id: string }>(CAMI, `insert into chat_messages (body, reply_to) values ('¡sí!', '${original!.id}') returning id`);
+    await as(JUAN, `delete from chat_messages where id = '${original!.id}'`);
+    expect(await as(CAMI, `select reply_to from chat_messages where id = '${reply!.id}'`)).toEqual([{ reply_to: null }]);
+  });
+
+  it("chat_presence guarda la conexión y, al leer, hasta dónde leyó", async () => {
+    await as(CAMI, "select chat_presence(false)");
+    const [seen] = await as<{ seen: boolean; read: string | null }>(CAMI, `select last_seen_at is not null as seen, last_read_at as read from chat_reads where user_id = '${CAMI}'`);
+    expect(seen).toEqual({ seen: true, read: null });
+    await as(CAMI, "select chat_presence(true)");
+    const [read] = await as<{ read: boolean }>(CAMI, `select last_read_at = last_seen_at as read from chat_reads where user_id = '${CAMI}'`);
+    expect(read).toEqual({ read: true });
+  });
+
+  it("quien usa el chat ve los vistos de los demás, pero nadie los escribe a mano", async () => {
+    expect(await as(JUAN, `select count(*)::int as n from chat_reads where user_id = '${CAMI}'`)).toEqual([{ n: 1 }]);
+    await expect(
+      as(JUAN, `insert into chat_reads (user_id, last_read_at) values ('${JUAN}', now() + interval '1 day')`),
+    ).rejects.toThrow(/row-level security/);
+    const updated = await as(JUAN, `update chat_reads set last_read_at = now() - interval '1 year' where user_id = '${CAMI}' returning user_id`);
+    expect(updated).toEqual([]);
+  });
+
+  it("un anónimo no ve la conexión ni puede marcarse en línea", async () => {
+    expect(await as(null, "select count(*)::int as n from chat_reads")).toEqual([{ n: 0 }]);
+    await expect(as(null, "select chat_presence(true)")).rejects.toThrow();
+  });
+});
+
+describe("chat: fotos y stickers", () => {
+  const ID = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+  const photo = (owner: string) =>
+    `'${owner}/${ID}.webp', '${owner}/${ID}.thumb.webp'`;
+
+  it("se puede mandar una foto (con o sin pie) y un sticker sin texto", async () => {
+    await as(JUAN, "select mark_notifications_read('chat')");
+    await as(CAMI, `insert into chat_messages (kind, image_path, thumb_path, image_width, image_height) values ('image', ${photo(CAMI)}, 800, 600)`);
+    await as(CAMI, `insert into chat_messages (kind, body, image_path, thumb_path) values ('image', 'mira 😍', ${photo(CAMI)})`);
+    await as(JUAN, "insert into chat_messages (kind, sticker) values ('sticker', 'te-amo')");
+    const [row] = await as<{ body: string }>(JUAN, "select body from notifications where kind = 'chat' order by created_at desc limit 1");
+    expect(row?.body).toMatch(/^📷 Foto/);
+  });
+
+  it("cada tipo exige lo suyo", async () => {
+    await expect(as(CAMI, "insert into chat_messages (kind) values ('image')")).rejects.toThrow(/chat_messages_content/);
+    await expect(as(CAMI, "insert into chat_messages (kind, body) values ('text', '   ')")).rejects.toThrow(/chat_messages_content/);
+    await expect(as(CAMI, "insert into chat_messages (kind, sticker, body) values ('sticker', 'te-amo', 'hola')")).rejects.toThrow(/chat_messages_content/);
+    await expect(as(CAMI, "insert into chat_messages (kind, sticker) values ('sticker', '../../x')")).rejects.toThrow(/check/);
+  });
+
+  it("una foto sólo puede apuntar a la carpeta de quien la envía", async () => {
+    await expect(
+      as(CAMI, `insert into chat_messages (kind, image_path, thumb_path) values ('image', ${photo(JUAN)})`),
+    ).rejects.toThrow(/row-level security/);
+    await expect(
+      as(CAMI, `insert into chat_messages (kind, image_path, thumb_path) values ('image', '../${ID}.webp', '${CAMI}/${ID}.thumb.webp')`),
+    ).rejects.toThrow(/row-level security|check/);
+  });
+
+  it("en el almacenamiento cada quien sube y borra sólo en su carpeta, y lo ve quien usa el chat", async () => {
+    await db.exec(`
+      alter table storage.objects enable row level security;
+      grant select, insert, update, delete on storage.objects to anon, authenticated;
+    `);
+    await as(CAMI, `insert into storage.objects (bucket_id, name) values ('chat-media', '${CAMI}/${ID}.webp')`);
+    await expect(
+      as(CAMI, `insert into storage.objects (bucket_id, name) values ('chat-media', '${JUAN}/${ID}.webp')`),
+    ).rejects.toThrow(/row-level security/);
+    expect(await as(JUAN, "select count(*)::int as n from storage.objects where bucket_id = 'chat-media'")).toEqual([{ n: 1 }]);
+    expect(await as(null, "select count(*)::int as n from storage.objects where bucket_id = 'chat-media'")).toEqual([{ n: 0 }]);
+    expect(await as(JUAN, `delete from storage.objects where bucket_id = 'chat-media' returning name`)).toEqual([]);
+    expect(await as(CAMI, `delete from storage.objects where bucket_id = 'chat-media' returning name`)).toHaveLength(1);
   });
 });
 
@@ -222,5 +326,65 @@ describe("invitaciones", () => {
   it("revocar borra la invitación", async () => {
     await as(JUAN, `delete from invitations where token_hash = '${HASH}'`);
     expect(await as(JUAN, "select count(*)::int as n from invitations")).toEqual([{ n: 0 }]);
+  });
+});
+
+describe("avisos en el celular", () => {
+  const calls = async () => (await db.query<{ n: number }>("select count(*)::int as n from net.calls")).rows[0]!.n;
+
+  it("sin la función configurada no se llama a nadie", async () => {
+    const before = await calls();
+    await as(JUAN, `insert into notes (recipient_id, kind, body) values ('${CAMI}', 'love', 'hola')`);
+    expect(await calls()).toBe(before);
+  });
+
+  it("con la función configurada, cada aviso nuevo llama a send-push con el secreto", async () => {
+    await db.exec(`insert into vault.decrypted_secrets values
+      ('push_function_url', 'https://x.supabase.co/functions/v1/send-push'), ('push_webhook_secret', 's3cr3t')`);
+    await db.exec("delete from net.calls");
+    await as(JUAN, `insert into notes (recipient_id, kind, body) values ('${CAMI}', 'love', 'te quiero')`);
+    const { rows } = await db.query<{ url: string; secret: string; user_id: string; title: string }>(
+      "select url, headers->>'x-webhook-secret' as secret, body->'record'->>'user_id' as user_id, body->'record'->>'title' as title from net.calls",
+    );
+    expect(rows).toEqual([{ url: "https://x.supabase.co/functions/v1/send-push", secret: "s3cr3t", user_id: CAMI, title: "Juan te mandó amor 💌" }]);
+  });
+
+  it("cada mensaje de chat avisa al celular aunque la campana tenga uno solo", async () => {
+    await db.exec("delete from net.calls");
+    await as(CAMI, "insert into chat_messages (body) values ('uno')");
+    await as(CAMI, "insert into chat_messages (body) values ('dos')");
+    const { rows } = await db.query<{ body: string }>(`select body->'record'->>'body' as body from net.calls where body->'record'->>'user_id' = '${JUAN}' order by id`);
+    expect(rows).toEqual([{ body: "uno" }, { body: "dos" }]);
+  });
+
+  it("marcar como leído no vuelve a avisar", async () => {
+    await db.exec("delete from net.calls");
+    await as(JUAN, "select mark_notifications_read()");
+    expect(await calls()).toBe(0);
+  });
+
+  it("una sorpresa activa avisa a los demás; una programada no", async () => {
+    await as(CAMI, "insert into interruptions (title) values ('Mira la página 🎁')");
+    expect(await as(JUAN, "select title, body, link from notifications where kind = 'system' and body = 'Mira la página 🎁'"))
+      .toEqual([{ title: "Camila te dejó una sorpresa 🎁", body: "Mira la página 🎁", link: "/" }]);
+    expect(await as(CAMI, "select count(*)::int as n from notifications where body = 'Mira la página 🎁'")).toEqual([{ n: 0 }]);
+    await as(CAMI, "insert into interruptions (title, starts_at) values ('Para mañana', now() + interval '1 day')");
+    expect(await as(JUAN, "select count(*)::int as n from notifications where body = 'Para mañana'")).toEqual([{ n: 0 }]);
+  });
+
+  it("un celular queda a nombre de quien inició sesión por última vez en él", async () => {
+    const endpoint = "https://push.example.com/abc";
+    await as(JUAN, `select register_push_subscription('${endpoint}', 'k', 'a', 'ua')`);
+    await as(CAMI, `select register_push_subscription('${endpoint}', 'k2', 'a2', 'ua')`);
+    expect(await as(CAMI, "select p256dh from push_subscriptions")).toEqual([{ p256dh: "k2" }]);
+    expect(await as(JUAN, "select count(*)::int as n from push_subscriptions")).toEqual([{ n: 0 }]);
+    await expect(as(null, `select register_push_subscription('${endpoint}', 'k', 'a')`)).rejects.toThrow(/permission denied|iniciar sesión/);
+  });
+
+  it("el aviso de prueba llega sólo a quien lo pide y no se puede repetir enseguida", async () => {
+    await as(GUEST, "select send_test_notification()");
+    expect(await as(GUEST, "select count(*)::int as n from notifications where link = '/cuenta'")).toEqual([{ n: 1 }]);
+    await expect(as(GUEST, "select send_test_notification()")).rejects.toThrow(/Espera un minuto/);
+    await expect(as(null, "select send_test_notification()")).rejects.toThrow(/permission denied|iniciar sesión/);
   });
 });

@@ -1,6 +1,6 @@
 /* Service worker: caché para que cargue rápido (y sin conexión) y
  * notificaciones push cuando la app está cerrada. */
-const VERSION = "v1";
+const VERSION = "v2";
 const STATIC_CACHE = `static-${VERSION}`;
 const PAGES_CACHE = `pages-${VERSION}`;
 
@@ -60,13 +60,17 @@ self.addEventListener("push", (event) => {
     data = { title: "Tienes algo nuevo 💌", body: event.data ? event.data.text() : "" };
   }
   const title = data.title || "Tienes algo nuevo 💌";
+  // Los mensajes del chat se agrupan en un solo aviso que se actualiza (como
+  // WhatsApp); las notitas y sorpresas llegan cada una por separado.
+  const tag = data.kind === "chat" ? "chat" : `${data.kind || "aviso"}-${Date.now()}`;
   event.waitUntil(
     self.registration.showNotification(title, {
       body: data.body || "",
       icon: "/icons/icon-192.png",
-      badge: "/icons/icon-192.png",
-      tag: data.link || "love",
+      badge: "/icons/badge-96.png",
+      tag,
       renotify: true,
+      vibrate: [80, 40, 80],
       data: { link: typeof data.link === "string" && data.link.startsWith("/") ? data.link : "/" },
     }),
   );

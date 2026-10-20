@@ -19,6 +19,8 @@ export interface Profile {
   role: Role;
   isActive: boolean;
   createdAt: IsoDateTime;
+  /** Colores que eligió para sí (null = los de la página). */
+  themeColors: Partial<Pick<ThemeTokens, "primary" | "primaryContrast" | "accent" | "background" | "surface" | "text" | "muted">> | null;
 }
 
 export interface PermissionDefinition {
@@ -184,11 +186,44 @@ export interface Note {
   createdAt: IsoDateTime;
 }
 
-export interface ChatMessage {
+export type ChatKind = "text" | "image" | "sticker";
+
+/** Foto de un mensaje: rutas en el almacenamiento privado y tamaño. */
+export interface ChatImage {
+  path: string;
+  thumbPath: string;
+  width: number | null;
+  height: number | null;
+}
+
+/** Lo que se muestra del mensaje al que se responde. */
+export interface ChatReplyPreview {
   id: Uuid;
   senderId: Uuid;
   body: string;
+  kind?: ChatKind;
+  sticker?: string | null;
+}
+
+export interface ChatMessage {
+  id: Uuid;
+  senderId: Uuid;
+  kind: ChatKind;
+  /** Texto, o pie de foto (puede ir vacío en fotos y stickers). */
+  body: string;
+  image: ChatImage | null;
+  /** Id del sticker del catálogo (src/domain/stickers.ts). */
+  sticker: string | null;
   createdAt: IsoDateTime;
+  /** Mensaje citado, o null si no responde a nada (o el original se borró). */
+  replyTo: ChatReplyPreview | null;
+}
+
+/** Última conexión de una persona y hasta cuándo leyó el chat. */
+export interface ChatPresence {
+  userId: Uuid;
+  lastSeenAt: IsoDateTime;
+  lastReadAt: IsoDateTime | null;
 }
 
 export type NotificationKind = "note" | "chat" | "system";

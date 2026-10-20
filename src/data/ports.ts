@@ -7,7 +7,7 @@
  * La fábrica de data/backend.ts elige uno al arrancar (patrón Strategy).
  */
 import type {
-  AppNotification, AuditEntry, ChatMessage, ImportantDate, Interruption, Invitation, InvitableRole,
+  AppNotification, AuditEntry, ChatMessage, ChatPresence, ImportantDate, Interruption, Invitation, InvitableRole,
   Milestone, Note, NoteKind, PermissionDefinition, Photo, PhotoUrls, Profile, Role, RolePermission,
   Section, SessionUser, SiteSettings, Uuid,
 } from "@/domain/types";
@@ -80,12 +80,36 @@ export interface MessagingRepository {
   deleteNote(id: Uuid): Promise<void>;
 
   listChat(options?: { before?: string; limit?: number }): Promise<ChatMessage[]>;
-  sendChat(body: string): Promise<ChatMessage>;
+  /** Envía texto, una foto (con pie opcional) o un sticker. */
+  sendChat(body: string, options?: ChatSendOptions): Promise<ChatMessage>;
+  /** URLs firmadas (o locales en demo) de las fotos del chat, por ruta. */
+  resolveChatImages(paths: string[]): Promise<Map<string, string>>;
   deleteChat(id: Uuid): Promise<void>;
+  /** Última conexión y vistos de quienes usan el chat. */
+  listChatPresence(): Promise<ChatPresence[]>;
+  /** Avisa de que sigo conectado; con `read`, además, que leí el chat hasta ahora. */
+  touchChatPresence(options?: { read?: boolean }): Promise<void>;
 
   listNotifications(limit?: number): Promise<AppNotification[]>;
   markNotificationRead(id: Uuid): Promise<void>;
   markAllNotificationsRead(kind?: AppNotification["kind"]): Promise<void>;
+  /** Aviso de prueba para mí (también llega al celular si tiene push). */
+  sendTestNotification(): Promise<void>;
+}
+
+/** Foto ya optimizada lista para subir al chat. */
+export interface ChatImageUpload {
+  full: Blob;
+  thumb: Blob;
+  extension: string;
+  width: number;
+  height: number;
+}
+
+export interface ChatSendOptions {
+  replyToId?: Uuid | null;
+  image?: ChatImageUpload;
+  sticker?: string;
 }
 
 export interface NewUserInput {
@@ -100,6 +124,8 @@ export interface UserRepository {
   getProfile(id: Uuid): Promise<Profile | null>;
   listProfiles(): Promise<Profile[]>;
   updateProfile(id: Uuid, patch: Partial<Pick<Profile, "displayName" | "avatarUrl" | "role" | "isActive">>): Promise<Profile>;
+  /** Colores propios de quien tiene la sesión (null = volver a los de la página). */
+  updateMyColors(colors: Profile["themeColors"]): Promise<Profile>;
   myPermissions(): Promise<string[]>;
   listPermissions(): Promise<PermissionDefinition[]>;
   listRolePermissions(): Promise<RolePermission[]>;
@@ -136,7 +162,7 @@ export interface InvitationRepository {
 
 export type RealtimeTable =
   | "site_settings" | "sections" | "photos" | "milestones" | "important_dates"
-  | "interruptions" | "notes" | "chat_messages" | "notifications";
+  | "interruptions" | "notes" | "chat_messages" | "chat_reads" | "notifications";
 
 export interface RealtimeChange<T = Record<string, unknown>> {
   table: RealtimeTable;

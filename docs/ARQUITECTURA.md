@@ -20,7 +20,7 @@ corren en Edge Functions.
 | Datos en el navegador | Puerto `Backend` con dos adaptadores (Supabase y demo) | Aislar la UI del proveedor |
 | Autenticación | Supabase Auth (PKCE, rotación de tokens) | Sesiones, enlaces mágicos y recuperación |
 | Base de datos | Postgres con RLS, RBAC en SQL y auditoría por triggers | Reglas de negocio y permisos |
-| Archivos | Supabase Storage, bucket privado `photos` | Fotos servidas con URLs firmadas |
+| Archivos | Supabase Storage, buckets privados `photos` y `chat-media` | Fotos de la página y del chat servidas con URLs firmadas |
 | Tiempo real | Supabase Realtime | Chat, notificaciones y contenido que se actualiza solo |
 | Funciones | Edge Functions en Deno | Gestión de cuentas, invitaciones y Web Push |
 | Publicación | Netlify (web) y GitHub Actions (backend y releases) | Despliegue continuo en cada merge |
@@ -100,7 +100,7 @@ Supabase. Eso permite probar las reglas del negocio sin navegador.
 | `AuthContext` | Usuario, perfil, `AccessPolicy` y acciones de sesión |
 | `SiteContentStore` | Ajustes, secciones, fotos, hitos, fechas y sorpresas, más las URLs firmadas |
 | `NotificationsContext` | Avisos, contador sin leer por tipo y notificaciones del sistema |
-| `ThemeController` | Aplica el tema como custom properties en `:root` |
+| `ThemeController` | Aplica el tema como custom properties en `:root`: el de la página con los colores de la persona encima (`personalTheme`) |
 | `ToastContext` | Mensajes emergentes |
 
 ### Fotos
@@ -150,11 +150,13 @@ Las tablas viven en `public` y se crean con las migraciones de
 `supabase/migrations` (el diagrama entidad-relación está en
 [DIAGRAMAS.md](DIAGRAMAS.md#modelo-de-datos)):
 
-- **Acceso:** `profiles`, `permissions`, `role_permissions`, `invitations`.
+- **Acceso:** `profiles` (con `theme_colors`, los colores que eligió cada
+  persona), `permissions`, `role_permissions`, `invitations`.
 - **Contenido:** `site_settings` (fila única), `sections`, `photos`,
   `milestones`, `important_dates`, `interruptions`, `interruption_views`.
-- **Mensajería:** `notes`, `chat_messages`, `chat_reads`, `notifications`,
-  `push_subscriptions`.
+- **Mensajería:** `notes`, `chat_messages` (con `reply_to` para responder
+  citando y `kind` = `text`, `image` o `sticker`), `chat_reads` (última conexión y hasta dónde leyó cada persona),
+  `notifications`, `push_subscriptions`.
 - **Trazabilidad:** `audit_log`.
 
 ### Roles y permisos (RBAC)
@@ -162,6 +164,11 @@ Las tablas viven en `public` y se crean con las migraciones de
 - Tres roles: `super_admin` (Juan), `editor` (Camila) y `viewer` (invitado).
 - Los permisos (`site.view`, `photos.manage`, `chat.use`, …) están en la tabla
   `permissions` y se asignan por rol en `role_permissions`.
+- **Colores:** `site_settings.theme` son los de la página (los ve quien entra
+  sin cuenta) y sólo los cambia `theme.manage`. Cada persona guarda los suyos
+  en `profiles.theme_colors`: la restricción `is_valid_theme_colors` sólo deja
+  claves de la paleta en `#rrggbb`, y `guard_profile_changes` impide que
+  alguien cambie los de otra persona, incluso el super administrador.
 - `has_permission(p)` resuelve en SQL si la persona actual tiene un permiso;
   todas las políticas RLS la usan. El super administrador los tiene todos.
 - Triggers (`guard_profile_changes`, `guard_site_settings`,
@@ -171,6 +178,9 @@ Las tablas viven en `public` y se crean con las migraciones de
 ### Triggers y automatismos
 
 - `handle_new_user`: crea el perfil de cada usuario nuevo de Auth.
+- `chat_presence(p_read)`: única forma de escribir en `chat_reads`. Guarda
+  la última conexión de quien la llama y, con `p_read`, que leyó el chat hasta
+  ese momento. Usa `auth.uid()`, así nadie marca vistos en nombre de otro.
 - `notify_new_note` y `notify_new_chat_message`: escriben en `notifications`
   cuando llega una notita o un mensaje. Sólo los triggers escriben ahí.
 - `audit_row`: registra en `audit_log` cada INSERT, UPDATE o DELETE de las
@@ -183,7 +193,7 @@ Las tablas viven en `public` y se crean con las migraciones de
 | --- | --- | --- |
 | `admin-users` | Super administrador con sesión | Crear, desactivar o borrar cuentas y generar enlaces de recuperación |
 | `redeem-invite` | Cualquiera con un enlace de invitación | Comprobar y canjear la invitación de forma atómica |
-| `send-push` | Database Webhook al insertar en `notifications` | Enviar Web Push a los dispositivos suscritos |
+| `send-push` | La base de datos (trigger `notifications_push` con `pg_net`) en cada aviso nuevo; `GET` desde el navegador | Enviar Web Push a los dispositivos suscritos; entregar la clave pública VAPID |
 
 La `service_role` key sólo existe dentro de estas funciones; nunca llega al
 navegador ni al repositorio.
@@ -198,7 +208,8 @@ navegador ni al repositorio.
 | Token de sesión robado y reutilizado | Tokens de 1 hora con rotación de tokens de refresco y cierre en todos los dispositivos |
 | Enlaces de invitación o recuperación filtrados | Token aleatorio de un solo uso en el `#fragmento`, que no llega a servidores ni registros; en la base sólo se guarda su SHA-256; caducan |
 | Redirecciones abiertas | `?next=` sólo acepta rutas internas (`safeRedirect.ts`) |
-| Fotos expuestas | Bucket privado, sólo imágenes de hasta 5 MB, URLs firmadas, metadatos borrados al subir |
+| Fotos expuestas | Buckets privados, sólo imágenes de hasta 5 MB, URLs firmadas, metadatos borrados al subir |
+| Alguien sube o borra fotos del chat de otro | En `chat-media` cada persona sólo escribe y borra en su carpeta (`<user_id>/`), y un mensaje sólo puede apuntar a fotos de esa carpeta |
 | Clickjacking y fugas de referer | `X-Frame-Options`, `frame-ancestors 'none'`, `Referrer-Policy` |
 | Enumeración de cuentas | La recuperación responde igual exista o no el correo |
 
@@ -207,14 +218,53 @@ Las cabeceras están en `public/_headers` (Netlify) y `vercel.json`; una prueba
 
 ## 7. Tiempo real y notificaciones
 
-1. Una notita o un mensaje se inserta con RLS.
-2. Un trigger crea la fila en `notifications` para la otra persona.
+### Chat tipo WhatsApp
+
+- **Última conexión:** `PresenceHeartbeat` llama a `chat_presence()` cada
+  30 s mientras la app está abierta y visible. Si el último latido tiene menos
+  de 75 s, la otra persona ve «en línea»; si no, «últ. vez…».
+- **Vistos:** al abrir el chat (y cada vez que llega algo con el chat a la
+  vista) se llama `chat_presence(true)`. Un mensaje propio está *visto* si
+  alguien leyó después de su hora, *entregado* si alguien se conectó después y
+  *enviado* si no. Las reglas son funciones puras en `src/domain/chat.ts`.
+- **Respuestas:** `chat_messages.reply_to` apunta al mensaje citado; la
+  consulta lo trae embebido (`reply:reply_to(...)`). Si el original se borra,
+  la respuesta pierde la cita (`on delete set null`).
+- **Fotos:** el navegador las achica (borde máximo 1600 px, ~350 KB, WebP o
+  JPEG sin metadatos) con el mismo `ImageProcessor` del panel, sube la foto y
+  su miniatura a `chat-media/<user_id>/<id>.webp` y luego inserta el mensaje
+  con `kind = 'image'`. Si el insert falla, borra lo que subió. La
+  conversación pide URLs firmadas sólo para las miniaturas, y la foto grande
+  al abrir el visor.
+- **Stickers:** son emoji con una frase, definidos en `src/domain/stickers.ts`;
+  la base de datos sólo guarda el id (`sticker`). No hay imágenes externas.
+- La restricción `chat_messages_content` exige lo de cada tipo: el texto no
+  puede ir vacío, la foto necesita sus dos rutas y el sticker no lleva texto.
+  El aviso de un mensaje nuevo dice «📷 Foto» o «✨ Sticker».
+- `chat_reads` está en la publicación de Realtime: los vistos y la conexión se
+  actualizan sin recargar.
+
+### Avisos
+
+1. Una notita, un mensaje o una sorpresa se inserta con RLS.
+2. Un trigger crea la fila en `notifications` para la otra persona. En el
+   chat, si ya hay un aviso sin leer, se actualiza con el último mensaje (la
+   campana muestra uno solo, pero cada mensaje avisa al celular).
 3. Realtime la entrega al navegador abierto: se actualizan la campanita y los
-   contadores y aparece un toast. Si la pestaña está en segundo plano, se
-   muestra una notificación del sistema.
-4. Si se configuró Web Push, un Database Webhook llama a `send-push`, que avisa
-   al celular aunque la app esté cerrada. El service worker (`public/sw.js`)
-   muestra el aviso y abre el enlace al tocarlo.
+   contadores y aparece un toast. Si la pestaña está en segundo plano y el
+   dispositivo no tiene push, se muestra una notificación del sistema.
+4. El trigger `notifications_push` lee de Supabase Vault la URL de `send-push`
+   y su secreto y la llama con `pg_net`. Si no están, no hace nada; si falla,
+   el aviso se guarda igual. `send-push` manda el Web Push (VAPID) a los
+   dispositivos de esa persona y borra las suscripciones vencidas.
+5. El service worker (`public/sw.js`) muestra el aviso en la pantalla de
+   notificaciones (los del chat se agrupan en uno) y abre el enlace al tocarlo.
+
+Cada dispositivo se suscribe con `register_push_subscription`, que lo pone a
+nombre de quien inició sesión por última vez en él; al cerrar sesión la
+suscripción se borra. La clave pública VAPID se pide a `send-push` (`GET`), así
+que no hay que configurarla en Netlify. El flujo *Deploy* genera las claves y
+el secreto la primera vez y los guarda en los secretos de Supabase y en Vault.
 
 ## 8. Integración y despliegue continuos
 

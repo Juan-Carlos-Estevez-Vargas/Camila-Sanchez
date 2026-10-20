@@ -6,15 +6,15 @@
 // (state/ThemeController.tsx), por eso no son variables Sass.
 // ==========================================================================
 :root {
-  // Paleta "Rosa suave" de la versión 1 (domain/palettes.ts → V1_PALETTE),
+  // Paleta "Rosa vino" de la página (domain/palettes.ts → WINE_PALETTE),
   // para que el primer pintado ya tenga los colores correctos.
-  --c-primary: #c2185b;
+  --c-primary: #b0305a;
   --c-primary-contrast: #ffffff;
-  --c-accent: #ff4081;
-  --c-bg: #ffe6ec;
-  --c-surface: #fff7f9;
-  --c-text: #880e4f;
-  --c-muted: #ad1457;
+  --c-accent: #e8a33d;
+  --c-bg: #fff8f6;
+  --c-surface: #ffffff;
+  --c-text: #2b1720;
+  --c-muted: #7a5c66;
 
   // Derivados con color-mix: cualquier paleta del panel sigue funcionando.
   --c-primary-soft: #{tint(var(--c-primary), 12%, var(--c-surface))};

@@ -6,12 +6,14 @@ import type {
 } from "@/data/ports";
 import { setRememberSession } from "@/data/sessionPersistence";
 import { expiryFromNow, generateInviteToken, hashInviteToken } from "@/domain/invitations";
+import { sanitizeColors } from "@/domain/palettes";
 import { RECOVERY_PATH } from "@/domain/recovery";
 import type { InvitableRole, PhotoUrls, SessionUser, Uuid } from "@/domain/types";
 import { getSupabase, unwrap, type Row } from "./client";
 import * as map from "./mappers";
 
 const PHOTO_BUCKET = "photos";
+const CHAT_BUCKET = "chat-media";
 /** Las URLs firmadas duran 1 h; se cachean 50 min para reutilizarlas. */
 const SIGNED_URL_TTL_S = 3600;
 const SIGNED_URL_CACHE_MS = 50 * 60 * 1000;
@@ -197,6 +199,9 @@ async function currentUserId(): Promise<Uuid> {
   return data.session.user.id;
 }
 
+/** Columnas del chat con el mensaje citado embebido (FK reply_to). */
+const CHAT_COLUMNS = "*, reply:reply_to(id, sender_id, body, kind, sticker)";
+
 const messaging: MessagingRepository = {
   async listNotes() {
     const rows = await unwrap<Row[]>(sb().from("notes").select("*").order("created_at", { ascending: false }).limit(200));
@@ -216,15 +221,64 @@ const messaging: MessagingRepository = {
   deleteNote: (id) => remove("notes", id),
 
   async listChat({ before, limit = 50 } = {}) {
-    let query = sb().from("chat_messages").select("*").order("created_at", { ascending: false }).limit(limit);
+    let query = sb().from("chat_messages").select(CHAT_COLUMNS).order("created_at", { ascending: false }).limit(limit);
     if (before) query = query.lt("created_at", before);
     const rows = await unwrap<Row[]>(query);
     return rows.map(map.toChatMessage).reverse();
   },
-  async sendChat(body) {
-    return map.toChatMessage(await unwrap<Row>(sb().from("chat_messages").insert({ body }).select().single()));
+  async sendChat(body, { replyToId = null, image, sticker } = {}) {
+    const row: Row = { body, reply_to: replyToId, kind: "text" };
+    const uploaded: string[] = [];
+    if (image) {
+      // Carpeta propia: la política del bucket sólo deja subir ahí.
+      const folder = await currentUserId();
+      const id = crypto.randomUUID();
+      const path = `${folder}/${id}.${image.extension}`;
+      const thumbPath = `${folder}/${id}.thumb.${image.extension}`;
+      const options = { cacheControl: "31536000", upsert: false };
+      await unwrap(sb().storage.from(CHAT_BUCKET).upload(path, image.full, { ...options, contentType: image.full.type }));
+      uploaded.push(path);
+      await unwrap(sb().storage.from(CHAT_BUCKET).upload(thumbPath, image.thumb, { ...options, contentType: image.thumb.type }));
+      uploaded.push(thumbPath);
+      Object.assign(row, { kind: "image", image_path: path, thumb_path: thumbPath, image_width: image.width, image_height: image.height });
+    } else if (sticker) {
+      Object.assign(row, { kind: "sticker", sticker, body: "" });
+    }
+    try {
+      return map.toChatMessage(await unwrap<Row>(sb().from("chat_messages").insert(row).select(CHAT_COLUMNS).single()));
+    } catch (error) {
+      // Sin mensaje no deben quedar fotos huérfanas en el almacenamiento.
+      if (uploaded.length) await sb().storage.from(CHAT_BUCKET).remove(uploaded);
+      throw error;
+    }
+  },
+  async resolveChatImages(paths) {
+    const now = Date.now();
+    const key = (path: string) => `${CHAT_BUCKET}:${path}`;
+    const missing = [...new Set(paths)].filter((p) => !((signedUrlCache.get(key(p))?.expires ?? 0) > now));
+    if (missing.length) {
+      const signed = await unwrap<Array<{ path: string | null; signedUrl: string }>>(
+        sb().storage.from(CHAT_BUCKET).createSignedUrls(missing, SIGNED_URL_TTL_S),
+      );
+      for (const s of signed) {
+        if (s.path && s.signedUrl) signedUrlCache.set(key(s.path), { url: s.signedUrl, expires: now + SIGNED_URL_CACHE_MS });
+      }
+    }
+    const result = new Map<string, string>();
+    for (const p of paths) {
+      const url = signedUrlCache.get(key(p))?.url;
+      if (url) result.set(p, url);
+    }
+    return result;
   },
   deleteChat: (id) => remove("chat_messages", id),
+  async listChatPresence() {
+    const rows = await unwrap<Row[]>(sb().from("chat_reads").select("user_id, last_seen_at, last_read_at"));
+    return rows.map(map.toChatPresence);
+  },
+  async touchChatPresence({ read = false } = {}) {
+    await unwrap(sb().rpc("chat_presence", { p_read: read }));
+  },
 
   async listNotifications(limit = 30) {
     const userId = await currentUserId();
@@ -238,6 +292,9 @@ const messaging: MessagingRepository = {
   },
   async markAllNotificationsRead(kind) {
     await unwrap(sb().rpc("mark_notifications_read", { p_kind: kind ?? null }));
+  },
+  async sendTestNotification() {
+    await unwrap(sb().rpc("send_test_notification"));
   },
 };
 
@@ -279,6 +336,12 @@ const users: UserRepository = {
     if (patch.isActive !== undefined) row.is_active = patch.isActive;
     const updated = await unwrap<Row>(sb().from("profiles").update(row).eq("id", id).select().single());
     if (patch.isActive !== undefined) await adminUsers({ action: "set_active", userId: id, active: patch.isActive });
+    return map.toProfile(updated);
+  },
+  async updateMyColors(colors) {
+    const updated = await unwrap<Row>(
+      sb().from("profiles").update({ theme_colors: sanitizeColors(colors) }).eq("id", await currentUserId()).select().single(),
+    );
     return map.toProfile(updated);
   },
   async myPermissions() {
@@ -363,12 +426,10 @@ const realtime: RealtimeGateway = {
 
 const push: PushRepository = {
   async register(s) {
-    await unwrap(
-      sb().from("push_subscriptions").upsert(
-        { endpoint: s.endpoint, p256dh: s.p256dh, auth: s.auth, user_agent: s.userAgent },
-        { onConflict: "endpoint" },
-      ),
-    );
+    // Vía RPC: si el celular era de otra cuenta, pasa a la que inició sesión.
+    await unwrap(sb().rpc("register_push_subscription", {
+      p_endpoint: s.endpoint, p_p256dh: s.p256dh, p_auth: s.auth, p_user_agent: s.userAgent,
+    }));
   },
   async unregister(endpoint) {
     await unwrap(sb().from("push_subscriptions").delete().eq("endpoint", endpoint));

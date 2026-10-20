@@ -30,10 +30,99 @@ $bubble-tail: 6px;
     margin: space(4) 0 space(2);
   }
 
-  &__composer {
+  &__people {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 space(3);
+  }
+
+  &__status.is-online {
+    color: var(--c-success);
+    font-weight: 600;
+  }
+
+  &__replying {
+    flex: 1 0 100%;
+    display: flex;
+    align-items: center;
+    gap: space(2);
+    padding: space(2) space(2) space(2) space(3);
+    border-left: 4px solid var(--c-primary);
+    border-radius: var(--radius-sm);
+    background: var(--c-surface-2);
+    animation: slide-up 0.2s $ease;
+  }
+
+  &__replying-quote {
+    flex: 1;
+    min-width: 0;
+    display: grid;
+    gap: 2px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  &__tools {
+    display: flex;
+    gap: 2px;
+    align-self: center;
+  }
+
+  &__drafts {
+    flex: 1 0 100%;
     display: flex;
     gap: space(2);
+    margin: 0;
+    padding: space(1) 0;
+    overflow-x: auto;
+    list-style: none;
+  }
+
+  &__draft {
+    position: relative;
+    flex: 0 0 auto;
+
+    img {
+      display: block;
+      width: 72px;
+      height: 72px;
+      object-fit: cover;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--c-border);
+    }
+  }
+
+  &__draft-remove {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    display: grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: var(--c-text);
+    color: var(--c-bg);
+    font-size: 0.7rem;
+    cursor: pointer;
+
+    &:focus-visible { @include focus-ring; }
+  }
+
+  &__composer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: space(2);
     align-items: end;
+
+    .textarea { flex: 1; min-width: 0; }
     position: sticky;
     bottom: 0;
     padding: space(2) 0 calc(#{space(2)} + env(safe-area-inset-bottom));
@@ -41,14 +130,236 @@ $bubble-tail: 6px;
 
     .textarea { min-height: 48px; max-height: 160px; resize: none; }
   }
+
+  // En pantallas angostas el botón queda sólo con el sobre para dejarle
+  // espacio al texto.
+  &__send-label {
+    @include below(sm) { @include visually-hidden; }
+  }
 }
 
 .bubble-row {
+  position: relative;
   display: flex;
+  align-items: center;
+  gap: space(1);
   margin-top: space(2);
+  // Deja el scroll vertical al navegador y el gesto horizontal a la app.
+  touch-action: pan-y;
+  transition: transform 0.2s $ease;
 
   &.is-grouped { margin-top: 2px; }
   &.is-mine { justify-content: flex-end; }
+  &.is-swiping { transition: none; }
+
+  &__hint {
+    position: absolute;
+    left: -#{space(6)};
+    color: var(--c-primary);
+    font-weight: 700;
+  }
+
+  // Al saltar a un mensaje citado se ilumina un momento.
+  &.is-flash .bubble { animation: bubble-flash 1.6s $ease; }
+}
+
+@keyframes bubble-flash {
+  0%, 60% { box-shadow: 0 0 0 4px tint(var(--c-primary), 45%); }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+
+.bubble__reply {
+  opacity: 0;
+  transition: opacity 0.15s ease;
+
+  .is-mine & { order: -1; }
+  .bubble-row:hover &,
+  &:focus-visible { opacity: 1; }
+
+  // En pantallas táctiles no hay hover: queda a la vista, discreto (también
+  // se puede deslizar el mensaje hacia la derecha).
+  @media (hover: none) {
+    opacity: 0.45;
+    border-color: transparent;
+  }
+}
+
+// Fotos dentro de la burbuja.
+.bubble--image { padding: 4px 4px 0.4rem; }
+.bubble--image .bubble__name,
+.bubble--image .bubble__quote,
+.bubble--image .bubble__text,
+.bubble--image .bubble__time { margin-inline: 0.5rem; }
+
+.bubble__photo {
+  position: relative;
+  display: block;
+  min-width: 160px;
+  padding: 0;
+  border: 0;
+  border-radius: 14px;
+  overflow: hidden;
+  background: tint(var(--c-text), 8%);
+  cursor: zoom-in;
+
+  img {
+    display: block;
+    width: 100%;
+    max-width: 320px;
+    max-height: 360px;
+    height: auto;
+    object-fit: cover;
+  }
+
+  &:disabled { cursor: default; }
+  &:focus-visible { @include focus-ring; }
+}
+
+.bubble__photo-placeholder {
+  display: grid;
+  place-items: center;
+  width: 220px;
+  height: 160px;
+  font-size: 2rem;
+  opacity: 0.5;
+}
+
+.bubble__uploading {
+  position: absolute;
+  inset: auto 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: space(1);
+  padding: space(2);
+  background: linear-gradient(transparent, tint(#12070c, 65%));
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.bubble__heart {
+  display: inline-block;
+  animation: heartbeat 1.2s ease-in-out infinite;
+
+  @include reduced-motion { animation: none; }
+}
+
+// Los stickers van sin burbuja, como en WhatsApp.
+.bubble--sticker {
+  padding: 0;
+  background: none !important;
+  color: var(--c-text) !important;
+
+  .bubble__time {
+    margin-top: 2px;
+    padding: 1px 8px;
+    border-radius: 999px;
+    background: var(--c-surface-2);
+    color: var(--c-muted);
+    opacity: 1;
+  }
+  .receipt--read { color: var(--c-info, #1d9bd1); }
+}
+
+.sticker {
+  display: inline-grid;
+  justify-items: center;
+  gap: 2px;
+  animation: pop-in 0.35s $ease;
+
+  &__emoji { line-height: 1; }
+  &__text {
+    @include display-text(1rem, 700);
+    padding: 2px 10px;
+    border-radius: 999px;
+    background: var(--c-surface);
+    border: 2px solid currentColor;
+    box-shadow: 0 2px 0 currentColor;
+    white-space: nowrap;
+  }
+
+  &--md .sticker__emoji { font-size: 4.2rem; }
+  &--sm .sticker__emoji { font-size: 2.2rem; }
+  &--sm .sticker__text { font-size: 0.72rem; padding: 0 6px; border-width: 1px; box-shadow: none; }
+
+  &--primary { color: var(--c-primary); }
+  &--accent { color: var(--c-primary-strong, var(--c-primary)); }
+  &--success { color: var(--c-success); }
+  &--warning { color: var(--c-warning); }
+
+  @include reduced-motion { animation: none; }
+}
+
+.sticker-picker {
+  position: absolute;
+  bottom: calc(100% + #{space(2)});
+  left: 0;
+  z-index: 5;
+  width: min(380px, 100%);
+  max-height: 320px;
+  overflow-y: auto;
+  padding: space(3);
+  box-shadow: var(--shadow-lg);
+  animation: slide-up 0.2s $ease;
+
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: space(2);
+
+    @include below(sm) { grid-template-columns: repeat(3, 1fr); }
+  }
+
+  &__item {
+    display: grid;
+    place-items: center;
+    padding: space(2) 0;
+    border: 0;
+    border-radius: var(--radius-sm);
+    min-width: 0;
+    background: none;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.15s ease;
+
+    &:hover { background: var(--c-surface-2); transform: scale(1.06); }
+    &:focus-visible { @include focus-ring; }
+  }
+}
+
+.chat-photo {
+  margin: 0;
+  display: grid;
+  gap: space(2);
+
+  img {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-height: 75vh;
+    object-fit: contain;
+    border-radius: var(--radius-sm);
+    background: var(--c-surface-2);
+  }
+
+  figcaption { color: var(--c-muted); }
+}
+
+.receipt {
+  margin-left: 4px;
+  font-size: 0.72rem;
+  letter-spacing: -0.18em;
+  padding-right: 0.18em;
+
+  &--read {
+    // Como el azul de WhatsApp, aclarado para que se lea sobre el color del tema.
+    color: #9be3ff;
+    opacity: 1;
+    font-weight: 700;
+  }
+
+  &--failed { letter-spacing: 0; font-weight: 700; }
+  &--sending { letter-spacing: 0; }
 }
 
 .bubble {
@@ -68,7 +379,43 @@ $bubble-tail: 6px;
 
   &__name { font-size: 0.75rem; font-weight: 700; color: var(--c-primary); }
   &__text { white-space: pre-wrap; word-break: break-word; }
-  &__time { font-size: 0.68rem; opacity: 0.65; justify-self: end; }
+  &__time { font-size: 0.68rem; opacity: 0.75; justify-self: end; white-space: nowrap; }
+
+  &__quote {
+    display: grid;
+    gap: 1px;
+    margin: 2px 0 4px;
+    padding: 0.35rem 0.6rem;
+    border: 0;
+    border-left: 3px solid var(--c-primary);
+    border-radius: 8px;
+    background: tint(var(--c-text), 7%);
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+
+    .is-mine & {
+      border-left-color: var(--c-primary-contrast);
+      background: tint(var(--c-primary-contrast), 18%);
+    }
+
+    &:focus-visible { @include focus-ring; }
+  }
+
+  &__quote-name {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--c-primary);
+
+    .is-mine & { color: inherit; }
+  }
+
+  &__quote-text {
+    @include truncate;
+    font-size: 0.8rem;
+    opacity: 0.85;
+  }
 
   &.is-pending { opacity: 0.6; }
   &.is-failed { background: var(--c-danger); color: #fff; }

@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { contrastRatio } from "@/core/validation";
 import { DEFAULT_THEME } from "./defaults";
-import { applyPalette, changesBeyondPalette, matchPalette, PALETTES, V1_PALETTE } from "./palettes";
+import { applyPalette, changesBeyondPalette, matchPalette, PALETTES, personalTheme, sanitizeColors, V1_PALETTE, WINE_PALETTE } from "./palettes";
 
 describe("paletas", () => {
-  it("el tema de fábrica usa la paleta suave de la versión 1 en modo claro", () => {
-    expect(matchPalette(DEFAULT_THEME)?.id).toBe(V1_PALETTE.id);
-    expect(DEFAULT_THEME.background).toBe("#ffe6ec");
+  it("el tema de fábrica usa la paleta rosa vino en modo claro", () => {
+    expect(matchPalette(DEFAULT_THEME)?.id).toBe(WINE_PALETTE.id);
+    expect(DEFAULT_THEME.primary).toBe("#b0305a");
     expect(DEFAULT_THEME.darkMode).toBe("light");
   });
 
@@ -31,5 +31,20 @@ describe("paletas", () => {
 
   it("colores sueltos no coinciden con ninguna paleta", () => {
     expect(matchPalette({ ...DEFAULT_THEME, accent: "#123456" })).toBeNull();
+  });
+
+  it("los colores de una persona se ponen encima de los de la página", () => {
+    const site = { ...DEFAULT_THEME, radius: 6 };
+    const mine = personalTheme(site, V1_PALETTE.colors);
+    expect(matchPalette(mine)?.id).toBe(V1_PALETTE.id);
+    expect(mine.radius).toBe(6);
+    expect(personalTheme(site, null)).toBe(site);
+  });
+
+  it("descarta colores inválidos o claves que no son de la paleta", () => {
+    expect(sanitizeColors({ primary: "#123456", text: "red", fontBody: "#000000", accent: "#abc" })).toEqual({ primary: "#123456" });
+    expect(sanitizeColors({ text: "url(x)" })).toBeNull();
+    expect(sanitizeColors("#123456")).toBeNull();
+    expect(sanitizeColors(["#123456"])).toBeNull();
   });
 });
