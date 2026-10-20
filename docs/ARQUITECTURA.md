@@ -100,7 +100,7 @@ Supabase. Eso permite probar las reglas del negocio sin navegador.
 | `AuthContext` | Usuario, perfil, `AccessPolicy` y acciones de sesión |
 | `SiteContentStore` | Ajustes, secciones, fotos, hitos, fechas y sorpresas, más las URLs firmadas |
 | `NotificationsContext` | Avisos, contador sin leer por tipo y notificaciones del sistema |
-| `ThemeController` | Aplica el tema como custom properties en `:root` |
+| `ThemeController` | Aplica el tema como custom properties en `:root`: el de la página con los colores de la persona encima (`personalTheme`) |
 | `ToastContext` | Mensajes emergentes |
 
 ### Fotos
@@ -150,7 +150,8 @@ Las tablas viven en `public` y se crean con las migraciones de
 `supabase/migrations` (el diagrama entidad-relación está en
 [DIAGRAMAS.md](DIAGRAMAS.md#modelo-de-datos)):
 
-- **Acceso:** `profiles`, `permissions`, `role_permissions`, `invitations`.
+- **Acceso:** `profiles` (con `theme_colors`, los colores que eligió cada
+  persona), `permissions`, `role_permissions`, `invitations`.
 - **Contenido:** `site_settings` (fila única), `sections`, `photos`,
   `milestones`, `important_dates`, `interruptions`, `interruption_views`.
 - **Mensajería:** `notes`, `chat_messages` (con `reply_to` para responder
@@ -163,6 +164,11 @@ Las tablas viven en `public` y se crean con las migraciones de
 - Tres roles: `super_admin` (Juan), `editor` (Camila) y `viewer` (invitado).
 - Los permisos (`site.view`, `photos.manage`, `chat.use`, …) están en la tabla
   `permissions` y se asignan por rol en `role_permissions`.
+- **Colores:** `site_settings.theme` son los de la página (los ve quien entra
+  sin cuenta) y sólo los cambia `theme.manage`. Cada persona guarda los suyos
+  en `profiles.theme_colors`: la restricción `is_valid_theme_colors` sólo deja
+  claves de la paleta en `#rrggbb`, y `guard_profile_changes` impide que
+  alguien cambie los de otra persona, incluso el super administrador.
 - `has_permission(p)` resuelve en SQL si la persona actual tiene un permiso;
   todas las políticas RLS la usan. El super administrador los tiene todos.
 - Triggers (`guard_profile_changes`, `guard_site_settings`,

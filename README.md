@@ -41,7 +41,8 @@ que puedes probar el chat y las notificaciones abriendo dos ventanas.
 | Página principal (portada, contador juntos, cuentas regresivas, notas, hitos, galería por año/mes, carta, frases) | `/` | Quien tenga `site.view` (o todos si el sitio es público) |
 | Cajita de mensajes | `/mensajes` | `notes.send` |
 | Chat en tiempo real tipo WhatsApp: fotos, stickers, responder citando, última conexión y vistos (✓ ✓✓) | `/chat` | `chat.use` |
-| Panel de contenido: fotos, textos y animaciones, hitos, fechas importantes, sorpresas/interrupciones, paleta de colores (por defecto la rosa suave de la versión 1) | `/panel` | Editora y super admin |
+| Panel de contenido: fotos, textos y animaciones, hitos, fechas importantes, sorpresas/interrupciones | `/panel` | Editora y super admin |
+| Mis colores: cada persona elige su paleta sin cambiársela a nadie más; quien entra sin cuenta ve Rosa vino | `/cuenta/colores` | Cualquier cuenta |
 | Super admin: usuarios, roles y permisos, apariencia (colores, fuentes, efectos, música), secciones, ajustes, auditoría | `/super` | Super admin |
 | Tutorial guiado: botón fijo en la cabecera que recorre la página actual paso a paso | todas | Todos |
 
@@ -114,8 +115,8 @@ src/features/messages/styles/  cajita de mensajes y chat
   `z("modal")`, `@include below("md")`, `@include surface`, etc.
 - Los estilos de cada funcionalidad se cargan con su ruta: quien sólo ve la
   página no descarga los del panel.
-- Los colores siguen siendo custom properties para que el super admin los
-  cambie en vivo desde *Apariencia*.
+- Los colores siguen siendo custom properties: la app pone los de la página
+  (*Apariencia*) y encima los que cada persona eligió en *Mis colores*.
 
 ### SEO
 
