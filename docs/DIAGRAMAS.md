@@ -13,6 +13,7 @@ directamente al abrir este archivo. La explicación de cada pieza está en
 - [Subida de fotos](#subida-de-fotos)
 - [Notitas, chat y notificaciones](#notitas-chat-y-notificaciones)
 - [Chat: respuestas, conexión y vistos](#chat-respuestas-conexión-y-vistos)
+- [Chat: fotos y stickers](#chat-fotos-y-stickers)
 - [Tutorial guiado](#tutorial-guiado)
 - [Integración y despliegue](#integración-y-despliegue)
 - [Modelo de datos](#modelo-de-datos)
@@ -262,6 +263,35 @@ stateDiagram-v2
   Enviado --> Visto: abre el chat
 ```
 
+## Chat: fotos y stickers
+
+```mermaid
+sequenceDiagram
+  actor J as Juan
+  participant A as SPA de Juan
+  participant S as Storage chat-media
+  participant DB as Postgres
+  participant RT as Realtime
+  participant B as SPA de Camila
+
+  J->>A: 📷 elige fotos y escribe un mensaje
+  A->>A: ImageProcessor: achica, quita metadatos, miniatura
+  A-->>J: burbuja «Enviando foto…» con la vista previa
+  A->>S: sube juan_id/id.webp y id.thumb.webp
+  A->>DB: insert chat_messages(kind=image, rutas, body)
+  alt el insert falla
+    A->>S: borra lo que subió
+    A-->>J: «No se envió»
+  end
+  DB-->>RT: mensaje nuevo
+  RT-->>B: llega la foto
+  B->>S: URL firmada de la miniatura
+  Note over B: Al tocarla pide la foto grande
+  J->>A: 😊 toca un sticker
+  A->>DB: insert chat_messages(kind=sticker, sticker=id)
+  RT-->>B: se dibuja con el catálogo de la app
+```
+
 ## Tutorial guiado
 
 ```mermaid
@@ -396,8 +426,12 @@ erDiagram
   CHAT_MESSAGES {
     uuid id PK
     uuid sender_id FK
+    chat_kind kind "text, image, sticker"
     text body
     uuid reply_to FK "mensaje citado"
+    text image_path "chat-media/<user_id>/..."
+    text thumb_path
+    text sticker "id del catálogo"
   }
   CHAT_READS {
     uuid user_id PK
