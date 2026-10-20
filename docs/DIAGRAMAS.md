@@ -12,6 +12,7 @@ directamente al abrir este archivo. La explicación de cada pieza está en
 - [Recuperación de contraseña](#recuperación-de-contraseña)
 - [Subida de fotos](#subida-de-fotos)
 - [Notitas, chat y notificaciones](#notitas-chat-y-notificaciones)
+- [Chat: respuestas, conexión y vistos](#chat-respuestas-conexión-y-vistos)
 - [Tutorial guiado](#tutorial-guiado)
 - [Integración y despliegue](#integración-y-despliegue)
 - [Modelo de datos](#modelo-de-datos)
@@ -222,6 +223,45 @@ sequenceDiagram
   end
 ```
 
+## Chat: respuestas, conexión y vistos
+
+```mermaid
+sequenceDiagram
+  actor J as Juan
+  participant A as SPA de Juan
+  participant DB as Postgres
+  participant RT as Realtime
+  participant B as SPA de Camila
+  actor C as Camila
+
+  loop cada 30 s con la app a la vista
+    B->>DB: chat_presence(false)
+    DB-->>RT: chat_reads.last_seen_at
+    RT-->>A: «Camila · en línea»
+  end
+  J->>A: escribe y envía
+  A->>DB: insert chat_messages
+  A-->>J: ✓✓ entregado (Camila se conectó después)
+  C->>B: abre el chat
+  B->>DB: chat_presence(true)
+  DB-->>RT: chat_reads.last_read_at
+  RT-->>A: ✓✓ visto
+  C->>B: desliza el mensaje o toca ↩
+  B->>DB: insert chat_messages(body, reply_to)
+  RT-->>A: respuesta con la cita
+  Note over A: Si Camila cierra la app, sin latidos<br/>pasa a «últ. vez hace…»
+```
+
+```mermaid
+stateDiagram-v2
+  [*] --> Enviando: enviar
+  Enviando --> NoEnviado: error
+  Enviando --> Enviado: guardado
+  Enviado --> Entregado: la otra persona se conecta
+  Entregado --> Visto: abre el chat
+  Enviado --> Visto: abre el chat
+```
+
 ## Tutorial guiado
 
 ```mermaid
@@ -276,7 +316,8 @@ erDiagram
   AUTH_USERS ||--o| INVITATIONS : "usa"
   AUTH_USERS ||--o{ NOTES : "envía / recibe"
   AUTH_USERS ||--o{ CHAT_MESSAGES : "escribe"
-  AUTH_USERS ||--o| CHAT_READS : "último leído"
+  AUTH_USERS ||--o| CHAT_READS : "conexión y vistos"
+  CHAT_MESSAGES |o--o{ CHAT_MESSAGES : "responde a"
   AUTH_USERS ||--o{ NOTIFICATIONS : "recibe"
   AUTH_USERS ||--o{ PUSH_SUBSCRIPTIONS : "dispositivos"
   AUTH_USERS ||--o{ INTERRUPTION_VIEWS : "vio"
@@ -356,6 +397,12 @@ erDiagram
     uuid id PK
     uuid sender_id FK
     text body
+    uuid reply_to FK "mensaje citado"
+  }
+  CHAT_READS {
+    uuid user_id PK
+    timestamptz last_seen_at "última conexión"
+    timestamptz last_read_at "hasta dónde leyó"
   }
   NOTIFICATIONS {
     uuid id PK

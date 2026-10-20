@@ -67,7 +67,7 @@ cerrada.
 
 ## 4. Chat
 
-Para hablar en tiempo real. Entra desde **Chat**.
+Para hablar en tiempo real, como en WhatsApp. Entra desde **Chat**.
 
 - Escribe abajo y pulsa **Enter** (o **Enviar 💌**). Con **Mayúsculas + Enter**
   haces un salto de línea.
@@ -75,6 +75,26 @@ Para hablar en tiempo real. Entra desde **Chat**.
 - Sube en la conversación y toca **Ver mensajes anteriores** para leer lo
   viejo.
 - El punto junto a **Chat** en la cabecera indica que hay mensajes sin leer.
+
+**Responder a un mensaje.** Pasa el mouse sobre el mensaje y toca **↩**, o en
+el celular deslízalo hacia la derecha. Arriba de donde escribes aparece
+«Respondiendo a…»; escribe y envía. Tu mensaje sale con el otro citado, y al
+tocar la cita la conversación salta al original y lo resalta. Para no
+responder, toca **✕** o pulsa Esc.
+
+**Última conexión.** Debajo del título dice si la otra persona está
+**en línea** o cuándo se conectó por última vez («últ. vez hace 5 min»,
+«hoy a las 3:15 p. m.», «ayer a las…»). Cuenta como conectado tener la app
+abierta y a la vista en cualquier página.
+
+**Vistos.** Junto a la hora de tus mensajes:
+
+| Marca | Significa |
+| --- | --- |
+| 🕓 | Enviándose |
+| ✓ | Enviado: la otra persona no se ha conectado desde entonces |
+| ✓✓ | Entregado: se conectó, pero todavía no abrió el chat |
+| ✓✓ de color | Visto: abrió el chat después de que llegó (con el mouse encima dice quién lo vio) |
 
 ## 5. Notificaciones
 

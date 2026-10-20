@@ -40,7 +40,7 @@ que puedes probar el chat y las notificaciones abriendo dos ventanas.
 | --- | --- | --- |
 | Página principal (portada, contador juntos, cuentas regresivas, notas, hitos, galería por año/mes, carta, frases) | `/` | Quien tenga `site.view` (o todos si el sitio es público) |
 | Cajita de mensajes | `/mensajes` | `notes.send` |
-| Chat en tiempo real | `/chat` | `chat.use` |
+| Chat en tiempo real tipo WhatsApp: responder citando, última conexión y vistos (✓ ✓✓) | `/chat` | `chat.use` |
 | Panel de contenido: fotos, textos y animaciones, hitos, fechas importantes, sorpresas/interrupciones, paleta de colores (por defecto la rosa suave de la versión 1) | `/panel` | Editora y super admin |
 | Super admin: usuarios, roles y permisos, apariencia (colores, fuentes, efectos, música), secciones, ajustes, auditoría | `/super` | Super admin |
 | Tutorial guiado: botón fijo en la cabecera que recorre la página actual paso a paso | todas | Todos |
