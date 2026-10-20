@@ -233,6 +233,12 @@ function pageSteps(ctx: TourContext): TourStep[] {
         body: "Elige con qué colores ves la app. Sólo cambia para ti.",
       },
       {
+        id: "account-push",
+        target: [tourTarget("account-push")],
+        title: "Avisos en el celular",
+        body: "Actívalos en cada dispositivo para que los mensajes, las notitas y las sorpresas te lleguen aunque la app esté cerrada. En iPhone, primero agrega la app a la pantalla de inicio.",
+      },
+      {
         id: "account-password",
         target: [tourTarget("account-password")],
         title: "Tu contraseña",
