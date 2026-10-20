@@ -89,7 +89,7 @@ describe("roles y escalada de privilegios", () => {
     const rows = await as<{ p: string }>(CAMI, "select p from my_permissions() p order by p");
     expect(rows.map((r) => r.p)).toEqual([
       "chat.use", "content.edit", "dates.manage", "interruptions.manage",
-      "notes.send", "photos.manage", "site.view", "theme.palette",
+      "notes.send", "photos.manage", "site.view",
     ]);
   });
 });
@@ -124,17 +124,43 @@ describe("edición de contenido", () => {
   });
 
   it("sólo theme.manage puede cambiar tipografías y efectos", async () => {
-    await expect(as(CAMI, `update site_settings set theme = theme || '{"fontDisplay":"Lora"}'`)).rejects.toThrow(/permiso para cambiar el tema/);
-    await expect(as(CAMI, `update site_settings set effects = '{"cursorHearts":true}'`)).rejects.toThrow(/permiso para cambiar el tema/);
+    expect(await as(CAMI, `update site_settings set theme = theme || '{"fontDisplay":"Lora"}' returning id`)).toEqual([]);
+    expect(await as(CAMI, `update site_settings set effects = '{"cursorHearts":true}' returning id`)).toEqual([]);
     expect(await as(GUEST, `update site_settings set theme = theme || '{"primary":"#aa0000"}' returning id`)).toEqual([]);
     const rows = await as(JUAN, `update site_settings set theme = theme || '{"primary":"#aa0000","fontDisplay":"Lora"}' returning theme->>'primary' as p`);
     expect(rows).toEqual([{ p: "#aa0000" }]);
   });
 
-  it("la editora puede elegir la paleta de colores (sólo colores válidos)", async () => {
-    const rows = await as(CAMI, `update site_settings set theme = theme || '{"primary":"#c2185b","background":"#ffe6ec"}' returning theme->>'background' as bg, theme->>'fontDisplay' as font`);
-    expect(rows).toEqual([{ bg: "#ffe6ec", font: "Lora" }]);
-    await expect(as(CAMI, `update site_settings set theme = theme || '{"primary":"red; background:url(x)"}'`)).rejects.toThrow(/Color no válido/);
+  it("la editora ya no cambia los colores de la página", async () => {
+    expect(await as(CAMI, `update site_settings set theme = theme || '{"primary":"#123456"}' returning id`)).toEqual([]);
+    const [row] = await as<{ p: string }>(JUAN, "select theme->>'primary' as p from site_settings");
+    expect(row?.p).toBe("#aa0000");
+  });
+});
+
+describe("colores por persona", () => {
+  it("cada persona guarda sus colores sin tocar los de la página", async () => {
+    const rows = await as(CAMI, `update profiles set theme_colors = '{"primary":"#7e4fb5","background":"#f6f0ff"}' where id = '${CAMI}' returning theme_colors->>'primary' as p`);
+    expect(rows).toEqual([{ p: "#7e4fb5" }]);
+    const [site] = await as<{ p: string }>(JUAN, "select theme->>'primary' as p from site_settings");
+    expect(site?.p).toBe("#aa0000");
+    expect(await as(CAMI, `update profiles set theme_colors = null where id = '${CAMI}' returning theme_colors`)).toEqual([{ theme_colors: null }]);
+  });
+
+  it("nadie cambia los colores de otra persona, ni siquiera el super administrador", async () => {
+    expect(await as(GUEST, `update profiles set theme_colors = '{"primary":"#000000"}' where id = '${CAMI}' returning id`)).toEqual([]);
+    await expect(as(JUAN, `update profiles set theme_colors = '{"primary":"#000000"}' where id = '${CAMI}'`))
+      .rejects.toThrow(/Sólo cada persona/);
+  });
+
+  it("sólo acepta colores de la paleta en formato #rrggbb", async () => {
+    for (const bad of ['{"primary":"red; background:url(x)"}', '{"fontBody":"#000000"}', '{"primary":"#abc"}', '["#000000"]', '{"primary":1}']) {
+      await expect(as(GUEST, `update profiles set theme_colors = '${bad}' where id = '${GUEST}'`)).rejects.toThrow(/theme_colors/);
+    }
+  });
+
+  it("el permiso theme.palette ya no existe", async () => {
+    expect(await as(JUAN, "select key from permissions where key = 'theme.palette'")).toEqual([]);
   });
 });
 
