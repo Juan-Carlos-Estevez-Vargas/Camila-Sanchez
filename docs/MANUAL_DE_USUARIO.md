@@ -82,6 +82,16 @@ el celular deslízalo hacia la derecha. Arriba de donde escribes aparece
 tocar la cita la conversación salta al original y lo resalta. Para no
 responder, toca **✕** o pulsa Esc.
 
+**Fotos.** Toca **📷** y elige una o varias fotos (hasta 10 a la vez). Aparecen
+en miniatura arriba de donde escribes; quita las que no quieras con **✕** y,
+si quieres, escribe un mensaje: va pegado a la primera foto. También puedes
+pegar una imagen copiada directamente en el cuadro de texto. Las fotos se
+achican antes de subirse para que lleguen rápido y se guardan privadas: sólo
+las ven las personas que usan el chat. Toca una foto para verla en grande.
+
+**Stickers.** Toca **😊**, elige uno y se envía al instante. Para cerrar la
+lista sin enviar nada, pulsa Esc o toca fuera de ella.
+
 **Última conexión.** Debajo del título dice si la otra persona está
 **en línea** o cuándo se conectó por última vez («últ. vez hace 5 min»,
 «hoy a las 3:15 p. m.», «ayer a las…»). Cuenta como conectado tener la app

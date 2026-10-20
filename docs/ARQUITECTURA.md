@@ -20,7 +20,7 @@ corren en Edge Functions.
 | Datos en el navegador | Puerto `Backend` con dos adaptadores (Supabase y demo) | Aislar la UI del proveedor |
 | Autenticación | Supabase Auth (PKCE, rotación de tokens) | Sesiones, enlaces mágicos y recuperación |
 | Base de datos | Postgres con RLS, RBAC en SQL y auditoría por triggers | Reglas de negocio y permisos |
-| Archivos | Supabase Storage, bucket privado `photos` | Fotos servidas con URLs firmadas |
+| Archivos | Supabase Storage, buckets privados `photos` y `chat-media` | Fotos de la página y del chat servidas con URLs firmadas |
 | Tiempo real | Supabase Realtime | Chat, notificaciones y contenido que se actualiza solo |
 | Funciones | Edge Functions en Deno | Gestión de cuentas, invitaciones y Web Push |
 | Publicación | Netlify (web) y GitHub Actions (backend y releases) | Despliegue continuo en cada merge |
@@ -154,7 +154,7 @@ Las tablas viven en `public` y se crean con las migraciones de
 - **Contenido:** `site_settings` (fila única), `sections`, `photos`,
   `milestones`, `important_dates`, `interruptions`, `interruption_views`.
 - **Mensajería:** `notes`, `chat_messages` (con `reply_to` para responder
-  citando), `chat_reads` (última conexión y hasta dónde leyó cada persona),
+  citando y `kind` = `text`, `image` o `sticker`), `chat_reads` (última conexión y hasta dónde leyó cada persona),
   `notifications`, `push_subscriptions`.
 - **Trazabilidad:** `audit_log`.
 
@@ -202,7 +202,8 @@ navegador ni al repositorio.
 | Token de sesión robado y reutilizado | Tokens de 1 hora con rotación de tokens de refresco y cierre en todos los dispositivos |
 | Enlaces de invitación o recuperación filtrados | Token aleatorio de un solo uso en el `#fragmento`, que no llega a servidores ni registros; en la base sólo se guarda su SHA-256; caducan |
 | Redirecciones abiertas | `?next=` sólo acepta rutas internas (`safeRedirect.ts`) |
-| Fotos expuestas | Bucket privado, sólo imágenes de hasta 5 MB, URLs firmadas, metadatos borrados al subir |
+| Fotos expuestas | Buckets privados, sólo imágenes de hasta 5 MB, URLs firmadas, metadatos borrados al subir |
+| Alguien sube o borra fotos del chat de otro | En `chat-media` cada persona sólo escribe y borra en su carpeta (`<user_id>/`), y un mensaje sólo puede apuntar a fotos de esa carpeta |
 | Clickjacking y fugas de referer | `X-Frame-Options`, `frame-ancestors 'none'`, `Referrer-Policy` |
 | Enumeración de cuentas | La recuperación responde igual exista o no el correo |
 
@@ -223,6 +224,17 @@ Las cabeceras están en `public/_headers` (Netlify) y `vercel.json`; una prueba
 - **Respuestas:** `chat_messages.reply_to` apunta al mensaje citado; la
   consulta lo trae embebido (`reply:reply_to(...)`). Si el original se borra,
   la respuesta pierde la cita (`on delete set null`).
+- **Fotos:** el navegador las achica (borde máximo 1600 px, ~350 KB, WebP o
+  JPEG sin metadatos) con el mismo `ImageProcessor` del panel, sube la foto y
+  su miniatura a `chat-media/<user_id>/<id>.webp` y luego inserta el mensaje
+  con `kind = 'image'`. Si el insert falla, borra lo que subió. La
+  conversación pide URLs firmadas sólo para las miniaturas, y la foto grande
+  al abrir el visor.
+- **Stickers:** son emoji con una frase, definidos en `src/domain/stickers.ts`;
+  la base de datos sólo guarda el id (`sticker`). No hay imágenes externas.
+- La restricción `chat_messages_content` exige lo de cada tipo: el texto no
+  puede ir vacío, la foto necesita sus dos rutas y el sticker no lleva texto.
+  El aviso de un mensaje nuevo dice «📷 Foto» o «✨ Sticker».
 - `chat_reads` está en la publicación de Realtime: los vistos y la conexión se
   actualizan sin recargar.
 
