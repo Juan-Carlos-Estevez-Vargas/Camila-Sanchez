@@ -153,8 +153,9 @@ Las tablas viven en `public` y se crean con las migraciones de
 - **Acceso:** `profiles`, `permissions`, `role_permissions`, `invitations`.
 - **Contenido:** `site_settings` (fila única), `sections`, `photos`,
   `milestones`, `important_dates`, `interruptions`, `interruption_views`.
-- **Mensajería:** `notes`, `chat_messages`, `chat_reads`, `notifications`,
-  `push_subscriptions`.
+- **Mensajería:** `notes`, `chat_messages` (con `reply_to` para responder
+  citando), `chat_reads` (última conexión y hasta dónde leyó cada persona),
+  `notifications`, `push_subscriptions`.
 - **Trazabilidad:** `audit_log`.
 
 ### Roles y permisos (RBAC)
@@ -171,6 +172,9 @@ Las tablas viven en `public` y se crean con las migraciones de
 ### Triggers y automatismos
 
 - `handle_new_user`: crea el perfil de cada usuario nuevo de Auth.
+- `chat_presence(p_read)`: única forma de escribir en `chat_reads`. Guarda
+  la última conexión de quien la llama y, con `p_read`, que leyó el chat hasta
+  ese momento. Usa `auth.uid()`, así nadie marca vistos en nombre de otro.
 - `notify_new_note` y `notify_new_chat_message`: escriben en `notifications`
   cuando llega una notita o un mensaje. Sólo los triggers escriben ahí.
 - `audit_row`: registra en `audit_log` cada INSERT, UPDATE o DELETE de las
@@ -206,6 +210,23 @@ Las cabeceras están en `public/_headers` (Netlify) y `vercel.json`; una prueba
 (`securityHeaders.test.ts`) comprueba que coincidan.
 
 ## 7. Tiempo real y notificaciones
+
+### Chat tipo WhatsApp
+
+- **Última conexión:** `PresenceHeartbeat` llama a `chat_presence()` cada
+  30 s mientras la app está abierta y visible. Si el último latido tiene menos
+  de 75 s, la otra persona ve «en línea»; si no, «últ. vez…».
+- **Vistos:** al abrir el chat (y cada vez que llega algo con el chat a la
+  vista) se llama `chat_presence(true)`. Un mensaje propio está *visto* si
+  alguien leyó después de su hora, *entregado* si alguien se conectó después y
+  *enviado* si no. Las reglas son funciones puras en `src/domain/chat.ts`.
+- **Respuestas:** `chat_messages.reply_to` apunta al mensaje citado; la
+  consulta lo trae embebido (`reply:reply_to(...)`). Si el original se borra,
+  la respuesta pierde la cita (`on delete set null`).
+- `chat_reads` está en la publicación de Realtime: los vistos y la conexión se
+  actualizan sin recargar.
+
+### Avisos
 
 1. Una notita o un mensaje se inserta con RLS.
 2. Un trigger crea la fila en `notifications` para la otra persona.
