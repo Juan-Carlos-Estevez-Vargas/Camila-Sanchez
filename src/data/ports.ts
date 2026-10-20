@@ -122,6 +122,8 @@ export interface UserRepository {
   getProfile(id: Uuid): Promise<Profile | null>;
   listProfiles(): Promise<Profile[]>;
   updateProfile(id: Uuid, patch: Partial<Pick<Profile, "displayName" | "avatarUrl" | "role" | "isActive">>): Promise<Profile>;
+  /** Colores propios de quien tiene la sesión (null = volver a los de la página). */
+  updateMyColors(colors: Profile["themeColors"]): Promise<Profile>;
   myPermissions(): Promise<string[]>;
   listPermissions(): Promise<PermissionDefinition[]>;
   listRolePermissions(): Promise<RolePermission[]>;

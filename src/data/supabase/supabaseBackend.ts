@@ -6,6 +6,7 @@ import type {
 } from "@/data/ports";
 import { setRememberSession } from "@/data/sessionPersistence";
 import { expiryFromNow, generateInviteToken, hashInviteToken } from "@/domain/invitations";
+import { sanitizeColors } from "@/domain/palettes";
 import { RECOVERY_PATH } from "@/domain/recovery";
 import type { InvitableRole, PhotoUrls, SessionUser, Uuid } from "@/domain/types";
 import { getSupabase, unwrap, type Row } from "./client";
@@ -332,6 +333,12 @@ const users: UserRepository = {
     if (patch.isActive !== undefined) row.is_active = patch.isActive;
     const updated = await unwrap<Row>(sb().from("profiles").update(row).eq("id", id).select().single());
     if (patch.isActive !== undefined) await adminUsers({ action: "set_active", userId: id, active: patch.isActive });
+    return map.toProfile(updated);
+  },
+  async updateMyColors(colors) {
+    const updated = await unwrap<Row>(
+      sb().from("profiles").update({ theme_colors: sanitizeColors(colors) }).eq("id", await currentUserId()).select().single(),
+    );
     return map.toProfile(updated);
   },
   async myPermissions() {
