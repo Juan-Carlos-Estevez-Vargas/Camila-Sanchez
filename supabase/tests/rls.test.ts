@@ -187,8 +187,8 @@ describe("mensajes y notificaciones", () => {
   it("un mensaje de chat avisa al resto una sola vez mientras no lo lean", async () => {
     await as(CAMI, "insert into chat_messages (body) values ('te amo')");
     await as(CAMI, "insert into chat_messages (body) values ('mucho')");
-    const rows = await as(JUAN, "select count(*)::int as n from notifications where kind = 'chat'");
-    expect(rows).toEqual([{ n: 1 }]);
+    const rows = await as(JUAN, "select count(*)::int as n, max(body) as body from notifications where kind = 'chat'");
+    expect(rows).toEqual([{ n: 1, body: "mucho" }]);
   });
 });
 
@@ -326,5 +326,65 @@ describe("invitaciones", () => {
   it("revocar borra la invitación", async () => {
     await as(JUAN, `delete from invitations where token_hash = '${HASH}'`);
     expect(await as(JUAN, "select count(*)::int as n from invitations")).toEqual([{ n: 0 }]);
+  });
+});
+
+describe("avisos en el celular", () => {
+  const calls = async () => (await db.query<{ n: number }>("select count(*)::int as n from net.calls")).rows[0]!.n;
+
+  it("sin la función configurada no se llama a nadie", async () => {
+    const before = await calls();
+    await as(JUAN, `insert into notes (recipient_id, kind, body) values ('${CAMI}', 'love', 'hola')`);
+    expect(await calls()).toBe(before);
+  });
+
+  it("con la función configurada, cada aviso nuevo llama a send-push con el secreto", async () => {
+    await db.exec(`insert into vault.decrypted_secrets values
+      ('push_function_url', 'https://x.supabase.co/functions/v1/send-push'), ('push_webhook_secret', 's3cr3t')`);
+    await db.exec("delete from net.calls");
+    await as(JUAN, `insert into notes (recipient_id, kind, body) values ('${CAMI}', 'love', 'te quiero')`);
+    const { rows } = await db.query<{ url: string; secret: string; user_id: string; title: string }>(
+      "select url, headers->>'x-webhook-secret' as secret, body->'record'->>'user_id' as user_id, body->'record'->>'title' as title from net.calls",
+    );
+    expect(rows).toEqual([{ url: "https://x.supabase.co/functions/v1/send-push", secret: "s3cr3t", user_id: CAMI, title: "Juan te mandó amor 💌" }]);
+  });
+
+  it("cada mensaje de chat avisa al celular aunque la campana tenga uno solo", async () => {
+    await db.exec("delete from net.calls");
+    await as(CAMI, "insert into chat_messages (body) values ('uno')");
+    await as(CAMI, "insert into chat_messages (body) values ('dos')");
+    const { rows } = await db.query<{ body: string }>(`select body->'record'->>'body' as body from net.calls where body->'record'->>'user_id' = '${JUAN}' order by id`);
+    expect(rows).toEqual([{ body: "uno" }, { body: "dos" }]);
+  });
+
+  it("marcar como leído no vuelve a avisar", async () => {
+    await db.exec("delete from net.calls");
+    await as(JUAN, "select mark_notifications_read()");
+    expect(await calls()).toBe(0);
+  });
+
+  it("una sorpresa activa avisa a los demás; una programada no", async () => {
+    await as(CAMI, "insert into interruptions (title) values ('Mira la página 🎁')");
+    expect(await as(JUAN, "select title, body, link from notifications where kind = 'system' and body = 'Mira la página 🎁'"))
+      .toEqual([{ title: "Camila te dejó una sorpresa 🎁", body: "Mira la página 🎁", link: "/" }]);
+    expect(await as(CAMI, "select count(*)::int as n from notifications where body = 'Mira la página 🎁'")).toEqual([{ n: 0 }]);
+    await as(CAMI, "insert into interruptions (title, starts_at) values ('Para mañana', now() + interval '1 day')");
+    expect(await as(JUAN, "select count(*)::int as n from notifications where body = 'Para mañana'")).toEqual([{ n: 0 }]);
+  });
+
+  it("un celular queda a nombre de quien inició sesión por última vez en él", async () => {
+    const endpoint = "https://push.example.com/abc";
+    await as(JUAN, `select register_push_subscription('${endpoint}', 'k', 'a', 'ua')`);
+    await as(CAMI, `select register_push_subscription('${endpoint}', 'k2', 'a2', 'ua')`);
+    expect(await as(CAMI, "select p256dh from push_subscriptions")).toEqual([{ p256dh: "k2" }]);
+    expect(await as(JUAN, "select count(*)::int as n from push_subscriptions")).toEqual([{ n: 0 }]);
+    await expect(as(null, `select register_push_subscription('${endpoint}', 'k', 'a')`)).rejects.toThrow(/permission denied|iniciar sesión/);
+  });
+
+  it("el aviso de prueba llega sólo a quien lo pide y no se puede repetir enseguida", async () => {
+    await as(GUEST, "select send_test_notification()");
+    expect(await as(GUEST, "select count(*)::int as n from notifications where link = '/cuenta'")).toEqual([{ n: 1 }]);
+    await expect(as(GUEST, "select send_test_notification()")).rejects.toThrow(/Espera un minuto/);
+    await expect(as(null, "select send_test_notification()")).rejects.toThrow(/permission denied|iniciar sesión/);
   });
 });
