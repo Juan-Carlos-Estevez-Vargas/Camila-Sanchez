@@ -27,7 +27,7 @@ content_path = "./supabase/templates/recovery.html"
 verify_jwt = true
 
 [functions.send-push]
-# La invoca un Database Webhook con su propio secreto, no un usuario.
+# La invoca la base de datos (pg_net) con su propio secreto, no un usuario.
 verify_jwt = false
 
 [functions.redeem-invite]
