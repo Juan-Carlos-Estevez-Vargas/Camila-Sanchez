@@ -198,6 +198,52 @@ describe("chat: respuestas, conexión y vistos", () => {
   });
 });
 
+describe("chat: fotos y stickers", () => {
+  const ID = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+  const photo = (owner: string) =>
+    `'${owner}/${ID}.webp', '${owner}/${ID}.thumb.webp'`;
+
+  it("se puede mandar una foto (con o sin pie) y un sticker sin texto", async () => {
+    await as(JUAN, "select mark_notifications_read('chat')");
+    await as(CAMI, `insert into chat_messages (kind, image_path, thumb_path, image_width, image_height) values ('image', ${photo(CAMI)}, 800, 600)`);
+    await as(CAMI, `insert into chat_messages (kind, body, image_path, thumb_path) values ('image', 'mira 😍', ${photo(CAMI)})`);
+    await as(JUAN, "insert into chat_messages (kind, sticker) values ('sticker', 'te-amo')");
+    const [row] = await as<{ body: string }>(JUAN, "select body from notifications where kind = 'chat' order by created_at desc limit 1");
+    expect(row?.body).toMatch(/^📷 Foto/);
+  });
+
+  it("cada tipo exige lo suyo", async () => {
+    await expect(as(CAMI, "insert into chat_messages (kind) values ('image')")).rejects.toThrow(/chat_messages_content/);
+    await expect(as(CAMI, "insert into chat_messages (kind, body) values ('text', '   ')")).rejects.toThrow(/chat_messages_content/);
+    await expect(as(CAMI, "insert into chat_messages (kind, sticker, body) values ('sticker', 'te-amo', 'hola')")).rejects.toThrow(/chat_messages_content/);
+    await expect(as(CAMI, "insert into chat_messages (kind, sticker) values ('sticker', '../../x')")).rejects.toThrow(/check/);
+  });
+
+  it("una foto sólo puede apuntar a la carpeta de quien la envía", async () => {
+    await expect(
+      as(CAMI, `insert into chat_messages (kind, image_path, thumb_path) values ('image', ${photo(JUAN)})`),
+    ).rejects.toThrow(/row-level security/);
+    await expect(
+      as(CAMI, `insert into chat_messages (kind, image_path, thumb_path) values ('image', '../${ID}.webp', '${CAMI}/${ID}.thumb.webp')`),
+    ).rejects.toThrow(/row-level security|check/);
+  });
+
+  it("en el almacenamiento cada quien sube y borra sólo en su carpeta, y lo ve quien usa el chat", async () => {
+    await db.exec(`
+      alter table storage.objects enable row level security;
+      grant select, insert, update, delete on storage.objects to anon, authenticated;
+    `);
+    await as(CAMI, `insert into storage.objects (bucket_id, name) values ('chat-media', '${CAMI}/${ID}.webp')`);
+    await expect(
+      as(CAMI, `insert into storage.objects (bucket_id, name) values ('chat-media', '${JUAN}/${ID}.webp')`),
+    ).rejects.toThrow(/row-level security/);
+    expect(await as(JUAN, "select count(*)::int as n from storage.objects where bucket_id = 'chat-media'")).toEqual([{ n: 1 }]);
+    expect(await as(null, "select count(*)::int as n from storage.objects where bucket_id = 'chat-media'")).toEqual([{ n: 0 }]);
+    expect(await as(JUAN, `delete from storage.objects where bucket_id = 'chat-media' returning name`)).toEqual([]);
+    expect(await as(CAMI, `delete from storage.objects where bucket_id = 'chat-media' returning name`)).toHaveLength(1);
+  });
+});
+
 describe("auditoría", () => {
   it("registra cambios y sólo la ve quien tiene audit.view", async () => {
     expect(await as(CAMI, "select count(*)::int as n from audit_log")).toEqual([{ n: 0 }]);
