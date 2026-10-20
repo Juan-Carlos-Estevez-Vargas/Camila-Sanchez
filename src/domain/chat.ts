@@ -2,7 +2,8 @@
  * Reglas del chat tipo WhatsApp: última conexión, vistos y citas.
  * Funciones puras para poder probarlas sin navegador ni base de datos.
  */
-import type { ChatMessage, ChatPresence, Uuid } from "./types";
+import { stickerById } from "./stickers";
+import type { ChatKind, ChatMessage, ChatPresence, Uuid } from "./types";
 
 /** Cada cuánto avisa la app de que la persona sigue conectada. */
 export const PRESENCE_HEARTBEAT_MS = 30_000;
@@ -67,6 +68,19 @@ export function readersOf(message: Pick<ChatMessage, "senderId" | "createdAt">, 
 export function quoteSnippet(body: string, max = 90): string {
   const flat = body.replace(/\s+/g, " ").trim();
   return flat.length > max ? `${flat.slice(0, max - 1).trimEnd()}…` : flat;
+}
+
+/** Texto corto de cualquier mensaje: para citas y avisos. */
+export function messagePreview(message: { kind?: ChatKind; body: string; sticker?: string | null }, max = 90): string {
+  if (message.kind === "sticker") {
+    const sticker = stickerById(message.sticker);
+    return `${sticker.emoji} Sticker «${sticker.text}»`;
+  }
+  if (message.kind === "image") {
+    const caption = quoteSnippet(message.body, Math.max(max - 9, 10));
+    return caption ? `📷 Foto: ${caption}` : "📷 Foto";
+  }
+  return quoteSnippet(message.body, max);
 }
 
 /** Junta o actualiza la conexión de una persona en la lista. */

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isOnline, lastSeenLabel, quoteSnippet, readersOf, receiptOf, upsertPresence } from "./chat";
+import { isOnline, lastSeenLabel, messagePreview, quoteSnippet, readersOf, receiptOf, upsertPresence } from "./chat";
 import type { ChatPresence } from "./types";
 
 const NOW = new Date("2026-10-20T15:00:00");
@@ -59,6 +59,14 @@ describe("citas y conexiones", () => {
   it("el fragmento citado es una sola línea y se recorta", () => {
     expect(quoteSnippet("hola\n\n  mi   amor")).toBe("hola mi amor");
     expect(quoteSnippet("a".repeat(200), 10)).toBe(`${"a".repeat(9)}…`);
+  });
+
+  it("las fotos y los stickers se citan con un texto corto", () => {
+    expect(messagePreview({ kind: "image", body: "" })).toBe("📷 Foto");
+    expect(messagePreview({ kind: "image", body: "mira  esto" })).toBe("📷 Foto: mira esto");
+    expect(messagePreview({ kind: "sticker", body: "", sticker: "te-amo" })).toBe("💖 Sticker «Te amo»");
+    expect(messagePreview({ kind: "sticker", body: "", sticker: "ya-no-existe" })).toBe("✨ Sticker «Sticker»");
+    expect(messagePreview({ kind: "text", body: "hola" })).toBe("hola");
   });
 
   it("actualizar la conexión de alguien reemplaza la anterior", () => {
