@@ -186,16 +186,23 @@ function pageSteps(ctx: TourContext): TourStep[] {
   if (pathname === "/chat") {
     return [
       {
+        id: "chat-presence",
+        target: [tourTarget("chat-presence")],
+        optional: true,
+        title: "¿Está conectado?",
+        body: "Aquí ves si la otra persona está «en línea» o hace cuánto se conectó por última vez.",
+      },
+      {
         id: "chat-thread",
         target: [tourTarget("chat-thread")],
         title: "La conversación",
-        body: "Los mensajes llegan en tiempo real, sin recargar. Sube para ver los anteriores.",
+        body: "Los mensajes llegan en tiempo real. En los tuyos, ✓ es enviado, ✓✓ entregado y ✓✓ de color, visto. Para responder uno, toca ↩ o deslízalo hacia la derecha.",
       },
       {
         id: "chat-composer",
         target: [tourTarget("chat-composer")],
         title: "Escribir",
-        body: "Escribe y pulsa Enter para enviar. Con Mayúsculas + Enter haces un salto de línea.",
+        body: "Escribe y pulsa Enter para enviar. Con Mayúsculas + Enter haces un salto de línea, y con Esc dejas de responder a un mensaje.",
       },
     ];
   }
