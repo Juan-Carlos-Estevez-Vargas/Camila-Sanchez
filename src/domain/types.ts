@@ -184,11 +184,27 @@ export interface Note {
   createdAt: IsoDateTime;
 }
 
+/** Lo que se muestra del mensaje al que se responde. */
+export interface ChatReplyPreview {
+  id: Uuid;
+  senderId: Uuid;
+  body: string;
+}
+
 export interface ChatMessage {
   id: Uuid;
   senderId: Uuid;
   body: string;
   createdAt: IsoDateTime;
+  /** Mensaje citado, o null si no responde a nada (o el original se borró). */
+  replyTo: ChatReplyPreview | null;
+}
+
+/** Última conexión de una persona y hasta cuándo leyó el chat. */
+export interface ChatPresence {
+  userId: Uuid;
+  lastSeenAt: IsoDateTime;
+  lastReadAt: IsoDateTime | null;
 }
 
 export type NotificationKind = "note" | "chat" | "system";
