@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { AccessPolicy } from "@/domain/permissions";
 import type { Profile, SessionUser } from "@/domain/types";
+import { disablePushOnThisDevice } from "@/services/notifications/browserNotifications";
 import { useBackend } from "./BackendContext";
 
 interface AuthState {
@@ -64,6 +65,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     policy,
     refresh: () => backend.auth.getSession().then(load),
     signOut: async (options) => {
+      // Antes de salir: este dispositivo deja de recibir los avisos de la cuenta.
+      await disablePushOnThisDevice(backend.push).catch(() => undefined);
       await backend.auth.signOut(options);
       await load(null);
     },

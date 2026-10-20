@@ -93,6 +93,8 @@ export interface MessagingRepository {
   listNotifications(limit?: number): Promise<AppNotification[]>;
   markNotificationRead(id: Uuid): Promise<void>;
   markAllNotificationsRead(kind?: AppNotification["kind"]): Promise<void>;
+  /** Aviso de prueba para mí (también llega al celular si tiene push). */
+  sendTestNotification(): Promise<void>;
 }
 
 /** Foto ya optimizada lista para subir al chat. */

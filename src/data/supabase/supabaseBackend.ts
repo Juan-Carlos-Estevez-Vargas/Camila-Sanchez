@@ -293,6 +293,9 @@ const messaging: MessagingRepository = {
   async markAllNotificationsRead(kind) {
     await unwrap(sb().rpc("mark_notifications_read", { p_kind: kind ?? null }));
   },
+  async sendTestNotification() {
+    await unwrap(sb().rpc("send_test_notification"));
+  },
 };
 
 /**
@@ -423,12 +426,10 @@ const realtime: RealtimeGateway = {
 
 const push: PushRepository = {
   async register(s) {
-    await unwrap(
-      sb().from("push_subscriptions").upsert(
-        { endpoint: s.endpoint, p256dh: s.p256dh, auth: s.auth, user_agent: s.userAgent },
-        { onConflict: "endpoint" },
-      ),
-    );
+    // Vía RPC: si el celular era de otra cuenta, pasa a la que inició sesión.
+    await unwrap(sb().rpc("register_push_subscription", {
+      p_endpoint: s.endpoint, p_p256dh: s.p256dh, p_auth: s.auth, p_user_agent: s.userAgent,
+    }));
   },
   async unregister(endpoint) {
     await unwrap(sb().from("push_subscriptions").delete().eq("endpoint", endpoint));
