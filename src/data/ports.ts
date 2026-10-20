@@ -80,7 +80,10 @@ export interface MessagingRepository {
   deleteNote(id: Uuid): Promise<void>;
 
   listChat(options?: { before?: string; limit?: number }): Promise<ChatMessage[]>;
-  sendChat(body: string, options?: { replyToId?: Uuid | null }): Promise<ChatMessage>;
+  /** Envía texto, una foto (con pie opcional) o un sticker. */
+  sendChat(body: string, options?: ChatSendOptions): Promise<ChatMessage>;
+  /** URLs firmadas (o locales en demo) de las fotos del chat, por ruta. */
+  resolveChatImages(paths: string[]): Promise<Map<string, string>>;
   deleteChat(id: Uuid): Promise<void>;
   /** Última conexión y vistos de quienes usan el chat. */
   listChatPresence(): Promise<ChatPresence[]>;
@@ -90,6 +93,21 @@ export interface MessagingRepository {
   listNotifications(limit?: number): Promise<AppNotification[]>;
   markNotificationRead(id: Uuid): Promise<void>;
   markAllNotificationsRead(kind?: AppNotification["kind"]): Promise<void>;
+}
+
+/** Foto ya optimizada lista para subir al chat. */
+export interface ChatImageUpload {
+  full: Blob;
+  thumb: Blob;
+  extension: string;
+  width: number;
+  height: number;
+}
+
+export interface ChatSendOptions {
+  replyToId?: Uuid | null;
+  image?: ChatImageUpload;
+  sticker?: string;
 }
 
 export interface NewUserInput {

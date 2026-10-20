@@ -12,6 +12,7 @@ import { getSupabase, unwrap, type Row } from "./client";
 import * as map from "./mappers";
 
 const PHOTO_BUCKET = "photos";
+const CHAT_BUCKET = "chat-media";
 /** Las URLs firmadas duran 1 h; se cachean 50 min para reutilizarlas. */
 const SIGNED_URL_TTL_S = 3600;
 const SIGNED_URL_CACHE_MS = 50 * 60 * 1000;
@@ -198,7 +199,7 @@ async function currentUserId(): Promise<Uuid> {
 }
 
 /** Columnas del chat con el mensaje citado embebido (FK reply_to). */
-const CHAT_COLUMNS = "*, reply:reply_to(id, sender_id, body)";
+const CHAT_COLUMNS = "*, reply:reply_to(id, sender_id, body, kind, sticker)";
 
 const messaging: MessagingRepository = {
   async listNotes() {
@@ -224,10 +225,50 @@ const messaging: MessagingRepository = {
     const rows = await unwrap<Row[]>(query);
     return rows.map(map.toChatMessage).reverse();
   },
-  async sendChat(body, { replyToId = null } = {}) {
-    return map.toChatMessage(
-      await unwrap<Row>(sb().from("chat_messages").insert({ body, reply_to: replyToId }).select(CHAT_COLUMNS).single()),
-    );
+  async sendChat(body, { replyToId = null, image, sticker } = {}) {
+    const row: Row = { body, reply_to: replyToId, kind: "text" };
+    const uploaded: string[] = [];
+    if (image) {
+      // Carpeta propia: la política del bucket sólo deja subir ahí.
+      const folder = await currentUserId();
+      const id = crypto.randomUUID();
+      const path = `${folder}/${id}.${image.extension}`;
+      const thumbPath = `${folder}/${id}.thumb.${image.extension}`;
+      const options = { cacheControl: "31536000", upsert: false };
+      await unwrap(sb().storage.from(CHAT_BUCKET).upload(path, image.full, { ...options, contentType: image.full.type }));
+      uploaded.push(path);
+      await unwrap(sb().storage.from(CHAT_BUCKET).upload(thumbPath, image.thumb, { ...options, contentType: image.thumb.type }));
+      uploaded.push(thumbPath);
+      Object.assign(row, { kind: "image", image_path: path, thumb_path: thumbPath, image_width: image.width, image_height: image.height });
+    } else if (sticker) {
+      Object.assign(row, { kind: "sticker", sticker, body: "" });
+    }
+    try {
+      return map.toChatMessage(await unwrap<Row>(sb().from("chat_messages").insert(row).select(CHAT_COLUMNS).single()));
+    } catch (error) {
+      // Sin mensaje no deben quedar fotos huérfanas en el almacenamiento.
+      if (uploaded.length) await sb().storage.from(CHAT_BUCKET).remove(uploaded);
+      throw error;
+    }
+  },
+  async resolveChatImages(paths) {
+    const now = Date.now();
+    const key = (path: string) => `${CHAT_BUCKET}:${path}`;
+    const missing = [...new Set(paths)].filter((p) => !((signedUrlCache.get(key(p))?.expires ?? 0) > now));
+    if (missing.length) {
+      const signed = await unwrap<Array<{ path: string | null; signedUrl: string }>>(
+        sb().storage.from(CHAT_BUCKET).createSignedUrls(missing, SIGNED_URL_TTL_S),
+      );
+      for (const s of signed) {
+        if (s.path && s.signedUrl) signedUrlCache.set(key(s.path), { url: s.signedUrl, expires: now + SIGNED_URL_CACHE_MS });
+      }
+    }
+    const result = new Map<string, string>();
+    for (const p of paths) {
+      const url = signedUrlCache.get(key(p))?.url;
+      if (url) result.set(p, url);
+    }
+    return result;
   },
   deleteChat: (id) => remove("chat_messages", id),
   async listChatPresence() {

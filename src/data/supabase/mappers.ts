@@ -6,7 +6,7 @@ import {
   normalizeAnimation, normalizeEffects, normalizeSectionContent, normalizeTheme, safeMusicUrl,
 } from "@/domain/defaults";
 import type {
-  AppNotification, AuditEntry, ChatMessage, ChatPresence, ImportantDate, Interruption, Invitation, InvitableRole,
+  AppNotification, AuditEntry, ChatKind, ChatMessage, ChatPresence, ImportantDate, Interruption, Invitation, InvitableRole,
   Milestone, Note, Photo, Profile, Section, SectionKind, SiteSettings,
 } from "@/domain/types";
 import type { Row } from "./client";
@@ -190,14 +190,26 @@ export const toChatMessage = (r: Row): ChatMessage => {
   // `reply` es el mensaje citado, embebido con reply:reply_to(...).
   const embedded = Array.isArray(r.reply) ? r.reply[0] : r.reply;
   const reply = embedded && typeof embedded === "object" ? (embedded as Row) : null;
+  const imagePath = strOrNull(r.image_path);
   return {
     id: str(r.id),
     senderId: str(r.sender_id),
+    kind: toChatKind(r.kind),
     body: str(r.body),
+    image: imagePath
+      ? { path: imagePath, thumbPath: str(r.thumb_path, imagePath), width: numOrNull(r.image_width), height: numOrNull(r.image_height) }
+      : null,
+    sticker: strOrNull(r.sticker),
     createdAt: str(r.created_at),
-    replyTo: reply ? { id: str(reply.id), senderId: str(reply.sender_id), body: str(reply.body) } : null,
+    replyTo: reply
+      ? { id: str(reply.id), senderId: str(reply.sender_id), body: str(reply.body), kind: toChatKind(reply.kind), sticker: strOrNull(reply.sticker) }
+      : null,
   };
 };
+
+const CHAT_KINDS: readonly ChatKind[] = ["text", "image", "sticker"];
+const toChatKind = (v: unknown): ChatKind => (CHAT_KINDS.includes(v as ChatKind) ? (v as ChatKind) : "text");
+
 
 export const toChatPresence = (r: Row): ChatPresence => ({
   userId: str(r.user_id),
