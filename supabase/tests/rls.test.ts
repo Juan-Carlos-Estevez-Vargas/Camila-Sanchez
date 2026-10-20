@@ -166,6 +166,38 @@ describe("mensajes y notificaciones", () => {
   });
 });
 
+describe("chat: respuestas, conexión y vistos", () => {
+  it("un mensaje puede responder a otro y la cita se suelta si el original se borra", async () => {
+    const [original] = await as<{ id: string }>(JUAN, "insert into chat_messages (body) values ('¿cenamos?') returning id");
+    const [reply] = await as<{ id: string }>(CAMI, `insert into chat_messages (body, reply_to) values ('¡sí!', '${original!.id}') returning id`);
+    await as(JUAN, `delete from chat_messages where id = '${original!.id}'`);
+    expect(await as(CAMI, `select reply_to from chat_messages where id = '${reply!.id}'`)).toEqual([{ reply_to: null }]);
+  });
+
+  it("chat_presence guarda la conexión y, al leer, hasta dónde leyó", async () => {
+    await as(CAMI, "select chat_presence(false)");
+    const [seen] = await as<{ seen: boolean; read: string | null }>(CAMI, `select last_seen_at is not null as seen, last_read_at as read from chat_reads where user_id = '${CAMI}'`);
+    expect(seen).toEqual({ seen: true, read: null });
+    await as(CAMI, "select chat_presence(true)");
+    const [read] = await as<{ read: boolean }>(CAMI, `select last_read_at = last_seen_at as read from chat_reads where user_id = '${CAMI}'`);
+    expect(read).toEqual({ read: true });
+  });
+
+  it("quien usa el chat ve los vistos de los demás, pero nadie los escribe a mano", async () => {
+    expect(await as(JUAN, `select count(*)::int as n from chat_reads where user_id = '${CAMI}'`)).toEqual([{ n: 1 }]);
+    await expect(
+      as(JUAN, `insert into chat_reads (user_id, last_read_at) values ('${JUAN}', now() + interval '1 day')`),
+    ).rejects.toThrow(/row-level security/);
+    const updated = await as(JUAN, `update chat_reads set last_read_at = now() - interval '1 year' where user_id = '${CAMI}' returning user_id`);
+    expect(updated).toEqual([]);
+  });
+
+  it("un anónimo no ve la conexión ni puede marcarse en línea", async () => {
+    expect(await as(null, "select count(*)::int as n from chat_reads")).toEqual([{ n: 0 }]);
+    await expect(as(null, "select chat_presence(true)")).rejects.toThrow();
+  });
+});
+
 describe("auditoría", () => {
   it("registra cambios y sólo la ve quien tiene audit.view", async () => {
     expect(await as(CAMI, "select count(*)::int as n from audit_log")).toEqual([{ n: 0 }]);
