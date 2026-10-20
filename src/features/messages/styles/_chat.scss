@@ -67,19 +67,74 @@ $bubble-tail: 6px;
     cursor: pointer;
   }
 
+  &__tools {
+    display: flex;
+    gap: 2px;
+    align-self: center;
+  }
+
+  &__drafts {
+    flex: 1 0 100%;
+    display: flex;
+    gap: space(2);
+    margin: 0;
+    padding: space(1) 0;
+    overflow-x: auto;
+    list-style: none;
+  }
+
+  &__draft {
+    position: relative;
+    flex: 0 0 auto;
+
+    img {
+      display: block;
+      width: 72px;
+      height: 72px;
+      object-fit: cover;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--c-border);
+    }
+  }
+
+  &__draft-remove {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    display: grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: var(--c-text);
+    color: var(--c-bg);
+    font-size: 0.7rem;
+    cursor: pointer;
+
+    &:focus-visible { @include focus-ring; }
+  }
+
   &__composer {
     display: flex;
     flex-wrap: wrap;
     gap: space(2);
     align-items: end;
 
-    .textarea { flex: 1; }
+    .textarea { flex: 1; min-width: 0; }
     position: sticky;
     bottom: 0;
     padding: space(2) 0 calc(#{space(2)} + env(safe-area-inset-bottom));
     background: var(--c-bg);
 
     .textarea { min-height: 48px; max-height: 160px; resize: none; }
+  }
+
+  // En pantallas angostas el botón queda sólo con el sobre para dejarle
+  // espacio al texto.
+  &__send-label {
+    @include below(sm) { @include visually-hidden; }
   }
 }
 
@@ -127,6 +182,167 @@ $bubble-tail: 6px;
     opacity: 0.45;
     border-color: transparent;
   }
+}
+
+// Fotos dentro de la burbuja.
+.bubble--image { padding: 4px 4px 0.4rem; }
+.bubble--image .bubble__name,
+.bubble--image .bubble__quote,
+.bubble--image .bubble__text,
+.bubble--image .bubble__time { margin-inline: 0.5rem; }
+
+.bubble__photo {
+  position: relative;
+  display: block;
+  min-width: 160px;
+  padding: 0;
+  border: 0;
+  border-radius: 14px;
+  overflow: hidden;
+  background: tint(var(--c-text), 8%);
+  cursor: zoom-in;
+
+  img {
+    display: block;
+    width: 100%;
+    max-width: 320px;
+    max-height: 360px;
+    height: auto;
+    object-fit: cover;
+  }
+
+  &:disabled { cursor: default; }
+  &:focus-visible { @include focus-ring; }
+}
+
+.bubble__photo-placeholder {
+  display: grid;
+  place-items: center;
+  width: 220px;
+  height: 160px;
+  font-size: 2rem;
+  opacity: 0.5;
+}
+
+.bubble__uploading {
+  position: absolute;
+  inset: auto 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: space(1);
+  padding: space(2);
+  background: linear-gradient(transparent, tint(#12070c, 65%));
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.bubble__heart {
+  display: inline-block;
+  animation: heartbeat 1.2s ease-in-out infinite;
+
+  @include reduced-motion { animation: none; }
+}
+
+// Los stickers van sin burbuja, como en WhatsApp.
+.bubble--sticker {
+  padding: 0;
+  background: none !important;
+  color: var(--c-text) !important;
+
+  .bubble__time {
+    margin-top: 2px;
+    padding: 1px 8px;
+    border-radius: 999px;
+    background: var(--c-surface-2);
+    color: var(--c-muted);
+    opacity: 1;
+  }
+  .receipt--read { color: var(--c-info, #1d9bd1); }
+}
+
+.sticker {
+  display: inline-grid;
+  justify-items: center;
+  gap: 2px;
+  animation: pop-in 0.35s $ease;
+
+  &__emoji { line-height: 1; }
+  &__text {
+    @include display-text(1rem, 700);
+    padding: 2px 10px;
+    border-radius: 999px;
+    background: var(--c-surface);
+    border: 2px solid currentColor;
+    box-shadow: 0 2px 0 currentColor;
+    white-space: nowrap;
+  }
+
+  &--md .sticker__emoji { font-size: 4.2rem; }
+  &--sm .sticker__emoji { font-size: 2.2rem; }
+  &--sm .sticker__text { font-size: 0.72rem; padding: 0 6px; border-width: 1px; box-shadow: none; }
+
+  &--primary { color: var(--c-primary); }
+  &--accent { color: var(--c-primary-strong, var(--c-primary)); }
+  &--success { color: var(--c-success); }
+  &--warning { color: var(--c-warning); }
+
+  @include reduced-motion { animation: none; }
+}
+
+.sticker-picker {
+  position: absolute;
+  bottom: calc(100% + #{space(2)});
+  left: 0;
+  z-index: 5;
+  width: min(380px, 100%);
+  max-height: 320px;
+  overflow-y: auto;
+  padding: space(3);
+  box-shadow: var(--shadow-lg);
+  animation: slide-up 0.2s $ease;
+
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: space(2);
+
+    @include below(sm) { grid-template-columns: repeat(3, 1fr); }
+  }
+
+  &__item {
+    display: grid;
+    place-items: center;
+    padding: space(2) 0;
+    border: 0;
+    border-radius: var(--radius-sm);
+    min-width: 0;
+    background: none;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.15s ease;
+
+    &:hover { background: var(--c-surface-2); transform: scale(1.06); }
+    &:focus-visible { @include focus-ring; }
+  }
+}
+
+.chat-photo {
+  margin: 0;
+  display: grid;
+  gap: space(2);
+
+  img {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-height: 75vh;
+    object-fit: contain;
+    border-radius: var(--radius-sm);
+    background: var(--c-surface-2);
+  }
+
+  figcaption { color: var(--c-muted); }
 }
 
 .receipt {
