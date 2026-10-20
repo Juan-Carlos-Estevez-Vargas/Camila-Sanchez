@@ -2,6 +2,7 @@ import { lazy, Suspense } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { AuthProvider } from "@/state/AuthContext";
 import { NotificationsProvider } from "@/state/NotificationsContext";
+import { PresenceHeartbeat } from "@/state/PresenceHeartbeat";
 import { SeoController } from "@/state/SeoController";
 import { SiteContentProvider, useSiteContent } from "@/state/SiteContentStore";
 import { ThemeController } from "@/state/ThemeController";
@@ -23,6 +24,7 @@ function ThemedShell() {
     <>
       <ThemeController theme={content?.settings.theme} />
       <SeoController />
+      <PresenceHeartbeat />
       <a className="skip-link" href="#contenido-principal">Saltar al contenido</a>
       <AppHeader />
       <ErrorBoundary>

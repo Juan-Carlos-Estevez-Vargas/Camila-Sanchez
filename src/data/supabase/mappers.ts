@@ -6,7 +6,7 @@ import {
   normalizeAnimation, normalizeEffects, normalizeSectionContent, normalizeTheme, safeMusicUrl,
 } from "@/domain/defaults";
 import type {
-  AppNotification, AuditEntry, ChatMessage, ImportantDate, Interruption, Invitation, InvitableRole,
+  AppNotification, AuditEntry, ChatMessage, ChatPresence, ImportantDate, Interruption, Invitation, InvitableRole,
   Milestone, Note, Photo, Profile, Section, SectionKind, SiteSettings,
 } from "@/domain/types";
 import type { Row } from "./client";
@@ -186,11 +186,23 @@ export const toNote = (r: Row): Note => ({
   createdAt: str(r.created_at),
 });
 
-export const toChatMessage = (r: Row): ChatMessage => ({
-  id: str(r.id),
-  senderId: str(r.sender_id),
-  body: str(r.body),
-  createdAt: str(r.created_at),
+export const toChatMessage = (r: Row): ChatMessage => {
+  // `reply` es el mensaje citado, embebido con reply:reply_to(...).
+  const embedded = Array.isArray(r.reply) ? r.reply[0] : r.reply;
+  const reply = embedded && typeof embedded === "object" ? (embedded as Row) : null;
+  return {
+    id: str(r.id),
+    senderId: str(r.sender_id),
+    body: str(r.body),
+    createdAt: str(r.created_at),
+    replyTo: reply ? { id: str(reply.id), senderId: str(reply.sender_id), body: str(reply.body) } : null,
+  };
+};
+
+export const toChatPresence = (r: Row): ChatPresence => ({
+  userId: str(r.user_id),
+  lastSeenAt: str(r.last_seen_at),
+  lastReadAt: strOrNull(r.last_read_at),
 });
 
 export const toNotification = (r: Row): AppNotification => ({

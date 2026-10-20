@@ -7,7 +7,7 @@
  * La fábrica de data/backend.ts elige uno al arrancar (patrón Strategy).
  */
 import type {
-  AppNotification, AuditEntry, ChatMessage, ImportantDate, Interruption, Invitation, InvitableRole,
+  AppNotification, AuditEntry, ChatMessage, ChatPresence, ImportantDate, Interruption, Invitation, InvitableRole,
   Milestone, Note, NoteKind, PermissionDefinition, Photo, PhotoUrls, Profile, Role, RolePermission,
   Section, SessionUser, SiteSettings, Uuid,
 } from "@/domain/types";
@@ -80,8 +80,12 @@ export interface MessagingRepository {
   deleteNote(id: Uuid): Promise<void>;
 
   listChat(options?: { before?: string; limit?: number }): Promise<ChatMessage[]>;
-  sendChat(body: string): Promise<ChatMessage>;
+  sendChat(body: string, options?: { replyToId?: Uuid | null }): Promise<ChatMessage>;
   deleteChat(id: Uuid): Promise<void>;
+  /** Última conexión y vistos de quienes usan el chat. */
+  listChatPresence(): Promise<ChatPresence[]>;
+  /** Avisa de que sigo conectado; con `read`, además, que leí el chat hasta ahora. */
+  touchChatPresence(options?: { read?: boolean }): Promise<void>;
 
   listNotifications(limit?: number): Promise<AppNotification[]>;
   markNotificationRead(id: Uuid): Promise<void>;
@@ -136,7 +140,7 @@ export interface InvitationRepository {
 
 export type RealtimeTable =
   | "site_settings" | "sections" | "photos" | "milestones" | "important_dates"
-  | "interruptions" | "notes" | "chat_messages" | "notifications";
+  | "interruptions" | "notes" | "chat_messages" | "chat_reads" | "notifications";
 
 export interface RealtimeChange<T = Record<string, unknown>> {
   table: RealtimeTable;

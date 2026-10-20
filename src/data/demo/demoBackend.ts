@@ -11,6 +11,7 @@
  */
 import { del as idbDel, get as idbGet, set as idbSet } from "idb-keyval";
 import { AccessPolicy, DEFAULT_ROLE_PERMISSIONS, PERMISSIONS, type Permission } from "@/domain/permissions";
+import { upsertPresence } from "@/domain/chat";
 import { changesBeyondPalette } from "@/domain/palettes";
 import { AppError } from "@/core/errors";
 import {
@@ -18,7 +19,7 @@ import {
 } from "@/domain/invitations";
 import { RECOVERY_LINK_HOURS } from "@/domain/recovery";
 import type {
-  AppNotification, AuditEntry, ChatMessage, ImportantDate, Interruption, Invitation, Milestone, Note,
+  AppNotification, AuditEntry, ChatMessage, ChatPresence, ImportantDate, Interruption, Invitation, Milestone, Note,
   PermissionDefinition, Photo, PhotoUrls, Profile, Role, RolePermission, Section, SessionUser,
   SiteSettings, Uuid,
 } from "@/domain/types";
@@ -60,6 +61,7 @@ interface DemoState {
   interruptionViews: Record<Uuid, Uuid[]>;
   notes: Note[];
   chat: ChatMessage[];
+  chatReads: ChatPresence[];
   notifications: AppNotification[];
   users: DemoUser[];
   invitations: DemoInvitation[];
@@ -99,6 +101,7 @@ function initialState(): DemoState {
     interruptionViews: {},
     notes: [],
     chat: [],
+    chatReads: [],
     notifications: [],
     users: DEMO_ACCOUNTS.map((a) => ({
       id: uuid(), email: a.email, password: a.password, displayName: a.displayName,
@@ -518,12 +521,18 @@ export const demoBackend: Backend = {
     async listChat({ before, limit = 50 } = {}) {
       require(PERMISSIONS.chatUse);
       const all = database().state.chat.filter((m) => !before || m.createdAt < before);
-      return clone(all.slice(-limit));
+      // Mensajes guardados antes de que existieran las respuestas.
+      return clone(all.slice(-limit)).map((m) => ({ ...m, replyTo: m.replyTo ?? null }));
     },
-    async sendChat(body) {
+    async sendChat(body, { replyToId = null } = {}) {
       const user = require(PERMISSIONS.chatUse);
-      const message: ChatMessage = { id: uuid(), senderId: user.id, body: body.trim().slice(0, 2000), createdAt: nowIso() };
       const state = database().state;
+      const original = replyToId ? state.chat.find((m) => m.id === replyToId) : undefined;
+      if (replyToId && !original) throw new AppError("El mensaje al que respondes ya no existe.");
+      const message: ChatMessage = {
+        id: uuid(), senderId: user.id, body: body.trim().slice(0, 2000), createdAt: nowIso(),
+        replyTo: original ? { id: original.id, senderId: original.senderId, body: original.body } : null,
+      };
       state.chat.push(message);
       state.chat = state.chat.slice(-1000);
       database().commit({ table: "chat_messages", type: "INSERT", record: message as never });
@@ -538,8 +547,25 @@ export const demoBackend: Backend = {
     async deleteChat(id) {
       const user = requireUser();
       const state = database().state;
-      state.chat = state.chat.filter((m) => !(m.id === id && m.senderId === user.id));
+      const deleted = state.chat.some((m) => m.id === id && m.senderId === user.id);
+      state.chat = state.chat
+        .filter((m) => !(m.id === id && m.senderId === user.id))
+        // Como en la base: las respuestas a un mensaje borrado pierden la cita.
+        .map((m) => (deleted && m.replyTo?.id === id ? { ...m, replyTo: null } : m));
       database().commit({ table: "chat_messages", type: "DELETE", record: null, old: { id } });
+    },
+    async listChatPresence() {
+      require(PERMISSIONS.chatUse);
+      return clone(database().state.chatReads);
+    },
+    async touchChatPresence({ read = false } = {}) {
+      const user = require(PERMISSIONS.chatUse);
+      const state = database().state;
+      const now = nowIso();
+      const previous = state.chatReads.find((p) => p.userId === user.id);
+      const presence: ChatPresence = { userId: user.id, lastSeenAt: now, lastReadAt: read ? now : previous?.lastReadAt ?? null };
+      state.chatReads = upsertPresence(state.chatReads, presence);
+      database().commit({ table: "chat_reads", type: previous ? "UPDATE" : "INSERT", record: presence as never });
     },
 
     async listNotifications(limit = 30) {
