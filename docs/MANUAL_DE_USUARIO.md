@@ -4,7 +4,7 @@ Guía para usar la app día a día. Hay tres tipos de personas:
 
 | Quién | Rol | Qué puede hacer |
 | --- | --- | --- |
-| Visitante | Sin cuenta | Ver la página si es pública |
+| Visitante | Sin cuenta | Ver la página si es pública (siempre con los colores Rosa vino) |
 | Invitado | `viewer` | Ver la página, escribir en la cajita y usar el chat |
 | Camila | `editor` | Lo anterior, más cambiar el contenido desde **Mi panel** |
 | Juan | `super_admin` | Todo, más **Administración**: usuarios, permisos, apariencia y ajustes |
@@ -48,7 +48,8 @@ Es la historia de los dos. Desplázate hacia abajo para ver:
 
 Si hay música, el botón ♪ abajo a la izquierda la pone o la pausa. A veces
 aparece una **sorpresa** en una ventanita: es un mensaje que Camila o Juan
-dejaron programado.
+dejaron programado. Si tienes los avisos activados, también te llega al
+celular cuando la publican.
 
 ## 3. Cajita de mensajes
 
@@ -62,8 +63,8 @@ Notitas que se guardan para siempre. Entra desde **Cajita** en la cabecera.
   🎁 Sorpresa o ⏰ Recordatorio), a quién va, un título opcional y el
   mensaje. A la otra persona le llega un aviso al instante.
 
-Toca **Activar avisos** para que el celular te avise aunque tengas la app
-cerrada.
+Toca **Activar avisos** (aquí, en el chat o en **Mi cuenta**) para que el
+celular te avise aunque tengas la app cerrada. Ver la sección 5.
 
 ## 4. Chat
 
@@ -136,6 +137,8 @@ inicio**, entra desde el ícono nuevo y activa los avisos ahí (necesita iOS
   que ves tú: cada persona tiene los suyos y quien entra sin cuenta siempre ve
   los de la página (Rosa vino). **Volver a los colores de la página** quita
   los tuyos.
+- **Avisos en este dispositivo:** actívalos y prueba que lleguen (ver la
+  sección 5).
 - **Cambiar contraseña:** al menos 10 caracteres, escrita dos veces.
 - **Cerrar sesión aquí:** sólo en este dispositivo.
 - **Cerrar en todos los dispositivos:** úsalo si perdiste el celular o entraste
@@ -186,6 +189,10 @@ cae sola en el mes en que se tomó. Para cambiar el orden, arrástralas o usa
 3. Indica desde cuándo (y opcionalmente hasta cuándo) se muestra.
 4. Deja activado **Mostrar sólo una vez a cada persona** si no quieres que se
    repita.
+
+Si la sorpresa queda activa desde ya, a los demás les llega un aviso al
+celular. Las programadas para más adelante aparecen cuando entren a la
+página.
 
 ## 9. Administración (Juan)
 
