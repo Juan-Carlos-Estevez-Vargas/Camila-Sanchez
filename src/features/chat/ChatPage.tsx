@@ -1,6 +1,10 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState, type FormEvent } from "react";
-import { lastSeenLabel, quoteSnippet, readersOf, receiptOf, upsertPresence, type Receipt } from "@/domain/chat";
-import type { ChatMessage, ChatPresence, ChatReplyPreview, Profile } from "@/domain/types";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ClipboardEvent, type FormEvent } from "react";
+import type { ChatSendOptions } from "@/data/ports";
+import { lastSeenLabel, messagePreview, quoteSnippet, readersOf, receiptOf, upsertPresence, type Receipt } from "@/domain/chat";
+import type { ChatImage, ChatKind, ChatMessage, ChatPresence, ChatReplyPreview, Profile } from "@/domain/types";
+import { ImageProcessor } from "@/services/images/ImageProcessor";
+import { isImageFile } from "@/services/images/bulk";
+import { Modal } from "@/ui/Modal";
 import { useAuth } from "@/state/AuthContext";
 import { useBackend } from "@/state/BackendContext";
 import { useNotifications } from "@/state/NotificationsContext";
@@ -8,6 +12,8 @@ import { useToast } from "@/state/ToastContext";
 import { EmptyState, PageLoader } from "@/ui/Feedback";
 import { EnableNotifications } from "@/features/messages/EnableNotifications";
 import "@/features/messages/styles/messages.scss";
+import { StickerArt } from "./StickerArt";
+import { StickerPicker } from "./StickerPicker";
 
 const PAGE = 40;
 /** Cada cuánto se refresca el texto de la última conexión. */
@@ -16,10 +22,23 @@ const CLOCK_MS = 20_000;
 const SWIPE_TO_REPLY = 56;
 const dayFormat = new Intl.DateTimeFormat("es-CO", { weekday: "long", day: "numeric", month: "long" });
 const timeFormat = new Intl.DateTimeFormat("es-CO", { hour: "numeric", minute: "2-digit" });
+/** Fotos por envío, como en WhatsApp sin llegar a saturar. */
+const MAX_PHOTOS = 10;
+/** Las fotos del chat se ven en el celular: más livianas que las del álbum. */
+const CHAT_IMAGE_OPTIONS = { maxEdge: 1600, thumbEdge: 480, quality: 0.82, targetBytes: 350 * 1024, minQuality: 0.66 };
 
 interface Pending extends ChatMessage {
   pending?: boolean;
   failed?: boolean;
+  /** Vista previa local de una foto que todavía se está subiendo. */
+  localUrl?: string;
+}
+
+/** Foto elegida que aún no se envía. */
+interface Draft {
+  id: string;
+  file: File;
+  url: string;
 }
 
 type Row = Record<string, unknown>;
@@ -40,13 +59,30 @@ function messageFromRecord(r: Row, known: Pending[]): ChatMessage {
   const embedded = r.replyTo as ChatReplyPreview | null | undefined;
   const replyId = (r.reply_to as string | null | undefined) ?? embedded?.id ?? null;
   const original = replyId ? known.find((m) => m.id === replyId) : undefined;
+  const imagePath = (r.image_path as string | null | undefined) ?? null;
   return {
     id: String(r.id),
     senderId: String(r.sender_id ?? r.senderId),
-    body: String(r.body),
+    kind: (r.kind as ChatKind | undefined) ?? "text",
+    body: String(r.body ?? ""),
+    image: (r.image as ChatImage | null | undefined) ?? (imagePath
+      ? {
+        path: imagePath,
+        thumbPath: String(r.thumb_path ?? imagePath),
+        width: (r.image_width as number | null) ?? null,
+        height: (r.image_height as number | null) ?? null,
+      }
+      : null),
+    sticker: (r.sticker as string | null | undefined) ?? null,
     createdAt: String(r.created_at ?? r.createdAt),
     replyTo: embedded ?? (replyId
-      ? { id: replyId, senderId: original?.senderId ?? "", body: original?.body ?? "Mensaje anterior" }
+      ? {
+        id: replyId,
+        senderId: original?.senderId ?? "",
+        body: original?.body ?? "Mensaje anterior",
+        kind: original?.kind ?? "text",
+        sticker: original?.sticker ?? null,
+      }
       : null),
   };
 }
@@ -91,9 +127,46 @@ export default function ChatPage() {
   const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
   const [now, setNow] = useState(() => new Date());
   const [flash, setFlash] = useState<string | null>(null);
+  const [drafts, setDrafts] = useState<Draft[]>([]);
+  const [picker, setPicker] = useState(false);
+  const [imageUrls, setImageUrls] = useState<Map<string, string>>(() => new Map());
+  const [viewing, setViewing] = useState<Pending | null>(null);
   const scroller = useRef<HTMLDivElement>(null);
   const input = useRef<HTMLTextAreaElement>(null);
+  const fileInput = useRef<HTMLInputElement>(null);
   const stickToBottom = useRef(true);
+  const processor = useMemo(() => new ImageProcessor(CHAT_IMAGE_OPTIONS), []);
+
+  useEffect(() => () => processor.dispose(), [processor]);
+
+  // Miniaturas firmadas de las fotos que aún no tienen URL.
+  useEffect(() => {
+    const missing = messages
+      .flatMap((m) => (m.image && !m.localUrl ? [m.image.thumbPath] : []))
+      .filter((path) => !imageUrls.has(path));
+    if (missing.length === 0) return;
+    let active = true;
+    backend.messaging.resolveChatImages(missing)
+      .then((urls) => active && setImageUrls((current) => new Map([...current, ...urls])))
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, [messages, imageUrls, backend]);
+
+  // La foto grande sólo se pide al abrirla.
+  useEffect(() => {
+    const path = viewing?.image?.path;
+    if (!path || imageUrls.has(path)) return;
+    backend.messaging.resolveChatImages([path])
+      .then((urls) => setImageUrls((current) => new Map([...current, ...urls])))
+      .catch((error) => toast.error(error));
+  }, [viewing, imageUrls, backend, toast]);
+
+  // Las vistas previas locales se liberan al salir.
+  const draftsRef = useRef<Draft[]>([]);
+  draftsRef.current = drafts;
+  useEffect(() => () => draftsRef.current.forEach((d) => URL.revokeObjectURL(d.url)), []);
 
   useEffect(() => {
     let active = true;
@@ -189,27 +262,98 @@ export default function ChatPage() {
     window.setTimeout(() => setFlash((current) => (current === id ? null : current)), 1600);
   };
 
+  /** Muestra el mensaje al instante y lo confirma (o lo marca fallido) al volver del servidor. */
+  const deliver = async (temp: Pending, body: string, options: ChatSendOptions) => {
+    stickToBottom.current = true;
+    setMessages((list) => merge(list, [temp]));
+    try {
+      const saved = await backend.messaging.sendChat(body, options);
+      if (temp.localUrl && saved.image) {
+        // La miniatura ya está en el navegador: se reutiliza mientras llega la firmada.
+        setImageUrls((current) => new Map(current).set(saved.image!.thumbPath, temp.localUrl!));
+      }
+      setMessages((list) => merge(list.filter((m) => m.id !== temp.id), [saved]));
+    } catch (error) {
+      setMessages((list) => list.map((m) => (m.id === temp.id ? { ...m, pending: false, failed: true } : m)));
+      toast.error(error, "No se envió");
+    }
+  };
+
+  const draftMessage = (quoted: ChatMessage | null, patch: Partial<Pending>): Pending => ({
+    id: `tmp-${crypto.randomUUID()}`, senderId: user!.id, kind: "text", body: "", image: null, sticker: null,
+    createdAt: new Date().toISOString(), pending: true,
+    replyTo: quoted ? { id: quoted.id, senderId: quoted.senderId, body: quoted.body, kind: quoted.kind, sticker: quoted.sticker } : null,
+    ...patch,
+  });
+
   const send = async (e?: FormEvent) => {
     e?.preventDefault();
     const body = text.trim();
-    if (!body || !user) return;
+    if ((!body && drafts.length === 0) || !user) return;
     const quoted = replyingTo;
+    const photos = drafts;
     setText("");
     setReplyingTo(null);
-    stickToBottom.current = true;
-    // Optimista: aparece al instante y se confirma al volver del servidor.
-    const tempId = `tmp-${crypto.randomUUID()}`;
-    const temp: Pending = {
-      id: tempId, senderId: user.id, body, createdAt: new Date().toISOString(), pending: true,
-      replyTo: quoted ? { id: quoted.id, senderId: quoted.senderId, body: quoted.body } : null,
-    };
-    setMessages((list) => merge(list, [temp]));
-    try {
-      const saved = await backend.messaging.sendChat(body, { replyToId: quoted?.id ?? null });
-      setMessages((list) => merge(list.filter((m) => m.id !== tempId), [saved]));
-    } catch (error) {
-      setMessages((list) => list.map((m) => (m.id === tempId ? { ...m, pending: false, failed: true } : m)));
-      toast.error(error, "No se envió");
+    setDrafts([]);
+    if (photos.length === 0) {
+      await deliver(draftMessage(quoted, { body }), body, { replyToId: quoted?.id ?? null });
+      return;
+    }
+    // Una foto por mensaje; el texto va de pie en la primera y la cita también.
+    for (const [index, photo] of photos.entries()) {
+      const caption = index === 0 ? body : "";
+      const temp = draftMessage(index === 0 ? quoted : null, { kind: "image", body: caption, localUrl: photo.url });
+      setMessages((list) => merge(list, [temp]));
+      stickToBottom.current = true;
+      try {
+        const optimized = await processor.process(photo.file);
+        await deliver(temp, caption, {
+          replyToId: index === 0 ? quoted?.id ?? null : null,
+          image: { full: optimized.full, thumb: optimized.thumb, extension: optimized.extension, width: optimized.width, height: optimized.height },
+        });
+      } catch (error) {
+        setMessages((list) => list.map((m) => (m.id === temp.id ? { ...m, pending: false, failed: true } : m)));
+        toast.error(error, "No se envió la foto");
+      }
+    }
+  };
+
+  const sendSticker = (id: string) => {
+    if (!user) return;
+    setPicker(false);
+    const quoted = replyingTo;
+    setReplyingTo(null);
+    void deliver(draftMessage(quoted, { kind: "sticker", sticker: id }), "", { replyToId: quoted?.id ?? null, sticker: id });
+    input.current?.focus();
+  };
+
+  const addPhotos = (files: Iterable<File>) => {
+    const images = [...files].filter(isImageFile);
+    if (images.length === 0) {
+      toast.show({ title: "Eso no es una foto", body: "Elige imágenes JPG, PNG, WebP o HEIC.", tone: "error" });
+      return;
+    }
+    setDrafts((current) => {
+      const room = MAX_PHOTOS - current.length;
+      if (images.length > room) toast.show({ title: `Máximo ${MAX_PHOTOS} fotos por envío` });
+      return [...current, ...images.slice(0, Math.max(room, 0)).map((file) => ({ id: crypto.randomUUID(), file, url: URL.createObjectURL(file) }))];
+    });
+    input.current?.focus();
+  };
+
+  const removeDraft = (id: string) => {
+    setDrafts((current) => {
+      const draft = current.find((d) => d.id === id);
+      if (draft) URL.revokeObjectURL(draft.url);
+      return current.filter((d) => d.id !== id);
+    });
+  };
+
+  const onPaste = (e: ClipboardEvent<HTMLTextAreaElement>) => {
+    const files = [...e.clipboardData.files].filter(isImageFile);
+    if (files.length) {
+      e.preventDefault();
+      addPhotos(files);
     }
   };
 
@@ -272,15 +416,37 @@ export default function ChatPage() {
                     enabled={!m.pending && !m.failed}
                     onReply={() => startReply(m)}
                   >
-                    <div className={`bubble${m.pending ? " is-pending" : ""}${m.failed ? " is-failed" : ""}`}>
+                    <div className={`bubble bubble--${m.kind}${m.pending ? " is-pending" : ""}${m.failed ? " is-failed" : ""}`}>
                       {!mine && !grouped && <span className="bubble__name">{nameOf(m.senderId)}</span>}
                       {m.replyTo && (
                         <button type="button" className="bubble__quote" onClick={() => jumpTo(m.replyTo!.id)}>
                           <span className="bubble__quote-name">{m.replyTo.senderId ? nameOf(m.replyTo.senderId) : "Mensaje"}</span>
-                          <span className="bubble__quote-text">{quoteSnippet(m.replyTo.body)}</span>
+                          <span className="bubble__quote-text">{messagePreview(m.replyTo)}</span>
                         </button>
                       )}
-                      <span className="bubble__text">{m.body}</span>
+                      {m.kind === "image" && (
+                        <button
+                          type="button"
+                          className="bubble__photo"
+                          disabled={m.pending || m.failed}
+                          onClick={() => setViewing(m)}
+                          aria-label={`Ver foto de ${nameOf(m.senderId)}${m.body ? `: ${quoteSnippet(m.body, 60)}` : ""}`}
+                        >
+                          {(m.localUrl || (m.image && imageUrls.get(m.image.thumbPath))) ? (
+                            <img
+                              src={m.localUrl ?? imageUrls.get(m.image!.thumbPath)}
+                              alt=""
+                              width={m.image?.width ?? undefined}
+                              height={m.image?.height ?? undefined}
+                              loading="lazy"
+                              decoding="async"
+                            />
+                          ) : <span className="bubble__photo-placeholder" aria-hidden>📷</span>}
+                          {m.pending && <span className="bubble__uploading"><span className="bubble__heart" aria-hidden>💗</span> Enviando foto…</span>}
+                        </button>
+                      )}
+                      {m.kind === "sticker" && <StickerArt id={m.sticker} />}
+                      {m.body && <span className="bubble__text">{m.body}</span>}
                       <span className="bubble__time">
                         {timeFormat.format(new Date(m.createdAt))}
                         {receipt && <ReceiptMark receipt={receipt} readers={readersOf(m, presences).map(nameOf).join(", ")} />}
@@ -290,7 +456,7 @@ export default function ChatPage() {
                       <button
                         type="button"
                         className="btn btn--icon btn--ghost btn--sm bubble__reply"
-                        aria-label={`Responder a ${mine ? "tu mensaje" : nameOf(m.senderId)}: ${quoteSnippet(m.body, 40)}`}
+                        aria-label={`Responder a ${mine ? "tu mensaje" : nameOf(m.senderId)}: ${messagePreview(m, 40)}`}
                         title="Responder"
                         onClick={() => startReply(m)}
                       >
@@ -311,15 +477,54 @@ export default function ChatPage() {
               <span className="bubble__quote-name">
                 {replyingTo.senderId === user?.id ? "Respondiendo a tu mensaje" : `Respondiendo a ${nameOf(replyingTo.senderId)}`}
               </span>
-              <span className="bubble__quote-text">{quoteSnippet(replyingTo.body)}</span>
+              <span className="bubble__quote-text">{messagePreview(replyingTo)}</span>
             </button>
             <button type="button" className="btn btn--icon btn--ghost btn--sm" aria-label="Cancelar respuesta" onClick={() => setReplyingTo(null)}>✕</button>
           </div>
         )}
+        {drafts.length > 0 && (
+          <ul className="chat__drafts" aria-label="Fotos para enviar">
+            {drafts.map((d) => (
+              <li key={d.id} className="chat__draft">
+                <img src={d.url} alt={d.file.name} />
+                <button type="button" className="chat__draft-remove" aria-label={`Quitar ${d.file.name}`} onClick={() => removeDraft(d.id)}>✕</button>
+              </li>
+            ))}
+          </ul>
+        )}
+        {picker && <StickerPicker onPick={sendSticker} onClose={() => setPicker(false)} />}
+        <div className="chat__tools">
+          <button type="button" className="btn btn--icon btn--ghost" aria-label="Enviar fotos" title="Fotos" onClick={() => fileInput.current?.click()} data-tour="chat-photo">📷</button>
+          <button
+            type="button"
+            className="btn btn--icon btn--ghost"
+            aria-label="Stickers"
+            title="Stickers"
+            aria-expanded={picker}
+            data-sticker-toggle
+            data-tour="chat-sticker"
+            onClick={() => setPicker((open) => !open)}
+          >
+            😊
+          </button>
+          <input
+            ref={fileInput}
+            type="file"
+            accept="image/*"
+            multiple
+            hidden
+            onChange={(e) => {
+              if (e.target.files) addPhotos(e.target.files);
+              e.target.value = "";
+            }}
+          />
+        </div>
         <textarea
           ref={input}
-          className="textarea" rows={1} maxLength={2000} placeholder="Escribe algo bonito…" value={text} aria-label="Mensaje"
+          className="textarea" rows={1} maxLength={2000} value={text} aria-label="Mensaje"
+          placeholder={drafts.length ? "Añade un mensaje a la foto…" : "Escribe algo bonito…"}
           onChange={(e) => setText(e.target.value)}
+          onPaste={onPaste}
           onKeyDown={(e) => {
             if (e.key === "Escape" && replyingTo) {
               e.preventDefault();
@@ -330,8 +535,21 @@ export default function ChatPage() {
             }
           }}
         />
-        <button className="btn" disabled={!text.trim()} aria-label="Enviar">Enviar 💌</button>
+        <button className="btn" disabled={!text.trim() && drafts.length === 0} aria-label="Enviar"><span className="chat__send-label">Enviar </span>💌</button>
       </form>
+      {viewing?.image && (
+        <Modal title={`Foto de ${nameOf(viewing.senderId)}`} onClose={() => setViewing(null)} wide>
+          <figure className="chat-photo">
+            <img
+              src={imageUrls.get(viewing.image.path) ?? imageUrls.get(viewing.image.thumbPath)}
+              alt={viewing.body || `Foto de ${nameOf(viewing.senderId)}`}
+              width={viewing.image.width ?? undefined}
+              height={viewing.image.height ?? undefined}
+            />
+            {viewing.body && <figcaption>{viewing.body}</figcaption>}
+          </figure>
+        </Modal>
+      )}
     </main>
   );
 }
