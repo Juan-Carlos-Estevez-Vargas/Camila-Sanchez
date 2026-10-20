@@ -5,6 +5,7 @@
 import {
   normalizeAnimation, normalizeEffects, normalizeSectionContent, normalizeTheme, safeMusicUrl,
 } from "@/domain/defaults";
+import { sanitizeColors } from "@/domain/palettes";
 import type {
   AppNotification, AuditEntry, ChatKind, ChatMessage, ChatPresence, ImportantDate, Interruption, Invitation, InvitableRole,
   Milestone, Note, Photo, Profile, Section, SectionKind, SiteSettings,
@@ -164,6 +165,7 @@ export const toProfile = (r: Row): Profile => ({
   role: (["super_admin", "editor", "viewer"].includes(str(r.role)) ? r.role : "viewer") as Profile["role"],
   isActive: r.is_active !== false,
   createdAt: str(r.created_at),
+  themeColors: sanitizeColors(r.theme_colors),
 });
 
 export const toInvitation = (r: Row): Invitation => ({

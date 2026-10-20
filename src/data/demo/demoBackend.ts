@@ -13,7 +13,7 @@ import { del as idbDel, get as idbGet, set as idbSet } from "idb-keyval";
 import { AccessPolicy, DEFAULT_ROLE_PERMISSIONS, PERMISSIONS, type Permission } from "@/domain/permissions";
 import { messagePreview, upsertPresence } from "@/domain/chat";
 import { isKnownSticker } from "@/domain/stickers";
-import { changesBeyondPalette } from "@/domain/palettes";
+import { sanitizeColors } from "@/domain/palettes";
 import { AppError } from "@/core/errors";
 import {
   expiryFromNow, generateInviteToken, hashInviteToken, invitationStatus, isInviteToken, MIN_PASSWORD_LENGTH,
@@ -81,7 +81,6 @@ const PERMISSION_DESCRIPTIONS: Record<Permission, string> = {
   "chat.use": "Usar el chat",
   "sections.manage": "Crear, ordenar y ocultar secciones",
   "theme.manage": "Cambiar colores, tipografías, efectos y animaciones",
-  "theme.palette": "Elegir la paleta de colores",
   "settings.manage": "Configuración general del sitio",
   "users.manage": "Gestionar usuarios, roles y permisos",
   "audit.view": "Ver el registro de auditoría",
@@ -106,7 +105,7 @@ function initialState(): DemoState {
     notifications: [],
     users: DEMO_ACCOUNTS.map((a) => ({
       id: uuid(), email: a.email, password: a.password, displayName: a.displayName,
-      role: a.role, isActive: true, avatarUrl: null, createdAt: created,
+      role: a.role, isActive: true, avatarUrl: null, createdAt: created, themeColors: null,
     })),
     invitations: [],
     recoveries: [],
@@ -339,11 +338,7 @@ export const demoBackend: Backend = {
     async updateSettings(patch) {
       const user = requireUser();
       const policy = policyOf(user);
-      if ((patch.theme || patch.effects) && !policy.can(PERMISSIONS.themeManage)) {
-        // Con theme.palette sólo se pueden cambiar los colores (igual que el trigger de la base de datos).
-        const onlyColors = !patch.effects && !!patch.theme && !changesBeyondPalette(database().state.settings.theme, patch.theme);
-        if (!(onlyColors && policy.can(PERMISSIONS.themePalette))) throw new AppError("No tienes permiso para cambiar el tema.");
-      }
+      if ((patch.theme || patch.effects) && !policy.can(PERMISSIONS.themeManage)) throw new AppError("No tienes permiso para cambiar el tema.");
       const { theme: _t, effects: _e, ...rest } = patch;
       if (Object.keys(rest).length && !policy.can(PERMISSIONS.settingsManage)) throw new AppError("No tienes permiso para cambiar la configuración.");
       const state = database().state;
@@ -649,6 +644,16 @@ export const demoBackend: Backend = {
       database().commit({ table: "site_settings", type: "UPDATE", record: null });
       return toProfile(user);
     },
+    async updateMyColors(colors) {
+      const actor = requireUser();
+      const user = database().state.users.find((u) => u.id === actor.id);
+      if (!user) throw new AppError("Usuario no encontrado.");
+      const old = toProfile(user);
+      user.themeColors = sanitizeColors(colors);
+      audit("UPDATE", "profiles", user.id, old, toProfile(user));
+      database().commit({ table: "site_settings", type: "UPDATE", record: null });
+      return toProfile(user);
+    },
     async myPermissions() {
       const user = sessionUser();
       if (!user) return [];
@@ -676,7 +681,7 @@ export const demoBackend: Backend = {
       if (state.users.some((u) => u.email === normalized)) throw new AppError("Ya existe un usuario con ese correo.");
       const user: DemoUser = {
         id: uuid(), email: normalized, password: password || "demo1234", displayName, role,
-        isActive: true, avatarUrl: null, createdAt: nowIso(),
+        isActive: true, avatarUrl: null, createdAt: nowIso(), themeColors: null,
       };
       state.users.push(user);
       audit("INSERT", "profiles", user.id, null, toProfile(user));
@@ -748,7 +753,7 @@ export const demoBackend: Backend = {
       if (password.length < MIN_PASSWORD_LENGTH) throw new AppError(`La contraseña debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres.`);
       const user: DemoUser = {
         id: uuid(), email: normalized, password, displayName: displayName.trim().slice(0, 80), role: invitation.role,
-        isActive: true, avatarUrl: null, createdAt: nowIso(),
+        isActive: true, avatarUrl: null, createdAt: nowIso(), themeColors: null,
       };
       state.users.push(user);
       invitation.usedAt = nowIso();
@@ -776,5 +781,8 @@ export const demoBackend: Backend = {
 };
 
 function toProfile(u: DemoUser): Profile {
-  return { id: u.id, displayName: u.displayName, avatarUrl: u.avatarUrl, role: u.role, isActive: u.isActive, createdAt: u.createdAt };
+  return {
+    id: u.id, displayName: u.displayName, avatarUrl: u.avatarUrl, role: u.role, isActive: u.isActive, createdAt: u.createdAt,
+    themeColors: sanitizeColors(u.themeColors),
+  };
 }
