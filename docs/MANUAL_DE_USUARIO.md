@@ -118,6 +118,12 @@ cajita (necesita que Juan haya configurado las notificaciones push).
 
 ## 6. Mi cuenta
 
+- **Mis colores:** toca **Cambiar colores** y elige una paleta (Rosa vino,
+  Rosa suave, Durazno, Lavanda, Menta, Cielo o Medianoche), o ajústala a tu
+  gusto con **Personalizar**, y luego **Guardar mis colores**. Sólo cambia lo
+  que ves tú: cada persona tiene los suyos y quien entra sin cuenta siempre ve
+  los de la página (Rosa vino). **Volver a los colores de la página** quita
+  los tuyos.
 - **Cambiar contraseña:** al menos 10 caracteres, escrita dos veces.
 - **Cerrar sesión aquí:** sólo en este dispositivo.
 - **Cerrar en todos los dispositivos:** úsalo si perdiste el celular o entraste
@@ -146,7 +152,6 @@ guardan solos y se ven al instante.
 | 🌟 Hitos | Momentos importantes con fecha, icono y foto opcional |
 | 📅 Fechas importantes | Aniversarios y cumpleaños (se repiten cada año si quieres) |
 | 🎁 Sorpresas | Mensajes que aparecen en una ventanita, banner, confeti o corazones |
-| 🎨 Colores | La paleta de toda la página (Rosa suave, Durazno, Lavanda, Menta, Cielo, Rosa vino, Medianoche) |
 
 ### Subir fotos
 
@@ -177,7 +182,7 @@ cae sola en el mes en que se tomó. Para cambiar el orden, arrástralas o usa
 | 🧭 Resumen | Cifras del sitio |
 | 👥 Usuarios | Crear cuentas, invitar, cambiar roles, desactivar, borrar y enlaces de recuperación |
 | 🔐 Roles y permisos | Qué puede hacer cada rol |
-| 🎨 Apariencia | Colores, tipografías, bordes, modo oscuro y efectos animados |
+| 🎨 Apariencia | Colores de la página (los que ve quien entra sin cuenta y quien no eligió los suyos), tipografías, bordes, modo oscuro y efectos animados |
 | 🧩 Secciones | Agregar, ordenar, ocultar o quitar secciones de la página |
 | ⚙️ Ajustes del sitio | Título, fecha en que empezó todo, música y si la página es pública |
 | 📜 Auditoría | Quién cambió qué y cuándo |
@@ -201,6 +206,10 @@ pídeselos a Juan.
 
 **Dice «Esta parte no está disponible para tu cuenta».** Igual que arriba: el
 enlace existe pero tu rol no puede usarlo.
+
+**Cambié los colores y a Camila no le cambiaron.** Así debe ser: los colores
+de **Mi cuenta → Mis colores** son de cada persona. Los de la página para
+quien no tiene cuenta los cambia Juan en **Administración → Apariencia**.
 
 **Subí una foto y no aparece.** Revisa el mes en la galería: se ubica por la
 fecha en que se tomó, no por la de hoy.

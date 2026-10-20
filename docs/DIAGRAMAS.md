@@ -360,6 +360,7 @@ erDiagram
     text display_name
     app_role role
     boolean is_active
+    jsonb theme_colors "colores propios"
   }
   PERMISSIONS {
     text key PK
@@ -474,7 +475,6 @@ flowchart LR
     E5["interruptions.manage"]
     E6["notes.send"]
     E7["chat.use"]
-    E8["theme.palette"]
   end
   subgraph viewer["viewer (invitado)"]
     V1["site.view"]
@@ -482,7 +482,7 @@ flowchart LR
     V3["chat.use"]
   end
   ALL --> SUPER["/super: usuarios, permisos,<br/>apariencia, secciones, ajustes, auditoría"]
-  E2 & E3 & E4 & E5 & E8 --> PANEL["/panel"]
+  E2 & E3 & E4 & E5 --> PANEL["/panel"]
   E6 & V2 --> MSG["/mensajes"]
   E7 & V3 --> CHAT["/chat"]
 ```
