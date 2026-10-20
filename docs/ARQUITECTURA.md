@@ -193,7 +193,7 @@ Las tablas viven en `public` y se crean con las migraciones de
 | --- | --- | --- |
 | `admin-users` | Super administrador con sesión | Crear, desactivar o borrar cuentas y generar enlaces de recuperación |
 | `redeem-invite` | Cualquiera con un enlace de invitación | Comprobar y canjear la invitación de forma atómica |
-| `send-push` | Database Webhook al insertar en `notifications` | Enviar Web Push a los dispositivos suscritos |
+| `send-push` | La base de datos (trigger `notifications_push` con `pg_net`) en cada aviso nuevo; `GET` desde el navegador | Enviar Web Push a los dispositivos suscritos; entregar la clave pública VAPID |
 
 La `service_role` key sólo existe dentro de estas funciones; nunca llega al
 navegador ni al repositorio.
@@ -246,14 +246,25 @@ Las cabeceras están en `public/_headers` (Netlify) y `vercel.json`; una prueba
 
 ### Avisos
 
-1. Una notita o un mensaje se inserta con RLS.
-2. Un trigger crea la fila en `notifications` para la otra persona.
+1. Una notita, un mensaje o una sorpresa se inserta con RLS.
+2. Un trigger crea la fila en `notifications` para la otra persona. En el
+   chat, si ya hay un aviso sin leer, se actualiza con el último mensaje (la
+   campana muestra uno solo, pero cada mensaje avisa al celular).
 3. Realtime la entrega al navegador abierto: se actualizan la campanita y los
-   contadores y aparece un toast. Si la pestaña está en segundo plano, se
-   muestra una notificación del sistema.
-4. Si se configuró Web Push, un Database Webhook llama a `send-push`, que avisa
-   al celular aunque la app esté cerrada. El service worker (`public/sw.js`)
-   muestra el aviso y abre el enlace al tocarlo.
+   contadores y aparece un toast. Si la pestaña está en segundo plano y el
+   dispositivo no tiene push, se muestra una notificación del sistema.
+4. El trigger `notifications_push` lee de Supabase Vault la URL de `send-push`
+   y su secreto y la llama con `pg_net`. Si no están, no hace nada; si falla,
+   el aviso se guarda igual. `send-push` manda el Web Push (VAPID) a los
+   dispositivos de esa persona y borra las suscripciones vencidas.
+5. El service worker (`public/sw.js`) muestra el aviso en la pantalla de
+   notificaciones (los del chat se agrupan en uno) y abre el enlace al tocarlo.
+
+Cada dispositivo se suscribe con `register_push_subscription`, que lo pone a
+nombre de quien inició sesión por última vez en él; al cerrar sesión la
+suscripción se borra. La clave pública VAPID se pide a `send-push` (`GET`), así
+que no hay que configurarla en Netlify. El flujo *Deploy* genera las claves y
+el secreto la primera vez y los guarda en los secretos de Supabase y en Vault.
 
 ## 8. Integración y despliegue continuos
 

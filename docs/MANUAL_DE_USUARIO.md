@@ -112,9 +112,21 @@ La campanita 🔔 de la cabecera cuenta los avisos sin leer. Tócala para verlos
 cada uno te lleva directo a la notita o al chat. **Marcar todo leído** los
 limpia.
 
-Si la pestaña está abierta pero en segundo plano, el sistema operativo
-también te avisa. Para avisos con la app cerrada, activa los avisos en la
-cajita (necesita que Juan haya configurado las notificaciones push).
+**En la pantalla de notificaciones del celular.** Entra a **Mi cuenta →
+Avisos en este dispositivo** y toca **Activar avisos**; el navegador te pide
+permiso. Desde ahí te llegan, aunque la app esté cerrada:
+
+- cada mensaje del chat (se agrupan en un solo aviso que se va actualizando),
+- cada notita de la cajita,
+- cada sorpresa nueva.
+
+Toca **Enviar aviso de prueba** para comprobarlo. Hazlo en cada celular o
+computador donde quieras recibirlos; al cerrar sesión en uno, ese deja de
+recibirlos.
+
+**En iPhone:** abre la página en Safari, toca **Compartir → Agregar a
+inicio**, entra desde el ícono nuevo y activa los avisos ahí (necesita iOS
+16.4 o más nuevo).
 
 ## 6. Mi cuenta
 
@@ -214,9 +226,11 @@ quien no tiene cuenta los cambia Juan en **Administración → Apariencia**.
 **Subí una foto y no aparece.** Revisa el mes en la galería: se ubica por la
 fecha en que se tomó, no por la de hoy.
 
-**No me llegan los avisos al celular.** Toca **Activar avisos** en la cajita y
-acepta el permiso del navegador. En iPhone, primero agrega la app a la
-pantalla de inicio.
+**No me llegan los avisos al celular.** Ve a **Mi cuenta → Avisos en este
+dispositivo**: si dice que están bloqueados, permítelos en los ajustes del
+navegador; si están activados, toca **Enviar aviso de prueba**. En iPhone,
+primero agrega la app a la pantalla de inicio. Revisa también que el modo
+«No molestar» del celular no los esté silenciando.
 
 **¿Puedo probar la app sin cuenta?** En el modo demo (sin Supabase
 configurado) entra con `juan@demo.local` o `camila@demo.local` y la contraseña
