@@ -22,6 +22,7 @@ corren en Edge Functions.
 | Base de datos | Postgres con RLS, RBAC en SQL y auditoría por triggers | Reglas de negocio y permisos |
 | Archivos | Supabase Storage, buckets privados `photos` y `chat-media` | Fotos de la página y del chat servidas con URLs firmadas |
 | Tiempo real | Supabase Realtime | Chat, notificaciones y contenido que se actualiza solo |
+| Avisos al celular | Web Push (VAPID), service worker, `pg_net` y Supabase Vault | Notificaciones en la pantalla del dispositivo con la app cerrada |
 | Funciones | Edge Functions en Deno | Gestión de cuentas, invitaciones y Web Push |
 | Publicación | Netlify (web) y GitHub Actions (backend y releases) | Despliegue continuo en cada merge |
 
@@ -31,7 +32,7 @@ corren en Edge Functions.
 src/
   app/        armazón: rutas, cabecera, pie de página, manejo de errores
   core/       configuración, validación, errores, EventBus, SEO, autor
-  domain/     reglas puras: tipos, permisos, fechas, invitaciones, recuperación, paletas
+  domain/     reglas puras: tipos, permisos, fechas, invitaciones, recuperación, paletas, chat, stickers
   data/       puertos (ports.ts) y adaptadores: supabase/ y demo/
   services/   cola de tareas, pipeline de imágenes (Web Workers), notificaciones, <head>
   state/      contextos de React: backend, auth, contenido, tema, notificaciones, toasts
@@ -39,10 +40,10 @@ src/
   features/   funcionalidades: site, auth, admin (panel), super, messages, chat, tour
   styles/     sistema de diseño SCSS: abstracts, base, components, layout
 supabase/
-  migrations/ esquema, RLS, triggers, bucket y publicación realtime (en orden)
+  migrations/ esquema, RLS, triggers, buckets, publicación realtime y avisos push (en orden)
   functions/  admin-users, redeem-invite, send-push (+ _shared/cors.ts)
   templates/  correo de recuperación de contraseña
-  tests/      pruebas de RLS sobre PGlite (Postgres en WebAssembly)
+  tests/      pruebas de RLS sobre PGlite (Postgres en WebAssembly) con un stub de Supabase
 scripts/      release.mjs (versión SemVer y notas) y build-setup-sql.mjs
 docs/         estos manuales
 .github/      workflows CI y Deploy
@@ -82,11 +83,15 @@ Supabase. Eso permite probar las reglas del negocio sin navegador.
 
 `main.tsx` monta `App`, que anida los proveedores en este orden:
 `ToastProvider → AuthProvider → SiteContentProvider → NotificationsProvider`.
-`ThemedShell` dibuja la cabecera, las rutas y el pie.
+`ThemedShell` calcula el tema (el de la página con los colores de la persona
+encima), monta `ThemeController`, `SeoController` y `PresenceHeartbeat` y
+dibuja la cabecera, las rutas y el pie. En producción `main.tsx` registra el
+service worker (`public/sw.js`): caché sin conexión y avisos push.
 
 - Rutas públicas: `/`, `/entrar`, `/invitacion`, `/recuperar`.
 - Rutas privadas (`src/app/routes.tsx`): `/mensajes`, `/chat`, `/cuenta`,
-  `/panel/*` y `/super/*`. Cada una se envuelve en `RequirePermission`, que
+  `/cuenta/colores`, `/panel/*` y `/super/*` (`/panel/colores`, de antes,
+  redirige a `/cuenta/colores`). Cada una se envuelve en `RequirePermission`, que
   manda a `/entrar?next=…` si no hay sesión y muestra un aviso si falta el
   permiso.
 - Todas las áreas privadas se cargan con `lazy()`: quien sólo visita la página
@@ -97,9 +102,9 @@ Supabase. Eso permite probar las reglas del negocio sin navegador.
 | Contexto | Qué guarda |
 | --- | --- |
 | `BackendContext` | La instancia del adaptador elegido |
-| `AuthContext` | Usuario, perfil, `AccessPolicy` y acciones de sesión |
+| `AuthContext` | Usuario, perfil (con sus colores), `AccessPolicy` y acciones de sesión; al cerrar sesión da de baja el push del dispositivo |
 | `SiteContentStore` | Ajustes, secciones, fotos, hitos, fechas y sorpresas, más las URLs firmadas |
-| `NotificationsContext` | Avisos, contador sin leer por tipo y notificaciones del sistema |
+| `NotificationsContext` | Avisos, contador sin leer por tipo, notificaciones del sistema y renovación de la suscripción push del dispositivo |
 | `ThemeController` | Aplica el tema como custom properties en `:root`: el de la página con los colores de la persona encima (`personalTheme`) |
 | `ToastContext` | Mensajes emergentes |
 
@@ -155,8 +160,9 @@ Las tablas viven en `public` y se crean con las migraciones de
 - **Contenido:** `site_settings` (fila única), `sections`, `photos`,
   `milestones`, `important_dates`, `interruptions`, `interruption_views`.
 - **Mensajería:** `notes`, `chat_messages` (con `reply_to` para responder
-  citando y `kind` = `text`, `image` o `sticker`), `chat_reads` (última conexión y hasta dónde leyó cada persona),
-  `notifications`, `push_subscriptions`.
+  citando y `kind` = `text`, `image` o `sticker`), `chat_reads` (última
+  conexión y hasta dónde leyó cada persona), `notifications` y
+  `push_subscriptions` (un registro por dispositivo con avisos activados).
 - **Trazabilidad:** `audit_log`.
 
 ### Roles y permisos (RBAC)
@@ -181,8 +187,16 @@ Las tablas viven en `public` y se crean con las migraciones de
 - `chat_presence(p_read)`: única forma de escribir en `chat_reads`. Guarda
   la última conexión de quien la llama y, con `p_read`, que leyó el chat hasta
   ese momento. Usa `auth.uid()`, así nadie marca vistos en nombre de otro.
-- `notify_new_note` y `notify_new_chat_message`: escriben en `notifications`
-  cuando llega una notita o un mensaje. Sólo los triggers escriben ahí.
+- `notify_new_note`, `notify_new_chat_message` y `notify_new_interruption`:
+  escriben en `notifications` cuando llega una notita, un mensaje o se
+  publica una sorpresa ya activa. Sólo los triggers y `send_test_notification`
+  escriben ahí. En el chat se reutiliza el aviso sin leer.
+- `dispatch_push` (trigger `notifications_push`): por cada aviso nuevo o
+  renovado llama a `send-push` con `pg_net`, usando la URL y el secreto
+  guardados en Supabase Vault.
+- `register_push_subscription(...)`: guarda el dispositivo a nombre de quien
+  tiene la sesión (si era de otra cuenta, pasa a la nueva).
+- `send_test_notification()`: aviso de prueba para uno mismo, uno por minuto.
 - `audit_row`: registra en `audit_log` cada INSERT, UPDATE o DELETE de las
   tablas auditadas. Los mensajes privados no se registran.
 - Publicación `supabase_realtime`: avisa al navegador de los cambios.
@@ -210,6 +224,8 @@ navegador ni al repositorio.
 | Redirecciones abiertas | `?next=` sólo acepta rutas internas (`safeRedirect.ts`) |
 | Fotos expuestas | Buckets privados, sólo imágenes de hasta 5 MB, URLs firmadas, metadatos borrados al subir |
 | Alguien sube o borra fotos del chat de otro | En `chat-media` cada persona sólo escribe y borra en su carpeta (`<user_id>/`), y un mensaje sólo puede apuntar a fotos de esa carpeta |
+| Avisos falsos o push a dispositivos ajenos | Sólo triggers crean avisos; `send-push` exige un secreto que vive en Vault y en los secretos de la función, nunca en el repositorio; cada dispositivo pertenece a una sola cuenta y se da de baja al cerrar sesión |
+| Colores ajenos | `profiles.theme_colors` sólo lo cambia su dueña o dueño y sólo acepta colores `#rrggbb` |
 | Clickjacking y fugas de referer | `X-Frame-Options`, `frame-ancestors 'none'`, `Referrer-Policy` |
 | Enumeración de cuentas | La recuperación responde igual exista o no el correo |
 
@@ -275,6 +291,8 @@ el secreto la primera vez y los guarda en los secretos de Supabase y en Vault.
   - aplica las migraciones nuevas en Supabase,
   - configura Auth (URLs, registro cerrado, plantilla y SMTP opcional),
   - publica las Edge Functions,
+  - configura los avisos push (claves VAPID y secreto la primera vez, en los
+    secretos de Supabase y en Vault),
   - y en el job `release` calcula la versión y crea el tag y el release.
 - **Netlify** publica la web sola con cada merge (`netlify.toml`). El build
   trae los tags para que el pie de página muestre la misma versión que el
@@ -295,11 +313,11 @@ Un salto manual en `package.json` manda sobre el cálculo.
 
 | Tipo | Dónde | Qué cubren |
 | --- | --- | --- |
-| Unitarias de dominio | `src/domain/*.test.ts` | Fechas, invitaciones, recuperación, paletas |
+| Unitarias de dominio | `src/domain/*.test.ts` | Fechas, invitaciones, recuperación, paletas y colores por persona, chat (vistos, última conexión, vistas previas), stickers |
 | Unitarias de núcleo | `src/core/*.test.ts` | Validación, redirecciones seguras, SEO, cabeceras |
 | Servicios | `src/services/**/*.test.ts` | Cola de tareas, EXIF, tamaños, carga masiva |
 | Tutorial | `src/features/tour/*.test.ts` | Pasos por rol y posición de la tarjeta |
-| Base de datos | `supabase/tests/rls.test.ts` | Políticas RLS y triggers sobre PGlite |
+| Base de datos | `supabase/tests/rls.test.ts` | Políticas RLS, triggers, buckets y avisos push sobre PGlite (con Vault y `pg_net` simulados en `supabaseStub.ts`) |
 | Releases | `scripts/release.test.ts` | Cálculo de versión y notas |
 
 `npm run check` corre typecheck, lint y todas las pruebas.
@@ -318,4 +336,21 @@ Un salto manual en `package.json` manda sobre el cálculo.
   editor; no hace falta tocar el resto.
 
 Las migraciones ya aplicadas no se editan: cada cambio va en un archivo nuevo
-con fecha posterior.
+con fecha posterior. Después de agregar una, corre `npm run db:setup-sql` (una
+prueba comprueba que `supabase/setup.sql` esté al día).
+
+## 11. Migraciones
+
+| Archivo | Qué hace |
+| --- | --- |
+| `…1015000100_core_schema` | Perfiles, roles, permisos, `has_permission` y protección contra escalada |
+| `…1015000200_content` | Ajustes, secciones, fotos, hitos, fechas y sorpresas |
+| `…1015000300_messaging` | Cajita, chat, avisos y suscripciones push |
+| `…1015000400_audit_realtime` | Auditoría por triggers y publicación de Realtime |
+| `…1015000500_photo_fingerprint` | Huella SHA-256 de cada foto para saltar repetidas |
+| `…1015000600_theme_palette` | Permiso de paleta para Camila (lo retira `personal_colors`) |
+| `…1015000700_invitations` | Invitaciones por enlace o QR |
+| `…1020000100_chat_replies_presence` | Respuestas citando, última conexión y vistos |
+| `…1020000200_chat_media` | Fotos y stickers en el chat, bucket `chat-media` |
+| `…1020000300_personal_colors` | Colores por persona y Rosa vino para quien no tiene cuenta |
+| `…1020000400_device_push` | Avisos al celular, avisos de sorpresas y aviso de prueba |
