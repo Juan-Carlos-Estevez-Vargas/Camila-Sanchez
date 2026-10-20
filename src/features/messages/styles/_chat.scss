@@ -30,10 +30,50 @@ $bubble-tail: 6px;
     margin: space(4) 0 space(2);
   }
 
+  &__people {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 space(3);
+  }
+
+  &__status.is-online {
+    color: var(--c-success);
+    font-weight: 600;
+  }
+
+  &__replying {
+    flex: 1 0 100%;
+    display: flex;
+    align-items: center;
+    gap: space(2);
+    padding: space(2) space(2) space(2) space(3);
+    border-left: 4px solid var(--c-primary);
+    border-radius: var(--radius-sm);
+    background: var(--c-surface-2);
+    animation: slide-up 0.2s $ease;
+  }
+
+  &__replying-quote {
+    flex: 1;
+    min-width: 0;
+    display: grid;
+    gap: 2px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+
   &__composer {
     display: flex;
+    flex-wrap: wrap;
     gap: space(2);
     align-items: end;
+
+    .textarea { flex: 1; }
     position: sticky;
     bottom: 0;
     padding: space(2) 0 calc(#{space(2)} + env(safe-area-inset-bottom));
@@ -44,11 +84,66 @@ $bubble-tail: 6px;
 }
 
 .bubble-row {
+  position: relative;
   display: flex;
+  align-items: center;
+  gap: space(1);
   margin-top: space(2);
+  // Deja el scroll vertical al navegador y el gesto horizontal a la app.
+  touch-action: pan-y;
+  transition: transform 0.2s $ease;
 
   &.is-grouped { margin-top: 2px; }
   &.is-mine { justify-content: flex-end; }
+  &.is-swiping { transition: none; }
+
+  &__hint {
+    position: absolute;
+    left: -#{space(6)};
+    color: var(--c-primary);
+    font-weight: 700;
+  }
+
+  // Al saltar a un mensaje citado se ilumina un momento.
+  &.is-flash .bubble { animation: bubble-flash 1.6s $ease; }
+}
+
+@keyframes bubble-flash {
+  0%, 60% { box-shadow: 0 0 0 4px tint(var(--c-primary), 45%); }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+
+.bubble__reply {
+  opacity: 0;
+  transition: opacity 0.15s ease;
+
+  .is-mine & { order: -1; }
+  .bubble-row:hover &,
+  &:focus-visible { opacity: 1; }
+
+  // En pantallas táctiles no hay hover: queda a la vista, discreto (también
+  // se puede deslizar el mensaje hacia la derecha).
+  @media (hover: none) {
+    opacity: 0.45;
+    border-color: transparent;
+  }
+}
+
+.receipt {
+  margin-left: 4px;
+  font-size: 0.72rem;
+  letter-spacing: -0.18em;
+  padding-right: 0.18em;
+
+  &--read {
+    // Como el azul de WhatsApp, aclarado para que se lea sobre el color del tema.
+    color: #9be3ff;
+    opacity: 1;
+    font-weight: 700;
+  }
+
+  &--failed { letter-spacing: 0; font-weight: 700; }
+  &--sending { letter-spacing: 0; }
 }
 
 .bubble {
@@ -68,7 +163,43 @@ $bubble-tail: 6px;
 
   &__name { font-size: 0.75rem; font-weight: 700; color: var(--c-primary); }
   &__text { white-space: pre-wrap; word-break: break-word; }
-  &__time { font-size: 0.68rem; opacity: 0.65; justify-self: end; }
+  &__time { font-size: 0.68rem; opacity: 0.75; justify-self: end; white-space: nowrap; }
+
+  &__quote {
+    display: grid;
+    gap: 1px;
+    margin: 2px 0 4px;
+    padding: 0.35rem 0.6rem;
+    border: 0;
+    border-left: 3px solid var(--c-primary);
+    border-radius: 8px;
+    background: tint(var(--c-text), 7%);
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+
+    .is-mine & {
+      border-left-color: var(--c-primary-contrast);
+      background: tint(var(--c-primary-contrast), 18%);
+    }
+
+    &:focus-visible { @include focus-ring; }
+  }
+
+  &__quote-name {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--c-primary);
+
+    .is-mine & { color: inherit; }
+  }
+
+  &__quote-text {
+    @include truncate;
+    font-size: 0.8rem;
+    opacity: 0.85;
+  }
 
   &.is-pending { opacity: 0.6; }
   &.is-failed { background: var(--c-danger); color: #fff; }
