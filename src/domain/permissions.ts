@@ -11,7 +11,6 @@ export const PERMISSIONS = {
   chatUse: "chat.use",
   sectionsManage: "sections.manage",
   themeManage: "theme.manage",
-  themePalette: "theme.palette",
   settingsManage: "settings.manage",
   usersManage: "users.manage",
   auditView: "audit.view",
@@ -31,7 +30,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {
   editor: [
     PERMISSIONS.siteView, PERMISSIONS.contentEdit, PERMISSIONS.photosManage,
     PERMISSIONS.datesManage, PERMISSIONS.interruptionsManage, PERMISSIONS.notesSend,
-    PERMISSIONS.chatUse, PERMISSIONS.themePalette,
+    PERMISSIONS.chatUse,
   ],
   viewer: [PERMISSIONS.siteView, PERMISSIONS.notesSend, PERMISSIONS.chatUse],
 };
@@ -70,7 +69,7 @@ export class AccessPolicy {
   get canUseContentPanel(): boolean {
     return this.canAny(
       PERMISSIONS.contentEdit, PERMISSIONS.photosManage,
-      PERMISSIONS.datesManage, PERMISSIONS.interruptionsManage, PERMISSIONS.themePalette,
+      PERMISSIONS.datesManage, PERMISSIONS.interruptionsManage,
     );
   }
 

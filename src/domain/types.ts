@@ -19,6 +19,8 @@ export interface Profile {
   role: Role;
   isActive: boolean;
   createdAt: IsoDateTime;
+  /** Colores que eligió para sí (null = los de la página). */
+  themeColors: Partial<Pick<ThemeTokens, "primary" | "primaryContrast" | "accent" | "background" | "surface" | "text" | "muted">> | null;
 }
 
 export interface PermissionDefinition {

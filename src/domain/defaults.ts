@@ -5,11 +5,11 @@ import {
   SECTION_ANIMATIONS, type EffectsConfig, type Section, type SectionAnimation,
   type SectionContentMap, type SectionKind, type ThemeTokens,
 } from "./types";
-import { V1_PALETTE } from "./palettes";
+import { WINE_PALETTE } from "./palettes";
 
 /** Tema de fábrica: los colores suaves de la versión 1, siempre en modo claro. */
 export const DEFAULT_THEME: ThemeTokens = {
-  ...V1_PALETTE.colors,
+  ...WINE_PALETTE.colors,
   fontDisplay: "Fraunces",
   fontBody: "Inter",
   radius: 18,
