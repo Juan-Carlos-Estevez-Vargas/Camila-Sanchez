@@ -288,19 +288,25 @@ Hay dos caminos, y el primero funciona desde ya:
      bonita (`supabase/templates/recovery.html`) y el enlace funciona aunque se
      abra en otro celular.
 
-### Opcional: notificaciones push al celular
+### Avisos en la pantalla de notificaciones del celular
 
-La cajita, el chat y la campana funcionan en tiempo real sin esto. Para que
-además lleguen avisos al celular con la app cerrada:
+No hay que configurar nada: el flujo *Deploy* crea una sola vez las claves
+de Web Push, las guarda como secretos de Supabase, publica `send-push` y
+conecta la base de datos con ella (Supabase Vault + `pg_net`). Si prefieres
+tus propias claves, crea los secrets de GitHub `VAPID_PUBLIC_KEY`,
+`VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` y `PUSH_WEBHOOK_SECRET` y vuelve a correr
+*Deploy*.
 
-1. Genera las claves VAPID con `npx web-push generate-vapid-keys` y un
-   secreto largo al azar (`openssl rand -hex 32`).
-2. Agrégalos como secrets de GitHub: `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`,
-   `VAPID_SUBJECT` (`mailto:tu-correo`) y `PUSH_WEBHOOK_SECRET`; y en Netlify
-   `VITE_VAPID_PUBLIC_KEY`. Vuelve a correr *Deploy*.
-3. Supabase → *Database → Webhooks → Create*: tabla `notifications`, evento
-   `INSERT`, tipo *Supabase Edge Function* → `send-push`, con la cabecera
-   `x-webhook-secret: <tu PUSH_WEBHOOK_SECRET>`.
+Lo único que hace cada persona, en cada celular: **Mi cuenta → Avisos en este
+dispositivo → Activar avisos** (y **Enviar aviso de prueba** para comprobar).
+En iPhone (iOS 16.4 o más nuevo) primero hay que abrir la página en Safari,
+tocar **Compartir → Agregar a inicio** y activar los avisos desde la app que
+queda en la pantalla de inicio.
+
+Llegan avisos de: cada mensaje del chat, cada notita de la cajita y cada
+sorpresa que se publica ya activa. Si antes creaste a mano un *Database
+Webhook* hacia `send-push`, bórralo (Supabase → *Database → Webhooks*) para
+no recibir cada aviso dos veces.
 
 ### Sin GitHub Actions
 

@@ -47,7 +47,7 @@ flowchart LR
   RT -- "cambios" --> SPA
   SPA -- "acciones de admin" --> AU
   SPA -- "canje de invitación" --> RI
-  DB -- "webhook al crear aviso" --> SP
+  DB -- "pg_net al crear aviso" --> SP
   SP -- "Web Push" --> SW
   AU & RI & SP -- "service_role" --> DB
   GH -- "migraciones y funciones" --> Supabase
@@ -217,8 +217,8 @@ sequenceDiagram
   opt Pestaña en segundo plano
     B->>B: notificación del sistema
   end
-  opt Push configurado
-    DB->>SP: Database Webhook
+  opt Celular con avisos activados
+    DB->>SP: trigger notifications_push (pg_net + secreto de Vault)
     SP->>SW: Web Push (VAPID)
     SW-->>SW: muestra el aviso y abre el enlace al tocarlo
   end
