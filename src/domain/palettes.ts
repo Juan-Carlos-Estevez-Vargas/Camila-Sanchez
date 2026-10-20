@@ -1,7 +1,8 @@
 /**
- * Paletas de colores. Camila puede elegir una (o ajustar sus colores) desde
- * su panel; tipografías, bordes, modo oscuro y efectos siguen siendo cosa del
- * super administrador.
+ * Paletas de colores. Cada persona con cuenta elige la suya en Mi cuenta y
+ * sólo cambia lo que ve ella. Los colores de la página (los que ve quien
+ * entra sin cuenta), las tipografías, los bordes, el modo oscuro y los
+ * efectos son cosa del super administrador.
  */
 import type { ThemeTokens } from "./types";
 
@@ -32,7 +33,16 @@ export const V1_PALETTE: Palette = {
   },
 };
 
+/** La paleta de la página para quien entra sin cuenta. */
+export const WINE_PALETTE: Palette = {
+  id: "rosa-vino",
+  name: "Rosa vino",
+  description: "Más elegante y sobria.",
+  colors: { primary: "#b0305a", primaryContrast: "#ffffff", accent: "#e8a33d", background: "#fff8f6", surface: "#ffffff", text: "#2b1720", muted: "#7a5c66" },
+};
+
 export const PALETTES: readonly Palette[] = [
+  WINE_PALETTE,
   V1_PALETTE,
   {
     id: "durazno",
@@ -57,12 +67,6 @@ export const PALETTES: readonly Palette[] = [
     name: "Cielo",
     description: "Azul claro y sereno.",
     colors: { primary: "#2f6aad", primaryContrast: "#ffffff", accent: "#f7b2c4", background: "#eef5fd", surface: "#fbfdff", text: "#1f3a5c", muted: "#4d6787" },
-  },
-  {
-    id: "rosa-vino",
-    name: "Rosa vino",
-    description: "Más elegante y sobria.",
-    colors: { primary: "#b0305a", primaryContrast: "#ffffff", accent: "#e8a33d", background: "#fff8f6", surface: "#ffffff", text: "#2b1720", muted: "#7a5c66" },
   },
   {
     id: "medianoche",
@@ -91,4 +95,25 @@ export function changesBeyondPalette(before: ThemeTokens, after: ThemeTokens): b
   return (Object.keys(after) as (keyof ThemeTokens)[]).some(
     (k) => !(PALETTE_KEYS as readonly string[]).includes(k) && after[k] !== before[k],
   );
+}
+
+/**
+ * Colores propios de una persona, limpios: sólo claves de la paleta y en
+ * formato #rrggbb (igual que la base de datos). Lo que no cumpla se descarta (null = usa los de la página).
+ */
+export function sanitizeColors(value: unknown): Partial<PaletteColors> | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const source = value as Record<string, unknown>;
+  const clean: Partial<PaletteColors> = {};
+  for (const k of PALETTE_KEYS) {
+    const color = source[k];
+    if (typeof color === "string" && /^#[0-9a-f]{6}$/i.test(color)) clean[k] = color;
+  }
+  return Object.keys(clean).length ? clean : null;
+}
+
+/** El tema que ve cada persona: el de la página con sus colores encima. */
+export function personalTheme(site: ThemeTokens, colors: Partial<PaletteColors> | null | undefined): ThemeTokens {
+  const clean = sanitizeColors(colors);
+  return clean ? applyPalette(site, clean) : site;
 }
