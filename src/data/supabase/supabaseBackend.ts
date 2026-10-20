@@ -197,6 +197,9 @@ async function currentUserId(): Promise<Uuid> {
   return data.session.user.id;
 }
 
+/** Columnas del chat con el mensaje citado embebido (FK reply_to). */
+const CHAT_COLUMNS = "*, reply:reply_to(id, sender_id, body)";
+
 const messaging: MessagingRepository = {
   async listNotes() {
     const rows = await unwrap<Row[]>(sb().from("notes").select("*").order("created_at", { ascending: false }).limit(200));
@@ -216,15 +219,24 @@ const messaging: MessagingRepository = {
   deleteNote: (id) => remove("notes", id),
 
   async listChat({ before, limit = 50 } = {}) {
-    let query = sb().from("chat_messages").select("*").order("created_at", { ascending: false }).limit(limit);
+    let query = sb().from("chat_messages").select(CHAT_COLUMNS).order("created_at", { ascending: false }).limit(limit);
     if (before) query = query.lt("created_at", before);
     const rows = await unwrap<Row[]>(query);
     return rows.map(map.toChatMessage).reverse();
   },
-  async sendChat(body) {
-    return map.toChatMessage(await unwrap<Row>(sb().from("chat_messages").insert({ body }).select().single()));
+  async sendChat(body, { replyToId = null } = {}) {
+    return map.toChatMessage(
+      await unwrap<Row>(sb().from("chat_messages").insert({ body, reply_to: replyToId }).select(CHAT_COLUMNS).single()),
+    );
   },
   deleteChat: (id) => remove("chat_messages", id),
+  async listChatPresence() {
+    const rows = await unwrap<Row[]>(sb().from("chat_reads").select("user_id, last_seen_at, last_read_at"));
+    return rows.map(map.toChatPresence);
+  },
+  async touchChatPresence({ read = false } = {}) {
+    await unwrap(sb().rpc("chat_presence", { p_read: read }));
+  },
 
   async listNotifications(limit = 30) {
     const userId = await currentUserId();
