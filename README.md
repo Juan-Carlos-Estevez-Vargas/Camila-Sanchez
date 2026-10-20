@@ -1,8 +1,9 @@
 # Camila 💖 · v2
 
 Página de recuerdos para Camila, con panel de contenido para ella, panel de
-super administrador, cajita de mensajes, chat en tiempo real, fechas con cuenta
-regresiva y subida de fotos que se optimizan solas.
+super administrador, cajita de mensajes, chat en tiempo real con fotos y
+stickers, avisos en el celular, colores propios para cada persona, fechas con
+cuenta regresiva y subida de fotos que se optimizan solas.
 
 > La versión original (HTML/JS estático) quedó en [`legacy/`](legacy/README.md)
 > con sus errores corregidos.
@@ -42,7 +43,9 @@ que puedes probar el chat y las notificaciones abriendo dos ventanas.
 | Cajita de mensajes | `/mensajes` | `notes.send` |
 | Chat en tiempo real tipo WhatsApp: fotos, stickers, responder citando, última conexión y vistos (✓ ✓✓) | `/chat` | `chat.use` |
 | Panel de contenido: fotos, textos y animaciones, hitos, fechas importantes, sorpresas/interrupciones | `/panel` | Editora y super admin |
+| Mi cuenta: avisos en este dispositivo (con prueba), contraseña y sesiones | `/cuenta` | Cualquier cuenta |
 | Mis colores: cada persona elige su paleta sin cambiársela a nadie más; quien entra sin cuenta ve Rosa vino | `/cuenta/colores` | Cualquier cuenta |
+| Avisos en la pantalla de notificaciones del celular: cada mensaje del chat, cada notita y cada sorpresa | — | Quien los active en su dispositivo |
 | Super admin: usuarios, roles y permisos, apariencia (colores, fuentes, efectos, música), secciones, ajustes, auditoría | `/super` | Super admin |
 | Tutorial guiado: botón fijo en la cabecera que recorre la página actual paso a paso | todas | Todos |
 
@@ -66,7 +69,7 @@ mientras sube y al final un resumen permite reintentar las que fallaron.
 ```
 src/
   core/       config, validación, errores, EventBus
-  domain/     tipos, permisos (RBAC), fechas y cuentas regresivas, valores por defecto
+  domain/     tipos, permisos (RBAC), fechas, paletas, chat y stickers, valores por defecto
   data/       puerto Backend + adaptadores (Supabase | demo), elegido por una fábrica
   services/   cola de tareas, pipeline de imágenes (workers), notificaciones
   state/      contextos: backend, auth, contenido (store observable), tema, notificaciones
@@ -75,7 +78,7 @@ src/
               (cada una con sus estilos en features/<x>/styles)
   styles/     sistema de diseño en SCSS: abstracts · base · components · layout
 supabase/
-  migrations/ esquema, RLS, triggers de auditoría y notificaciones, bucket privado
+  migrations/ esquema, RLS, triggers de auditoría y avisos, buckets privados, push
   functions/  admin-users (cuentas) · redeem-invite (invitaciones) · send-push (Web Push)
   tests/      pruebas de RLS sobre PGlite
 ```
@@ -138,7 +141,10 @@ src/features/messages/styles/  cajita de mensajes y chat
 - Registro público desactivado: sólo entra quien crea el super admin o quien
   recibe un **enlace de invitación**.
 - Las notificaciones y la auditoría sólo las escriben triggers.
-- Fotos nuevas en un bucket **privado** (5 MB, sólo imágenes) servidas con URLs firmadas.
+- Fotos nuevas en buckets **privados** (5 MB, sólo imágenes) servidas con URLs firmadas;
+  en el chat cada persona sólo sube a su propia carpeta.
+- Los avisos al celular se envían con un secreto guardado en Supabase Vault;
+  cada dispositivo pertenece a una sola cuenta y se da de baja al cerrar sesión.
 - La `service_role` key sólo existe dentro de las Edge Functions.
 
 **Invitaciones por enlace o QR** (*Administración → Usuarios → Crear enlace*):
@@ -182,7 +188,8 @@ de Supabase, GitHub y Netlify. No hace falta instalar nada en tu computador.
 Después de esto, **cada merge a `main` o `master` se despliega solo**:
 Netlify vuelve a publicar la web y el flujo
 [`Deploy`](.github/workflows/deploy.yml) aplica las migraciones nuevas, ajusta
-el inicio de sesión y publica las Edge Functions.
+el inicio de sesión, publica las Edge Functions y deja listos los avisos al
+celular.
 
 ### 1. Crear el proyecto en Supabase
 
@@ -315,7 +322,9 @@ migraciones y el contenido inicial en un solo archivo) en el *SQL Editor* en
 lugar del paso 2, y configura a mano *Authentication → URL Configuration* y
 *Sign In / Providers → Allow new users to sign up* (apagado). No mezcles las
 dos formas en el mismo proyecto: el flujo no sabría que las migraciones ya
-están aplicadas. Si cambias una migración, regenera el archivo con
+están aplicadas. Sin el flujo, los avisos al celular no quedan configurados:
+habría que publicar `send-push` con sus secretos y crear en Vault
+`push_function_url` y `push_webhook_secret` a mano. Si cambias una migración, regenera el archivo con
 `npm run db:setup-sql`.
 
 ### Sobre la privacidad del repositorio
