@@ -11,7 +11,8 @@
  */
 import { del as idbDel, get as idbGet, set as idbSet } from "idb-keyval";
 import { AccessPolicy, DEFAULT_ROLE_PERMISSIONS, PERMISSIONS, type Permission } from "@/domain/permissions";
-import { upsertPresence } from "@/domain/chat";
+import { messagePreview, upsertPresence } from "@/domain/chat";
+import { isKnownSticker } from "@/domain/stickers";
 import { changesBeyondPalette } from "@/domain/palettes";
 import { AppError } from "@/core/errors";
 import {
@@ -19,7 +20,7 @@ import {
 } from "@/domain/invitations";
 import { RECOVERY_LINK_HOURS } from "@/domain/recovery";
 import type {
-  AppNotification, AuditEntry, ChatMessage, ChatPresence, ImportantDate, Interruption, Invitation, Milestone, Note,
+  AppNotification, AuditEntry, ChatImage, ChatMessage, ChatPresence, ImportantDate, Interruption, Invitation, Milestone, Note,
   PermissionDefinition, Photo, PhotoUrls, Profile, Role, RolePermission, Section, SessionUser,
   SiteSettings, Uuid,
 } from "@/domain/types";
@@ -522,16 +523,48 @@ export const demoBackend: Backend = {
       require(PERMISSIONS.chatUse);
       const all = database().state.chat.filter((m) => !before || m.createdAt < before);
       // Mensajes guardados antes de que existieran las respuestas.
-      return clone(all.slice(-limit)).map((m) => ({ ...m, replyTo: m.replyTo ?? null }));
+      return clone(all.slice(-limit)).map((m) => ({
+        ...m, kind: m.kind ?? "text", image: m.image ?? null, sticker: m.sticker ?? null, replyTo: m.replyTo ?? null,
+      }));
     },
-    async sendChat(body, { replyToId = null } = {}) {
+    async resolveChatImages(paths) {
+      require(PERMISSIONS.chatUse);
+      const result = new Map<string, string>();
+      for (const path of new Set(paths)) {
+        let url = objectUrls.get(path);
+        if (!url) {
+          const blob = await idbGet<Blob>(path);
+          if (!blob) continue;
+          url = URL.createObjectURL(blob);
+          objectUrls.set(path, url);
+        }
+        result.set(path, url);
+      }
+      return result;
+    },
+    async sendChat(body, { replyToId = null, image, sticker } = {}) {
       const user = require(PERMISSIONS.chatUse);
       const state = database().state;
       const original = replyToId ? state.chat.find((m) => m.id === replyToId) : undefined;
       if (replyToId && !original) throw new AppError("El mensaje al que respondes ya no existe.");
+      if (sticker && !isKnownSticker(sticker)) throw new AppError("Ese sticker no existe.");
+      const text = sticker ? "" : body.trim().slice(0, 2000);
+      if (!image && !sticker && !text) throw new AppError("Escribe un mensaje.");
+      const id = uuid();
+      let chatImage: ChatImage | null = null;
+      if (image) {
+        const path = `chat/${user.id}/${id}.${image.extension}`;
+        const thumbPath = `chat/${user.id}/${id}.thumb.${image.extension}`;
+        await idbSet(path, image.full);
+        await idbSet(thumbPath, image.thumb);
+        chatImage = { path, thumbPath, width: image.width, height: image.height };
+      }
       const message: ChatMessage = {
-        id: uuid(), senderId: user.id, body: body.trim().slice(0, 2000), createdAt: nowIso(),
-        replyTo: original ? { id: original.id, senderId: original.senderId, body: original.body } : null,
+        id, senderId: user.id, kind: image ? "image" : sticker ? "sticker" : "text", body: text,
+        image: chatImage, sticker: sticker ?? null, createdAt: nowIso(),
+        replyTo: original
+          ? { id: original.id, senderId: original.senderId, body: original.body, kind: original.kind ?? "text", sticker: original.sticker ?? null }
+          : null,
       };
       state.chat.push(message);
       state.chat = state.chat.slice(-1000);
@@ -539,7 +572,7 @@ export const demoBackend: Backend = {
       for (const other of state.users) {
         const hasUnread = state.notifications.some((n) => n.userId === other.id && n.kind === "chat" && !n.readAt);
         if (other.id !== user.id && other.isActive && policyOf(other).can(PERMISSIONS.chatUse) && !hasUnread) {
-          notify(other.id, "chat", `${user.displayName} te escribió 💬`, message.body, "/chat");
+          notify(other.id, "chat", `${user.displayName} te escribió 💬`, messagePreview(message, 140), "/chat");
         }
       }
       return clone(message);
