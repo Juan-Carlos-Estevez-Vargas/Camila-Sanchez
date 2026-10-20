@@ -14,6 +14,8 @@ directamente al abrir este archivo. La explicación de cada pieza está en
 - [Notitas, chat y notificaciones](#notitas-chat-y-notificaciones)
 - [Chat: respuestas, conexión y vistos](#chat-respuestas-conexión-y-vistos)
 - [Chat: fotos y stickers](#chat-fotos-y-stickers)
+- [Avisos en el celular](#avisos-en-el-celular)
+- [Colores por persona](#colores-por-persona)
 - [Tutorial guiado](#tutorial-guiado)
 - [Integración y despliegue](#integración-y-despliegue)
 - [Modelo de datos](#modelo-de-datos)
@@ -30,8 +32,9 @@ flowchart LR
   subgraph Supabase
     AUTH["Auth<br/>PKCE + rotación de tokens"]
     DB[("Postgres<br/>RLS + triggers")]
-    ST[("Storage<br/>bucket privado photos")]
+    ST[("Storage<br/>buckets privados<br/>photos · chat-media")]
     RT["Realtime"]
+    VA[("Vault<br/>URL y secreto de send-push")]
     subgraph Edge["Edge Functions"]
       AU["admin-users"]
       RI["redeem-invite"]
@@ -48,7 +51,10 @@ flowchart LR
   SPA -- "acciones de admin" --> AU
   SPA -- "canje de invitación" --> RI
   DB -- "pg_net al crear aviso" --> SP
+  VA -. "secreto" .-> DB
+  SPA -- "clave pública VAPID (GET)" --> SP
   SP -- "Web Push" --> SW
+  SW -- "notificación en el celular" --> SPA
   AU & RI & SP -- "service_role" --> DB
   GH -- "migraciones y funciones" --> Supabase
   GH -. "merge a master" .-> NL
@@ -208,13 +214,13 @@ sequenceDiagram
   participant SP as send-push
   participant SW as Service worker de Juan
 
-  C->>A: escribe una notita o un mensaje
-  A->>DB: insert notes / chat_messages (RLS)
-  DB->>DB: trigger notify_new_* → insert notifications
+  C->>A: escribe una notita, un mensaje o publica una sorpresa
+  A->>DB: insert notes / chat_messages / interruptions (RLS)
+  DB->>DB: trigger notify_new_* → insert notifications<br/>(chat: actualiza el aviso sin leer)
   DB-->>RT: cambio publicado
   RT-->>B: nueva notificación y mensaje
   B->>B: campanita, contador y toast
-  opt Pestaña en segundo plano
+  opt Pestaña en segundo plano y sin push
     B->>B: notificación del sistema
   end
   opt Celular con avisos activados
@@ -292,6 +298,85 @@ sequenceDiagram
   RT-->>B: se dibuja con el catálogo de la app
 ```
 
+## Avisos en el celular
+
+Activar los avisos en un dispositivo:
+
+```mermaid
+sequenceDiagram
+  actor P as Persona
+  participant App as SPA
+  participant SW as Service worker
+  participant PS as Servicio push del navegador
+  participant SP as send-push
+  participant DB as Postgres
+
+  P->>App: Mi cuenta → Activar avisos
+  App->>P: el navegador pide permiso
+  P-->>App: Permitir
+  App->>SP: GET clave pública VAPID
+  SP-->>App: publicKey
+  App->>SW: pushManager.subscribe(publicKey)
+  SW->>PS: registra el dispositivo
+  PS-->>App: endpoint + claves
+  App->>DB: register_push_subscription(endpoint, claves)
+  Note over DB: el dispositivo queda a nombre<br/>de quien tiene la sesión
+  P->>App: Enviar aviso de prueba
+  App->>DB: send_test_notification()
+  DB->>SP: trigger notifications_push (pg_net)
+  SP->>PS: Web Push cifrado
+  PS->>SW: evento push
+  SW-->>P: aviso en la pantalla de notificaciones
+  P->>App: Cerrar sesión
+  App->>DB: borra la suscripción
+  App->>SW: unsubscribe()
+```
+
+Qué ve cada persona en Mi cuenta:
+
+```mermaid
+flowchart TD
+  A["Avisos en este dispositivo"] --> I{"¿iPhone fuera de la app<br/>de la pantalla de inicio?"}
+  I -- "sí" --> H["Instrucciones: Compartir → Agregar a inicio"]
+  I -- "no" --> S{"¿El navegador permite avisos?"}
+  S -- "no" --> U["«Este navegador no permite avisos»"]
+  S -- "sí" --> P{"Permiso"}
+  P -- "sin pedir" --> B["Botón Activar avisos"]
+  P -- "bloqueado" --> D["Cómo permitirlos en el navegador"]
+  P -- "concedido" --> G["Activados ✓ + Enviar aviso de prueba"]
+  B -- "Permitir" --> G
+```
+
+Cuándo sale un aviso al celular:
+
+```mermaid
+flowchart LR
+  N["Notita nueva"] --> INS["insert notifications"]
+  S["Sorpresa activa ya"] --> INS
+  C["Mensaje de chat"] --> Q{"¿Hay un aviso de chat<br/>sin leer?"}
+  Q -- "no" --> INS
+  Q -- "sí" --> UPD["update del aviso<br/>con el último mensaje"]
+  INS & UPD --> T["trigger notifications_push"]
+  T --> V{"¿Vault tiene la URL<br/>y el secreto?"}
+  V -- "no" --> X["Sólo campana en la app"]
+  V -- "sí" --> SP["send-push → Web Push<br/>a cada dispositivo de la persona"]
+  SP --> SW["Service worker: los del chat<br/>se agrupan en un solo aviso"]
+```
+
+## Colores por persona
+
+```mermaid
+flowchart TD
+  A["Se abre la app"] --> B["site_settings.theme<br/>(Rosa vino, lo cambia Juan en Apariencia)"]
+  B --> C{"¿Hay sesión y la persona<br/>eligió sus colores?"}
+  C -- "no" --> D["Se ve la paleta de la página"]
+  C -- "sí" --> E["personalTheme():<br/>la página + profiles.theme_colors encima"]
+  E --> F["ThemeController pone las<br/>custom properties en :root"]
+  D --> F
+  G["Mi cuenta → Mis colores → Guardar"] --> H["update profiles.theme_colors<br/>(sólo la propia fila, sólo #rrggbb)"]
+  H --> C
+```
+
 ## Tutorial guiado
 
 ```mermaid
@@ -328,7 +413,8 @@ flowchart LR
   D1 --> D2["Migraciones en Supabase"]
   D2 --> D3["Configurar Auth<br/>URLs, registro cerrado, SMTP"]
   D3 --> D4["Publicar Edge Functions"]
-  D4 --> REL["release.mjs<br/>SemVer desde los commits"]
+  D4 --> D5["Configurar avisos push<br/>claves VAPID y secreto (sólo la 1.ª vez)<br/>en secretos de Supabase y Vault"]
+  D5 --> REL["release.mjs<br/>SemVer desde los commits"]
   REL --> TAG["Tag vX.Y.Z + release con notas"]
   M --> NET["Netlify<br/>build con tags y publicación"]
   NET --> WEB["Sitio con la versión en el pie"]
@@ -415,6 +501,7 @@ erDiagram
     text title
     interruption_style style
     timestamptz starts_at
+    boolean is_active
     boolean show_once
   }
   NOTES {
@@ -443,8 +530,17 @@ erDiagram
     uuid id PK
     uuid user_id FK
     text kind "note, chat, system"
+    text title
+    text body
     text link
     timestamptz read_at
+  }
+  PUSH_SUBSCRIPTIONS {
+    uuid id PK
+    uuid user_id FK
+    text endpoint UK "un dispositivo"
+    text p256dh
+    text auth
   }
   AUDIT_LOG {
     bigint id PK
@@ -485,6 +581,7 @@ flowchart LR
   E2 & E3 & E4 & E5 --> PANEL["/panel"]
   E6 & V2 --> MSG["/mensajes"]
   E7 & V3 --> CHAT["/chat"]
+  ANY["cualquier cuenta"] --> CUENTA["/cuenta y /cuenta/colores<br/>avisos, colores, contraseña"]
 ```
 
 Estos son los permisos por defecto (migración `core_schema`). Juan los cambia
