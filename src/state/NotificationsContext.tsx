@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import { useNavigate } from "react-router-dom";
 import { toUserMessage } from "@/core/errors";
 import type { AppNotification } from "@/domain/types";
-import { showLocalNotification } from "@/services/notifications/browserNotifications";
+import { showLocalNotification, syncPushSubscription } from "@/services/notifications/browserNotifications";
 import { useAuth } from "./AuthContext";
 import { useBackend } from "./BackendContext";
 import { useToast } from "./ToastContext";
@@ -33,13 +33,27 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     }
   }, [backend, user]);
 
+  // Si este dispositivo ya dio permiso, renueva su suscripción push a nombre
+  // de quien entró (por si cambió la clave o la cuenta).
+  useEffect(() => {
+    if (!user) return;
+    syncPushSubscription(backend.push).catch((error) => console.warn("[push]", toUserMessage(error)));
+  }, [backend, user]);
+
   useEffect(() => {
     void reload();
     if (!user) return;
     return backend.realtime.subscribe(["notifications"], (change) => {
-      const record = change.record as { user_id?: string; userId?: string; title?: string; body?: string; link?: string | null } | null;
+      const record = change.record as {
+        user_id?: string; userId?: string; title?: string; body?: string; link?: string | null;
+        read_at?: string | null; readAt?: string | null; created_at?: string; createdAt?: string;
+      } | null;
       const ownerId = record?.user_id ?? record?.userId;
-      if (change.type === "INSERT" && record && ownerId === user.id) {
+      // Un aviso de chat sin leer se actualiza con cada mensaje nuevo.
+      const createdAt = record?.created_at ?? record?.createdAt;
+      const refreshed = change.type === "UPDATE" && !(record?.read_at ?? record?.readAt)
+        && !!createdAt && Date.now() - new Date(createdAt).getTime() < 15_000;
+      if ((change.type === "INSERT" || refreshed) && record && ownerId === user.id) {
         const title = String(record.title ?? "Tienes algo nuevo");
         const body = String(record.body ?? "");
         const link = record.link ?? null;

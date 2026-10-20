@@ -407,8 +407,18 @@ export const demoBackend: Backend = {
         : [];
     },
     async saveInterruption(i) {
-      require(PERMISSIONS.interruptionsManage);
-      return upsertIn<Interruption>("interruptions", i);
+      const author = require(PERMISSIONS.interruptionsManage);
+      const saved = upsertIn<Interruption>("interruptions", i);
+      const now = Date.now();
+      const live = saved.isActive && new Date(saved.startsAt).getTime() <= now && (!saved.endsAt || new Date(saved.endsAt).getTime() > now);
+      if (!i.id && live) {
+        for (const other of database().state.users) {
+          if (other.id !== author.id && other.isActive && policyOf(other).can(PERMISSIONS.siteView)) {
+            notify(other.id, "system", `${author.displayName} te dejó una sorpresa 🎁`, saved.title, "/");
+          }
+        }
+      }
+      return saved;
     },
     async deleteInterruption(id) {
       require(PERMISSIONS.interruptionsManage);
@@ -564,10 +574,18 @@ export const demoBackend: Backend = {
       state.chat.push(message);
       state.chat = state.chat.slice(-1000);
       database().commit({ table: "chat_messages", type: "INSERT", record: message as never });
+      // Igual que la base de datos: si ya hay un aviso de chat sin leer se
+      // actualiza con el último mensaje en vez de crear otro.
       for (const other of state.users) {
-        const hasUnread = state.notifications.some((n) => n.userId === other.id && n.kind === "chat" && !n.readAt);
-        if (other.id !== user.id && other.isActive && policyOf(other).can(PERMISSIONS.chatUse) && !hasUnread) {
-          notify(other.id, "chat", `${user.displayName} te escribió 💬`, messagePreview(message, 140), "/chat");
+        if (other.id === user.id || !other.isActive || !policyOf(other).can(PERMISSIONS.chatUse)) continue;
+        const title = `${user.displayName} te escribió 💬`;
+        const preview = messagePreview(message, 140);
+        const unread = state.notifications.find((n) => n.userId === other.id && n.kind === "chat" && !n.readAt);
+        if (unread) {
+          Object.assign(unread, { title, body: preview, createdAt: nowIso() });
+          database().commit({ table: "notifications", type: "UPDATE", record: unread as never });
+        } else {
+          notify(other.id, "chat", title, preview, "/chat");
         }
       }
       return clone(message);
@@ -607,6 +625,14 @@ export const demoBackend: Backend = {
         n.readAt = nowIso();
         database().commit({ table: "notifications", type: "UPDATE", record: n as never });
       }
+    },
+    async sendTestNotification() {
+      const user = requireUser();
+      const recent = database().state.notifications.some(
+        (n) => n.userId === user.id && n.link === "/cuenta" && Date.now() - new Date(n.createdAt).getTime() < 60_000,
+      );
+      if (recent) throw new AppError("Espera un minuto antes de probar otra vez.");
+      notify(user.id, "system", "Así te llegarán los avisos 💖", "Si ves esto en tu celular, ya quedaron activados.", "/cuenta");
     },
     async markAllNotificationsRead(kind) {
       const user = requireUser();
