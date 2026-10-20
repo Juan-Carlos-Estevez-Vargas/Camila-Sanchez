@@ -59,7 +59,7 @@ export default function ThemeAdmin() {
       </>}>
       <div className="card stack">
         <h3 style={{ margin: 0 }}>Paletas listas</h3>
-        <p className="muted" style={{ margin: 0 }}>Camila también puede cambiar la paleta desde su panel.</p>
+        <p className="muted" style={{ margin: 0 }}>Son los colores de la página: los ve quien entra sin cuenta y quien no eligió los suyos. Cada persona cambia los que ve ella en Mi cuenta → Mis colores.</p>
         <PalettePicker selectedId={matchPalette(t)?.id ?? null} onSelect={(p) => set(applyPalette(t, p.colors))} />
       </div>
 

@@ -1,6 +1,8 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useMemo } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
-import { AuthProvider } from "@/state/AuthContext";
+import { DEFAULT_THEME } from "@/domain/defaults";
+import { personalTheme } from "@/domain/palettes";
+import { AuthProvider, useAuth } from "@/state/AuthContext";
 import { NotificationsProvider } from "@/state/NotificationsContext";
 import { PresenceHeartbeat } from "@/state/PresenceHeartbeat";
 import { SeoController } from "@/state/SeoController";
@@ -20,9 +22,13 @@ const RecoverPage = lazy(() => import("@/features/auth/RecoverPage"));
 
 function ThemedShell() {
   const { content } = useSiteContent();
+  const { profile } = useAuth();
+  // Quien entra sin cuenta ve los colores de la página; cada persona, los suyos.
+  const siteTheme = content?.settings.theme ?? DEFAULT_THEME;
+  const theme = useMemo(() => personalTheme(siteTheme, profile?.themeColors), [siteTheme, profile?.themeColors]);
   return (
     <>
-      <ThemeController theme={content?.settings.theme} />
+      <ThemeController theme={theme} />
       <SeoController />
       <PresenceHeartbeat />
       <a className="skip-link" href="#contenido-principal">Saltar al contenido</a>

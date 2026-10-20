@@ -46,7 +46,7 @@ function areaOf(pathname: string): string {
 const PANEL_PAGES: Record<string, { title: string; body: string }> = {
   "/panel": {
     title: "Tu panel",
-    body: "Desde aquí cambias todo lo que se ve en la página: fotos, textos, hitos, fechas, sorpresas y colores. Cada cambio se guarda y se ve al instante.",
+    body: "Desde aquí cambias todo lo que se ve en la página: fotos, textos, hitos, fechas y sorpresas. Cada cambio se guarda y se ve al instante.",
   },
   "/panel/fotos": {
     title: "Fotos",
@@ -68,10 +68,6 @@ const PANEL_PAGES: Record<string, { title: string; body: string }> = {
     title: "Sorpresas",
     body: "Mensajes que aparecen en una ventanita cuando la otra persona entra a la página. Puedes elegir si se muestran una sola vez.",
   },
-  "/panel/colores": {
-    title: "Colores",
-    body: "Elige una paleta para toda la página. El cambio se ve enseguida en todas las pantallas.",
-  },
 };
 
 const SUPER_PAGES: Record<string, { title: string; body: string }> = {
@@ -89,7 +85,7 @@ const SUPER_PAGES: Record<string, { title: string; body: string }> = {
   },
   "/super/apariencia": {
     title: "Apariencia",
-    body: "Colores, tipografías, bordes, modo oscuro y efectos animados de toda la página.",
+    body: "Colores de la página (los que ve quien entra sin cuenta), tipografías, bordes, modo oscuro y efectos animados.",
   },
   "/super/secciones": {
     title: "Secciones",
@@ -218,8 +214,24 @@ function pageSteps(ctx: TourContext): TourStep[] {
       },
     ];
   }
+  if (pathname === "/cuenta/colores") {
+    return [
+      {
+        id: "my-colors",
+        target: [tourTarget("my-colors")],
+        title: "Tus colores",
+        body: "Toca una paleta para probarla y guárdala. Sólo cambia lo que ves tú: los demás siguen con los suyos, y quien entra sin cuenta ve los de la página.",
+      },
+    ];
+  }
   if (pathname === "/cuenta") {
     return [
+      {
+        id: "account-colors",
+        target: [tourTarget("account-colors")],
+        title: "Tus colores",
+        body: "Elige con qué colores ves la app. Sólo cambia para ti.",
+      },
       {
         id: "account-password",
         target: [tourTarget("account-password")],
@@ -263,7 +275,7 @@ function navSteps(ctx: TourContext): TourStep[] {
     steps.push({ id: "nav-chat", target: navTarget("nav-chat"), fallbackNote: MENU_NOTE, title: "Chat", body: "Para hablar en tiempo real. El punto te avisa de mensajes sin leer." });
   }
   if (policy.canUseContentPanel && here !== "panel") {
-    steps.push({ id: "nav-panel", target: navTarget("nav-panel"), fallbackNote: MENU_NOTE, title: "Mi panel", body: "Aquí cambias las fotos, los textos, los hitos, las fechas, las sorpresas y los colores." });
+    steps.push({ id: "nav-panel", target: navTarget("nav-panel"), fallbackNote: MENU_NOTE, title: "Mi panel", body: "Aquí cambias las fotos, los textos, los hitos, las fechas y las sorpresas." });
   }
   if (policy.canUseSuperPanel && here !== "super") {
     steps.push({ id: "nav-super", target: navTarget("nav-super"), fallbackNote: MENU_NOTE, title: "Administración", body: "Usuarios, invitaciones, permisos, apariencia y auditoría de todo el sitio." });

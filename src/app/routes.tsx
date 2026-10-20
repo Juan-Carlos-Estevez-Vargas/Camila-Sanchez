@@ -3,7 +3,7 @@
  * quien sólo visita la página nunca descarga el código de los paneles.
  */
 import { lazy } from "react";
-import { Route } from "react-router-dom";
+import { Navigate, Route } from "react-router-dom";
 import { RequirePermission } from "@/features/auth/RequirePermission";
 import { PERMISSIONS } from "@/domain/permissions";
 
@@ -14,10 +14,10 @@ const TextsAdmin = lazy(() => import("@/features/admin/TextsAdmin"));
 const MilestonesAdmin = lazy(() => import("@/features/admin/MilestonesAdmin"));
 const DatesAdmin = lazy(() => import("@/features/admin/DatesAdmin"));
 const InterruptionsAdmin = lazy(() => import("@/features/admin/InterruptionsAdmin"));
-const ColorsAdmin = lazy(() => import("@/features/admin/ColorsAdmin"));
 const MessagesPage = lazy(() => import("@/features/messages/MessagesPage"));
 const ChatPage = lazy(() => import("@/features/chat/ChatPage"));
 const AccountPage = lazy(() => import("@/features/auth/AccountPage"));
+const MyColorsPage = lazy(() => import("@/features/auth/MyColorsPage"));
 const SuperLayout = lazy(() => import("@/features/super/SuperLayout"));
 const SuperHome = lazy(() => import("@/features/super/SuperHome"));
 const UsersAdmin = lazy(() => import("@/features/super/UsersAdmin"));
@@ -31,6 +31,7 @@ export const appRoutes = (
   <>
     <Route path="/mensajes" element={<RequirePermission check={(p) => p.can(PERMISSIONS.notesSend)}><MessagesPage /></RequirePermission>} />
     <Route path="/cuenta" element={<RequirePermission check={() => true}><AccountPage /></RequirePermission>} />
+    <Route path="/cuenta/colores" element={<RequirePermission check={() => true}><MyColorsPage /></RequirePermission>} />
     <Route path="/chat" element={<RequirePermission check={(p) => p.can(PERMISSIONS.chatUse)}><ChatPage /></RequirePermission>} />
     <Route path="/panel" element={<RequirePermission check={(p) => p.canUseContentPanel}><PanelLayout /></RequirePermission>}>
       <Route index element={<PanelHome />} />
@@ -39,7 +40,8 @@ export const appRoutes = (
       <Route path="hitos" element={<RequirePermission check={(p) => p.can(PERMISSIONS.contentEdit)}><MilestonesAdmin /></RequirePermission>} />
       <Route path="fechas" element={<RequirePermission check={(p) => p.can(PERMISSIONS.datesManage)}><DatesAdmin /></RequirePermission>} />
       <Route path="sorpresas" element={<RequirePermission check={(p) => p.can(PERMISSIONS.interruptionsManage)}><InterruptionsAdmin /></RequirePermission>} />
-      <Route path="colores" element={<RequirePermission check={(p) => p.can(PERMISSIONS.themePalette)}><ColorsAdmin /></RequirePermission>} />
+      {/* Los colores ahora son de cada persona: viven en Mi cuenta. */}
+      <Route path="colores" element={<Navigate to="/cuenta/colores" replace />} />
     </Route>
     <Route path="/super" element={<RequirePermission check={(p) => p.canUseSuperPanel}><SuperLayout /></RequirePermission>}>
       <Route index element={<SuperHome />} />
