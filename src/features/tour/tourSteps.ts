@@ -204,6 +204,18 @@ function pageSteps(ctx: TourContext): TourStep[] {
         title: "Escribir",
         body: "Escribe y pulsa Enter para enviar. Con Mayúsculas + Enter haces un salto de línea, y con Esc dejas de responder a un mensaje.",
       },
+      {
+        id: "chat-photo",
+        target: [tourTarget("chat-photo")],
+        title: "Fotos",
+        body: "Con 📷 eliges una o varias fotos (hasta 10) y puedes añadirles un mensaje. También puedes pegar una imagen directamente en el cuadro de texto.",
+      },
+      {
+        id: "chat-sticker",
+        target: [tourTarget("chat-sticker")],
+        title: "Stickers",
+        body: "Con 😊 abres los stickers. Toca uno y se envía al instante.",
+      },
     ];
   }
   if (pathname === "/cuenta") {
