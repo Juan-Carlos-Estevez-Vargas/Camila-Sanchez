@@ -46,7 +46,7 @@ function areaOf(pathname: string): string {
 const PANEL_PAGES: Record<string, { title: string; body: string }> = {
   "/panel": {
     title: "Tu panel",
-    body: "Desde aquí cambias todo lo que se ve en la página: fotos, textos, hitos, fechas, sorpresas y colores. Cada cambio se guarda y se ve al instante.",
+    body: "Desde aquí cambias todo lo que se ve en la página: fotos, textos, hitos, fechas y sorpresas. Cada cambio se guarda y se ve al instante.",
   },
   "/panel/fotos": {
     title: "Fotos",
@@ -68,10 +68,6 @@ const PANEL_PAGES: Record<string, { title: string; body: string }> = {
     title: "Sorpresas",
     body: "Mensajes que aparecen en una ventanita cuando la otra persona entra a la página. Puedes elegir si se muestran una sola vez.",
   },
-  "/panel/colores": {
-    title: "Colores",
-    body: "Elige una paleta para toda la página. El cambio se ve enseguida en todas las pantallas.",
-  },
 };
 
 const SUPER_PAGES: Record<string, { title: string; body: string }> = {
@@ -89,7 +85,7 @@ const SUPER_PAGES: Record<string, { title: string; body: string }> = {
   },
   "/super/apariencia": {
     title: "Apariencia",
-    body: "Colores, tipografías, bordes, modo oscuro y efectos animados de toda la página.",
+    body: "Colores de la página (los que ve quien entra sin cuenta), tipografías, bordes, modo oscuro y efectos animados.",
   },
   "/super/secciones": {
     title: "Secciones",
@@ -186,21 +182,62 @@ function pageSteps(ctx: TourContext): TourStep[] {
   if (pathname === "/chat") {
     return [
       {
+        id: "chat-presence",
+        target: [tourTarget("chat-presence")],
+        optional: true,
+        title: "¿Está conectado?",
+        body: "Aquí ves si la otra persona está «en línea» o hace cuánto se conectó por última vez.",
+      },
+      {
         id: "chat-thread",
         target: [tourTarget("chat-thread")],
         title: "La conversación",
-        body: "Los mensajes llegan en tiempo real, sin recargar. Sube para ver los anteriores.",
+        body: "Los mensajes llegan en tiempo real. En los tuyos, ✓ es enviado, ✓✓ entregado y ✓✓ de color, visto. Para responder uno, toca ↩ o deslízalo hacia la derecha.",
       },
       {
         id: "chat-composer",
         target: [tourTarget("chat-composer")],
         title: "Escribir",
-        body: "Escribe y pulsa Enter para enviar. Con Mayúsculas + Enter haces un salto de línea.",
+        body: "Escribe y pulsa Enter para enviar. Con Mayúsculas + Enter haces un salto de línea, y con Esc dejas de responder a un mensaje.",
+      },
+      {
+        id: "chat-photo",
+        target: [tourTarget("chat-photo")],
+        title: "Fotos",
+        body: "Con 📷 eliges una o varias fotos (hasta 10) y puedes añadirles un mensaje. También puedes pegar una imagen directamente en el cuadro de texto.",
+      },
+      {
+        id: "chat-sticker",
+        target: [tourTarget("chat-sticker")],
+        title: "Stickers",
+        body: "Con 😊 abres los stickers. Toca uno y se envía al instante.",
+      },
+    ];
+  }
+  if (pathname === "/cuenta/colores") {
+    return [
+      {
+        id: "my-colors",
+        target: [tourTarget("my-colors")],
+        title: "Tus colores",
+        body: "Toca una paleta para probarla y guárdala. Sólo cambia lo que ves tú: los demás siguen con los suyos, y quien entra sin cuenta ve los de la página.",
       },
     ];
   }
   if (pathname === "/cuenta") {
     return [
+      {
+        id: "account-colors",
+        target: [tourTarget("account-colors")],
+        title: "Tus colores",
+        body: "Elige con qué colores ves la app. Sólo cambia para ti.",
+      },
+      {
+        id: "account-push",
+        target: [tourTarget("account-push")],
+        title: "Avisos en el celular",
+        body: "Actívalos en cada dispositivo para que los mensajes, las notitas y las sorpresas te lleguen aunque la app esté cerrada. En iPhone, primero agrega la app a la pantalla de inicio.",
+      },
       {
         id: "account-password",
         target: [tourTarget("account-password")],
@@ -244,7 +281,7 @@ function navSteps(ctx: TourContext): TourStep[] {
     steps.push({ id: "nav-chat", target: navTarget("nav-chat"), fallbackNote: MENU_NOTE, title: "Chat", body: "Para hablar en tiempo real. El punto te avisa de mensajes sin leer." });
   }
   if (policy.canUseContentPanel && here !== "panel") {
-    steps.push({ id: "nav-panel", target: navTarget("nav-panel"), fallbackNote: MENU_NOTE, title: "Mi panel", body: "Aquí cambias las fotos, los textos, los hitos, las fechas, las sorpresas y los colores." });
+    steps.push({ id: "nav-panel", target: navTarget("nav-panel"), fallbackNote: MENU_NOTE, title: "Mi panel", body: "Aquí cambias las fotos, los textos, los hitos, las fechas y las sorpresas." });
   }
   if (policy.canUseSuperPanel && here !== "super") {
     steps.push({ id: "nav-super", target: navTarget("nav-super"), fallbackNote: MENU_NOTE, title: "Administración", body: "Usuarios, invitaciones, permisos, apariencia y auditoría de todo el sitio." });

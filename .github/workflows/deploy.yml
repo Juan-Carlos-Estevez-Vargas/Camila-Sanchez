@@ -3,7 +3,9 @@
 #   1. Aplica las migraciones nuevas de supabase/migrations (y el contenido
 #      inicial de seed.sql la primera vez).
 #   2. Ajusta el inicio de sesión: dominio, URLs de retorno y registro cerrado.
-#   3. Publica las Edge Functions.
+#   3. Publica las Edge Functions y deja listos los avisos push al celular
+#      (crea las claves la primera vez y conecta la base de datos con
+#      send-push mediante Supabase Vault).
 #   4. Crea un release vX.Y.Z en GitHub con las notas de lo que cambió.
 #
 # La web la vuelve a publicar Netlify sola con cada merge (integración con Git
@@ -11,8 +13,9 @@
 #
 # Configuración (Settings → Secrets and variables → Actions), una sola vez:
 #   Secrets:   SUPABASE_ACCESS_TOKEN, SUPABASE_DB_PASSWORD
-#              (opcionales, para push: VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY,
-#               VAPID_SUBJECT, PUSH_WEBHOOK_SECRET)
+#              (opcionales: VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT
+#               y PUSH_WEBHOOK_SECRET; si no están, el flujo los genera una vez
+#               y los guarda en Supabase)
 #              (opcionales, para que los correos de recuperación lleguen a
 #               cualquiera: SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS,
 #               SMTP_SENDER_EMAIL)
@@ -128,23 +131,71 @@ jobs:
 
       - name: Publicar Edge Functions
         if: steps.config.outputs.ready == 'true'
+        run: |
+          supabase secrets set --project-ref "$PROJECT_REF" "ALLOWED_ORIGIN=${SITE_URL%/}"
+          supabase functions deploy admin-users --project-ref "$PROJECT_REF" --use-api
+          supabase functions deploy redeem-invite --project-ref "$PROJECT_REF" --use-api --no-verify-jwt
+
+      # Avisos al celular (Web Push). Las claves se crean una sola vez y quedan
+      # guardadas como secretos de Supabase; si se cambiaran, los celulares
+      # tendrían que volver a activar los avisos. Nada de esto se imprime.
+      - name: Configurar avisos push
+        if: steps.config.outputs.ready == 'true'
         env:
           VAPID_PUBLIC_KEY: ${{ secrets.VAPID_PUBLIC_KEY }}
           VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
           VAPID_SUBJECT: ${{ secrets.VAPID_SUBJECT }}
           PUSH_WEBHOOK_SECRET: ${{ secrets.PUSH_WEBHOOK_SECRET }}
         run: |
-          supabase secrets set --project-ref "$PROJECT_REF" "ALLOWED_ORIGIN=${SITE_URL%/}"
-          supabase functions deploy admin-users --project-ref "$PROJECT_REF" --use-api
-          supabase functions deploy redeem-invite --project-ref "$PROJECT_REF" --use-api --no-verify-jwt
-          if [ -n "$VAPID_PRIVATE_KEY" ] && [ -n "$PUSH_WEBHOOK_SECRET" ]; then
+          set -euo pipefail
+          api="https://api.supabase.com/v1/projects/$PROJECT_REF"
+          sql() {
+            jq -n --arg q "$1" '{query: $q}' | curl --fail-with-body -sS -X POST "$api/database/query" \
+              -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" -H "Content-Type: application/json" -d @-
+          }
+          existing=$(supabase secrets list --project-ref "$PROJECT_REF")
+          has_secret() { grep -qw "$1" <<< "$existing"; }
+
+          # 1. Claves VAPID: las de GitHub si existen; si no, se generan una vez.
+          if [ -n "$VAPID_PRIVATE_KEY" ] && [ -n "$VAPID_PUBLIC_KEY" ]; then
             supabase secrets set --project-ref "$PROJECT_REF" \
-              "VAPID_PUBLIC_KEY=$VAPID_PUBLIC_KEY" "VAPID_PRIVATE_KEY=$VAPID_PRIVATE_KEY" \
-              "VAPID_SUBJECT=$VAPID_SUBJECT" "PUSH_WEBHOOK_SECRET=$PUSH_WEBHOOK_SECRET"
-            supabase functions deploy send-push --project-ref "$PROJECT_REF" --use-api --no-verify-jwt
-          else
-            echo "::notice::Notificaciones push sin configurar: send-push no se publicó."
+              "VAPID_PUBLIC_KEY=$VAPID_PUBLIC_KEY" "VAPID_PRIVATE_KEY=$VAPID_PRIVATE_KEY" > /dev/null
+          elif ! has_secret VAPID_PRIVATE_KEY; then
+            keys=$(npx --yes web-push@3.6.7 generate-vapid-keys --json)
+            pub=$(jq -r .publicKey <<< "$keys"); priv=$(jq -r .privateKey <<< "$keys")
+            echo "::add-mask::$priv"
+            supabase secrets set --project-ref "$PROJECT_REF" "VAPID_PUBLIC_KEY=$pub" "VAPID_PRIVATE_KEY=$priv" > /dev/null
+            echo "::notice::Se crearon las claves de los avisos push."
           fi
+          subject="${VAPID_SUBJECT:-${SITE_URL%/}}"
+          supabase secrets set --project-ref "$PROJECT_REF" "VAPID_SUBJECT=$subject" > /dev/null
+
+          # 2. Secreto entre la base de datos y send-push, guardado en los dos
+          #    lados (secreto de la función y Supabase Vault).
+          in_vault=$(sql "select count(*)::int as n from vault.secrets where name = 'push_webhook_secret'" | jq '.[0].n')
+          secret="$PUSH_WEBHOOK_SECRET"
+          if [ -z "$secret" ] && { [ "$in_vault" != "1" ] || ! has_secret PUSH_WEBHOOK_SECRET; }; then
+            secret=$(openssl rand -hex 32)
+          fi
+          if [ -n "$secret" ]; then
+            echo "::add-mask::$secret"
+            if ! [[ "$secret" =~ ^[A-Za-z0-9_-]{16,}$ ]]; then
+              echo "::error::PUSH_WEBHOOK_SECRET sólo puede tener letras, números, - y _ (mínimo 16)."; exit 1
+            fi
+            supabase secrets set --project-ref "$PROJECT_REF" "PUSH_WEBHOOK_SECRET=$secret" > /dev/null
+            url="https://$PROJECT_REF.supabase.co/functions/v1/send-push"
+            sql "do \$\$ declare sid uuid; begin
+              select id into sid from vault.secrets where name = 'push_webhook_secret';
+              if sid is null then perform vault.create_secret('$secret', 'push_webhook_secret');
+              else perform vault.update_secret(sid, '$secret'); end if;
+              select id into sid from vault.secrets where name = 'push_function_url';
+              if sid is null then perform vault.create_secret('$url', 'push_function_url');
+              else perform vault.update_secret(sid, '$url'); end if;
+            end \$\$;" > /dev/null
+          fi
+
+          supabase functions deploy send-push --project-ref "$PROJECT_REF" --use-api --no-verify-jwt
+          echo "::notice::Avisos push listos: cada persona los activa en Mi cuenta → Avisos en este dispositivo."
 
   # Después de desplegar: versión SemVer calculada a partir de los commits,
   # tag vX.Y.Z y release en GitHub con las notas de lo que cambió

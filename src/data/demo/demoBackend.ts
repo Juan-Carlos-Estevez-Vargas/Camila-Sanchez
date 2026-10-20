@@ -11,14 +11,16 @@
  */
 import { del as idbDel, get as idbGet, set as idbSet } from "idb-keyval";
 import { AccessPolicy, DEFAULT_ROLE_PERMISSIONS, PERMISSIONS, type Permission } from "@/domain/permissions";
-import { changesBeyondPalette } from "@/domain/palettes";
+import { messagePreview, upsertPresence } from "@/domain/chat";
+import { isKnownSticker } from "@/domain/stickers";
+import { sanitizeColors } from "@/domain/palettes";
 import { AppError } from "@/core/errors";
 import {
   expiryFromNow, generateInviteToken, hashInviteToken, invitationStatus, isInviteToken, MIN_PASSWORD_LENGTH,
 } from "@/domain/invitations";
 import { RECOVERY_LINK_HOURS } from "@/domain/recovery";
 import type {
-  AppNotification, AuditEntry, ChatMessage, ImportantDate, Interruption, Invitation, Milestone, Note,
+  AppNotification, AuditEntry, ChatImage, ChatMessage, ChatPresence, ImportantDate, Interruption, Invitation, Milestone, Note,
   PermissionDefinition, Photo, PhotoUrls, Profile, Role, RolePermission, Section, SessionUser,
   SiteSettings, Uuid,
 } from "@/domain/types";
@@ -60,6 +62,7 @@ interface DemoState {
   interruptionViews: Record<Uuid, Uuid[]>;
   notes: Note[];
   chat: ChatMessage[];
+  chatReads: ChatPresence[];
   notifications: AppNotification[];
   users: DemoUser[];
   invitations: DemoInvitation[];
@@ -78,7 +81,6 @@ const PERMISSION_DESCRIPTIONS: Record<Permission, string> = {
   "chat.use": "Usar el chat",
   "sections.manage": "Crear, ordenar y ocultar secciones",
   "theme.manage": "Cambiar colores, tipografías, efectos y animaciones",
-  "theme.palette": "Elegir la paleta de colores",
   "settings.manage": "Configuración general del sitio",
   "users.manage": "Gestionar usuarios, roles y permisos",
   "audit.view": "Ver el registro de auditoría",
@@ -99,10 +101,11 @@ function initialState(): DemoState {
     interruptionViews: {},
     notes: [],
     chat: [],
+    chatReads: [],
     notifications: [],
     users: DEMO_ACCOUNTS.map((a) => ({
       id: uuid(), email: a.email, password: a.password, displayName: a.displayName,
-      role: a.role, isActive: true, avatarUrl: null, createdAt: created,
+      role: a.role, isActive: true, avatarUrl: null, createdAt: created, themeColors: null,
     })),
     invitations: [],
     recoveries: [],
@@ -335,11 +338,7 @@ export const demoBackend: Backend = {
     async updateSettings(patch) {
       const user = requireUser();
       const policy = policyOf(user);
-      if ((patch.theme || patch.effects) && !policy.can(PERMISSIONS.themeManage)) {
-        // Con theme.palette sólo se pueden cambiar los colores (igual que el trigger de la base de datos).
-        const onlyColors = !patch.effects && !!patch.theme && !changesBeyondPalette(database().state.settings.theme, patch.theme);
-        if (!(onlyColors && policy.can(PERMISSIONS.themePalette))) throw new AppError("No tienes permiso para cambiar el tema.");
-      }
+      if ((patch.theme || patch.effects) && !policy.can(PERMISSIONS.themeManage)) throw new AppError("No tienes permiso para cambiar el tema.");
       const { theme: _t, effects: _e, ...rest } = patch;
       if (Object.keys(rest).length && !policy.can(PERMISSIONS.settingsManage)) throw new AppError("No tienes permiso para cambiar la configuración.");
       const state = database().state;
@@ -408,8 +407,18 @@ export const demoBackend: Backend = {
         : [];
     },
     async saveInterruption(i) {
-      require(PERMISSIONS.interruptionsManage);
-      return upsertIn<Interruption>("interruptions", i);
+      const author = require(PERMISSIONS.interruptionsManage);
+      const saved = upsertIn<Interruption>("interruptions", i);
+      const now = Date.now();
+      const live = saved.isActive && new Date(saved.startsAt).getTime() <= now && (!saved.endsAt || new Date(saved.endsAt).getTime() > now);
+      if (!i.id && live) {
+        for (const other of database().state.users) {
+          if (other.id !== author.id && other.isActive && policyOf(other).can(PERMISSIONS.siteView)) {
+            notify(other.id, "system", `${author.displayName} te dejó una sorpresa 🎁`, saved.title, "/");
+          }
+        }
+      }
+      return saved;
     },
     async deleteInterruption(id) {
       require(PERMISSIONS.interruptionsManage);
@@ -518,19 +527,65 @@ export const demoBackend: Backend = {
     async listChat({ before, limit = 50 } = {}) {
       require(PERMISSIONS.chatUse);
       const all = database().state.chat.filter((m) => !before || m.createdAt < before);
-      return clone(all.slice(-limit));
+      // Mensajes guardados antes de que existieran las respuestas.
+      return clone(all.slice(-limit)).map((m) => ({
+        ...m, kind: m.kind ?? "text", image: m.image ?? null, sticker: m.sticker ?? null, replyTo: m.replyTo ?? null,
+      }));
     },
-    async sendChat(body) {
+    async resolveChatImages(paths) {
+      require(PERMISSIONS.chatUse);
+      const result = new Map<string, string>();
+      for (const path of new Set(paths)) {
+        let url = objectUrls.get(path);
+        if (!url) {
+          const blob = await idbGet<Blob>(path);
+          if (!blob) continue;
+          url = URL.createObjectURL(blob);
+          objectUrls.set(path, url);
+        }
+        result.set(path, url);
+      }
+      return result;
+    },
+    async sendChat(body, { replyToId = null, image, sticker } = {}) {
       const user = require(PERMISSIONS.chatUse);
-      const message: ChatMessage = { id: uuid(), senderId: user.id, body: body.trim().slice(0, 2000), createdAt: nowIso() };
       const state = database().state;
+      const original = replyToId ? state.chat.find((m) => m.id === replyToId) : undefined;
+      if (replyToId && !original) throw new AppError("El mensaje al que respondes ya no existe.");
+      if (sticker && !isKnownSticker(sticker)) throw new AppError("Ese sticker no existe.");
+      const text = sticker ? "" : body.trim().slice(0, 2000);
+      if (!image && !sticker && !text) throw new AppError("Escribe un mensaje.");
+      const id = uuid();
+      let chatImage: ChatImage | null = null;
+      if (image) {
+        const path = `chat/${user.id}/${id}.${image.extension}`;
+        const thumbPath = `chat/${user.id}/${id}.thumb.${image.extension}`;
+        await idbSet(path, image.full);
+        await idbSet(thumbPath, image.thumb);
+        chatImage = { path, thumbPath, width: image.width, height: image.height };
+      }
+      const message: ChatMessage = {
+        id, senderId: user.id, kind: image ? "image" : sticker ? "sticker" : "text", body: text,
+        image: chatImage, sticker: sticker ?? null, createdAt: nowIso(),
+        replyTo: original
+          ? { id: original.id, senderId: original.senderId, body: original.body, kind: original.kind ?? "text", sticker: original.sticker ?? null }
+          : null,
+      };
       state.chat.push(message);
       state.chat = state.chat.slice(-1000);
       database().commit({ table: "chat_messages", type: "INSERT", record: message as never });
+      // Igual que la base de datos: si ya hay un aviso de chat sin leer se
+      // actualiza con el último mensaje en vez de crear otro.
       for (const other of state.users) {
-        const hasUnread = state.notifications.some((n) => n.userId === other.id && n.kind === "chat" && !n.readAt);
-        if (other.id !== user.id && other.isActive && policyOf(other).can(PERMISSIONS.chatUse) && !hasUnread) {
-          notify(other.id, "chat", `${user.displayName} te escribió 💬`, message.body, "/chat");
+        if (other.id === user.id || !other.isActive || !policyOf(other).can(PERMISSIONS.chatUse)) continue;
+        const title = `${user.displayName} te escribió 💬`;
+        const preview = messagePreview(message, 140);
+        const unread = state.notifications.find((n) => n.userId === other.id && n.kind === "chat" && !n.readAt);
+        if (unread) {
+          Object.assign(unread, { title, body: preview, createdAt: nowIso() });
+          database().commit({ table: "notifications", type: "UPDATE", record: unread as never });
+        } else {
+          notify(other.id, "chat", title, preview, "/chat");
         }
       }
       return clone(message);
@@ -538,8 +593,25 @@ export const demoBackend: Backend = {
     async deleteChat(id) {
       const user = requireUser();
       const state = database().state;
-      state.chat = state.chat.filter((m) => !(m.id === id && m.senderId === user.id));
+      const deleted = state.chat.some((m) => m.id === id && m.senderId === user.id);
+      state.chat = state.chat
+        .filter((m) => !(m.id === id && m.senderId === user.id))
+        // Como en la base: las respuestas a un mensaje borrado pierden la cita.
+        .map((m) => (deleted && m.replyTo?.id === id ? { ...m, replyTo: null } : m));
       database().commit({ table: "chat_messages", type: "DELETE", record: null, old: { id } });
+    },
+    async listChatPresence() {
+      require(PERMISSIONS.chatUse);
+      return clone(database().state.chatReads);
+    },
+    async touchChatPresence({ read = false } = {}) {
+      const user = require(PERMISSIONS.chatUse);
+      const state = database().state;
+      const now = nowIso();
+      const previous = state.chatReads.find((p) => p.userId === user.id);
+      const presence: ChatPresence = { userId: user.id, lastSeenAt: now, lastReadAt: read ? now : previous?.lastReadAt ?? null };
+      state.chatReads = upsertPresence(state.chatReads, presence);
+      database().commit({ table: "chat_reads", type: previous ? "UPDATE" : "INSERT", record: presence as never });
     },
 
     async listNotifications(limit = 30) {
@@ -553,6 +625,14 @@ export const demoBackend: Backend = {
         n.readAt = nowIso();
         database().commit({ table: "notifications", type: "UPDATE", record: n as never });
       }
+    },
+    async sendTestNotification() {
+      const user = requireUser();
+      const recent = database().state.notifications.some(
+        (n) => n.userId === user.id && n.link === "/cuenta" && Date.now() - new Date(n.createdAt).getTime() < 60_000,
+      );
+      if (recent) throw new AppError("Espera un minuto antes de probar otra vez.");
+      notify(user.id, "system", "Así te llegarán los avisos 💖", "Si ves esto en tu celular, ya quedaron activados.", "/cuenta");
     },
     async markAllNotificationsRead(kind) {
       const user = requireUser();
@@ -590,6 +670,16 @@ export const demoBackend: Backend = {
       database().commit({ table: "site_settings", type: "UPDATE", record: null });
       return toProfile(user);
     },
+    async updateMyColors(colors) {
+      const actor = requireUser();
+      const user = database().state.users.find((u) => u.id === actor.id);
+      if (!user) throw new AppError("Usuario no encontrado.");
+      const old = toProfile(user);
+      user.themeColors = sanitizeColors(colors);
+      audit("UPDATE", "profiles", user.id, old, toProfile(user));
+      database().commit({ table: "site_settings", type: "UPDATE", record: null });
+      return toProfile(user);
+    },
     async myPermissions() {
       const user = sessionUser();
       if (!user) return [];
@@ -617,7 +707,7 @@ export const demoBackend: Backend = {
       if (state.users.some((u) => u.email === normalized)) throw new AppError("Ya existe un usuario con ese correo.");
       const user: DemoUser = {
         id: uuid(), email: normalized, password: password || "demo1234", displayName, role,
-        isActive: true, avatarUrl: null, createdAt: nowIso(),
+        isActive: true, avatarUrl: null, createdAt: nowIso(), themeColors: null,
       };
       state.users.push(user);
       audit("INSERT", "profiles", user.id, null, toProfile(user));
@@ -689,7 +779,7 @@ export const demoBackend: Backend = {
       if (password.length < MIN_PASSWORD_LENGTH) throw new AppError(`La contraseña debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres.`);
       const user: DemoUser = {
         id: uuid(), email: normalized, password, displayName: displayName.trim().slice(0, 80), role: invitation.role,
-        isActive: true, avatarUrl: null, createdAt: nowIso(),
+        isActive: true, avatarUrl: null, createdAt: nowIso(), themeColors: null,
       };
       state.users.push(user);
       invitation.usedAt = nowIso();
@@ -717,5 +807,8 @@ export const demoBackend: Backend = {
 };
 
 function toProfile(u: DemoUser): Profile {
-  return { id: u.id, displayName: u.displayName, avatarUrl: u.avatarUrl, role: u.role, isActive: u.isActive, createdAt: u.createdAt };
+  return {
+    id: u.id, displayName: u.displayName, avatarUrl: u.avatarUrl, role: u.role, isActive: u.isActive, createdAt: u.createdAt,
+    themeColors: sanitizeColors(u.themeColors),
+  };
 }

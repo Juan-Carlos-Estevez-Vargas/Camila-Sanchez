@@ -12,6 +12,8 @@ directamente al abrir este archivo. La explicación de cada pieza está en
 - [Recuperación de contraseña](#recuperación-de-contraseña)
 - [Subida de fotos](#subida-de-fotos)
 - [Notitas, chat y notificaciones](#notitas-chat-y-notificaciones)
+- [Chat: respuestas, conexión y vistos](#chat-respuestas-conexión-y-vistos)
+- [Chat: fotos y stickers](#chat-fotos-y-stickers)
 - [Tutorial guiado](#tutorial-guiado)
 - [Integración y despliegue](#integración-y-despliegue)
 - [Modelo de datos](#modelo-de-datos)
@@ -45,7 +47,7 @@ flowchart LR
   RT -- "cambios" --> SPA
   SPA -- "acciones de admin" --> AU
   SPA -- "canje de invitación" --> RI
-  DB -- "webhook al crear aviso" --> SP
+  DB -- "pg_net al crear aviso" --> SP
   SP -- "Web Push" --> SW
   AU & RI & SP -- "service_role" --> DB
   GH -- "migraciones y funciones" --> Supabase
@@ -215,11 +217,79 @@ sequenceDiagram
   opt Pestaña en segundo plano
     B->>B: notificación del sistema
   end
-  opt Push configurado
-    DB->>SP: Database Webhook
+  opt Celular con avisos activados
+    DB->>SP: trigger notifications_push (pg_net + secreto de Vault)
     SP->>SW: Web Push (VAPID)
     SW-->>SW: muestra el aviso y abre el enlace al tocarlo
   end
+```
+
+## Chat: respuestas, conexión y vistos
+
+```mermaid
+sequenceDiagram
+  actor J as Juan
+  participant A as SPA de Juan
+  participant DB as Postgres
+  participant RT as Realtime
+  participant B as SPA de Camila
+  actor C as Camila
+
+  loop cada 30 s con la app a la vista
+    B->>DB: chat_presence(false)
+    DB-->>RT: chat_reads.last_seen_at
+    RT-->>A: «Camila · en línea»
+  end
+  J->>A: escribe y envía
+  A->>DB: insert chat_messages
+  A-->>J: ✓✓ entregado (Camila se conectó después)
+  C->>B: abre el chat
+  B->>DB: chat_presence(true)
+  DB-->>RT: chat_reads.last_read_at
+  RT-->>A: ✓✓ visto
+  C->>B: desliza el mensaje o toca ↩
+  B->>DB: insert chat_messages(body, reply_to)
+  RT-->>A: respuesta con la cita
+  Note over A: Si Camila cierra la app, sin latidos<br/>pasa a «últ. vez hace…»
+```
+
+```mermaid
+stateDiagram-v2
+  [*] --> Enviando: enviar
+  Enviando --> NoEnviado: error
+  Enviando --> Enviado: guardado
+  Enviado --> Entregado: la otra persona se conecta
+  Entregado --> Visto: abre el chat
+  Enviado --> Visto: abre el chat
+```
+
+## Chat: fotos y stickers
+
+```mermaid
+sequenceDiagram
+  actor J as Juan
+  participant A as SPA de Juan
+  participant S as Storage chat-media
+  participant DB as Postgres
+  participant RT as Realtime
+  participant B as SPA de Camila
+
+  J->>A: 📷 elige fotos y escribe un mensaje
+  A->>A: ImageProcessor: achica, quita metadatos, miniatura
+  A-->>J: burbuja «Enviando foto…» con la vista previa
+  A->>S: sube juan_id/id.webp y id.thumb.webp
+  A->>DB: insert chat_messages(kind=image, rutas, body)
+  alt el insert falla
+    A->>S: borra lo que subió
+    A-->>J: «No se envió»
+  end
+  DB-->>RT: mensaje nuevo
+  RT-->>B: llega la foto
+  B->>S: URL firmada de la miniatura
+  Note over B: Al tocarla pide la foto grande
+  J->>A: 😊 toca un sticker
+  A->>DB: insert chat_messages(kind=sticker, sticker=id)
+  RT-->>B: se dibuja con el catálogo de la app
 ```
 
 ## Tutorial guiado
@@ -276,7 +346,8 @@ erDiagram
   AUTH_USERS ||--o| INVITATIONS : "usa"
   AUTH_USERS ||--o{ NOTES : "envía / recibe"
   AUTH_USERS ||--o{ CHAT_MESSAGES : "escribe"
-  AUTH_USERS ||--o| CHAT_READS : "último leído"
+  AUTH_USERS ||--o| CHAT_READS : "conexión y vistos"
+  CHAT_MESSAGES |o--o{ CHAT_MESSAGES : "responde a"
   AUTH_USERS ||--o{ NOTIFICATIONS : "recibe"
   AUTH_USERS ||--o{ PUSH_SUBSCRIPTIONS : "dispositivos"
   AUTH_USERS ||--o{ INTERRUPTION_VIEWS : "vio"
@@ -289,6 +360,7 @@ erDiagram
     text display_name
     app_role role
     boolean is_active
+    jsonb theme_colors "colores propios"
   }
   PERMISSIONS {
     text key PK
@@ -355,7 +427,17 @@ erDiagram
   CHAT_MESSAGES {
     uuid id PK
     uuid sender_id FK
+    chat_kind kind "text, image, sticker"
     text body
+    uuid reply_to FK "mensaje citado"
+    text image_path "chat-media/<user_id>/..."
+    text thumb_path
+    text sticker "id del catálogo"
+  }
+  CHAT_READS {
+    uuid user_id PK
+    timestamptz last_seen_at "última conexión"
+    timestamptz last_read_at "hasta dónde leyó"
   }
   NOTIFICATIONS {
     uuid id PK
@@ -393,7 +475,6 @@ flowchart LR
     E5["interruptions.manage"]
     E6["notes.send"]
     E7["chat.use"]
-    E8["theme.palette"]
   end
   subgraph viewer["viewer (invitado)"]
     V1["site.view"]
@@ -401,7 +482,7 @@ flowchart LR
     V3["chat.use"]
   end
   ALL --> SUPER["/super: usuarios, permisos,<br/>apariencia, secciones, ajustes, auditoría"]
-  E2 & E3 & E4 & E5 & E8 --> PANEL["/panel"]
+  E2 & E3 & E4 & E5 --> PANEL["/panel"]
   E6 & V2 --> MSG["/mensajes"]
   E7 & V3 --> CHAT["/chat"]
 ```

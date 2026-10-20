@@ -67,7 +67,7 @@ cerrada.
 
 ## 4. Chat
 
-Para hablar en tiempo real. Entra desde **Chat**.
+Para hablar en tiempo real, como en WhatsApp. Entra desde **Chat**.
 
 - Escribe abajo y pulsa **Enter** (o **Enviar 💌**). Con **Mayúsculas + Enter**
   haces un salto de línea.
@@ -76,18 +76,66 @@ Para hablar en tiempo real. Entra desde **Chat**.
   viejo.
 - El punto junto a **Chat** en la cabecera indica que hay mensajes sin leer.
 
+**Responder a un mensaje.** Pasa el mouse sobre el mensaje y toca **↩**, o en
+el celular deslízalo hacia la derecha. Arriba de donde escribes aparece
+«Respondiendo a…»; escribe y envía. Tu mensaje sale con el otro citado, y al
+tocar la cita la conversación salta al original y lo resalta. Para no
+responder, toca **✕** o pulsa Esc.
+
+**Fotos.** Toca **📷** y elige una o varias fotos (hasta 10 a la vez). Aparecen
+en miniatura arriba de donde escribes; quita las que no quieras con **✕** y,
+si quieres, escribe un mensaje: va pegado a la primera foto. También puedes
+pegar una imagen copiada directamente en el cuadro de texto. Las fotos se
+achican antes de subirse para que lleguen rápido y se guardan privadas: sólo
+las ven las personas que usan el chat. Toca una foto para verla en grande.
+
+**Stickers.** Toca **😊**, elige uno y se envía al instante. Para cerrar la
+lista sin enviar nada, pulsa Esc o toca fuera de ella.
+
+**Última conexión.** Debajo del título dice si la otra persona está
+**en línea** o cuándo se conectó por última vez («últ. vez hace 5 min»,
+«hoy a las 3:15 p. m.», «ayer a las…»). Cuenta como conectado tener la app
+abierta y a la vista en cualquier página.
+
+**Vistos.** Junto a la hora de tus mensajes:
+
+| Marca | Significa |
+| --- | --- |
+| 🕓 | Enviándose |
+| ✓ | Enviado: la otra persona no se ha conectado desde entonces |
+| ✓✓ | Entregado: se conectó, pero todavía no abrió el chat |
+| ✓✓ de color | Visto: abrió el chat después de que llegó (con el mouse encima dice quién lo vio) |
+
 ## 5. Notificaciones
 
 La campanita 🔔 de la cabecera cuenta los avisos sin leer. Tócala para verlos;
 cada uno te lleva directo a la notita o al chat. **Marcar todo leído** los
 limpia.
 
-Si la pestaña está abierta pero en segundo plano, el sistema operativo
-también te avisa. Para avisos con la app cerrada, activa los avisos en la
-cajita (necesita que Juan haya configurado las notificaciones push).
+**En la pantalla de notificaciones del celular.** Entra a **Mi cuenta →
+Avisos en este dispositivo** y toca **Activar avisos**; el navegador te pide
+permiso. Desde ahí te llegan, aunque la app esté cerrada:
+
+- cada mensaje del chat (se agrupan en un solo aviso que se va actualizando),
+- cada notita de la cajita,
+- cada sorpresa nueva.
+
+Toca **Enviar aviso de prueba** para comprobarlo. Hazlo en cada celular o
+computador donde quieras recibirlos; al cerrar sesión en uno, ese deja de
+recibirlos.
+
+**En iPhone:** abre la página en Safari, toca **Compartir → Agregar a
+inicio**, entra desde el ícono nuevo y activa los avisos ahí (necesita iOS
+16.4 o más nuevo).
 
 ## 6. Mi cuenta
 
+- **Mis colores:** toca **Cambiar colores** y elige una paleta (Rosa vino,
+  Rosa suave, Durazno, Lavanda, Menta, Cielo o Medianoche), o ajústala a tu
+  gusto con **Personalizar**, y luego **Guardar mis colores**. Sólo cambia lo
+  que ves tú: cada persona tiene los suyos y quien entra sin cuenta siempre ve
+  los de la página (Rosa vino). **Volver a los colores de la página** quita
+  los tuyos.
 - **Cambiar contraseña:** al menos 10 caracteres, escrita dos veces.
 - **Cerrar sesión aquí:** sólo en este dispositivo.
 - **Cerrar en todos los dispositivos:** úsalo si perdiste el celular o entraste
@@ -116,7 +164,6 @@ guardan solos y se ven al instante.
 | 🌟 Hitos | Momentos importantes con fecha, icono y foto opcional |
 | 📅 Fechas importantes | Aniversarios y cumpleaños (se repiten cada año si quieres) |
 | 🎁 Sorpresas | Mensajes que aparecen en una ventanita, banner, confeti o corazones |
-| 🎨 Colores | La paleta de toda la página (Rosa suave, Durazno, Lavanda, Menta, Cielo, Rosa vino, Medianoche) |
 
 ### Subir fotos
 
@@ -147,7 +194,7 @@ cae sola en el mes en que se tomó. Para cambiar el orden, arrástralas o usa
 | 🧭 Resumen | Cifras del sitio |
 | 👥 Usuarios | Crear cuentas, invitar, cambiar roles, desactivar, borrar y enlaces de recuperación |
 | 🔐 Roles y permisos | Qué puede hacer cada rol |
-| 🎨 Apariencia | Colores, tipografías, bordes, modo oscuro y efectos animados |
+| 🎨 Apariencia | Colores de la página (los que ve quien entra sin cuenta y quien no eligió los suyos), tipografías, bordes, modo oscuro y efectos animados |
 | 🧩 Secciones | Agregar, ordenar, ocultar o quitar secciones de la página |
 | ⚙️ Ajustes del sitio | Título, fecha en que empezó todo, música y si la página es pública |
 | 📜 Auditoría | Quién cambió qué y cuándo |
@@ -172,12 +219,18 @@ pídeselos a Juan.
 **Dice «Esta parte no está disponible para tu cuenta».** Igual que arriba: el
 enlace existe pero tu rol no puede usarlo.
 
+**Cambié los colores y a Camila no le cambiaron.** Así debe ser: los colores
+de **Mi cuenta → Mis colores** son de cada persona. Los de la página para
+quien no tiene cuenta los cambia Juan en **Administración → Apariencia**.
+
 **Subí una foto y no aparece.** Revisa el mes en la galería: se ubica por la
 fecha en que se tomó, no por la de hoy.
 
-**No me llegan los avisos al celular.** Toca **Activar avisos** en la cajita y
-acepta el permiso del navegador. En iPhone, primero agrega la app a la
-pantalla de inicio.
+**No me llegan los avisos al celular.** Ve a **Mi cuenta → Avisos en este
+dispositivo**: si dice que están bloqueados, permítelos en los ajustes del
+navegador; si están activados, toca **Enviar aviso de prueba**. En iPhone,
+primero agrega la app a la pantalla de inicio. Revisa también que el modo
+«No molestar» del celular no los esté silenciando.
 
 **¿Puedo probar la app sin cuenta?** En el modo demo (sin Supabase
 configurado) entra con `juan@demo.local` o `camila@demo.local` y la contraseña
