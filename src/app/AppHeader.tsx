@@ -68,6 +68,11 @@ export function AppHeader() {
               Chat {unreadByKind.chat > 0 && <span className="counter-dot">•</span>}
             </NavLink>
           )}
+          {user && policy.can(PERMISSIONS.listsUse) && (
+            <NavLink to="/listas" data-tour="nav-listas" onClick={close}>
+              Listas {unreadByKind.list > 0 && <span className="counter-dot">{unreadByKind.list}</span>}
+            </NavLink>
+          )}
           {policy.canUseContentPanel && <NavLink to="/panel" data-tour="nav-panel" onClick={close}>Mi panel</NavLink>}
           {policy.canUseSuperPanel && <NavLink to="/super" data-tour="nav-super" onClick={close}>Administración</NavLink>}
           {user && <NavLink to="/cuenta" data-tour="nav-cuenta" onClick={close}>Mi cuenta</NavLink>}

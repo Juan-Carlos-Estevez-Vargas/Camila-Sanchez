@@ -49,6 +49,13 @@ describe("recorrido del tutorial", () => {
     expect(users.find((s) => s.id === "admin-page")?.title).toBe("Usuarios");
   });
 
+  it("enseña las listas: el listado y cada lista por dentro", () => {
+    expect(ids("/listas", "viewer")).toEqual(expect.arrayContaining(["lists-new", "lists-grid"]));
+    expect(ids("/listas", "viewer")).not.toContain("nav-listas");
+    expect(ids("/listas/123", "viewer")).toEqual(expect.arrayContaining(["list-add", "list-tasks", "list-settings"]));
+    expect(ids("/", "viewer")).toContain("nav-listas");
+  });
+
   it("en móvil, los enlaces del menú caen en el botón ☰", () => {
     const step = tourFor({ pathname: "/", loggedIn: true, policy: policyFor("viewer") }).find((s) => s.id === "nav-chat");
     expect(step?.target).toEqual([tourTarget("nav-chat"), tourTarget("menu")]);
@@ -56,7 +63,7 @@ describe("recorrido del tutorial", () => {
   });
 
   it("todos los pasos tienen un id único y texto", () => {
-    for (const path of ["/", "/entrar", "/mensajes", "/chat", "/cuenta", "/panel", "/super/auditoria", "/invitacion", "/recuperar"]) {
+    for (const path of ["/", "/entrar", "/mensajes", "/chat", "/cuenta", "/panel", "/super/auditoria", "/invitacion", "/recuperar", "/listas", "/listas/abc"]) {
       const steps = tourFor({ pathname: path, loggedIn: true, policy: policyFor("super_admin") });
       expect(new Set(steps.map((s) => s.id)).size).toBe(steps.length);
       for (const s of steps) expect(s.title && s.body).toBeTruthy();

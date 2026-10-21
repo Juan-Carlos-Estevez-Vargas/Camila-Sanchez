@@ -57,8 +57,9 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
         const title = String(record.title ?? "Tienes algo nuevo");
         const body = String(record.body ?? "");
         const link = record.link ?? null;
-        const onChatPage = link === "/chat" && window.location.pathname === "/chat";
-        if (!onChatPage) {
+        // En el chat o en la lista que ya se está viendo, el cambio se ve solo.
+        const alreadyHere = (link === "/chat" || !!link?.startsWith("/listas/")) && link === window.location.pathname;
+        if (!alreadyHere) {
           toast.show({ title, body, action: link ? { label: "Ver", onClick: () => navigate(link) } : undefined });
           void showLocalNotification(title, body, link);
         }
@@ -68,11 +69,11 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   }, [backend, user, reload, toast, navigate]);
 
   const value = useMemo<NotificationsState>(() => {
-    const unreadByKind = { note: 0, chat: 0, system: 0 };
-    for (const n of items) if (!n.readAt) unreadByKind[n.kind]++;
+    const unreadByKind = { note: 0, chat: 0, system: 0, list: 0 };
+    for (const n of items) if (!n.readAt && n.kind in unreadByKind) unreadByKind[n.kind]++;
     return {
       items,
-      unread: unreadByKind.note + unreadByKind.chat + unreadByKind.system,
+      unread: items.filter((n) => !n.readAt).length,
       unreadByKind,
       markRead: async (id) => {
         await backend.messaging.markNotificationRead(id);

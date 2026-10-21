@@ -1,11 +1,12 @@
 import { FunctionsHttpError } from "@supabase/supabase-js";
 import { AppError } from "@/core/errors";
 import type {
-  AuthGateway, Backend, ContentRepository, InvitationRepository, MessagingRepository, PhotoRepository,
+  AuthGateway, Backend, ContentRepository, InvitationRepository, ListsRepository, MessagingRepository, PhotoRepository,
   PushRepository, RealtimeChange, RealtimeGateway, RealtimeTable, UserRepository,
 } from "@/data/ports";
 import { setRememberSession } from "@/data/sessionPersistence";
 import { expiryFromNow, generateInviteToken, hashInviteToken } from "@/domain/invitations";
+import { nextDueOf, progressOf } from "@/domain/lists";
 import { sanitizeColors } from "@/domain/palettes";
 import { RECOVERY_PATH } from "@/domain/recovery";
 import type { InvitableRole, PhotoUrls, SessionUser, Uuid } from "@/domain/types";
@@ -14,6 +15,7 @@ import * as map from "./mappers";
 
 const PHOTO_BUCKET = "photos";
 const CHAT_BUCKET = "chat-media";
+const LIST_BUCKET = "list-media";
 /** Las URLs firmadas duran 1 h; se cachean 50 min para reutilizarlas. */
 const SIGNED_URL_TTL_S = 3600;
 const SIGNED_URL_CACHE_MS = 50 * 60 * 1000;
@@ -199,6 +201,27 @@ async function currentUserId(): Promise<Uuid> {
   return data.session.user.id;
 }
 
+/** URLs firmadas de un bucket privado, cacheadas por ruta. */
+async function signedUrls(bucket: string, paths: string[]): Promise<Map<string, string>> {
+  const now = Date.now();
+  const key = (path: string) => `${bucket}:${path}`;
+  const missing = [...new Set(paths)].filter((p) => !((signedUrlCache.get(key(p))?.expires ?? 0) > now));
+  if (missing.length) {
+    const signed = await unwrap<Array<{ path: string | null; signedUrl: string }>>(
+      sb().storage.from(bucket).createSignedUrls(missing, SIGNED_URL_TTL_S),
+    );
+    for (const s of signed) {
+      if (s.path && s.signedUrl) signedUrlCache.set(key(s.path), { url: s.signedUrl, expires: now + SIGNED_URL_CACHE_MS });
+    }
+  }
+  const result = new Map<string, string>();
+  for (const p of paths) {
+    const url = signedUrlCache.get(key(p))?.url;
+    if (url) result.set(p, url);
+  }
+  return result;
+}
+
 /** Columnas del chat con el mensaje citado embebido (FK reply_to). */
 const CHAT_COLUMNS = "*, reply:reply_to(id, sender_id, body, kind, sticker)";
 
@@ -252,25 +275,7 @@ const messaging: MessagingRepository = {
       throw error;
     }
   },
-  async resolveChatImages(paths) {
-    const now = Date.now();
-    const key = (path: string) => `${CHAT_BUCKET}:${path}`;
-    const missing = [...new Set(paths)].filter((p) => !((signedUrlCache.get(key(p))?.expires ?? 0) > now));
-    if (missing.length) {
-      const signed = await unwrap<Array<{ path: string | null; signedUrl: string }>>(
-        sb().storage.from(CHAT_BUCKET).createSignedUrls(missing, SIGNED_URL_TTL_S),
-      );
-      for (const s of signed) {
-        if (s.path && s.signedUrl) signedUrlCache.set(key(s.path), { url: s.signedUrl, expires: now + SIGNED_URL_CACHE_MS });
-      }
-    }
-    const result = new Map<string, string>();
-    for (const p of paths) {
-      const url = signedUrlCache.get(key(p))?.url;
-      if (url) result.set(p, url);
-    }
-    return result;
-  },
+  resolveChatImages: (paths) => signedUrls(CHAT_BUCKET, paths),
   deleteChat: (id) => remove("chat_messages", id),
   async listChatPresence() {
     const rows = await unwrap<Row[]>(sb().from("chat_reads").select("user_id, last_seen_at, last_read_at"));
@@ -296,6 +301,139 @@ const messaging: MessagingRepository = {
   async sendTestNotification() {
     await unwrap(sb().rpc("send_test_notification"));
   },
+};
+
+const LIST_COLUMNS = "*, todo_list_members(user_id)";
+
+/** Borra fotos del almacenamiento sin frenar lo demás si algo falla. */
+async function removeListFiles(images: Row[]): Promise<void> {
+  const paths = images.flatMap((i) => [i.path, i.thumb_path]).filter((p): p is string => typeof p === "string");
+  for (let i = 0; i < paths.length; i += 100) {
+    await sb().storage.from(LIST_BUCKET).remove(paths.slice(i, i + 100));
+  }
+}
+
+const lists: ListsRepository = {
+  async list() {
+    const rows = await unwrap<Row[]>(
+      sb().from("todo_lists").select(`${LIST_COLUMNS}, todo_items(parent_id, done_at, due_on)`).order("created_at", { ascending: false }),
+    );
+    return rows.map((r) => {
+      const items = (Array.isArray(r.todo_items) ? r.todo_items as Row[] : []).map(map.toTodoItem);
+      const list = map.toTodoList(r);
+      const { total, done } = progressOf(items);
+      return { ...list, total, done, nextDue: nextDueOf(items, list.dueOn) };
+    });
+  },
+  async get(id) {
+    const [list, items, materials, images] = await Promise.all([
+      unwrap<Row | null>(sb().from("todo_lists").select(LIST_COLUMNS).eq("id", id).maybeSingle()),
+      unwrap<Row[]>(sb().from("todo_items").select("*").eq("list_id", id).order("position")),
+      unwrap<Row[]>(sb().from("todo_materials").select("*, todo_items!inner(list_id)").eq("todo_items.list_id", id).order("position")),
+      unwrap<Row[]>(sb().from("todo_item_images").select("*").eq("list_id", id).order("created_at")),
+    ]);
+    if (!list) return null;
+    return {
+      list: map.toTodoList(list),
+      items: items.map(map.toTodoItem),
+      materials: materials.map(map.toTodoMaterial),
+      images: images.map(map.toTodoImage),
+    };
+  },
+  async create(input) {
+    return unwrap<string>(sb().rpc("create_todo_list", {
+      p_title: input.title.trim(),
+      p_description: input.description.trim(),
+      p_emoji: input.emoji,
+      p_due_on: input.dueOn || null,
+      p_member_ids: input.memberIds,
+    }));
+  },
+  async update(id, patch) {
+    const row: Row = {};
+    if (patch.title !== undefined) row.title = patch.title.trim();
+    if (patch.description !== undefined) row.description = patch.description;
+    if (patch.emoji !== undefined) row.emoji = patch.emoji;
+    if (patch.dueOn !== undefined) row.due_on = patch.dueOn || null;
+    await unwrap(sb().from("todo_lists").update(row).eq("id", id));
+  },
+  async remove(id) {
+    const images = await unwrap<Row[]>(sb().from("todo_item_images").select("path, thumb_path").eq("list_id", id));
+    const deleted = await unwrap<Row[]>(sb().from("todo_lists").delete().eq("id", id).select("id"));
+    if (!deleted.length) throw new AppError("Sólo quien creó la lista puede borrarla.");
+    await removeListFiles(images);
+  },
+  async addMember(listId, userId) {
+    await unwrap(sb().from("todo_list_members").insert({ list_id: listId, user_id: userId }));
+  },
+  async removeMember(listId, userId) {
+    const deleted = await unwrap<Row[]>(
+      sb().from("todo_list_members").delete().eq("list_id", listId).eq("user_id", userId).select("user_id"),
+    );
+    if (!deleted.length) throw new AppError("No puedes sacar a esta persona de la lista.");
+  },
+
+  async saveItem(item) {
+    const row: Row = {};
+    if (item.title !== undefined) row.title = item.title.trim();
+    if (item.description !== undefined) row.description = item.description;
+    if (item.dueOn !== undefined) row.due_on = item.dueOn || null;
+    if (item.assigneeId !== undefined) row.assignee_id = item.assigneeId;
+    if (item.parentId !== undefined) row.parent_id = item.parentId;
+    const query = item.id
+      ? sb().from("todo_items").update(row).eq("id", item.id).select().single()
+      : sb().from("todo_items").insert({ ...row, list_id: item.listId }).select().single();
+    return map.toTodoItem(await unwrap<Row>(query));
+  },
+  async setItemDone(id, done) {
+    // La hora y quién la terminó los pone la base de datos.
+    await unwrap(sb().from("todo_items").update({ done_at: done ? new Date().toISOString() : null }).eq("id", id));
+  },
+  async deleteItem(id) {
+    const subtasks = await unwrap<Row[]>(sb().from("todo_items").select("id").eq("parent_id", id));
+    const ids = [id, ...subtasks.map((s) => String(s.id))];
+    const images = await unwrap<Row[]>(sb().from("todo_item_images").select("path, thumb_path").in("item_id", ids));
+    await remove("todo_items", id);
+    await removeListFiles(images);
+  },
+
+  async saveMaterial(material) {
+    const row: Row = {};
+    if (material.name !== undefined) row.name = material.name.trim();
+    if (material.quantity !== undefined) row.quantity = material.quantity.trim();
+    if (material.isReady !== undefined) row.is_ready = material.isReady;
+    const query = material.id
+      ? sb().from("todo_materials").update(row).eq("id", material.id).select().single()
+      : sb().from("todo_materials").insert({ ...row, item_id: material.itemId }).select().single();
+    return map.toTodoMaterial(await unwrap<Row>(query));
+  },
+  deleteMaterial: (id) => remove("todo_materials", id),
+
+  async addImage(listId, itemId, image) {
+    // Carpeta de la lista: la política del bucket sólo deja subir ahí a sus miembros.
+    const id = crypto.randomUUID();
+    const path = `${listId}/${id}.${image.extension}`;
+    const thumbPath = `${listId}/${id}.thumb.${image.extension}`;
+    const options = { cacheControl: "31536000", upsert: false };
+    const uploaded: string[] = [];
+    try {
+      await unwrap(sb().storage.from(LIST_BUCKET).upload(path, image.full, { ...options, contentType: image.full.type }));
+      uploaded.push(path);
+      await unwrap(sb().storage.from(LIST_BUCKET).upload(thumbPath, image.thumb, { ...options, contentType: image.thumb.type }));
+      uploaded.push(thumbPath);
+      return map.toTodoImage(await unwrap<Row>(sb().from("todo_item_images").insert({
+        item_id: itemId, list_id: listId, path, thumb_path: thumbPath, width: image.width, height: image.height,
+      }).select().single()));
+    } catch (error) {
+      if (uploaded.length) await sb().storage.from(LIST_BUCKET).remove(uploaded);
+      throw error;
+    }
+  },
+  async deleteImage(image) {
+    await remove("todo_item_images", image.id);
+    await sb().storage.from(LIST_BUCKET).remove([image.path, image.thumbPath]);
+  },
+  resolveImages: (paths) => signedUrls(LIST_BUCKET, paths),
 };
 
 /**
@@ -442,6 +580,7 @@ export const supabaseBackend: Backend = {
   content,
   photos,
   messaging,
+  lists,
   users,
   invitations,
   realtime,
