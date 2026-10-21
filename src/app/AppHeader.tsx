@@ -6,6 +6,7 @@ import { GuidedTour } from "@/features/tour/GuidedTour";
 import { useAuth } from "@/state/AuthContext";
 import { useNotifications } from "@/state/NotificationsContext";
 import { useSiteContent } from "@/state/SiteContentStore";
+import { Avatar } from "@/ui/Avatar";
 
 function NotificationBell() {
   const { items, unread, markAllRead, markRead } = useNotifications();
@@ -75,7 +76,7 @@ export function AppHeader() {
           )}
           {policy.canUseContentPanel && <NavLink to="/panel" data-tour="nav-panel" onClick={close}>Mi panel</NavLink>}
           {policy.canUseSuperPanel && <NavLink to="/super" data-tour="nav-super" onClick={close}>Administración</NavLink>}
-          {user && <NavLink to="/cuenta" data-tour="nav-cuenta" onClick={close}>Mi cuenta</NavLink>}
+          {user && <NavLink to="/cuenta" data-tour="nav-cuenta" className="nav-account" onClick={close}><Avatar person={profile} size={24} />Mi cuenta</NavLink>}
           {user ? (
             <button className="btn btn--sm btn--ghost" onClick={() => { close(); void signOut(); }}>
               Salir{profile ? ` (${profile.displayName})` : ""}

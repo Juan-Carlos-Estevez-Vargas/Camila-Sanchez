@@ -165,6 +165,8 @@ export interface ListsRepository {
   resolveImages(paths: string[]): Promise<Map<string, string>>;
 }
 
+export type MyProfilePatch = Partial<Pick<Profile, "displayName" | "avatarEmoji" | "bio" | "birthday">>;
+
 export interface NewUserInput {
   email: string;
   displayName: string;
@@ -179,6 +181,12 @@ export interface UserRepository {
   updateProfile(id: Uuid, patch: Partial<Pick<Profile, "displayName" | "avatarUrl" | "role" | "isActive">>): Promise<Profile>;
   /** Colores propios de quien tiene la sesión (null = volver a los de la página). */
   updateMyColors(colors: Profile["themeColors"]): Promise<Profile>;
+  /** Nombre, icono, frase y cumpleaños de quien tiene la sesión. */
+  updateMyProfile(patch: MyProfilePatch): Promise<Profile>;
+  /** Sube la foto de perfil (o la quita con null) y borra la anterior. */
+  setMyAvatar(image: ChatImageUpload | null): Promise<Profile>;
+  /** URLs firmadas (o locales en demo) de fotos de perfil, por ruta. */
+  resolveAvatars(paths: string[]): Promise<Map<string, string>>;
   myPermissions(): Promise<string[]>;
   listPermissions(): Promise<PermissionDefinition[]>;
   listRolePermissions(): Promise<RolePermission[]>;

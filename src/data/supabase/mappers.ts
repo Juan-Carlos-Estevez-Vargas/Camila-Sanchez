@@ -165,6 +165,10 @@ export const toProfile = (r: Row): Profile => ({
   role: (["super_admin", "editor", "viewer"].includes(str(r.role)) ? r.role : "viewer") as Profile["role"],
   isActive: r.is_active !== false,
   createdAt: str(r.created_at),
+  avatarPath: strOrNull(r.avatar_path),
+  avatarEmoji: strOrNull(r.avatar_emoji),
+  bio: str(r.bio),
+  birthday: strOrNull(r.birthday),
   themeColors: sanitizeColors(r.theme_colors),
 });
 

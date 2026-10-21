@@ -5,6 +5,7 @@ import type { Profile, TodoListSummary } from "@/domain/types";
 import { useAuth } from "@/state/AuthContext";
 import { useBackend } from "@/state/BackendContext";
 import { useToast } from "@/state/ToastContext";
+import { Avatar, AvatarStack } from "@/ui/Avatar";
 import { EmptyState, PageLoader } from "@/ui/Feedback";
 import { Modal } from "@/ui/Modal";
 import { useAsync } from "@/ui/useAsync";
@@ -21,7 +22,7 @@ export function PeoplePicker({ people, selected, onChange }: { people: Profile[]
       {people.map((p) => (
         <label key={p.id} className={`people-picker__option${selected.includes(p.id) ? " is-active" : ""}`}>
           <input type="checkbox" checked={selected.includes(p.id)} onChange={() => toggle(p.id)} />
-          <span className="avatar" aria-hidden>{p.displayName.slice(0, 1).toUpperCase() || "?"}</span>
+          <Avatar person={p} size={28} />
           {p.displayName || "Sin nombre"}
         </label>
       ))}
@@ -67,14 +68,14 @@ function NewListModal({ people, onClose }: { people: Profile[]; onClose(): void 
   );
 }
 
-function ListCard({ list, names }: { list: TodoListSummary; names: string }) {
+function ListCard({ list, names, people }: { list: TodoListSummary; names: string; people: Profile[] }) {
   const complete = list.total > 0 && list.done === list.total;
   return (
     <Link to={`/listas/${list.id}`} className="list-card card card--interactive">
       <span className="list-card__emoji" aria-hidden>{list.emoji}</span>
       <span className="list-card__body">
         <strong className="list-card__title">{list.title}</strong>
-        <span className="muted list-card__people">{names ? `Con ${names}` : "Sólo tú"}</span>
+        <span className="muted list-card__people"><AvatarStack people={people} size={22} /> {names ? `Con ${names}` : "Sólo tú"}</span>
         <ProgressBar done={list.done} total={list.total} />
         <span className="row list-card__meta">
           <span className="muted">{list.total === 0 ? "Sin tareas todavía" : complete ? "¡Todo listo! 🎉" : `${list.done} de ${list.total} hechas`}</span>
@@ -121,9 +122,13 @@ export default function ListsPage() {
         </EmptyState>
       ) : (
         <div className="list-grid" data-tour="lists-grid">
-          {lists.map((l) => (
-            <ListCard key={l.id} list={l} names={joinNames(l.memberIds.filter((id) => id !== user?.id).map(nameOf))} />
-          ))}
+          {lists.map((l) => {
+            const otherIds = l.memberIds.filter((id) => id !== user?.id);
+            return (
+              <ListCard key={l.id} list={l} names={joinNames(otherIds.map(nameOf))}
+                people={otherIds.map((id) => profiles.find((p) => p.id === id)).filter((p): p is Profile => !!p)} />
+            );
+          })}
         </div>
       )}
       {creating && <NewListModal people={people} onClose={() => setCreating(false)} />}

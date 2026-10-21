@@ -20,7 +20,7 @@ corren en Edge Functions.
 | Datos en el navegador | Puerto `Backend` con dos adaptadores (Supabase y demo) | Aislar la UI del proveedor |
 | Autenticación | Supabase Auth (PKCE, rotación de tokens) | Sesiones, enlaces mágicos y recuperación |
 | Base de datos | Postgres con RLS, RBAC en SQL y auditoría por triggers | Reglas de negocio y permisos |
-| Archivos | Supabase Storage, buckets privados `photos`, `chat-media` y `list-media` | Fotos de la página, del chat y de las listas servidas con URLs firmadas |
+| Archivos | Supabase Storage, buckets privados `photos`, `chat-media`, `list-media` y `avatars` | Fotos de la página, del chat, de las listas y de perfil servidas con URLs firmadas |
 | Tiempo real | Supabase Realtime | Chat, listas, notificaciones y contenido que se actualiza solo |
 | Avisos al celular | Web Push (VAPID), service worker, `pg_net` y Supabase Vault | Notificaciones en la pantalla del dispositivo con la app cerrada |
 | Funciones | Edge Functions en Deno | Gestión de cuentas, invitaciones y Web Push |
@@ -90,7 +90,7 @@ service worker (`public/sw.js`): caché sin conexión y avisos push.
 
 - Rutas públicas: `/`, `/entrar`, `/invitacion`, `/recuperar`.
 - Rutas privadas (`src/app/routes.tsx`): `/mensajes`, `/chat`, `/listas`,
-  `/listas/:id`, `/cuenta`, `/cuenta/colores`, `/panel/*` y `/super/*` (`/panel/colores`, de antes,
+  `/listas/:id`, `/cuenta`, `/cuenta/perfil`, `/cuenta/colores`, `/panel/*` y `/super/*` (`/panel/colores`, de antes,
   redirige a `/cuenta/colores`). Cada una se envuelve en `RequirePermission`, que
   manda a `/entrar?next=…` si no hay sesión y muestra un aviso si falta el
   permiso.
@@ -156,7 +156,8 @@ Las tablas viven en `public` y se crean con las migraciones de
 [DIAGRAMAS.md](DIAGRAMAS.md#modelo-de-datos)):
 
 - **Acceso:** `profiles` (con `theme_colors`, los colores que eligió cada
-  persona), `permissions`, `role_permissions`, `invitations`.
+  persona, y el perfil: `avatar_path` en el bucket `avatars`, `avatar_emoji`,
+  `bio` y `birthday`), `permissions`, `role_permissions`, `invitations`.
 - **Contenido:** `site_settings` (fila única), `sections`, `photos`,
   `milestones`, `important_dates`, `interruptions`, `interruption_views`.
 - **Mensajería:** `notes`, `chat_messages` (con `reply_to` para responder
@@ -245,6 +246,7 @@ navegador ni al repositorio.
 | Alguien sube o borra fotos del chat de otro | En `chat-media` cada persona sólo escribe y borra en su carpeta (`<user_id>/`), y un mensaje sólo puede apuntar a fotos de esa carpeta |
 | Avisos falsos o push a dispositivos ajenos | Sólo triggers crean avisos; `send-push` exige un secreto que vive en Vault y en los secretos de la función, nunca en el repositorio; cada dispositivo pertenece a una sola cuenta y se da de baja al cerrar sesión |
 | Alguien ve o cambia una lista ajena | RLS con `is_list_member` en las cinco tablas; las fotos van en `list-media/<list_id>/` y el bucket sólo deja ver, subir y borrar a los miembros de esa lista |
+| Perfil ajeno | El trigger `guard_profile_changes` sólo deja que cada persona cambie su foto, icono, frase y cumpleaños; las fotos van en `avatars/<user_id>/` (2 MB) y sólo su dueña o dueño sube o borra ahí |
 | Colores ajenos | `profiles.theme_colors` sólo lo cambia su dueña o dueño y sólo acepta colores `#rrggbb` |
 | Clickjacking y fugas de referer | `X-Frame-Options`, `frame-ancestors 'none'`, `Referrer-Policy` |
 | Enumeración de cuentas | La recuperación responde igual exista o no el correo |
@@ -387,3 +389,4 @@ prueba comprueba que `supabase/setup.sql` esté al día).
 | `…1020000300_personal_colors` | Colores por persona y Rosa vino para quien no tiene cuenta |
 | `…1020000400_device_push` | Avisos al celular, avisos de sorpresas y aviso de prueba |
 | `…1021000100_todo_lists` | Listas compartidas con tareas, subtareas, materiales y fotos, bucket `list-media` y permiso `lists.use` |
+| `…1021000200_profile_details` | Perfil editable: foto (bucket `avatars`), icono, frase y cumpleaños |

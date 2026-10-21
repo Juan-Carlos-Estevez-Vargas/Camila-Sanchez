@@ -117,6 +117,7 @@ function initialState(): DemoState {
     users: DEMO_ACCOUNTS.map((a) => ({
       id: uuid(), email: a.email, password: a.password, displayName: a.displayName,
       role: a.role, isActive: true, avatarUrl: null, createdAt: created, themeColors: null,
+      avatarPath: null, avatarEmoji: null, bio: "", birthday: null,
     })),
     invitations: [],
     recoveries: [],
@@ -994,6 +995,46 @@ export const demoBackend: Backend = {
       database().commit({ table: "site_settings", type: "UPDATE", record: null });
       return toProfile(user);
     },
+    async updateMyProfile(patch) {
+      const actor = requireUser();
+      const user = database().state.users.find((u) => u.id === actor.id);
+      if (!user) throw new AppError("Usuario no encontrado.");
+      const old = toProfile(user);
+      if (patch.displayName !== undefined) user.displayName = patch.displayName.trim().slice(0, 80);
+      if (patch.avatarEmoji !== undefined) user.avatarEmoji = patch.avatarEmoji || null;
+      if (patch.bio !== undefined) user.bio = patch.bio.trim().slice(0, 160);
+      if (patch.birthday !== undefined) user.birthday = patch.birthday || null;
+      audit("UPDATE", "profiles", user.id, old, toProfile(user));
+      database().commit({ table: "site_settings", type: "UPDATE", record: null });
+      return toProfile(user);
+    },
+    async setMyAvatar(image) {
+      const actor = requireUser();
+      let path: string | null = null;
+      if (image) {
+        path = `avatars/${actor.id}/${uuid()}.${image.extension}`;
+        await idbSet(path, image.full);
+      }
+      // Tras subir la foto se releen los datos por si otra pestaña escribió.
+      const user = database().state.users.find((u) => u.id === actor.id);
+      if (!user) throw new AppError("Usuario no encontrado.");
+      const previous = user.avatarPath;
+      const old = toProfile(user);
+      user.avatarPath = path;
+      audit("UPDATE", "profiles", user.id, old, toProfile(user));
+      database().commit({ table: "site_settings", type: "UPDATE", record: null });
+      if (previous) {
+        void idbDel(previous);
+        const url = objectUrls.get(previous);
+        if (url) URL.revokeObjectURL(url);
+        objectUrls.delete(previous);
+      }
+      return toProfile(user);
+    },
+    async resolveAvatars(paths) {
+      requireUser();
+      return localImageUrls(paths);
+    },
     async myPermissions() {
       const user = sessionUser();
       if (!user) return [];
@@ -1022,6 +1063,7 @@ export const demoBackend: Backend = {
       const user: DemoUser = {
         id: uuid(), email: normalized, password: password || "demo1234", displayName, role,
         isActive: true, avatarUrl: null, createdAt: nowIso(), themeColors: null,
+        avatarPath: null, avatarEmoji: null, bio: "", birthday: null,
       };
       state.users.push(user);
       audit("INSERT", "profiles", user.id, null, toProfile(user));
@@ -1094,6 +1136,7 @@ export const demoBackend: Backend = {
       const user: DemoUser = {
         id: uuid(), email: normalized, password, displayName: displayName.trim().slice(0, 80), role: invitation.role,
         isActive: true, avatarUrl: null, createdAt: nowIso(), themeColors: null,
+        avatarPath: null, avatarEmoji: null, bio: "", birthday: null,
       };
       state.users.push(user);
       invitation.usedAt = nowIso();
@@ -1123,6 +1166,7 @@ export const demoBackend: Backend = {
 function toProfile(u: DemoUser): Profile {
   return {
     id: u.id, displayName: u.displayName, avatarUrl: u.avatarUrl, role: u.role, isActive: u.isActive, createdAt: u.createdAt,
+    avatarPath: u.avatarPath ?? null, avatarEmoji: u.avatarEmoji ?? null, bio: u.bio ?? "", birthday: u.birthday ?? null,
     themeColors: sanitizeColors(u.themeColors),
   };
 }

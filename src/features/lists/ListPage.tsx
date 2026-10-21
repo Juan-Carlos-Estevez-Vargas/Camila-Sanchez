@@ -6,6 +6,7 @@ import { useAuth } from "@/state/AuthContext";
 import { useBackend } from "@/state/BackendContext";
 import { useNotifications } from "@/state/NotificationsContext";
 import { useToast } from "@/state/ToastContext";
+import { AvatarStack } from "@/ui/Avatar";
 import { EmptyState, PageLoader } from "@/ui/Feedback";
 import { useAsync } from "@/ui/useAsync";
 import { burst } from "@/features/site/effects/FloatingEffects";
@@ -118,7 +119,8 @@ export default function ListPage() {
     );
   }
   const { list } = detail;
-  const others = members.filter((m) => m.id !== user?.id).map((m) => m.displayName || "Alguien");
+  const otherMembers = members.filter((m) => m.id !== user?.id);
+  const others = otherMembers.map((m) => m.displayName || "Alguien");
 
   const add = async (e: FormEvent) => {
     e.preventDefault();
@@ -164,7 +166,7 @@ export default function ListPage() {
         <span className="list-page__emoji" aria-hidden>{list.emoji}</span>
         <div className="grow">
           <h1>{list.title}</h1>
-          <p className="muted list-page__people" data-tour="list-people">{others.length ? `Con ${joinNames(others)}` : "Sólo tú (súmale gente en Ajustes)"}</p>
+          <p className="muted list-page__people" data-tour="list-people"><AvatarStack people={otherMembers} size={24} /> {others.length ? `Con ${joinNames(others)}` : "Sólo tú (súmale gente en Ajustes)"}</p>
         </div>
         <button className="btn btn--soft btn--sm" data-tour="list-settings" onClick={() => setSettings(true)}>⚙️ Ajustes</button>
       </header>

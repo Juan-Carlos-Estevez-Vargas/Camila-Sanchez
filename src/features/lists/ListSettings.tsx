@@ -6,6 +6,7 @@ import type { Profile, RolePermission, TodoListDetail } from "@/domain/types";
 import { useAuth } from "@/state/AuthContext";
 import { useBackend } from "@/state/BackendContext";
 import { useToast } from "@/state/ToastContext";
+import { Avatar } from "@/ui/Avatar";
 import { Modal } from "@/ui/Modal";
 import { useConfirm } from "@/ui/useConfirm";
 import { ListFields, type ListFormValue } from "./listParts";
@@ -97,7 +98,7 @@ export function ListSettings({ detail, profiles, rolePermissions, onChanged, onC
           <ul className="mini-list">
             {list.memberIds.map((id) => (
               <li key={id}>
-                <span className="avatar" aria-hidden>{nameOf(id).slice(0, 1).toUpperCase()}</span>
+                <Avatar person={profiles.find((p) => p.id === id)} size={28} />
                 <span className="grow">{id === user?.id ? `${nameOf(id)} (tú)` : nameOf(id)}</span>
                 {id === list.ownerId && <span className="badge badge--muted">Creó la lista</span>}
                 {isOwner && id !== list.ownerId && (

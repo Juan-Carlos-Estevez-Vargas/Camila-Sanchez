@@ -16,6 +16,7 @@ import * as map from "./mappers";
 const PHOTO_BUCKET = "photos";
 const CHAT_BUCKET = "chat-media";
 const LIST_BUCKET = "list-media";
+const AVATAR_BUCKET = "avatars";
 /** Las URLs firmadas duran 1 h; se cachean 50 min para reutilizarlas. */
 const SIGNED_URL_TTL_S = 3600;
 const SIGNED_URL_CACHE_MS = 50 * 60 * 1000;
@@ -482,6 +483,34 @@ const users: UserRepository = {
     );
     return map.toProfile(updated);
   },
+  async updateMyProfile(patch) {
+    const row: Row = {};
+    if (patch.displayName !== undefined) row.display_name = patch.displayName.trim().slice(0, 80);
+    if (patch.avatarEmoji !== undefined) row.avatar_emoji = patch.avatarEmoji || null;
+    if (patch.bio !== undefined) row.bio = patch.bio.trim().slice(0, 160);
+    if (patch.birthday !== undefined) row.birthday = patch.birthday || null;
+    const updated = await unwrap<Row>(sb().from("profiles").update(row).eq("id", await currentUserId()).select().single());
+    return map.toProfile(updated);
+  },
+  async setMyAvatar(image) {
+    const id = await currentUserId();
+    const current = await unwrap<Row>(sb().from("profiles").select("avatar_path").eq("id", id).single());
+    let path: string | null = null;
+    if (image) {
+      // Carpeta propia: la política del bucket sólo deja subir ahí.
+      path = `${id}/${crypto.randomUUID()}.${image.extension}`;
+      await unwrap(sb().storage.from(AVATAR_BUCKET).upload(path, image.full, { cacheControl: "31536000", upsert: false, contentType: image.full.type }));
+    }
+    try {
+      const updated = await unwrap<Row>(sb().from("profiles").update({ avatar_path: path }).eq("id", id).select().single());
+      if (typeof current.avatar_path === "string") await sb().storage.from(AVATAR_BUCKET).remove([current.avatar_path]);
+      return map.toProfile(updated);
+    } catch (error) {
+      if (path) await sb().storage.from(AVATAR_BUCKET).remove([path]);
+      throw error;
+    }
+  },
+  resolveAvatars: (paths) => signedUrls(AVATAR_BUCKET, paths),
   async myPermissions() {
     const rows = await unwrap<string[] | Array<{ my_permissions: string }>>(sb().rpc("my_permissions"));
     return rows.map((r) => (typeof r === "string" ? r : r.my_permissions));

@@ -39,7 +39,7 @@
   }
 
   &__title { font-size: 1.1rem; @include truncate; }
-  &__people { font-size: 0.85rem; @include truncate; }
+  &__people { font-size: 0.85rem; @include truncate; display: flex; align-items: center; gap: space(2); }
   &__meta { font-size: 0.85rem; gap: space(2); }
 }
 
@@ -94,19 +94,6 @@
   }
 }
 
-.avatar {
-  width: 28px;
-  height: 28px;
-  flex: none;
-  border-radius: 50%;
-  display: inline-grid;
-  place-items: center;
-  background: var(--c-primary-soft);
-  color: var(--c-primary-strong);
-  font-weight: 700;
-  font-size: 0.85rem;
-}
-
 // --- página de una lista -----------------------------------------------------
 
 .list-page {
@@ -121,7 +108,7 @@
   }
 
   &__emoji { font-size: clamp(2.2rem, 7vw, 3rem); line-height: 1; }
-  &__people { margin: 0; }
+  &__people { margin: 0; display: flex; align-items: center; gap: space(2); flex-wrap: wrap; }
   &__description { margin: 0; white-space: pre-line; }
 
   &__progress {
