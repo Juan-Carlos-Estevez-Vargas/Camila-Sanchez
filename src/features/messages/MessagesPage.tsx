@@ -89,14 +89,14 @@ function Envelope({ note, from, mine, onOpen, onDelete }: { note: Note; from: st
     <article className={`envelope card card--interactive${unread ? " is-unread" : ""}`}>
       <button className="envelope__open" onClick={onOpen} aria-label={`Abrir notita de ${from}`}>
         <span className="envelope__icon" aria-hidden>{unread ? "💌" : meta.icon}</span>
-        <span className="grow">
+        <span className="envelope__text">
           <strong>{note.title || meta.label}</strong>
           <span className="muted envelope__meta">{mine ? `Para ${from}` : `De ${from}`} · {formatRelative(note.createdAt)}{mine && note.readAt ? " · leída ✓" : ""}</span>
           {!unread && <span className="envelope__preview">{note.body}</span>}
         </span>
         {unread && <span className="badge">Nueva</span>}
       </button>
-      <button className="btn btn--icon btn--ghost btn--sm" aria-label="Borrar notita" onClick={onDelete}>🗑</button>
+      <button className="btn btn--icon btn--ghost btn--sm envelope__delete" aria-label="Borrar notita" onClick={onDelete}>🗑</button>
     </article>
   );
 }
@@ -164,7 +164,7 @@ export default function MessagesPage() {
           <button className="btn btn--soft" onClick={() => setTab("write")}>Escribir una</button>
         </EmptyState>
       ) : (
-        <div className="list">
+        <div className="envelopes">
           {list.map((n) => (
             <Envelope key={n.id} note={n} mine={tab === "sent"} from={nameOf(tab === "sent" ? n.recipientId : n.senderId)}
               onOpen={() => void openNote(n)} onDelete={() => void remove(n)} />
