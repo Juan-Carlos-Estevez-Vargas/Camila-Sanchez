@@ -2,7 +2,7 @@
 
 Página de recuerdos para Camila, con panel de contenido para ella, panel de
 super administrador, cajita de mensajes, chat en tiempo real con fotos y
-stickers, avisos en el celular, colores propios para cada persona, fechas con
+stickers, listas de cosas por hacer compartidas, avisos en el celular, colores propios para cada persona, fechas con
 cuenta regresiva y subida de fotos que se optimizan solas.
 
 > La versión original (HTML/JS estático) quedó en [`legacy/`](legacy/README.md)
@@ -42,10 +42,11 @@ que puedes probar el chat y las notificaciones abriendo dos ventanas.
 | Página principal (portada, contador juntos, cuentas regresivas, notas, hitos, galería por año/mes, carta, frases) | `/` | Quien tenga `site.view` (o todos si el sitio es público) |
 | Cajita de mensajes | `/mensajes` | `notes.send` |
 | Chat en tiempo real tipo WhatsApp: fotos, stickers, responder citando, última conexión y vistos (✓ ✓✓) | `/chat` | `chat.use` |
+| Listas compartidas: eliges con quién (dos o un grupo) y agregan tareas con subtareas, descripción, materiales, fotos, fecha y responsable, en vivo | `/listas` | `lists.use` |
 | Panel de contenido: fotos, textos y animaciones, hitos, fechas importantes, sorpresas/interrupciones | `/panel` | Editora y super admin |
 | Mi cuenta: avisos en este dispositivo (con prueba), contraseña y sesiones | `/cuenta` | Cualquier cuenta |
 | Mis colores: cada persona elige su paleta sin cambiársela a nadie más; quien entra sin cuenta ve Rosa vino | `/cuenta/colores` | Cualquier cuenta |
-| Avisos en la pantalla de notificaciones del celular: cada mensaje del chat, cada notita y cada sorpresa | — | Quien los active en su dispositivo |
+| Avisos en la pantalla de notificaciones del celular: cada mensaje del chat, cada notita, cada sorpresa y lo que pasa en tus listas | — | Quien los active en su dispositivo |
 | Super admin: usuarios, roles y permisos, apariencia (colores, fuentes, efectos, música), secciones, ajustes, auditoría | `/super` | Super admin |
 | Tutorial guiado: botón fijo en la cabecera que recorre la página actual paso a paso | todas | Todos |
 
@@ -69,12 +70,12 @@ mientras sube y al final un resumen permite reintentar las que fallaron.
 ```
 src/
   core/       config, validación, errores, EventBus
-  domain/     tipos, permisos (RBAC), fechas, paletas, chat y stickers, valores por defecto
+  domain/     tipos, permisos (RBAC), fechas, paletas, chat y stickers, listas, valores por defecto
   data/       puerto Backend + adaptadores (Supabase | demo), elegido por una fábrica
   services/   cola de tareas, pipeline de imágenes (workers), notificaciones
   state/      contextos: backend, auth, contenido (store observable), tema, notificaciones
   ui/         componentes reutilizables (modal, campos, toasts, cargador romántico)
-  features/   site · auth · admin (panel) · super · messages · chat · tour
+  features/   site · auth · admin (panel) · super · messages · chat · lists · tour
               (cada una con sus estilos en features/<x>/styles)
   styles/     sistema de diseño en SCSS: abstracts · base · components · layout
 supabase/
@@ -142,7 +143,8 @@ src/features/messages/styles/  cajita de mensajes y chat
   recibe un **enlace de invitación**.
 - Las notificaciones y la auditoría sólo las escriben triggers.
 - Fotos nuevas en buckets **privados** (5 MB, sólo imágenes) servidas con URLs firmadas;
-  en el chat cada persona sólo sube a su propia carpeta.
+  en el chat cada persona sólo sube a su propia carpeta y en las listas sólo
+  los miembros de cada lista ven y suben sus fotos.
 - Los avisos al celular se envían con un secreto guardado en Supabase Vault;
   cada dispositivo pertenece a una sola cuenta y se da de baja al cerrar sesión.
 - La `service_role` key sólo existe dentro de las Edge Functions.
@@ -310,8 +312,8 @@ En iPhone (iOS 16.4 o más nuevo) primero hay que abrir la página en Safari,
 tocar **Compartir → Agregar a inicio** y activar los avisos desde la app que
 queda en la pantalla de inicio.
 
-Llegan avisos de: cada mensaje del chat, cada notita de la cajita y cada
-sorpresa que se publica ya activa. Si antes creaste a mano un *Database
+Llegan avisos de: cada mensaje del chat, cada notita de la cajita, cada
+sorpresa que se publica ya activa y lo que pasa en tus listas. Si antes creaste a mano un *Database
 Webhook* hacia `send-push`, bórralo (Supabase → *Database → Webhooks*) para
 no recibir cada aviso dos veces.
 
