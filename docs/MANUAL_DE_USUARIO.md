@@ -5,7 +5,7 @@ Guía para usar la app día a día. Hay tres tipos de personas:
 | Quién | Rol | Qué puede hacer |
 | --- | --- | --- |
 | Visitante | Sin cuenta | Ver la página si es pública (siempre con los colores Rosa vino) |
-| Invitado | `viewer` | Ver la página, escribir en la cajita y usar el chat |
+| Invitado | `viewer` | Ver la página, escribir en la cajita, usar el chat y hacer listas |
 | Camila | `editor` | Lo anterior, más cambiar el contenido desde **Mi panel** |
 | Juan | `super_admin` | Todo, más **Administración**: usuarios, permisos, apariencia y ajustes |
 
@@ -28,7 +28,7 @@ Otras formas de entrar, debajo del botón:
 
 - **Enlace mágico:** te llega un correo con un enlace para entrar sin
   contraseña.
-- **Olvidé mi contraseña:** ver la sección 7.
+- **Olvidé mi contraseña:** ver la sección 8.
 
 ### Si te invitaron
 
@@ -64,7 +64,7 @@ Notitas que se guardan para siempre. Entra desde **Cajita** en la cabecera.
   mensaje. A la otra persona le llega un aviso al instante.
 
 Toca **Activar avisos** (aquí, en el chat o en **Mi cuenta**) para que el
-celular te avise aunque tengas la app cerrada. Ver la sección 5.
+celular te avise aunque tengas la app cerrada. Ver la sección 6.
 
 ## 4. Chat
 
@@ -107,7 +107,43 @@ abierta y a la vista en cualquier página.
 | ✓✓ | Entregado: se conectó, pero todavía no abrió el chat |
 | ✓✓ de color | Visto: abrió el chat después de que llegó (con el mouse encima dice quién lo vio) |
 
-## 5. Notificaciones
+## 5. Listas
+
+Listas de cosas por hacer con alguien más: el mercado, un viaje, un regalo,
+la casa… Entra desde **Listas** en la cabecera.
+
+**Crear una lista.** Toca **+ Nueva lista**, elige **con quién** (una persona
+o varias), ponle nombre e icono y, si quieres, una descripción y una fecha
+límite. A quienes sumaste les llega un aviso. Sólo las personas de la lista
+la ven.
+
+**Agregar tareas.** Dentro de la lista escribe arriba y pulsa **Enter**. Cada
+tarea nueva le avisa a los demás. Lo que hace cada quien aparece en las otras
+pantallas al instante, sin recargar.
+
+**Tachar.** Toca el círculo de una tarea cuando esté hecha: baja a
+**Hechas** y dice quién la terminó. Tócalo otra vez para desmarcarla. La barra
+de arriba muestra cuántas van.
+
+**El detalle de una tarea.** Toca la tarea para abrirla. Todo se guarda solo:
+
+| Parte | Para qué |
+| --- | --- |
+| Título y descripción | Qué hay que hacer y los detalles (se guardan al salir del cuadro) |
+| Fecha límite | Se pinta de color cuando se acerca o ya pasó |
+| ¿Quién se encarga? | Elige a alguien de la lista; le llega un aviso |
+| ☑️ Subtareas | Pasos más pequeños, cada uno con su círculo |
+| 🧰 Materiales | Lo que hace falta, con cantidad; márcalo cuando ya lo tengan |
+| 📷 Fotos | Hasta 12 por tarea; tócalas para verlas en grande |
+
+**🗑 Borrar** quita la tarea con sus subtareas, materiales y fotos, para
+todos.
+
+**Ajustes de la lista** (botón ⚙️): cambia el nombre, el icono, la
+descripción o la fecha, y suma a alguien más. Quien creó la lista puede sacar
+a otros y **Borrar lista**; los demás pueden **Salirme de la lista**.
+
+## 6. Notificaciones
 
 La campanita 🔔 de la cabecera cuenta los avisos sin leer. Tócala para verlos;
 cada uno te lleva directo a la notita o al chat. **Marcar todo leído** los
@@ -119,7 +155,9 @@ permiso. Desde ahí te llegan, aunque la app esté cerrada:
 
 - cada mensaje del chat (se agrupan en un solo aviso que se va actualizando),
 - cada notita de la cajita,
-- cada sorpresa nueva.
+- cada sorpresa nueva,
+- lo que pasa en tus listas: cuando te suman, cuando agregan o terminan una
+  tarea y cuando te asignan una (se agrupan en un aviso por lista).
 
 Toca **Enviar aviso de prueba** para comprobarlo. Hazlo en cada celular o
 computador donde quieras recibirlos; al cerrar sesión en uno, ese deja de
@@ -129,7 +167,23 @@ recibirlos.
 inicio**, entra desde el ícono nuevo y activa los avisos ahí (necesita iOS
 16.4 o más nuevo).
 
-## 6. Mi cuenta
+## 7. Mi cuenta
+
+Arriba ves tu foto, tu nombre y tu frase. Toca **Editar perfil** para
+cambiarlos:
+
+- **Tu foto:** **📷 Subir foto** y elige una imagen del celular o del
+  computador. Se recorta en círculo y se ve en la cabecera, en el chat, en las
+  listas y en **Mi cuenta**. **Quitar foto** la borra.
+- **Tu icono:** si no quieres foto, toca un icono (🌻, 🐱, 🌙…). Sin foto ni
+  icono se ve la inicial de tu nombre.
+- **Sobre mí:** tu nombre, una frase o estado (hasta 160 letras) y tu
+  cumpleaños. Toca **Guardar perfil**. De tu cumpleaños los demás ven el día y
+  el mes, nunca el año.
+
+En el **chat**, toca la foto o el nombre de la otra persona para ver su
+perfil: su foto en grande, su frase y cuántos días faltan para su cumpleaños.
+Sólo cada persona puede cambiar su propio perfil.
 
 - **Mis colores:** toca **Cambiar colores** y elige una paleta (Rosa vino,
   Rosa suave, Durazno, Lavanda, Menta, Cielo o Medianoche), o ajústala a tu
@@ -138,13 +192,13 @@ inicio**, entra desde el ícono nuevo y activa los avisos ahí (necesita iOS
   los de la página (Rosa vino). **Volver a los colores de la página** quita
   los tuyos.
 - **Avisos en este dispositivo:** actívalos y prueba que lleguen (ver la
-  sección 5).
+  sección 6).
 - **Cambiar contraseña:** al menos 10 caracteres, escrita dos veces.
 - **Cerrar sesión aquí:** sólo en este dispositivo.
 - **Cerrar en todos los dispositivos:** úsalo si perdiste el celular o entraste
   en un equipo ajeno.
 
-## 7. Recuperar la contraseña
+## 8. Recuperar la contraseña
 
 1. En **Entrar**, toca **Olvidé mi contraseña** y escribe tu correo.
 2. Abre el enlace del correo (vence en 1 hora y sirve una sola vez).
@@ -152,9 +206,9 @@ inicio**, entra desde el ícono nuevo y activa los avisos ahí (necesita iOS
    dispositivos se cierran.
 
 Si el correo no llega, pídele a Juan un **enlace de recuperación** (ver
-sección 9): te lo puede mandar por WhatsApp o mostrártelo como QR.
+sección 10): te lo puede mandar por WhatsApp o mostrártelo como QR.
 
-## 8. Mi panel (Camila y Juan)
+## 9. Mi panel (Camila y Juan)
 
 Desde **Mi panel** se cambia todo lo que se ve en la página. Los cambios se
 guardan solos y se ven al instante.
@@ -194,7 +248,7 @@ Si la sorpresa queda activa desde ya, a los demás les llega un aviso al
 celular. Las programadas para más adelante aparecen cuando entren a la
 página.
 
-## 9. Administración (Juan)
+## 10. Administración (Juan)
 
 | Opción | Para qué |
 | --- | --- |
@@ -218,7 +272,7 @@ página.
 En **Usuarios**, toca 🔑 junto a la persona. Sale un enlace y un QR que vencen
 en 1 hora; mándaselo por donde quieras. No depende del correo.
 
-## 10. Preguntas frecuentes
+## 11. Preguntas frecuentes
 
 **No veo «Mi panel» o «Administración».** Tu cuenta no tiene esos permisos;
 pídeselos a Juan.
@@ -229,6 +283,9 @@ enlace existe pero tu rol no puede usarlo.
 **Cambié los colores y a Camila no le cambiaron.** Así debe ser: los colores
 de **Mi cuenta → Mis colores** son de cada persona. Los de la página para
 quien no tiene cuenta los cambia Juan en **Administración → Apariencia**.
+
+**No veo una lista que me comentaron.** Sólo la ven las personas que están
+en ella: pídele a alguien de la lista que te sume desde **⚙️ Ajustes**.
 
 **Subí una foto y no aparece.** Revisa el mes en la galería: se ubica por la
 fecha en que se tomó, no por la de hoy.

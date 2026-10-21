@@ -9,7 +9,7 @@
 import type {
   AppNotification, AuditEntry, ChatMessage, ChatPresence, ImportantDate, Interruption, Invitation, InvitableRole,
   Milestone, Note, NoteKind, PermissionDefinition, Photo, PhotoUrls, Profile, Role, RolePermission,
-  Section, SessionUser, SiteSettings, Uuid,
+  Section, SessionUser, SiteSettings, TodoImage, TodoItem, TodoList, TodoListDetail, TodoListSummary, TodoMaterial, Uuid,
 } from "@/domain/types";
 
 export type Unsubscribe = () => void;
@@ -97,7 +97,7 @@ export interface MessagingRepository {
   sendTestNotification(): Promise<void>;
 }
 
-/** Foto ya optimizada lista para subir al chat. */
+/** Foto ya optimizada lista para subir (al chat o a una tarea). */
 export interface ChatImageUpload {
   full: Blob;
   thumb: Blob;
@@ -111,6 +111,61 @@ export interface ChatSendOptions {
   image?: ChatImageUpload;
   sticker?: string;
 }
+
+export interface NewTodoListInput {
+  title: string;
+  description: string;
+  emoji: string;
+  dueOn: string | null;
+  /** Con quién se comparte (quien la crea entra sola). */
+  memberIds: Uuid[];
+}
+
+export type TodoListPatch = Partial<Pick<TodoList, "title" | "description" | "emoji" | "dueOn">>;
+
+export type TodoItemInput = Partial<Pick<TodoItem, "title" | "description" | "dueOn" | "assigneeId" | "parentId">> & {
+  id?: Uuid;
+  listId: Uuid;
+};
+
+export type TodoMaterialInput = Partial<Pick<TodoMaterial, "name" | "quantity" | "isReady">> & {
+  id?: Uuid;
+  itemId: Uuid;
+};
+
+/**
+ * Listas de cosas por hacer compartidas. Sólo sus miembros las ven; la base
+ * de datos decide quién puede qué (RLS) y avisa a los demás.
+ */
+export interface ListsRepository {
+  /** Mis listas con su avance, las más nuevas primero. */
+  list(): Promise<TodoListSummary[]>;
+  /** null si no existe o no soy miembro. */
+  get(id: Uuid): Promise<TodoListDetail | null>;
+  /** Crea la lista y suma a las personas elegidas. Devuelve su id. */
+  create(input: NewTodoListInput): Promise<Uuid>;
+  update(id: Uuid, patch: TodoListPatch): Promise<void>;
+  /** Sólo quien la creó. Borra también sus tareas y fotos. */
+  remove(id: Uuid): Promise<void>;
+  addMember(listId: Uuid, userId: Uuid): Promise<void>;
+  /** Sacar a alguien (quien la creó) o salirse (cualquiera). */
+  removeMember(listId: Uuid, userId: Uuid): Promise<void>;
+
+  saveItem(item: TodoItemInput): Promise<TodoItem>;
+  setItemDone(id: Uuid, done: boolean): Promise<void>;
+  /** Borra la tarea, sus subtareas, materiales y fotos. */
+  deleteItem(id: Uuid): Promise<void>;
+
+  saveMaterial(material: TodoMaterialInput): Promise<TodoMaterial>;
+  deleteMaterial(id: Uuid): Promise<void>;
+
+  addImage(listId: Uuid, itemId: Uuid, image: ChatImageUpload): Promise<TodoImage>;
+  deleteImage(image: TodoImage): Promise<void>;
+  /** URLs firmadas (o locales en demo) de las fotos, por ruta. */
+  resolveImages(paths: string[]): Promise<Map<string, string>>;
+}
+
+export type MyProfilePatch = Partial<Pick<Profile, "displayName" | "avatarEmoji" | "bio" | "birthday">>;
 
 export interface NewUserInput {
   email: string;
@@ -126,6 +181,12 @@ export interface UserRepository {
   updateProfile(id: Uuid, patch: Partial<Pick<Profile, "displayName" | "avatarUrl" | "role" | "isActive">>): Promise<Profile>;
   /** Colores propios de quien tiene la sesión (null = volver a los de la página). */
   updateMyColors(colors: Profile["themeColors"]): Promise<Profile>;
+  /** Nombre, icono, frase y cumpleaños de quien tiene la sesión. */
+  updateMyProfile(patch: MyProfilePatch): Promise<Profile>;
+  /** Sube la foto de perfil (o la quita con null) y borra la anterior. */
+  setMyAvatar(image: ChatImageUpload | null): Promise<Profile>;
+  /** URLs firmadas (o locales en demo) de fotos de perfil, por ruta. */
+  resolveAvatars(paths: string[]): Promise<Map<string, string>>;
   myPermissions(): Promise<string[]>;
   listPermissions(): Promise<PermissionDefinition[]>;
   listRolePermissions(): Promise<RolePermission[]>;
@@ -162,7 +223,8 @@ export interface InvitationRepository {
 
 export type RealtimeTable =
   | "site_settings" | "sections" | "photos" | "milestones" | "important_dates"
-  | "interruptions" | "notes" | "chat_messages" | "chat_reads" | "notifications";
+  | "interruptions" | "notes" | "chat_messages" | "chat_reads" | "notifications"
+  | "todo_lists" | "todo_list_members" | "todo_items" | "todo_materials" | "todo_item_images";
 
 export interface RealtimeChange<T = Record<string, unknown>> {
   table: RealtimeTable;
@@ -194,6 +256,7 @@ export interface Backend {
   readonly content: ContentRepository;
   readonly photos: PhotoRepository;
   readonly messaging: MessagingRepository;
+  readonly lists: ListsRepository;
   readonly users: UserRepository;
   readonly invitations: InvitationRepository;
   readonly realtime: RealtimeGateway;

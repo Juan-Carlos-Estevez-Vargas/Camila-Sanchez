@@ -1,0 +1,403 @@
+@use "abstracts" as *;
+
+// Listas compartidas: listado, página de una lista y detalle de una tarea.
+.lists {
+  padding-block: space(6) space(7);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: space(4);
+  max-width: 860px;
+}
+
+.lists__header {
+  align-items: flex-end;
+
+  h1 { font-size: clamp(1.8rem, 5vw, 2.6rem); margin-bottom: space(1); }
+  p { margin: 0; }
+}
+
+.list-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: space(4);
+}
+
+.list-card {
+  display: flex;
+  gap: space(3);
+  align-items: flex-start;
+  color: inherit;
+  text-decoration: none;
+  padding: space(4);
+
+  &__emoji { font-size: 2rem; line-height: 1; }
+
+  &__body {
+    display: grid;
+    gap: space(2);
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__title { font-size: 1.1rem; @include truncate; }
+  &__people { font-size: 0.85rem; @include truncate; display: flex; align-items: center; gap: space(2); }
+  &__meta { font-size: 0.85rem; gap: space(2); }
+}
+
+.progress {
+  height: 8px;
+  border-radius: var(--radius-pill);
+  background: var(--c-surface-2);
+  overflow: hidden;
+
+  &__bar {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, var(--c-primary), var(--c-accent));
+    transition: width 0.4s $ease;
+  }
+}
+
+.emoji-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: space(2);
+
+  &__option {
+    @include chip;
+    width: 42px;
+    height: 42px;
+    font-size: 1.3rem;
+    display: grid;
+    place-items: center;
+
+    &.is-active { @include chip-active; }
+  }
+}
+
+.people-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: space(2);
+
+  &__option {
+    @include chip;
+    display: inline-flex;
+    align-items: center;
+    gap: space(2);
+    padding: 0.35rem 0.9rem 0.35rem 0.4rem;
+    font-weight: 500;
+
+    input { @include visually-hidden; }
+    &:focus-within { @include focus-ring; }
+    &.is-active { @include chip-active; }
+  }
+}
+
+// --- página de una lista -----------------------------------------------------
+
+.list-page {
+  &__back { font-size: 0.9rem; justify-self: start; }
+
+  &__header {
+    display: flex;
+    align-items: center;
+    gap: space(3);
+
+    h1 { font-size: clamp(1.6rem, 5vw, 2.3rem); margin: 0; overflow-wrap: anywhere; }
+  }
+
+  &__emoji { font-size: clamp(2.2rem, 7vw, 3rem); line-height: 1; }
+  &__people { margin: 0; display: flex; align-items: center; gap: space(2); flex-wrap: wrap; }
+  &__description { margin: 0; white-space: pre-line; }
+
+  &__progress {
+    display: grid;
+    gap: space(2);
+    padding: space(3) space(4);
+  }
+
+  &__add {
+    display: flex;
+    gap: space(2);
+    padding: space(2);
+
+    .input { min-width: 0; }
+  }
+}
+
+.check {
+  appearance: none;
+  flex: none;
+  width: 24px;
+  height: 24px;
+  margin: 0;
+  border: 2px solid var(--c-border-strong);
+  border-radius: 50%;
+  background: var(--c-surface);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: background 0.2s $ease, border-color 0.2s $ease, transform 0.2s $ease;
+
+  &::after {
+    content: "✓";
+    color: var(--c-primary-contrast);
+    font-size: 0.8rem;
+    font-weight: 800;
+    transform: scale(0);
+    transition: transform 0.2s $ease;
+  }
+
+  &:hover { border-color: var(--c-primary); }
+  &:focus-visible { @include focus-ring; }
+
+  &:checked {
+    background: var(--c-success);
+    border-color: var(--c-success);
+
+    &::after { transform: scale(1); }
+  }
+
+  &--sm {
+    width: 20px;
+    height: 20px;
+
+    &::after { font-size: 0.7rem; }
+  }
+}
+
+.tasks {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: space(2);
+}
+
+.task {
+  @include surface(var(--radius-sm));
+  padding: space(2) space(3);
+  box-shadow: var(--shadow-sm);
+
+  &__main {
+    display: flex;
+    align-items: flex-start;
+    gap: space(3);
+
+    > .check { margin-top: 6px; }
+  }
+
+  &__open {
+    flex: 1;
+    min-width: 0;
+    display: grid;
+    gap: 4px;
+    padding: 4px 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  &__title { font-weight: 600; overflow-wrap: anywhere; }
+
+  &__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+    font-size: 0.8rem;
+
+    &:empty { display: none; }
+  }
+
+  &__by { font-size: 0.8rem; }
+
+  &__subtasks {
+    list-style: none;
+    margin: space(1) 0 0;
+    padding: 0 0 0 space(6);
+    display: grid;
+    gap: 2px;
+  }
+
+  &.is-done {
+    background: var(--c-surface-2);
+    box-shadow: none;
+
+    .task__title { text-decoration: line-through; color: var(--c-muted); }
+  }
+}
+
+.subtask {
+  display: flex;
+  align-items: center;
+  gap: space(2);
+  font-size: 0.9rem;
+
+  &__open {
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    padding: 2px 0;
+    text-align: left;
+    cursor: pointer;
+    overflow-wrap: anywhere;
+  }
+
+  &.is-done .subtask__open { text-decoration: line-through; color: var(--c-muted); }
+}
+
+.tasks-done {
+  summary {
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--c-muted);
+    padding: space(2) 0;
+  }
+}
+
+// --- detalle de una tarea ----------------------------------------------------
+
+.task-editor {
+  &__done {
+    display: inline-flex;
+    align-items: center;
+    gap: space(2);
+    cursor: pointer;
+  }
+
+  &__title {
+    font-size: 1.15rem;
+    font-weight: 600;
+  }
+
+  &__parent,
+  &__meta { margin: 0; font-size: 0.85rem; }
+  &__meta:empty { display: none; }
+
+  &__section {
+    display: grid;
+    gap: space(2);
+    padding-top: space(3);
+    border-top: 1px solid var(--c-border);
+
+    h4 { margin: 0; display: flex; gap: space(2); align-items: baseline; }
+    h4 .muted { font-size: 0.85rem; font-weight: 500; }
+  }
+
+  &__delete { color: var(--c-danger); margin-right: auto; }
+}
+
+.list-settings__danger { color: var(--c-danger); margin-right: auto; }
+
+.mini-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 2px;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: space(2);
+    min-height: 40px;
+    overflow-wrap: anywhere;
+
+    &.is-done .grow { text-decoration: line-through; color: var(--c-muted); }
+  }
+}
+
+.mini-form {
+  display: flex;
+  gap: space(2);
+  align-items: center;
+
+  .input,
+  .select { min-width: 0; }
+
+  &__qty { flex: 0 0 110px; }
+
+  @include below(sm) {
+    flex-wrap: wrap;
+
+    .input.grow { flex-basis: 100%; }
+    &__qty { flex: 1; }
+  }
+}
+
+.thumb-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
+  gap: space(2);
+
+  &__item {
+    position: relative;
+    aspect-ratio: 1;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    background: var(--c-surface-2);
+
+    &.is-loading { animation: pulse 1.2s ease-in-out infinite; }
+  }
+
+  &__open {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    padding: 0;
+    background: none;
+    cursor: zoom-in;
+    display: grid;
+    place-items: center;
+
+    img { width: 100%; height: 100%; object-fit: cover; }
+  }
+
+  &__remove {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 26px;
+    height: 26px;
+    border: 0;
+    border-radius: 50%;
+    background: rgb(0 0 0 / 55%);
+    color: #fff;
+    cursor: pointer;
+    font-size: 0.75rem;
+  }
+
+  &__add {
+    aspect-ratio: 1;
+    border: 2px dashed var(--c-border-strong);
+    border-radius: var(--radius-sm);
+    background: none;
+    color: var(--c-muted);
+    cursor: pointer;
+    font-size: 0.8rem;
+    display: grid;
+    place-content: center;
+    gap: 2px;
+
+    span { font-size: 1.4rem; }
+    &:hover { border-color: var(--c-primary); color: var(--c-primary); }
+  }
+}
+
+.list-photo-viewer {
+  display: grid;
+  place-items: center;
+
+  img { max-width: 100%; max-height: 75vh; border-radius: var(--radius-sm); }
+}
+
+@keyframes pulse {
+  50% { opacity: 0.5; }
+}

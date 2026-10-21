@@ -89,7 +89,7 @@ describe("roles y escalada de privilegios", () => {
     const rows = await as<{ p: string }>(CAMI, "select p from my_permissions() p order by p");
     expect(rows.map((r) => r.p)).toEqual([
       "chat.use", "content.edit", "dates.manage", "interruptions.manage",
-      "notes.send", "photos.manage", "site.view",
+      "lists.use", "notes.send", "photos.manage", "site.view",
     ]);
   });
 });
@@ -386,5 +386,140 @@ describe("avisos en el celular", () => {
     expect(await as(GUEST, "select count(*)::int as n from notifications where link = '/cuenta'")).toEqual([{ n: 1 }]);
     await expect(as(GUEST, "select send_test_notification()")).rejects.toThrow(/Espera un minuto/);
     await expect(as(null, "select send_test_notification()")).rejects.toThrow(/permission denied|iniciar sesión/);
+  });
+});
+
+describe("listas compartidas", () => {
+  let LIST = "";
+  let ITEM = "";
+  const IMG = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
+  const listNotes = (uid: string) =>
+    as<{ title: string; body: string; link: string }>(uid, "select title, body, link from notifications where kind = 'list' and read_at is null order by created_at");
+
+  it("quien crea la lista elige con quién; sólo los miembros la ven", async () => {
+    const [row] = await as<{ id: string }>(JUAN, `select create_todo_list('Viaje a la playa', 'Lo que falta', '🏖️', null, array['${CAMI}']::uuid[]) as id`);
+    LIST = row!.id;
+    expect(await as(JUAN, "select title, owner_id from todo_lists")).toEqual([{ title: "Viaje a la playa", owner_id: JUAN }]);
+    expect(await as(CAMI, "select user_id from todo_list_members order by added_at, user_id")).toHaveLength(2);
+    expect(await as(GUEST, "select count(*)::int as n from todo_lists")).toEqual([{ n: 0 }]);
+    expect(await as(GUEST, "select count(*)::int as n from todo_list_members")).toEqual([{ n: 0 }]);
+    expect(await listNotes(CAMI)).toEqual([
+      { title: "Juan te sumó a la lista 🏖️ Viaje a la playa", body: "Lo que falta", link: `/listas/${LIST}?nueva=1` },
+    ]);
+    expect(await listNotes(JUAN)).toEqual([]);
+  });
+
+  it("sin el permiso lists.use no se crean listas, y no se crean sin la función", async () => {
+    await expect(as(null, "select create_todo_list('x')")).rejects.toThrow(/permission denied|permiso/);
+    await expect(as(CAMI, "insert into todo_lists (title) values ('a escondidas')")).rejects.toThrow(/row-level security/);
+    await db.exec("delete from role_permissions where role = 'viewer' and permission = 'lists.use'");
+    await expect(as(GUEST, "select create_todo_list('x')")).rejects.toThrow(/permiso/);
+    await expect(as(JUAN, `select create_todo_list('x', '', '📝', null, array['${GUEST}']::uuid[])`)).rejects.toThrow(/no puede usar listas/);
+    await db.exec("insert into role_permissions values ('viewer', 'lists.use')");
+  });
+
+  it("los miembros agregan tareas y a los demás les llega un solo aviso que se actualiza", async () => {
+    await as(JUAN, "select mark_notifications_read()");
+    const [item] = await as<{ id: string }>(CAMI, `insert into todo_items (list_id, title) values ('${LIST}', 'Comprar bloqueador') returning id`);
+    ITEM = item!.id;
+    await as(CAMI, `insert into todo_items (list_id, title, due_on) values ('${LIST}', 'Reservar hotel', '2026-12-01')`);
+    expect(await listNotes(JUAN)).toEqual([
+      { title: "Camila · 🏖️ Viaje a la playa", body: "➕ Reservar hotel", link: `/listas/${LIST}` },
+    ]);
+    await expect(as(GUEST, `insert into todo_items (list_id, title) values ('${LIST}', 'colado')`)).rejects.toThrow(/row-level security/);
+    expect(await as(GUEST, "select count(*)::int as n from todo_items")).toEqual([{ n: 0 }]);
+  });
+
+  it("las subtareas son de un solo nivel y de la misma lista", async () => {
+    const [sub] = await as<{ id: string }>(JUAN, `insert into todo_items (list_id, parent_id, title) values ('${LIST}', '${ITEM}', 'FPS 50') returning id`);
+    await expect(as(JUAN, `insert into todo_items (list_id, parent_id, title) values ('${LIST}', '${sub!.id}', 'nieta')`)).rejects.toThrow(/no puede tener subtareas/);
+    const [other] = await as<{ id: string }>(JUAN, "select create_todo_list('Otra') as id");
+    await expect(as(JUAN, `insert into todo_items (list_id, parent_id, title) values ('${other!.id}', '${ITEM}', 'cruzada')`)).rejects.toThrow(/misma lista/);
+    await expect(as(JUAN, `update todo_items set list_id = '${other!.id}' where id = '${ITEM}'`)).rejects.toThrow(/otra lista/);
+    await as(JUAN, `delete from todo_lists where id = '${other!.id}'`);
+  });
+
+  it("quién y cuándo terminó una tarea lo pone la base de datos", async () => {
+    await as(JUAN, "select mark_notifications_read()");
+    await as(CAMI, `update todo_items set done_at = '2000-01-01', done_by = '${JUAN}' where id = '${ITEM}'`);
+    const [row] = await as<{ done_by: string; recent: boolean }>(CAMI, `select done_by, done_at > now() - interval '1 minute' as recent from todo_items where id = '${ITEM}'`);
+    expect(row).toEqual({ done_by: CAMI, recent: true });
+    expect((await listNotes(JUAN)).map((n) => n.body)).toEqual(["✅ Comprar bloqueador"]);
+    await as(CAMI, `update todo_items set done_at = null where id = '${ITEM}'`);
+    expect(await as(CAMI, `select done_by from todo_items where id = '${ITEM}'`)).toEqual([{ done_by: null }]);
+  });
+
+  it("sólo se asigna a alguien de la lista, y le llega el aviso", async () => {
+    await expect(as(CAMI, `update todo_items set assignee_id = '${GUEST}' where id = '${ITEM}'`)).rejects.toThrow(/alguien de la lista/);
+    await as(JUAN, "select mark_notifications_read()");
+    await as(CAMI, `update todo_items set assignee_id = '${JUAN}' where id = '${ITEM}'`);
+    expect((await listNotes(JUAN)).map((n) => n.body)).toEqual(["👉 Te asignó: Comprar bloqueador"]);
+  });
+
+  it("cualquier miembro suma gente; cada quien se sale; sólo quien la creó saca a otros", async () => {
+    await as(CAMI, `insert into todo_list_members (list_id, user_id) values ('${LIST}', '${GUEST}')`);
+    expect(await as(GUEST, "select title from todo_lists")).toEqual([{ title: "Viaje a la playa" }]);
+    expect(await as(GUEST, "select count(*)::int as n from notifications where kind = 'list' and title like 'Camila te sumó%'")).toEqual([{ n: 1 }]);
+    expect(await as(CAMI, `delete from todo_list_members where list_id = '${LIST}' and user_id = '${GUEST}' returning user_id`)).toEqual([]);
+    expect(await as(CAMI, `delete from todo_list_members where list_id = '${LIST}' and user_id = '${JUAN}' returning user_id`)).toEqual([]);
+    expect(await as(GUEST, `delete from todo_list_members where list_id = '${LIST}' and user_id = '${GUEST}' returning user_id`)).toHaveLength(1);
+    expect(await as(GUEST, "select count(*)::int as n from todo_lists")).toEqual([{ n: 0 }]);
+    await expect(as(GUEST, `insert into todo_list_members (list_id, user_id) values ('${LIST}', '${GUEST}')`)).rejects.toThrow(/row-level security/);
+  });
+
+  it("materiales y fotos sólo para los miembros, y las fotos en la carpeta de la lista", async () => {
+    await as(CAMI, `insert into todo_materials (item_id, name, quantity) values ('${ITEM}', 'Bloqueador', '2')`);
+    expect(await as(JUAN, "select name, quantity, is_ready from todo_materials")).toEqual([{ name: "Bloqueador", quantity: "2", is_ready: false }]);
+    expect(await as(GUEST, "select count(*)::int as n from todo_materials")).toEqual([{ n: 0 }]);
+    await expect(as(GUEST, `insert into todo_materials (item_id, name) values ('${ITEM}', 'x')`)).rejects.toThrow(/row-level security/);
+
+    await as(CAMI, `insert into todo_item_images (item_id, list_id, path, thumb_path) values ('${ITEM}', '${LIST}', '${LIST}/${IMG}.webp', '${LIST}/${IMG}.thumb.webp')`);
+    expect(await as(JUAN, "select list_id from todo_item_images")).toEqual([{ list_id: LIST }]);
+    await expect(as(CAMI, `insert into todo_item_images (item_id, list_id, path, thumb_path) values ('${ITEM}', '${LIST}', '${CAMI}/${IMG}.webp', '${CAMI}/${IMG}.thumb.webp')`)).rejects.toThrow(/carpeta de su lista/);
+
+    await as(CAMI, `insert into storage.objects (bucket_id, name) values ('list-media', '${LIST}/${IMG}.webp')`);
+    await expect(as(GUEST, `insert into storage.objects (bucket_id, name) values ('list-media', '${LIST}/${IMG}.thumb.webp')`)).rejects.toThrow(/row-level security/);
+    await expect(as(CAMI, `insert into storage.objects (bucket_id, name) values ('list-media', '../${IMG}.webp')`)).rejects.toThrow(/row-level security/);
+    expect(await as(JUAN, "select count(*)::int as n from storage.objects where bucket_id = 'list-media'")).toEqual([{ n: 1 }]);
+    expect(await as(GUEST, "select count(*)::int as n from storage.objects where bucket_id = 'list-media'")).toEqual([{ n: 0 }]);
+  });
+
+  it("sólo quien la creó borra la lista, y se borra todo lo de adentro", async () => {
+    expect(await as(CAMI, `delete from todo_lists where id = '${LIST}' returning id`)).toEqual([]);
+    expect(await as(JUAN, `delete from todo_lists where id = '${LIST}' returning id`)).toHaveLength(1);
+    const { rows } = await db.query<{ n: number }>("select (select count(*) from todo_items) + (select count(*) from todo_materials) + (select count(*) from todo_item_images) + (select count(*) from todo_list_members)::int as n");
+    expect(Number(rows[0]!.n)).toBe(0);
+  });
+});
+
+describe("perfil de cada persona", () => {
+  const PIC = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
+
+  it("cada quien cambia su nombre, foto, icono, frase y cumpleaños", async () => {
+    const rows = await as(CAMI, `update profiles set display_name = 'Cami', avatar_path = '${CAMI}/${PIC}.webp',
+      avatar_emoji = '🌸', bio = 'Feliz 💖', birthday = '2001-03-15' where id = '${CAMI}'
+      returning display_name, avatar_path, avatar_emoji, bio, birthday::text`);
+    expect(rows).toEqual([{ display_name: "Cami", avatar_path: `${CAMI}/${PIC}.webp`, avatar_emoji: "🌸", bio: "Feliz 💖", birthday: "2001-03-15" }]);
+    expect(await as(GUEST, `select bio from profiles where id = '${CAMI}'`)).toEqual([{ bio: "Feliz 💖" }]);
+  });
+
+  it("nadie cambia la foto ni el perfil de otra persona, ni el super administrador", async () => {
+    await expect(as(JUAN, `update profiles set avatar_emoji = '🐸' where id = '${CAMI}'`)).rejects.toThrow(/su foto y su perfil/);
+    await expect(as(JUAN, `update profiles set bio = 'x' where id = '${CAMI}'`)).rejects.toThrow(/su foto y su perfil/);
+    expect(await as(GUEST, `update profiles set bio = 'x' where id = '${CAMI}' returning id`)).toEqual([]);
+  });
+
+  it("la foto sólo puede estar en la carpeta propia y la frase es corta", async () => {
+    await expect(as(CAMI, `update profiles set avatar_path = '${JUAN}/${PIC}.webp' where id = '${CAMI}'`)).rejects.toThrow(/profiles_avatar_own_folder/);
+    await expect(as(CAMI, `update profiles set avatar_path = '../x.webp' where id = '${CAMI}'`)).rejects.toThrow(/check/);
+    await expect(as(CAMI, `update profiles set bio = '${"a".repeat(161)}' where id = '${CAMI}'`)).rejects.toThrow(/check/);
+  });
+
+  it("en el almacenamiento cada quien sube a su carpeta y lo ve quien tiene sesión", async () => {
+    await as(CAMI, `insert into storage.objects (bucket_id, name) values ('avatars', '${CAMI}/${PIC}.webp')`);
+    await expect(as(CAMI, `insert into storage.objects (bucket_id, name) values ('avatars', '${JUAN}/${PIC}.webp')`)).rejects.toThrow(/row-level security/);
+    expect(await as(GUEST, "select count(*)::int as n from storage.objects where bucket_id = 'avatars'")).toEqual([{ n: 1 }]);
+    expect(await as(null, "select count(*)::int as n from storage.objects where bucket_id = 'avatars'")).toEqual([{ n: 0 }]);
+    expect(await as(JUAN, "delete from storage.objects where bucket_id = 'avatars' returning name")).toEqual([]);
   });
 });

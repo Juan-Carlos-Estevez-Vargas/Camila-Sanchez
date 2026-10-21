@@ -6,10 +6,11 @@ import { useSaver } from "@/features/admin/useSaver";
 import { DeviceNotificationsCard } from "@/features/messages/EnableNotifications";
 import { useAuth } from "@/state/AuthContext";
 import { useBackend } from "@/state/BackendContext";
+import { Avatar } from "@/ui/Avatar";
 import { Field } from "@/ui/Field";
 import { useConfirm } from "@/ui/useConfirm";
 
-/** Mi cuenta: mis colores, avisos, cambiar la contraseña y cerrar sesiones. */
+/** Mi cuenta: mi perfil, mis colores, avisos, cambiar la contraseña y cerrar sesiones. */
 export default function AccountPage() {
   const backend = useBackend();
   const navigate = useNavigate();
@@ -50,6 +51,15 @@ export default function AccountPage() {
       <p className="muted">
         {profile?.displayName} · {user?.email}{profile ? ` · ${ROLE_LABELS[profile.role]}` : ""}
       </p>
+
+      <section className="card account-profile" data-tour="account-profile" style={{ marginBottom: 16 }}>
+        <Avatar person={profile} size={64} />
+        <div className="account-profile__text">
+          <strong>{profile?.displayName || "Sin nombre"}</strong>
+          <span className="muted">{profile?.bio || "Agrega tu foto, un icono y una frase."}</span>
+        </div>
+        <Link className="btn btn--soft" to="/cuenta/perfil">Editar perfil</Link>
+      </section>
 
       <section className="card row-between" data-tour="account-colors">
         <div>

@@ -186,7 +186,7 @@ function pageSteps(ctx: TourContext): TourStep[] {
         target: [tourTarget("chat-presence")],
         optional: true,
         title: "¿Está conectado?",
-        body: "Aquí ves si la otra persona está «en línea» o hace cuánto se conectó por última vez.",
+        body: "Aquí ves si la otra persona está «en línea» o hace cuánto se conectó por última vez. Toca su foto para ver su perfil.",
       },
       {
         id: "chat-thread",
@@ -214,6 +214,68 @@ function pageSteps(ctx: TourContext): TourStep[] {
       },
     ];
   }
+  if (pathname === "/listas") {
+    return [
+      {
+        id: "lists-new",
+        target: [tourTarget("lists-new")],
+        title: "Nueva lista",
+        body: "Crea una lista, ponle nombre e icono y elige con quién compartirla: una persona o varias. Les llega un aviso.",
+      },
+      {
+        id: "lists-grid",
+        target: [tourTarget("lists-grid")],
+        optional: true,
+        title: "Tus listas",
+        body: "Cada tarjeta muestra con quién la compartes, cuánto llevan y la fecha más cercana. Tócala para abrirla.",
+      },
+    ];
+  }
+  if (areaOf(pathname) === "listas") {
+    return [
+      {
+        id: "list-add",
+        target: [tourTarget("list-add")],
+        title: "Agregar tareas",
+        body: "Escribe una tarea y pulsa Enter. A los demás de la lista les llega un aviso.",
+      },
+      {
+        id: "list-tasks",
+        target: [tourTarget("list-tasks")],
+        optional: true,
+        title: "Tachar y abrir",
+        body: "Marca el círculo cuando esté hecha. Toca la tarea para agregarle descripción, fecha, quién se encarga, subtareas, materiales y fotos.",
+      },
+      {
+        id: "list-settings",
+        target: [tourTarget("list-settings")],
+        title: "Ajustes",
+        body: "Cambia el nombre o la fecha, suma o saca personas, o sal de la lista. Quien la creó también puede borrarla.",
+      },
+    ];
+  }
+  if (pathname === "/cuenta/perfil") {
+    return [
+      {
+        id: "profile-photo",
+        target: [tourTarget("profile-photo")],
+        title: "Tu foto",
+        body: "Sube una foto desde el celular o el computador. Se recorta en círculo y la ven los demás en el chat, las listas y la cabecera.",
+      },
+      {
+        id: "profile-icon",
+        target: [tourTarget("profile-icon")],
+        title: "O un icono",
+        body: "Si no quieres foto, elige un icono. Sin foto ni icono se ve la inicial de tu nombre.",
+      },
+      {
+        id: "profile-details",
+        target: [tourTarget("profile-details")],
+        title: "Sobre ti",
+        body: "Tu nombre, una frase o estado y tu cumpleaños. De tu cumpleaños los demás ven el día y el mes, no el año.",
+      },
+    ];
+  }
   if (pathname === "/cuenta/colores") {
     return [
       {
@@ -226,6 +288,12 @@ function pageSteps(ctx: TourContext): TourStep[] {
   }
   if (pathname === "/cuenta") {
     return [
+      {
+        id: "account-profile",
+        target: [tourTarget("account-profile")],
+        title: "Tu perfil",
+        body: "Cambia tu nombre, tu foto o icono, una frase y tu cumpleaños.",
+      },
       {
         id: "account-colors",
         target: [tourTarget("account-colors")],
@@ -280,6 +348,9 @@ function navSteps(ctx: TourContext): TourStep[] {
   if (policy.can(PERMISSIONS.chatUse) && here !== "chat") {
     steps.push({ id: "nav-chat", target: navTarget("nav-chat"), fallbackNote: MENU_NOTE, title: "Chat", body: "Para hablar en tiempo real. El punto te avisa de mensajes sin leer." });
   }
+  if (policy.can(PERMISSIONS.listsUse) && here !== "listas") {
+    steps.push({ id: "nav-listas", target: navTarget("nav-listas"), fallbackNote: MENU_NOTE, title: "Listas", body: "Cosas por hacer con alguien más: tareas, subtareas, materiales, fotos y fechas." });
+  }
   if (policy.canUseContentPanel && here !== "panel") {
     steps.push({ id: "nav-panel", target: navTarget("nav-panel"), fallbackNote: MENU_NOTE, title: "Mi panel", body: "Aquí cambias las fotos, los textos, los hitos, las fechas y las sorpresas." });
   }
@@ -288,7 +359,7 @@ function navSteps(ctx: TourContext): TourStep[] {
   }
   steps.push({ id: "bell", target: [tourTarget("bell")], title: "Notificaciones", body: "La campanita cuenta lo que no has leído. Tócala para ver cada aviso e ir directo a él." });
   if (here !== "cuenta") {
-    steps.push({ id: "nav-cuenta", target: navTarget("nav-cuenta"), fallbackNote: MENU_NOTE, title: "Mi cuenta", body: "Cambia tu contraseña y cierra sesión en otros dispositivos." });
+    steps.push({ id: "nav-cuenta", target: navTarget("nav-cuenta"), fallbackNote: MENU_NOTE, title: "Mi cuenta", body: "Tu perfil y foto, tus colores, los avisos, tu contraseña y las sesiones abiertas." });
   }
   return steps;
 }

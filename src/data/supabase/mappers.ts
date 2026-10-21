@@ -8,7 +8,7 @@ import {
 import { sanitizeColors } from "@/domain/palettes";
 import type {
   AppNotification, AuditEntry, ChatKind, ChatMessage, ChatPresence, ImportantDate, Interruption, Invitation, InvitableRole,
-  Milestone, Note, Photo, Profile, Section, SectionKind, SiteSettings,
+  Milestone, Note, Photo, Profile, Section, SectionKind, SiteSettings, TodoImage, TodoItem, TodoList, TodoMaterial,
 } from "@/domain/types";
 import type { Row } from "./client";
 
@@ -165,6 +165,10 @@ export const toProfile = (r: Row): Profile => ({
   role: (["super_admin", "editor", "viewer"].includes(str(r.role)) ? r.role : "viewer") as Profile["role"],
   isActive: r.is_active !== false,
   createdAt: str(r.created_at),
+  avatarPath: strOrNull(r.avatar_path),
+  avatarEmoji: strOrNull(r.avatar_emoji),
+  bio: str(r.bio),
+  birthday: strOrNull(r.birthday),
   themeColors: sanitizeColors(r.theme_colors),
 });
 
@@ -238,5 +242,56 @@ export const toAudit = (r: Row): AuditEntry => ({
   recordId: strOrNull(r.record_id),
   oldData: (r.old_data as Record<string, unknown> | null) ?? null,
   newData: (r.new_data as Record<string, unknown> | null) ?? null,
+  createdAt: str(r.created_at),
+});
+
+const rows = (v: unknown): Row[] => (Array.isArray(v) ? (v as Row[]) : []);
+
+/** Lista con sus miembros embebidos (todo_list_members(user_id)). */
+export const toTodoList = (r: Row): TodoList => ({
+  id: str(r.id),
+  ownerId: str(r.owner_id),
+  title: str(r.title),
+  description: str(r.description),
+  emoji: str(r.emoji, "📝"),
+  dueOn: strOrNull(r.due_on),
+  createdAt: str(r.created_at),
+  updatedAt: str(r.updated_at),
+  memberIds: rows(r.todo_list_members).map((m) => str(m.user_id)).filter(Boolean),
+});
+
+export const toTodoItem = (r: Row): TodoItem => ({
+  id: str(r.id),
+  listId: str(r.list_id),
+  parentId: strOrNull(r.parent_id),
+  title: str(r.title),
+  description: str(r.description),
+  dueOn: strOrNull(r.due_on),
+  assigneeId: strOrNull(r.assignee_id),
+  doneAt: strOrNull(r.done_at),
+  doneBy: strOrNull(r.done_by),
+  position: num(r.position),
+  createdBy: strOrNull(r.created_by),
+  createdAt: str(r.created_at),
+});
+
+export const toTodoMaterial = (r: Row): TodoMaterial => ({
+  id: str(r.id),
+  itemId: str(r.item_id),
+  name: str(r.name),
+  quantity: str(r.quantity),
+  isReady: r.is_ready === true,
+  position: num(r.position),
+});
+
+export const toTodoImage = (r: Row): TodoImage => ({
+  id: str(r.id),
+  itemId: str(r.item_id),
+  listId: str(r.list_id),
+  path: str(r.path),
+  thumbPath: str(r.thumb_path),
+  width: numOrNull(r.width),
+  height: numOrNull(r.height),
+  createdBy: strOrNull(r.created_by),
   createdAt: str(r.created_at),
 });
