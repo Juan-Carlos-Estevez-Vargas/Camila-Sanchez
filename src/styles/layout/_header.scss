@@ -18,7 +18,7 @@
   &__burger {
     display: none;
 
-    @include below("lg") { display: inline-grid; }
+    @include below("xl") { display: inline-grid; }
   }
 }
 
@@ -62,13 +62,14 @@
     font-weight: 500;
     font-size: 0.92rem;
     text-decoration: none;
+    white-space: nowrap;
 
     &:hover { color: var(--c-text); background: var(--c-surface-2); }
     &.active { color: var(--c-text); background: var(--c-primary-soft); }
   }
 
-  // En móvil la navegación se despliega bajo la cabecera.
-  @include below("lg") {
+  // En pantallas angostas la navegación se despliega bajo la cabecera.
+  @include below("xl") {
     position: absolute;
     top: 100%;
     left: 0;

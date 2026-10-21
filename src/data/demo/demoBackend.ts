@@ -13,6 +13,7 @@ import { del as idbDel, get as idbGet, set as idbSet } from "idb-keyval";
 import { AccessPolicy, DEFAULT_ROLE_PERMISSIONS, PERMISSIONS, type Permission } from "@/domain/permissions";
 import { messagePreview, upsertPresence } from "@/domain/chat";
 import { isKnownSticker } from "@/domain/stickers";
+import { MAX_TASK_IMAGES, nextDueOf, progressOf } from "@/domain/lists";
 import { sanitizeColors } from "@/domain/palettes";
 import { AppError } from "@/core/errors";
 import {
@@ -22,13 +23,14 @@ import { RECOVERY_LINK_HOURS } from "@/domain/recovery";
 import type {
   AppNotification, AuditEntry, ChatImage, ChatMessage, ChatPresence, ImportantDate, Interruption, Invitation, Milestone, Note,
   PermissionDefinition, Photo, PhotoUrls, Profile, Role, RolePermission, Section, SessionUser,
-  SiteSettings, Uuid,
+  SiteSettings, TodoImage, TodoItem, TodoList, TodoMaterial, Uuid,
 } from "@/domain/types";
-import type { Backend, RealtimeChange, RealtimeTable } from "@/data/ports";
+import type { Backend, ListsRepository, RealtimeChange, RealtimeTable } from "@/data/ports";
 import { SEED_DATES, SEED_MILESTONES, SEED_PHOTOS, SEED_SECTIONS, SEED_SETTINGS } from "./seed";
 
 // Cambia de versión cuando cambian los datos de fábrica (tema, permisos...).
-const STORAGE_KEY = "love-demo-v2";
+const STORAGE_KEY = "love-demo-v3";
+const REVISION_KEY = "love-demo-rev";
 const SESSION_KEY = "love-demo-session";
 const CHANNEL = "love-demo";
 
@@ -64,6 +66,10 @@ interface DemoState {
   chat: ChatMessage[];
   chatReads: ChatPresence[];
   notifications: AppNotification[];
+  todoLists: TodoList[];
+  todoItems: TodoItem[];
+  todoMaterials: TodoMaterial[];
+  todoImages: TodoImage[];
   users: DemoUser[];
   invitations: DemoInvitation[];
   recoveries: DemoRecovery[];
@@ -79,6 +85,7 @@ const PERMISSION_DESCRIPTIONS: Record<Permission, string> = {
   "interruptions.manage": "Crear interrupciones (sorpresas emergentes)",
   "notes.send": "Enviar notitas a la cajita de mensajes",
   "chat.use": "Usar el chat",
+  "lists.use": "Crear listas de cosas por hacer y compartirlas",
   "sections.manage": "Crear, ordenar y ocultar secciones",
   "theme.manage": "Cambiar colores, tipografías, efectos y animaciones",
   "settings.manage": "Configuración general del sitio",
@@ -103,6 +110,10 @@ function initialState(): DemoState {
     chat: [],
     chatReads: [],
     notifications: [],
+    todoLists: [],
+    todoItems: [],
+    todoMaterials: [],
+    todoImages: [],
     users: DEMO_ACCOUNTS.map((a) => ({
       id: uuid(), email: a.email, password: a.password, displayName: a.displayName,
       role: a.role, isActive: true, avatarUrl: null, createdAt: created, themeColors: null,
@@ -125,17 +136,37 @@ function safeStorage<T>(fn: () => T, fallback: T): T {
 }
 
 class DemoDatabase {
-  state: DemoState;
+  private current: DemoState;
+  /** Revisión de los datos que tiene esta pestaña (cambia con cada escritura). */
+  private revision: string | null;
   private readonly listeners = new Set<(change: RealtimeChange) => void>();
   private readonly channel = typeof BroadcastChannel !== "undefined" ? new BroadcastChannel(CHANNEL) : null;
 
   constructor() {
-    this.state = this.load();
-    // Otra pestaña cambió algo: recargamos y avisamos a los suscriptores.
+    this.current = this.load();
+    this.revision = safeStorage(() => localStorage.getItem(REVISION_KEY), null);
+    // Otra pestaña cambió algo: avisamos a los suscriptores (los datos se
+    // releen solos al pedir `state`).
     this.channel?.addEventListener("message", (event: MessageEvent<RealtimeChange>) => {
-      this.state = this.load();
       this.listeners.forEach((l) => l(event.data));
     });
+  }
+
+  /**
+   * Datos al día. Si otra pestaña escribió desde la última lectura se releen
+   * antes de usarlos, así una pestaña nunca pisa lo que guardó la otra.
+   */
+  get state(): DemoState {
+    const revision = safeStorage(() => localStorage.getItem(REVISION_KEY), null);
+    if (revision !== this.revision) {
+      this.current = this.load();
+      this.revision = revision;
+    }
+    return this.current;
+  }
+
+  set state(value: DemoState) {
+    this.current = value;
   }
 
   private load(): DemoState {
@@ -153,7 +184,12 @@ class DemoDatabase {
   }
 
   commit(change: Omit<RealtimeChange, "old"> & { old?: RealtimeChange["old"] }): void {
-    safeStorage(() => localStorage.setItem(STORAGE_KEY, JSON.stringify(this.state)), undefined);
+    const revision = uuid();
+    safeStorage(() => {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(this.current));
+      localStorage.setItem(REVISION_KEY, revision);
+    }, undefined);
+    this.revision = revision;
     const full: RealtimeChange = { old: null, ...change };
     // Copia "plana" para que BroadcastChannel pueda clonarla.
     const message = JSON.parse(JSON.stringify(full)) as RealtimeChange;
@@ -289,6 +325,292 @@ const NOTE_TITLES: Record<Note["kind"], string> = {
 };
 
 const objectUrls = new Map<string, string>();
+
+/** URLs locales de imágenes guardadas en IndexedDB. */
+async function localImageUrls(paths: string[]): Promise<Map<string, string>> {
+  const result = new Map<string, string>();
+  for (const path of new Set(paths)) {
+    let url = objectUrls.get(path);
+    if (!url) {
+      const blob = await idbGet<Blob>(path);
+      if (!blob) continue;
+      url = URL.createObjectURL(blob);
+      objectUrls.set(path, url);
+    }
+    result.set(path, url);
+  }
+  return result;
+}
+
+// --- listas compartidas (mismas reglas que la base de datos) -----------------
+
+function listOf(id: Uuid): TodoList | undefined {
+  return database().state.todoLists.find((l) => l.id === id);
+}
+
+/** La lista, si quien tiene la sesión es miembro y puede usar listas. */
+function memberList(listId: Uuid): { user: DemoUser; list: TodoList } {
+  const user = require(PERMISSIONS.listsUse);
+  const list = listOf(listId);
+  if (!list || !list.memberIds.includes(user.id)) throw new AppError("Esta lista no existe o no eres parte de ella.");
+  return { user, list };
+}
+
+function memberItem(itemId: Uuid): { user: DemoUser; list: TodoList; item: TodoItem } {
+  const item = database().state.todoItems.find((i) => i.id === itemId);
+  if (!item) throw new AppError("Esta tarea ya no existe.");
+  return { ...memberList(item.listId), item };
+}
+
+const canUseLists = (userId: Uuid) => {
+  const other = database().state.users.find((u) => u.id === userId);
+  return !!other?.isActive && policyOf(other).can(PERMISSIONS.listsUse);
+};
+
+/** Avisa a los demás miembros; si ya tienen uno sin leer de la lista, se actualiza. */
+function notifyList(actor: DemoUser, list: TodoList, body: string, only?: Uuid) {
+  const state = database().state;
+  const link = `/listas/${list.id}`;
+  const title = `${actor.displayName} · ${list.emoji} ${list.title}`.slice(0, 160);
+  for (const userId of list.memberIds) {
+    if (userId === actor.id || (only && userId !== only) || !canUseLists(userId)) continue;
+    const unread = state.notifications.find((n) => n.userId === userId && n.kind === "list" && n.link === link && !n.readAt);
+    if (unread) {
+      Object.assign(unread, { title, body: body.slice(0, 140), createdAt: nowIso() });
+      database().commit({ table: "notifications", type: "UPDATE", record: unread as never });
+    } else {
+      notify(userId, "list", title, body, link);
+    }
+  }
+}
+
+function addListMember(actor: DemoUser, list: TodoList, userId: Uuid) {
+  if (list.memberIds.includes(userId)) return;
+  if (!canUseLists(userId)) throw new AppError("Esa persona no puede usar listas.");
+  list.memberIds.push(userId);
+  database().commit({ table: "todo_list_members", type: "INSERT", record: { list_id: list.id, user_id: userId } });
+  if (userId !== actor.id) {
+    notify(userId, "list", `${actor.displayName} te sumó a la lista ${list.emoji} ${list.title}`.slice(0, 160),
+      list.description.trim() || "Ábrela para ver qué hay por hacer.", `/listas/${list.id}?nueva=1`);
+  }
+}
+
+function dropImages(images: TodoImage[]) {
+  for (const image of images) {
+    for (const path of [image.path, image.thumbPath]) {
+      void idbDel(path);
+      const url = objectUrls.get(path);
+      if (url) URL.revokeObjectURL(url);
+      objectUrls.delete(path);
+    }
+  }
+}
+
+const textOf = (value: string, max: number, what: string) => {
+  const text = value.trim();
+  if (!text) throw new AppError(`Escribe ${what}.`);
+  return text.slice(0, max);
+};
+
+const demoLists: ListsRepository = {
+  async list() {
+    const user = require(PERMISSIONS.listsUse);
+    const state = database().state;
+    return clone(
+      state.todoLists
+        .filter((l) => l.memberIds.includes(user.id))
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+        .map((l) => {
+          const items = state.todoItems.filter((i) => i.listId === l.id);
+          const { total, done } = progressOf(items);
+          return { ...l, total, done, nextDue: nextDueOf(items, l.dueOn) };
+        }),
+    );
+  },
+  async get(id) {
+    const user = require(PERMISSIONS.listsUse);
+    const state = database().state;
+    const list = listOf(id);
+    if (!list || !list.memberIds.includes(user.id)) return null;
+    const items = state.todoItems.filter((i) => i.listId === id);
+    const ids = new Set(items.map((i) => i.id));
+    return clone({
+      list,
+      items,
+      materials: state.todoMaterials.filter((m) => ids.has(m.itemId)).sort((a, b) => a.position - b.position),
+      images: state.todoImages.filter((i) => i.listId === id),
+    });
+  },
+  async create(input) {
+    const user = require(PERMISSIONS.listsUse);
+    const now = nowIso();
+    const list: TodoList = {
+      id: uuid(), ownerId: user.id, title: textOf(input.title, 120, "un nombre para la lista"),
+      description: input.description.trim().slice(0, 2000), emoji: input.emoji || "📝", dueOn: input.dueOn || null,
+      createdAt: now, updatedAt: now, memberIds: [user.id],
+    };
+    for (const id of input.memberIds) {
+      if (id !== user.id && !canUseLists(id)) throw new AppError("Una de las personas elegidas no puede usar listas.");
+    }
+    database().state.todoLists.push(list);
+    database().commit({ table: "todo_lists", type: "INSERT", record: list as never });
+    for (const id of input.memberIds) if (id !== user.id) addListMember(user, list, id);
+    return list.id;
+  },
+  async update(id, patch) {
+    const { list } = memberList(id);
+    if (patch.title !== undefined) list.title = textOf(patch.title, 120, "un nombre para la lista");
+    if (patch.description !== undefined) list.description = patch.description.slice(0, 2000);
+    if (patch.emoji !== undefined) list.emoji = patch.emoji || "📝";
+    if (patch.dueOn !== undefined) list.dueOn = patch.dueOn || null;
+    list.updatedAt = nowIso();
+    database().commit({ table: "todo_lists", type: "UPDATE", record: list as never });
+  },
+  async remove(id) {
+    const { user, list } = memberList(id);
+    if (list.ownerId !== user.id) throw new AppError("Sólo quien creó la lista puede borrarla.");
+    const state = database().state;
+    const itemIds = new Set(state.todoItems.filter((i) => i.listId === id).map((i) => i.id));
+    dropImages(state.todoImages.filter((i) => i.listId === id));
+    state.todoImages = state.todoImages.filter((i) => i.listId !== id);
+    state.todoMaterials = state.todoMaterials.filter((m) => !itemIds.has(m.itemId));
+    state.todoItems = state.todoItems.filter((i) => i.listId !== id);
+    state.todoLists = state.todoLists.filter((l) => l.id !== id);
+    database().commit({ table: "todo_lists", type: "DELETE", record: null, old: { id } });
+  },
+  async addMember(listId, userId) {
+    const { user, list } = memberList(listId);
+    addListMember(user, list, userId);
+  },
+  async removeMember(listId, userId) {
+    const { user, list } = memberList(listId);
+    if (userId === list.ownerId || (userId !== user.id && list.ownerId !== user.id)) {
+      throw new AppError("No puedes sacar a esta persona de la lista.");
+    }
+    list.memberIds = list.memberIds.filter((id) => id !== userId);
+    database().commit({ table: "todo_list_members", type: "DELETE", record: null, old: { list_id: listId, user_id: userId } });
+  },
+
+  async saveItem(input) {
+    const state = database().state;
+    const existing = input.id ? memberItem(input.id) : null;
+    const { user, list } = existing ?? memberList(input.listId);
+    const parentId = input.parentId !== undefined ? input.parentId : existing?.item.parentId ?? null;
+    if (parentId && (!existing || parentId !== existing.item.parentId)) {
+      const parent = state.todoItems.find((i) => i.id === parentId);
+      if (!parent || parent.listId !== list.id) throw new AppError("La subtarea debe ser de la misma lista.");
+      if (parent.parentId) throw new AppError("Una subtarea no puede tener subtareas.");
+    }
+    if (input.assigneeId && input.assigneeId !== existing?.item.assigneeId && !list.memberIds.includes(input.assigneeId)) {
+      throw new AppError("Sólo se puede asignar a alguien de la lista.");
+    }
+    const patch: Partial<TodoItem> = { parentId };
+    if (input.title !== undefined) patch.title = textOf(input.title, 300, "la tarea");
+    if (input.description !== undefined) patch.description = input.description.slice(0, 4000);
+    if (input.dueOn !== undefined) patch.dueOn = input.dueOn || null;
+    if (input.assigneeId !== undefined) patch.assigneeId = input.assigneeId;
+    if (existing) {
+      const before = { ...existing.item };
+      Object.assign(existing.item, patch);
+      database().commit({ table: "todo_items", type: "UPDATE", record: existing.item as never });
+      if (patch.assigneeId && patch.assigneeId !== before.assigneeId && patch.assigneeId !== user.id) {
+        notifyList(user, list, `👉 Te asignó: ${existing.item.title}`, patch.assigneeId);
+      }
+      return clone(existing.item);
+    }
+    const item: TodoItem = {
+      id: uuid(), listId: list.id, parentId, title: patch.title ?? textOf("", 1, "la tarea"),
+      description: patch.description ?? "", dueOn: patch.dueOn ?? null, assigneeId: patch.assigneeId ?? null,
+      doneAt: null, doneBy: null, position: Date.now() / 1000, createdBy: user.id, createdAt: nowIso(),
+    };
+    state.todoItems.push(item);
+    database().commit({ table: "todo_items", type: "INSERT", record: item as never });
+    if (!parentId) notifyList(user, list, `➕ ${item.title}`);
+    if (item.assigneeId && item.assigneeId !== user.id) notifyList(user, list, `👉 Te asignó: ${item.title}`, item.assigneeId);
+    return clone(item);
+  },
+  async setItemDone(id, done) {
+    const { user, list, item } = memberItem(id);
+    if (!!item.doneAt === done) return;
+    item.doneAt = done ? nowIso() : null;
+    item.doneBy = done ? user.id : null;
+    database().commit({ table: "todo_items", type: "UPDATE", record: item as never });
+    if (done && !item.parentId) notifyList(user, list, `✅ ${item.title}`);
+  },
+  async deleteItem(id) {
+    memberItem(id);
+    const state = database().state;
+    const ids = new Set([id, ...state.todoItems.filter((i) => i.parentId === id).map((i) => i.id)]);
+    dropImages(state.todoImages.filter((i) => ids.has(i.itemId)));
+    state.todoImages = state.todoImages.filter((i) => !ids.has(i.itemId));
+    state.todoMaterials = state.todoMaterials.filter((m) => !ids.has(m.itemId));
+    state.todoItems = state.todoItems.filter((i) => !ids.has(i.id));
+    database().commit({ table: "todo_items", type: "DELETE", record: null, old: { id } });
+  },
+
+  async saveMaterial(input) {
+    const state = database().state;
+    const existing = input.id ? state.todoMaterials.find((m) => m.id === input.id) : undefined;
+    if (input.id && !existing) throw new AppError("Este material ya no existe.");
+    memberItem(existing?.itemId ?? input.itemId);
+    const patch: Partial<TodoMaterial> = {};
+    if (input.name !== undefined) patch.name = textOf(input.name, 120, "el material");
+    if (input.quantity !== undefined) patch.quantity = input.quantity.trim().slice(0, 40);
+    if (input.isReady !== undefined) patch.isReady = input.isReady;
+    if (existing) {
+      Object.assign(existing, patch);
+      database().commit({ table: "todo_materials", type: "UPDATE", record: existing as never });
+      return clone(existing);
+    }
+    const material: TodoMaterial = {
+      id: uuid(), itemId: input.itemId, name: patch.name ?? textOf("", 1, "el material"),
+      quantity: patch.quantity ?? "", isReady: patch.isReady ?? false, position: Date.now() / 1000,
+    };
+    state.todoMaterials.push(material);
+    database().commit({ table: "todo_materials", type: "INSERT", record: material as never });
+    return clone(material);
+  },
+  async deleteMaterial(id) {
+    const state = database().state;
+    const material = state.todoMaterials.find((m) => m.id === id);
+    if (!material) return;
+    memberItem(material.itemId);
+    state.todoMaterials = state.todoMaterials.filter((m) => m.id !== id);
+    database().commit({ table: "todo_materials", type: "DELETE", record: null, old: { id } });
+  },
+
+  async addImage(listId, itemId, image) {
+    const { user, item } = memberItem(itemId);
+    if (item.listId !== listId) throw new AppError("La foto debe estar en la carpeta de su lista.");
+    const state = database().state;
+    if (state.todoImages.filter((i) => i.itemId === itemId).length >= MAX_TASK_IMAGES) {
+      throw new AppError(`Máximo ${MAX_TASK_IMAGES} fotos por tarea.`);
+    }
+    const id = uuid();
+    const path = `lists/${listId}/${id}.${image.extension}`;
+    const thumbPath = `lists/${listId}/${id}.thumb.${image.extension}`;
+    await idbSet(path, image.full);
+    await idbSet(thumbPath, image.thumb);
+    const saved: TodoImage = {
+      id, itemId, listId, path, thumbPath, width: image.width, height: image.height, createdBy: user.id, createdAt: nowIso(),
+    };
+    // Tras las esperas se releen los datos por si otra pestaña escribió.
+    database().state.todoImages.push(saved);
+    database().commit({ table: "todo_item_images", type: "INSERT", record: saved as never });
+    return clone(saved);
+  },
+  async deleteImage(image) {
+    memberList(image.listId);
+    const state = database().state;
+    dropImages(state.todoImages.filter((i) => i.id === image.id));
+    state.todoImages = state.todoImages.filter((i) => i.id !== image.id);
+    database().commit({ table: "todo_item_images", type: "DELETE", record: null, old: { id: image.id } });
+  },
+  async resolveImages(paths) {
+    require(PERMISSIONS.listsUse);
+    return localImageUrls(paths);
+  },
+};
 
 export const demoBackend: Backend = {
   mode: "demo",
@@ -534,23 +856,11 @@ export const demoBackend: Backend = {
     },
     async resolveChatImages(paths) {
       require(PERMISSIONS.chatUse);
-      const result = new Map<string, string>();
-      for (const path of new Set(paths)) {
-        let url = objectUrls.get(path);
-        if (!url) {
-          const blob = await idbGet<Blob>(path);
-          if (!blob) continue;
-          url = URL.createObjectURL(blob);
-          objectUrls.set(path, url);
-        }
-        result.set(path, url);
-      }
-      return result;
+      return localImageUrls(paths);
     },
     async sendChat(body, { replyToId = null, image, sticker } = {}) {
       const user = require(PERMISSIONS.chatUse);
-      const state = database().state;
-      const original = replyToId ? state.chat.find((m) => m.id === replyToId) : undefined;
+      const original = replyToId ? database().state.chat.find((m) => m.id === replyToId) : undefined;
       if (replyToId && !original) throw new AppError("El mensaje al que respondes ya no existe.");
       if (sticker && !isKnownSticker(sticker)) throw new AppError("Ese sticker no existe.");
       const text = sticker ? "" : body.trim().slice(0, 2000);
@@ -571,6 +881,8 @@ export const demoBackend: Backend = {
           ? { id: original.id, senderId: original.senderId, body: original.body, kind: original.kind ?? "text", sticker: original.sticker ?? null }
           : null,
       };
+      // Tras subir la foto se releen los datos por si otra pestaña escribió.
+      const state = database().state;
       state.chat.push(message);
       state.chat = state.chat.slice(-1000);
       database().commit({ table: "chat_messages", type: "INSERT", record: message as never });
@@ -642,6 +954,8 @@ export const demoBackend: Backend = {
       database().commit({ table: "notifications", type: "UPDATE", record: null });
     },
   },
+
+  lists: demoLists,
 
   users: {
     async getProfile(id) {
