@@ -427,7 +427,9 @@ grande, frase y cuenta regresiva a su cumpleaños (sólo día y mes).
 
 ## Listas compartidas
 
-Crear una lista y trabajar en ella entre varias personas:
+Diagramas de la sección **Listas** (cosas por hacer entre dos o en grupo).
+
+### Crear una lista y trabajar juntos
 
 ```mermaid
 sequenceDiagram
@@ -455,7 +457,173 @@ sequenceDiagram
   RT-->>J: la tarea pasa a «Hechas»
 ```
 
-Qué puede hacer cada miembro:
+### Cómo está armada una lista
+
+Cada lista tiene miembros y tareas; cada tarea puede tener un nivel de
+subtareas, materiales y hasta 12 fotos. Al borrar la lista se borra todo lo
+de adentro (`on delete cascade`) y la app borra también sus fotos del bucket.
+
+```mermaid
+classDiagram
+  direction LR
+  class Lista {
+    icono y nombre
+    descripción
+    fecha límite
+    dueña o dueño
+  }
+  class Miembro {
+    persona con lists.use
+    quién la sumó
+  }
+  class Tarea {
+    título y descripción
+    fecha
+    responsable: un miembro
+    hecha: cuándo y quién
+  }
+  class Subtarea {
+    título
+    hecha: cuándo y quién
+  }
+  class Material {
+    nombre
+    cantidad
+    listo sí/no
+  }
+  class Foto {
+    list-media/lista/archivo.webp
+    miniatura
+  }
+  Lista "1" *-- "1..*" Miembro : comparten
+  Lista "1" *-- "0..*" Tarea : tiene
+  Tarea "1" *-- "0..*" Subtarea : un solo nivel
+  Tarea "1" *-- "0..*" Material : necesita
+  Tarea "1" *-- "0..12" Foto : fotos
+```
+
+### Pantallas
+
+```mermaid
+flowchart LR
+  NAV["Cabecera → Listas<br/>(contador de avisos)"] --> L["/listas<br/>tarjetas con avance,<br/>fecha y caras"]
+  BELL["Campana o aviso<br/>en el celular"] --> D
+  L -- "+ Nueva lista" --> NL["Ventana: con quién,<br/>icono, nombre, fecha"]
+  NL -- "Crear lista" --> D["/listas/:id<br/>avance, agregar tarea,<br/>pendientes y hechas"]
+  L -- "toca una tarjeta" --> D
+  D -- "toca una tarea" --> T["Detalle de la tarea:<br/>fecha, responsable, descripción,<br/>subtareas, materiales, fotos"]
+  D -- "⚙️ Ajustes" --> S["Ajustes: datos de la lista,<br/>sumar o sacar personas,<br/>salirse o borrarla"]
+  T -- "Listo" --> D
+  S -- "salirse o borrar" --> L
+```
+
+### Estados de una tarea
+
+```mermaid
+stateDiagram-v2
+  [*] --> Pendiente: se agrega
+  Pendiente --> Hecha: se marca ✓
+  Hecha --> Pendiente: se desmarca
+  Hecha --> [*]: se borra
+  Pendiente --> [*]: se borra
+  state Pendiente {
+    state "Sin fecha" as SinFecha
+    state "Más adelante" as Mas_adelante
+    state "Pronto (3 días o menos)" as Pronto
+    state "Vence hoy" as Hoy
+    [*] --> SinFecha
+    SinFecha --> Mas_adelante: se le pone fecha
+    Mas_adelante --> Pronto: faltan 3 días o menos
+    Pronto --> Hoy: es el día
+    Hoy --> Vencida: pasó la fecha
+  }
+  note right of Hecha
+    guard_todo_item pone done_at y done_by;
+    el navegador no puede inventarlos.
+    Si era la última, salen 🎉 y confeti.
+  end note
+```
+
+La etiqueta de la fecha sale de `dueState()` y `dueLabel()` en
+`domain/lists.ts`: «En 5 días», «Mañana», «Vence hoy», «Venció hace 2 días».
+Las subtareas se tachan igual, pero no cambian el avance de la lista, que
+cuenta sólo las tareas principales.
+
+### Quién recibe cada aviso
+
+```mermaid
+flowchart TD
+  E1["Te suman a una lista"] --> N1["Aviso propio:<br/>«Juan te sumó a la lista…»<br/>enlace /listas/:id?nueva=1"]
+  E2["Alguien agrega una tarea"] --> G["notify_list_members()"]
+  E3["Alguien termina una tarea"] --> G
+  E4["Alguien te asigna una tarea"] --> G1["notify_list_members()<br/>sólo para la persona asignada"]
+  G --> R["Para cada miembro<br/>menos quien lo hizo<br/>y que tenga lists.use"]
+  G1 --> R
+  R --> Q{"¿Ya tiene un aviso sin leer<br/>de esta lista?"}
+  Q -- "sí" --> U["Se actualiza ese aviso<br/>(texto y hora)"]
+  Q -- "no" --> I["Se crea uno nuevo"]
+  N1 & U & I --> P["dispatch_push → send-push<br/>(celular, agrupado con<br/>tag list:/listas/:id)"]
+  N1 & U & I --> C["Campana y contador<br/>de Listas en la cabecera"]
+  C --> V{"¿La persona ya está<br/>en esa lista?"}
+  V -- "sí" --> M["No sale el globo<br/>y el aviso se marca leído"]
+  V -- "no" --> T["Globo emergente"]
+```
+
+### Fotos de una tarea
+
+```mermaid
+sequenceDiagram
+  actor P as Miembro
+  participant App as Detalle de la tarea
+  participant W as Web Worker
+  participant ST as Storage (list-media)
+  participant DB as Postgres
+
+  P->>App: 📷 Agregar fotos
+  App->>W: corrige orientación, quita GPS,<br/>reduce y genera miniatura
+  W-->>App: WebP + miniatura
+  App->>ST: sube a list-media/<list_id>/<uuid>.webp
+  Note over ST: is_list_folder_member: sólo<br/>miembros de esa lista suben,<br/>ven o borran en su carpeta
+  App->>DB: insert todo_item_images
+  Note over DB: guard_todo_image: la ruta debe<br/>ser de la lista y máximo 12 por tarea
+  alt se guardó
+    DB-->>App: foto registrada
+    App->>ST: URLs firmadas (1 h) para mostrarlas
+  else falló
+    App->>ST: borra lo que alcanzó a subir
+    App-->>P: aviso de error
+  end
+```
+
+### Cambios en vivo
+
+```mermaid
+sequenceDiagram
+  actor C as Camila
+  participant A as App de Camila
+  participant DB as Postgres
+  participant RT as Realtime
+  participant B as App de Juan
+  actor J as Juan
+
+  C->>A: marca «Reservar hotel» ✓
+  A->>A: la tacha al instante (optimista)
+  A->>DB: update done_at
+  DB-->>RT: cambio en todo_items
+  RT-->>B: aviso de cambio (RLS: sólo miembros)
+  Note over B: junta los cambios 250 ms<br/>y recarga la lista una vez
+  B-->>J: la tarea pasa a «Hechas»
+  alt falló el guardado
+    DB-->>A: error
+    A->>DB: recarga lo real
+    A-->>C: aviso de error
+  end
+```
+
+Las cinco tablas (`todo_lists`, `todo_list_members`, `todo_items`,
+`todo_materials`, `todo_item_images`) están en la publicación de Realtime.
+
+### Qué puede hacer cada miembro
 
 ```mermaid
 flowchart TD
@@ -467,6 +635,25 @@ flowchart TD
   A --> S["Sumar a alguien que use listas"]
   A --> L["Salirse"]
   M -- "sí, la creó" --> O["Además: sacar a otros<br/>y borrar la lista"]
+```
+
+### Sumar, sacar, salirse y borrar
+
+```mermaid
+flowchart TD
+  A["⚙️ Ajustes de la lista"] --> B{"¿Qué quiere hacer?"}
+  B -- "Sumar a alguien" --> C{"¿Esa persona<br/>tiene lists.use?"}
+  C -- "no" --> CX["No aparece para elegir<br/>(y la base lo rechaza)"]
+  C -- "sí" --> CS["insert todo_list_members<br/>→ aviso «te sumó a la lista»"]
+  B -- "Sacar a alguien" --> D{"¿Quien lo pide<br/>creó la lista?"}
+  D -- "no" --> DX["No puede (RLS)"]
+  D -- "sí" --> DS["delete todo_list_members<br/>→ deja de verla"]
+  B -- "Salirme" --> E{"¿Creó la lista?"}
+  E -- "no" --> ES["Se borra su membresía<br/>y vuelve a /listas"]
+  E -- "sí" --> EX["En su lugar ve<br/>«Borrar lista»"]
+  B -- "Borrar lista" --> F{"¿La creó?"}
+  F -- "sí" --> FS["delete todo_lists (cascade)<br/>+ borra sus fotos del bucket"]
+  F -- "no" --> FX["No puede (RLS)"]
 ```
 
 ## Tutorial guiado
