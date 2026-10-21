@@ -33,7 +33,7 @@ flowchart LR
   subgraph Supabase
     AUTH["Auth<br/>PKCE + rotación de tokens"]
     DB[("Postgres<br/>RLS + triggers")]
-    ST[("Storage<br/>buckets privados<br/>photos · chat-media · list-media")]
+    ST[("Storage<br/>buckets privados<br/>photos · chat-media · list-media · avatars")]
     RT["Realtime"]
     VA[("Vault<br/>URL y secreto de send-push")]
     subgraph Edge["Edge Functions"]
@@ -502,6 +502,10 @@ erDiagram
     app_role role
     boolean is_active
     jsonb theme_colors "colores propios"
+    text avatar_path "avatars/<id>/..."
+    text avatar_emoji
+    text bio
+    date birthday
   }
   PERMISSIONS {
     text key PK

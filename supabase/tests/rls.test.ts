@@ -491,3 +491,35 @@ describe("listas compartidas", () => {
     expect(Number(rows[0]!.n)).toBe(0);
   });
 });
+
+describe("perfil de cada persona", () => {
+  const PIC = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
+
+  it("cada quien cambia su nombre, foto, icono, frase y cumpleaños", async () => {
+    const rows = await as(CAMI, `update profiles set display_name = 'Cami', avatar_path = '${CAMI}/${PIC}.webp',
+      avatar_emoji = '🌸', bio = 'Feliz 💖', birthday = '2001-03-15' where id = '${CAMI}'
+      returning display_name, avatar_path, avatar_emoji, bio, birthday::text`);
+    expect(rows).toEqual([{ display_name: "Cami", avatar_path: `${CAMI}/${PIC}.webp`, avatar_emoji: "🌸", bio: "Feliz 💖", birthday: "2001-03-15" }]);
+    expect(await as(GUEST, `select bio from profiles where id = '${CAMI}'`)).toEqual([{ bio: "Feliz 💖" }]);
+  });
+
+  it("nadie cambia la foto ni el perfil de otra persona, ni el super administrador", async () => {
+    await expect(as(JUAN, `update profiles set avatar_emoji = '🐸' where id = '${CAMI}'`)).rejects.toThrow(/su foto y su perfil/);
+    await expect(as(JUAN, `update profiles set bio = 'x' where id = '${CAMI}'`)).rejects.toThrow(/su foto y su perfil/);
+    expect(await as(GUEST, `update profiles set bio = 'x' where id = '${CAMI}' returning id`)).toEqual([]);
+  });
+
+  it("la foto sólo puede estar en la carpeta propia y la frase es corta", async () => {
+    await expect(as(CAMI, `update profiles set avatar_path = '${JUAN}/${PIC}.webp' where id = '${CAMI}'`)).rejects.toThrow(/profiles_avatar_own_folder/);
+    await expect(as(CAMI, `update profiles set avatar_path = '../x.webp' where id = '${CAMI}'`)).rejects.toThrow(/check/);
+    await expect(as(CAMI, `update profiles set bio = '${"a".repeat(161)}' where id = '${CAMI}'`)).rejects.toThrow(/check/);
+  });
+
+  it("en el almacenamiento cada quien sube a su carpeta y lo ve quien tiene sesión", async () => {
+    await as(CAMI, `insert into storage.objects (bucket_id, name) values ('avatars', '${CAMI}/${PIC}.webp')`);
+    await expect(as(CAMI, `insert into storage.objects (bucket_id, name) values ('avatars', '${JUAN}/${PIC}.webp')`)).rejects.toThrow(/row-level security/);
+    expect(await as(GUEST, "select count(*)::int as n from storage.objects where bucket_id = 'avatars'")).toEqual([{ n: 1 }]);
+    expect(await as(null, "select count(*)::int as n from storage.objects where bucket_id = 'avatars'")).toEqual([{ n: 0 }]);
+    expect(await as(JUAN, "delete from storage.objects where bucket_id = 'avatars' returning name")).toEqual([]);
+  });
+});

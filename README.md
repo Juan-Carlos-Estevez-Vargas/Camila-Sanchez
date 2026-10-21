@@ -42,6 +42,7 @@ que puedes probar el chat y las notificaciones abriendo dos ventanas.
 | Página principal (portada, contador juntos, cuentas regresivas, notas, hitos, galería por año/mes, carta, frases) | `/` | Quien tenga `site.view` (o todos si el sitio es público) |
 | Cajita de mensajes | `/mensajes` | `notes.send` |
 | Chat en tiempo real tipo WhatsApp: fotos, stickers, responder citando, última conexión y vistos (✓ ✓✓) | `/chat` | `chat.use` |
+| Perfil propio: nombre, foto o icono, frase y cumpleaños; se ve en la cabecera, el chat y las listas | `/cuenta/perfil` | Cualquier cuenta |
 | Listas compartidas: eliges con quién (dos o un grupo) y agregan tareas con subtareas, descripción, materiales, fotos, fecha y responsable, en vivo | `/listas` | `lists.use` |
 | Panel de contenido: fotos, textos y animaciones, hitos, fechas importantes, sorpresas/interrupciones | `/panel` | Editora y super admin |
 | Mi cuenta: avisos en este dispositivo (con prueba), contraseña y sesiones | `/cuenta` | Cualquier cuenta |

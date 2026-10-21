@@ -19,6 +19,13 @@ export interface Profile {
   role: Role;
   isActive: boolean;
   createdAt: IsoDateTime;
+  /** Foto de perfil en el almacenamiento privado (gana sobre el icono). */
+  avatarPath: string | null;
+  /** Icono (emoji) que eligió si no tiene foto. */
+  avatarEmoji: string | null;
+  /** Frase o estado corto. */
+  bio: string;
+  birthday: IsoDate | null;
   /** Colores que eligió para sí (null = los de la página). */
   themeColors: Partial<Pick<ThemeTokens, "primary" | "primaryContrast" | "accent" | "background" | "surface" | "text" | "muted">> | null;
 }

@@ -169,6 +169,22 @@ inicio**, entra desde el ícono nuevo y activa los avisos ahí (necesita iOS
 
 ## 7. Mi cuenta
 
+Arriba ves tu foto, tu nombre y tu frase. Toca **Editar perfil** para
+cambiarlos:
+
+- **Tu foto:** **📷 Subir foto** y elige una imagen del celular o del
+  computador. Se recorta en círculo y se ve en la cabecera, en el chat, en las
+  listas y en **Mi cuenta**. **Quitar foto** la borra.
+- **Tu icono:** si no quieres foto, toca un icono (🌻, 🐱, 🌙…). Sin foto ni
+  icono se ve la inicial de tu nombre.
+- **Sobre mí:** tu nombre, una frase o estado (hasta 160 letras) y tu
+  cumpleaños. Toca **Guardar perfil**. De tu cumpleaños los demás ven el día y
+  el mes, nunca el año.
+
+En el **chat**, toca la foto o el nombre de la otra persona para ver su
+perfil: su foto en grande, su frase y cuántos días faltan para su cumpleaños.
+Sólo cada persona puede cambiar su propio perfil.
+
 - **Mis colores:** toca **Cambiar colores** y elige una paleta (Rosa vino,
   Rosa suave, Durazno, Lavanda, Menta, Cielo o Medianoche), o ajústala a tu
   gusto con **Personalizar**, y luego **Guardar mis colores**. Sólo cambia lo

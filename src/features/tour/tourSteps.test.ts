@@ -63,10 +63,15 @@ describe("recorrido del tutorial", () => {
   });
 
   it("todos los pasos tienen un id único y texto", () => {
-    for (const path of ["/", "/entrar", "/mensajes", "/chat", "/cuenta", "/panel", "/super/auditoria", "/invitacion", "/recuperar", "/listas", "/listas/abc"]) {
+    for (const path of ["/", "/entrar", "/mensajes", "/chat", "/cuenta", "/cuenta/perfil", "/panel", "/super/auditoria", "/invitacion", "/recuperar", "/listas", "/listas/abc"]) {
       const steps = tourFor({ pathname: path, loggedIn: true, policy: policyFor("super_admin") });
       expect(new Set(steps.map((s) => s.id)).size).toBe(steps.length);
       for (const s of steps) expect(s.title && s.body).toBeTruthy();
     }
+  });
+
+  it("en Mi perfil explica la foto, el icono y los datos", () => {
+    expect(ids("/cuenta/perfil", "viewer")).toEqual(expect.arrayContaining(["profile-photo", "profile-icon", "profile-details"]));
+    expect(ids("/cuenta", "viewer")).toContain("account-profile");
   });
 });
