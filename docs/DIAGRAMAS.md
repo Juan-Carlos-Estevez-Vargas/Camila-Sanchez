@@ -16,6 +16,7 @@ directamente al abrir este archivo. La explicación de cada pieza está en
 - [Chat: fotos y stickers](#chat-fotos-y-stickers)
 - [Avisos en el celular](#avisos-en-el-celular)
 - [Colores por persona](#colores-por-persona)
+- [Perfil de cada persona](#perfil-de-cada-persona)
 - [Listas compartidas](#listas-compartidas)
 - [Tutorial guiado](#tutorial-guiado)
 - [Integración y despliegue](#integración-y-despliegue)
@@ -66,8 +67,8 @@ flowchart LR
 
 ```mermaid
 flowchart TB
-  F["features/<br/>site · auth · admin · super · messages · chat · tour"]
-  UI["ui/<br/>modal, campos, feedback, cargador"]
+  F["features/<br/>site · auth · admin · super · messages · chat · lists · tour"]
+  UI["ui/<br/>modal, campos, feedback, cargador, avatar"]
   S["state/<br/>contextos: auth, contenido, tema, avisos"]
   SV["services/<br/>cola, imágenes, notificaciones"]
   P["data/ports.ts<br/>interfaz Backend"]
@@ -381,6 +382,49 @@ flowchart TD
   H --> C
 ```
 
+## Perfil de cada persona
+
+Qué se ve en el círculo de cada persona (cabecera, Mi cuenta, chat y listas):
+
+```mermaid
+flowchart TD
+  A["Avatar(persona)"] --> B{"¿Tiene avatar_path?"}
+  B -- "sí" --> C["resolveAvatars():<br/>URL firmada del bucket avatars"]
+  C --> F["Foto en círculo"]
+  B -- "no" --> D{"¿Eligió un icono?<br/>avatar_emoji"}
+  D -- "sí" --> E["El icono (🌻, 🐱, 🌙…)"]
+  D -- "no" --> G["La inicial del nombre"]
+```
+
+Cambiar la foto en **Mi cuenta → Editar perfil**:
+
+```mermaid
+sequenceDiagram
+  actor P as Persona
+  participant App as Mi perfil
+  participant W as Web Worker
+  participant ST as Storage (avatars)
+  participant DB as Postgres
+
+  P->>App: 📷 Subir foto
+  App->>W: reduce a 512 px, quita metadatos (GPS)
+  W-->>App: WebP liviano
+  App->>ST: sube a avatars/<su id>/<uuid>.webp
+  Note over ST: la política sólo deja subir<br/>a la carpeta propia (2 MB)
+  App->>DB: update profiles.avatar_path
+  Note over DB: guard_profile_changes: sólo<br/>la dueña o el dueño cambia<br/>foto, icono, frase y cumpleaños
+  alt se guardó
+    App->>ST: borra la foto anterior
+    App-->>P: «Foto actualizada 📸»
+  else falló
+    App->>ST: borra la foto recién subida
+    App-->>P: aviso de error
+  end
+```
+
+En el chat, tocar a la otra persona abre su tarjeta de perfil: foto en
+grande, frase y cuenta regresiva a su cumpleaños (sólo día y mes).
+
 ## Listas compartidas
 
 Crear una lista y trabajar en ella entre varias personas:
@@ -681,7 +725,7 @@ flowchart LR
   E6 & V2 --> MSG["/mensajes"]
   E7 & V3 --> CHAT["/chat"]
   E8 & V4 --> LISTAS["/listas<br/>(dentro, sólo las listas<br/>donde es miembro)"]
-  ANY["cualquier cuenta"] --> CUENTA["/cuenta y /cuenta/colores<br/>avisos, colores, contraseña"]
+  ANY["cualquier cuenta"] --> CUENTA["/cuenta, /cuenta/perfil y /cuenta/colores<br/>perfil, avisos, colores, contraseña"]
 ```
 
 Estos son los permisos por defecto (migración `core_schema`). Juan los cambia

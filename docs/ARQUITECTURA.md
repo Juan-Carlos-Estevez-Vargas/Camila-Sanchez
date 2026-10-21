@@ -36,7 +36,7 @@ src/
   data/       puertos (ports.ts) y adaptadores: supabase/ y demo/
   services/   cola de tareas, pipeline de imágenes (Web Workers), notificaciones, <head>
   state/      contextos de React: backend, auth, contenido, tema, notificaciones, toasts
-  ui/         componentes reutilizables: modal, campos, feedback, cargador romántico
+  ui/         componentes reutilizables: modal, campos, feedback, avatar, cargador romántico
   features/   funcionalidades: site, auth, admin (panel), super, messages, chat, tour
   styles/     sistema de diseño SCSS: abstracts, base, components, layout
 supabase/
@@ -119,6 +119,20 @@ service worker (`public/sw.js`): caché sin conexión y avisos push.
 4. En la carga masiva, cada foto se ubica en el mes en que se tomó (fecha EXIF)
    y las repetidas se saltan gracias a una huella SHA-256 guardada en
    `photos.source_hash`.
+5. Las fotos de perfil pasan por el mismo worker con otro tamaño (512 px,
+   unos 120 KB) y van al bucket privado `avatars`, en la carpeta de cada
+   persona.
+
+### Perfil
+
+`/cuenta/perfil` (`features/auth/ProfilePage.tsx`) guarda nombre, frase,
+cumpleaños e icono con `users.updateMyProfile`, y la foto con
+`users.setMyAvatar`, que sube la nueva, guarda la ruta y borra la anterior
+(si algo falla, borra la recién subida). `ui/Avatar.tsx` dibuja a cualquier
+persona: su foto con URL firmada, si no su icono y si no la inicial; lo usan
+la cabecera, Mi cuenta, el chat y las listas. `ProfileCard` muestra el perfil
+de otra persona desde el chat. `domain/profile.ts` calcula la fecha del
+cumpleaños (día y mes) y los días que faltan.
 
 ### Tutorial guiado
 
@@ -146,6 +160,11 @@ tenga texto e id único.
 - Cada funcionalidad carga sus estilos con su ruta (`features/*/styles`) y los
   componentes aislados usan CSS Modules.
 - Las capas de `z-index` están centralizadas en `$z-layers`.
+- Responsive: las cuadrículas de una columna (`.stack`, la cajita, el chat y
+  las listas) usan `grid-template-columns: minmax(0, 1fr)`, así un texto
+  largo de una sola línea (el resumen de una notita, un nombre) se recorta
+  con «…» en vez de ensanchar la página. Los títulos y palabras largas usan
+  `overflow-wrap: anywhere`.
 
 ## 5. Backend (Supabase)
 
@@ -217,6 +236,10 @@ Las tablas viven en `public` y se crean con las migraciones de
   `notify_list_members`): avisan al sumar a alguien, al agregar o terminar una
   tarea y al asignarla. Como en el chat, el aviso sin leer de una lista se
   actualiza en vez de sumar otro.
+- `guard_profile_changes`: sólo quien tiene `users.manage` cambia roles o
+  activa y desactiva cuentas, siempre queda un super administrador activo, y
+  sólo cada persona cambia sus colores, foto, icono, frase y cumpleaños. La foto debe estar en `avatars/<su id>/`
+  (`profiles_avatar_own_folder`).
 - `audit_row`: registra en `audit_log` cada INSERT, UPDATE o DELETE de las
   tablas auditadas. Los mensajes privados no se registran.
 - Publicación `supabase_realtime`: avisa al navegador de los cambios.
@@ -347,11 +370,11 @@ Un salto manual en `package.json` manda sobre el cálculo.
 
 | Tipo | Dónde | Qué cubren |
 | --- | --- | --- |
-| Unitarias de dominio | `src/domain/*.test.ts` | Fechas, invitaciones, recuperación, paletas y colores por persona, chat (vistos, última conexión, vistas previas), stickers, listas (avance, fechas, subtareas) |
+| Unitarias de dominio | `src/domain/*.test.ts` | Fechas, invitaciones, recuperación, paletas y colores por persona, chat (vistos, última conexión, vistas previas), stickers, listas (avance, fechas, subtareas), perfil (cumpleaños, inicial) |
 | Unitarias de núcleo | `src/core/*.test.ts` | Validación, redirecciones seguras, SEO, cabeceras |
 | Servicios | `src/services/**/*.test.ts` | Cola de tareas, EXIF, tamaños, carga masiva |
 | Tutorial | `src/features/tour/*.test.ts` | Pasos por rol y posición de la tarjeta |
-| Base de datos | `supabase/tests/rls.test.ts` | Políticas RLS, triggers, buckets, listas compartidas y avisos push sobre PGlite (con Vault y `pg_net` simulados en `supabaseStub.ts`) |
+| Base de datos | `supabase/tests/rls.test.ts` | Políticas RLS, triggers, buckets, listas compartidas, perfiles y avisos push sobre PGlite (con Vault y `pg_net` simulados en `supabaseStub.ts`) |
 | Releases | `scripts/release.test.ts` | Cálculo de versión y notas |
 
 `npm run check` corre typecheck, lint y todas las pruebas.
