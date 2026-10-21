@@ -20,8 +20,8 @@ corren en Edge Functions.
 | Datos en el navegador | Puerto `Backend` con dos adaptadores (Supabase y demo) | Aislar la UI del proveedor |
 | Autenticación | Supabase Auth (PKCE, rotación de tokens) | Sesiones, enlaces mágicos y recuperación |
 | Base de datos | Postgres con RLS, RBAC en SQL y auditoría por triggers | Reglas de negocio y permisos |
-| Archivos | Supabase Storage, buckets privados `photos` y `chat-media` | Fotos de la página y del chat servidas con URLs firmadas |
-| Tiempo real | Supabase Realtime | Chat, notificaciones y contenido que se actualiza solo |
+| Archivos | Supabase Storage, buckets privados `photos`, `chat-media` y `list-media` | Fotos de la página, del chat y de las listas servidas con URLs firmadas |
+| Tiempo real | Supabase Realtime | Chat, listas, notificaciones y contenido que se actualiza solo |
 | Avisos al celular | Web Push (VAPID), service worker, `pg_net` y Supabase Vault | Notificaciones en la pantalla del dispositivo con la app cerrada |
 | Funciones | Edge Functions en Deno | Gestión de cuentas, invitaciones y Web Push |
 | Publicación | Netlify (web) y GitHub Actions (backend y releases) | Despliegue continuo en cada merge |
@@ -89,8 +89,8 @@ dibuja la cabecera, las rutas y el pie. En producción `main.tsx` registra el
 service worker (`public/sw.js`): caché sin conexión y avisos push.
 
 - Rutas públicas: `/`, `/entrar`, `/invitacion`, `/recuperar`.
-- Rutas privadas (`src/app/routes.tsx`): `/mensajes`, `/chat`, `/cuenta`,
-  `/cuenta/colores`, `/panel/*` y `/super/*` (`/panel/colores`, de antes,
+- Rutas privadas (`src/app/routes.tsx`): `/mensajes`, `/chat`, `/listas`,
+  `/listas/:id`, `/cuenta`, `/cuenta/colores`, `/panel/*` y `/super/*` (`/panel/colores`, de antes,
   redirige a `/cuenta/colores`). Cada una se envuelve en `RequirePermission`, que
   manda a `/entrar?next=…` si no hay sesión y muestra un aviso si falta el
   permiso.
@@ -163,6 +163,10 @@ Las tablas viven en `public` y se crean con las migraciones de
   citando y `kind` = `text`, `image` o `sticker`), `chat_reads` (última
   conexión y hasta dónde leyó cada persona), `notifications` y
   `push_subscriptions` (un registro por dispositivo con avisos activados).
+- **Listas compartidas:** `todo_lists` (nombre, icono, descripción, fecha y
+  quién la creó), `todo_list_members` (con quién se comparte), `todo_items`
+  (tareas; con `parent_id` son subtareas de un solo nivel, con fecha,
+  responsable y quién la terminó), `todo_materials` y `todo_item_images`.
 - **Trazabilidad:** `audit_log`.
 
 ### Roles y permisos (RBAC)
@@ -175,6 +179,11 @@ Las tablas viven en `public` y se crean con las migraciones de
   en `profiles.theme_colors`: la restricción `is_valid_theme_colors` sólo deja
   claves de la paleta en `#rrggbb`, y `guard_profile_changes` impide que
   alguien cambie los de otra persona, incluso el super administrador.
+- **Listas:** `lists.use` (editora e invitado lo tienen) deja crear listas.
+  Lo de adentro no depende de un permiso sino de ser miembro:
+  `is_list_member(id)` decide qué lista, tarea, material o foto ve y cambia
+  cada persona. Cualquier miembro suma a otros que tengan `lists.use`; cada
+  quien puede salirse; sólo quien la creó saca a otros o la borra.
 - `has_permission(p)` resuelve en SQL si la persona actual tiene un permiso;
   todas las políticas RLS la usan. El super administrador los tiene todos.
 - Triggers (`guard_profile_changes`, `guard_site_settings`,
@@ -197,6 +206,16 @@ Las tablas viven en `public` y se crean con las migraciones de
 - `register_push_subscription(...)`: guarda el dispositivo a nombre de quien
   tiene la sesión (si era de otra cuenta, pasa a la nueva).
 - `send_test_notification()`: aviso de prueba para uno mismo, uno por minuto.
+- `create_todo_list(...)`: crea una lista y suma a las personas elegidas en un
+  solo paso (`add_list_owner` mete siempre a quien la crea).
+- `guard_todo_item`: una tarea no cambia de lista, una subtarea es de la misma
+  lista y de un solo nivel, sólo se asigna a miembros, y quién y cuándo la
+  terminó lo pone la base. `guard_todo_image` deja cada foto en la carpeta de
+  su lista y hasta 12 por tarea.
+- `notify_list_member_added` y `notify_todo_item` (vía
+  `notify_list_members`): avisan al sumar a alguien, al agregar o terminar una
+  tarea y al asignarla. Como en el chat, el aviso sin leer de una lista se
+  actualiza en vez de sumar otro.
 - `audit_row`: registra en `audit_log` cada INSERT, UPDATE o DELETE de las
   tablas auditadas. Los mensajes privados no se registran.
 - Publicación `supabase_realtime`: avisa al navegador de los cambios.
@@ -225,6 +244,7 @@ navegador ni al repositorio.
 | Fotos expuestas | Buckets privados, sólo imágenes de hasta 5 MB, URLs firmadas, metadatos borrados al subir |
 | Alguien sube o borra fotos del chat de otro | En `chat-media` cada persona sólo escribe y borra en su carpeta (`<user_id>/`), y un mensaje sólo puede apuntar a fotos de esa carpeta |
 | Avisos falsos o push a dispositivos ajenos | Sólo triggers crean avisos; `send-push` exige un secreto que vive en Vault y en los secretos de la función, nunca en el repositorio; cada dispositivo pertenece a una sola cuenta y se da de baja al cerrar sesión |
+| Alguien ve o cambia una lista ajena | RLS con `is_list_member` en las cinco tablas; las fotos van en `list-media/<list_id>/` y el bucket sólo deja ver, subir y borrar a los miembros de esa lista |
 | Colores ajenos | `profiles.theme_colors` sólo lo cambia su dueña o dueño y sólo acepta colores `#rrggbb` |
 | Clickjacking y fugas de referer | `X-Frame-Options`, `frame-ancestors 'none'`, `Referrer-Policy` |
 | Enumeración de cuentas | La recuperación responde igual exista o no el correo |
@@ -260,9 +280,20 @@ Las cabeceras están en `public/_headers` (Netlify) y `vercel.json`; una prueba
 - `chat_reads` está en la publicación de Realtime: los vistos y la conexión se
   actualizan sin recargar.
 
+### Listas compartidas
+
+- `ListsPage` (`/listas`) muestra las listas de la persona con su avance y la
+  fecha más cercana; `ListPage` (`/listas/:id`) la lista con sus tareas, y
+  `TaskEditor` el detalle de una tarea, que se guarda solo.
+- Las cinco tablas están en la publicación de Realtime: lo que hace una
+  persona aparece en la pantalla de las demás sin recargar (las recargas se
+  agrupan en 250 ms).
+- Las reglas puras (árbol de tareas, avance, fechas) están en
+  `src/domain/lists.ts` y tienen pruebas.
+
 ### Avisos
 
-1. Una notita, un mensaje o una sorpresa se inserta con RLS.
+1. Una notita, un mensaje, una sorpresa o algo en una lista se inserta con RLS.
 2. Un trigger crea la fila en `notifications` para la otra persona. En el
    chat, si ya hay un aviso sin leer, se actualiza con el último mensaje (la
    campana muestra uno solo, pero cada mensaje avisa al celular).
@@ -274,7 +305,8 @@ Las cabeceras están en `public/_headers` (Netlify) y `vercel.json`; una prueba
    el aviso se guarda igual. `send-push` manda el Web Push (VAPID) a los
    dispositivos de esa persona y borra las suscripciones vencidas.
 5. El service worker (`public/sw.js`) muestra el aviso en la pantalla de
-   notificaciones (los del chat se agrupan en uno) y abre el enlace al tocarlo.
+   notificaciones (los del chat se agrupan en uno, y los de cada lista en uno
+   por lista) y abre el enlace al tocarlo.
 
 Cada dispositivo se suscribe con `register_push_subscription`, que lo pone a
 nombre de quien inició sesión por última vez en él; al cerrar sesión la
@@ -313,11 +345,11 @@ Un salto manual en `package.json` manda sobre el cálculo.
 
 | Tipo | Dónde | Qué cubren |
 | --- | --- | --- |
-| Unitarias de dominio | `src/domain/*.test.ts` | Fechas, invitaciones, recuperación, paletas y colores por persona, chat (vistos, última conexión, vistas previas), stickers |
+| Unitarias de dominio | `src/domain/*.test.ts` | Fechas, invitaciones, recuperación, paletas y colores por persona, chat (vistos, última conexión, vistas previas), stickers, listas (avance, fechas, subtareas) |
 | Unitarias de núcleo | `src/core/*.test.ts` | Validación, redirecciones seguras, SEO, cabeceras |
 | Servicios | `src/services/**/*.test.ts` | Cola de tareas, EXIF, tamaños, carga masiva |
 | Tutorial | `src/features/tour/*.test.ts` | Pasos por rol y posición de la tarjeta |
-| Base de datos | `supabase/tests/rls.test.ts` | Políticas RLS, triggers, buckets y avisos push sobre PGlite (con Vault y `pg_net` simulados en `supabaseStub.ts`) |
+| Base de datos | `supabase/tests/rls.test.ts` | Políticas RLS, triggers, buckets, listas compartidas y avisos push sobre PGlite (con Vault y `pg_net` simulados en `supabaseStub.ts`) |
 | Releases | `scripts/release.test.ts` | Cálculo de versión y notas |
 
 `npm run check` corre typecheck, lint y todas las pruebas.
@@ -354,3 +386,4 @@ prueba comprueba que `supabase/setup.sql` esté al día).
 | `…1020000200_chat_media` | Fotos y stickers en el chat, bucket `chat-media` |
 | `…1020000300_personal_colors` | Colores por persona y Rosa vino para quien no tiene cuenta |
 | `…1020000400_device_push` | Avisos al celular, avisos de sorpresas y aviso de prueba |
+| `…1021000100_todo_lists` | Listas compartidas con tareas, subtareas, materiales y fotos, bucket `list-media` y permiso `lists.use` |

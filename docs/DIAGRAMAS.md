@@ -16,6 +16,7 @@ directamente al abrir este archivo. La explicación de cada pieza está en
 - [Chat: fotos y stickers](#chat-fotos-y-stickers)
 - [Avisos en el celular](#avisos-en-el-celular)
 - [Colores por persona](#colores-por-persona)
+- [Listas compartidas](#listas-compartidas)
 - [Tutorial guiado](#tutorial-guiado)
 - [Integración y despliegue](#integración-y-despliegue)
 - [Modelo de datos](#modelo-de-datos)
@@ -32,7 +33,7 @@ flowchart LR
   subgraph Supabase
     AUTH["Auth<br/>PKCE + rotación de tokens"]
     DB[("Postgres<br/>RLS + triggers")]
-    ST[("Storage<br/>buckets privados<br/>photos · chat-media")]
+    ST[("Storage<br/>buckets privados<br/>photos · chat-media · list-media")]
     RT["Realtime"]
     VA[("Vault<br/>URL y secreto de send-push")]
     subgraph Edge["Edge Functions"]
@@ -353,6 +354,9 @@ Cuándo sale un aviso al celular:
 flowchart LR
   N["Notita nueva"] --> INS["insert notifications"]
   S["Sorpresa activa ya"] --> INS
+  L["Algo nuevo en una lista"] --> QL{"¿Hay un aviso de esa lista<br/>sin leer?"}
+  QL -- "no" --> INS
+  QL -- "sí" --> UPD
   C["Mensaje de chat"] --> Q{"¿Hay un aviso de chat<br/>sin leer?"}
   Q -- "no" --> INS
   Q -- "sí" --> UPD["update del aviso<br/>con el último mensaje"]
@@ -360,7 +364,7 @@ flowchart LR
   T --> V{"¿Vault tiene la URL<br/>y el secreto?"}
   V -- "no" --> X["Sólo campana en la app"]
   V -- "sí" --> SP["send-push → Web Push<br/>a cada dispositivo de la persona"]
-  SP --> SW["Service worker: los del chat<br/>se agrupan en un solo aviso"]
+  SP --> SW["Service worker: los del chat se agrupan<br/>en un aviso, y los de cada lista en otro"]
 ```
 
 ## Colores por persona
@@ -375,6 +379,50 @@ flowchart TD
   D --> F
   G["Mi cuenta → Mis colores → Guardar"] --> H["update profiles.theme_colors<br/>(sólo la propia fila, sólo #rrggbb)"]
   H --> C
+```
+
+## Listas compartidas
+
+Crear una lista y trabajar en ella entre varias personas:
+
+```mermaid
+sequenceDiagram
+  actor J as Juan
+  participant App as SPA
+  participant DB as Postgres
+  participant RT as Realtime
+  actor C as Camila
+
+  J->>App: Listas → Nueva lista (elige a Camila)
+  App->>DB: create_todo_list(nombre, icono, fecha, [Camila])
+  Note over DB: add_list_owner suma a Juan<br/>y se suma a Camila
+  DB-->>C: aviso «Juan te sumó a la lista…» (campana y celular)
+  J->>App: Agrega «Comprar bloqueador»
+  App->>DB: insert todo_items (RLS: is_list_member)
+  DB-->>C: aviso «➕ Comprar bloqueador»<br/>(actualiza el de esa lista si no lo leyó)
+  RT-->>C: la tarea aparece sin recargar
+  C->>App: Abre la tarea: subtareas, materiales, fotos
+  App->>DB: insert todo_materials / todo_item_images
+  App->>DB: sube la foto a list-media/<list_id>/
+  C->>App: Marca la tarea como hecha
+  App->>DB: update done_at
+  Note over DB: guard_todo_item pone la hora<br/>y done_by = Camila
+  DB-->>J: aviso «✅ Comprar bloqueador»
+  RT-->>J: la tarea pasa a «Hechas»
+```
+
+Qué puede hacer cada miembro:
+
+```mermaid
+flowchart TD
+  P["Persona con sesión"] --> U{"¿Tiene lists.use?"}
+  U -- "no" --> N["No ve listas"]
+  U -- "sí" --> M{"¿Es miembro de la lista?"}
+  M -- "no" --> X["No la ve (RLS)"]
+  M -- "sí" --> A["Ver, agregar, editar, tachar y borrar<br/>tareas, subtareas, materiales y fotos"]
+  A --> S["Sumar a alguien que use listas"]
+  A --> L["Salirse"]
+  M -- "sí, la creó" --> O["Además: sacar a otros<br/>y borrar la lista"]
 ```
 
 ## Tutorial guiado
@@ -440,6 +488,13 @@ erDiagram
   INTERRUPTIONS ||--o{ INTERRUPTION_VIEWS : "vista por"
   PHOTOS ||--o{ MILESTONES : "ilustra"
   AUTH_USERS ||--o{ AUDIT_LOG : "actor"
+  AUTH_USERS ||--o{ TODO_LISTS : "crea"
+  TODO_LISTS ||--|{ TODO_LIST_MEMBERS : "se comparte con"
+  AUTH_USERS ||--o{ TODO_LIST_MEMBERS : "es miembro"
+  TODO_LISTS ||--o{ TODO_ITEMS : "tiene"
+  TODO_ITEMS |o--o{ TODO_ITEMS : "subtarea de"
+  TODO_ITEMS ||--o{ TODO_MATERIALS : "necesita"
+  TODO_ITEMS ||--o{ TODO_ITEM_IMAGES : "fotos"
 
   PROFILES {
     uuid id PK
@@ -529,7 +584,7 @@ erDiagram
   NOTIFICATIONS {
     uuid id PK
     uuid user_id FK
-    text kind "note, chat, system"
+    text kind "note, chat, system, list"
     text title
     text body
     text link
@@ -541,6 +596,44 @@ erDiagram
     text endpoint UK "un dispositivo"
     text p256dh
     text auth
+  }
+  TODO_LISTS {
+    uuid id PK
+    uuid owner_id FK "quien la creó"
+    text title
+    text emoji
+    text description
+    date due_on
+  }
+  TODO_LIST_MEMBERS {
+    uuid list_id PK
+    uuid user_id PK
+    uuid added_by FK
+  }
+  TODO_ITEMS {
+    uuid id PK
+    uuid list_id FK
+    uuid parent_id FK "subtarea (un nivel)"
+    text title
+    text description
+    date due_on
+    uuid assignee_id FK "miembro"
+    timestamptz done_at
+    uuid done_by FK
+  }
+  TODO_MATERIALS {
+    uuid id PK
+    uuid item_id FK
+    text name
+    text quantity
+    boolean is_ready
+  }
+  TODO_ITEM_IMAGES {
+    uuid id PK
+    uuid item_id FK
+    uuid list_id FK
+    text path "list-media/<list_id>/..."
+    text thumb_path
   }
   AUDIT_LOG {
     bigint id PK
@@ -571,16 +664,19 @@ flowchart LR
     E5["interruptions.manage"]
     E6["notes.send"]
     E7["chat.use"]
+    E8["lists.use"]
   end
   subgraph viewer["viewer (invitado)"]
     V1["site.view"]
     V2["notes.send"]
     V3["chat.use"]
+    V4["lists.use"]
   end
   ALL --> SUPER["/super: usuarios, permisos,<br/>apariencia, secciones, ajustes, auditoría"]
   E2 & E3 & E4 & E5 --> PANEL["/panel"]
   E6 & V2 --> MSG["/mensajes"]
   E7 & V3 --> CHAT["/chat"]
+  E8 & V4 --> LISTAS["/listas<br/>(dentro, sólo las listas<br/>donde es miembro)"]
   ANY["cualquier cuenta"] --> CUENTA["/cuenta y /cuenta/colores<br/>avisos, colores, contraseña"]
 ```
 
