@@ -9,6 +9,7 @@ export const PERMISSIONS = {
   interruptionsManage: "interruptions.manage",
   notesSend: "notes.send",
   chatUse: "chat.use",
+  listsUse: "lists.use",
   sectionsManage: "sections.manage",
   themeManage: "theme.manage",
   settingsManage: "settings.manage",
@@ -30,9 +31,9 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {
   editor: [
     PERMISSIONS.siteView, PERMISSIONS.contentEdit, PERMISSIONS.photosManage,
     PERMISSIONS.datesManage, PERMISSIONS.interruptionsManage, PERMISSIONS.notesSend,
-    PERMISSIONS.chatUse,
+    PERMISSIONS.chatUse, PERMISSIONS.listsUse,
   ],
-  viewer: [PERMISSIONS.siteView, PERMISSIONS.notesSend, PERMISSIONS.chatUse],
+  viewer: [PERMISSIONS.siteView, PERMISSIONS.notesSend, PERMISSIONS.chatUse, PERMISSIONS.listsUse],
 };
 
 /**

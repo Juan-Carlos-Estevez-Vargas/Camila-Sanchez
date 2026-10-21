@@ -226,7 +226,7 @@ export interface ChatPresence {
   lastReadAt: IsoDateTime | null;
 }
 
-export type NotificationKind = "note" | "chat" | "system";
+export type NotificationKind = "note" | "chat" | "system" | "list";
 
 export interface AppNotification {
   id: Uuid;
@@ -237,6 +237,74 @@ export interface AppNotification {
   link: string | null;
   readAt: IsoDateTime | null;
   createdAt: IsoDateTime;
+}
+
+/** Lista de cosas por hacer compartida con una o varias personas. */
+export interface TodoList {
+  id: Uuid;
+  ownerId: Uuid;
+  title: string;
+  description: string;
+  emoji: string;
+  dueOn: IsoDate | null;
+  createdAt: IsoDateTime;
+  updatedAt: IsoDateTime;
+  /** Quienes la ven y la editan (incluye a quien la creó). */
+  memberIds: Uuid[];
+}
+
+/** Lista con su avance, para el listado. */
+export interface TodoListSummary extends TodoList {
+  total: number;
+  done: number;
+  /** Fecha más cercana entre las tareas pendientes (o la de la lista). */
+  nextDue: IsoDate | null;
+}
+
+/** Tarea o subtarea (si tiene parentId). */
+export interface TodoItem {
+  id: Uuid;
+  listId: Uuid;
+  parentId: Uuid | null;
+  title: string;
+  description: string;
+  dueOn: IsoDate | null;
+  assigneeId: Uuid | null;
+  doneAt: IsoDateTime | null;
+  doneBy: Uuid | null;
+  position: number;
+  createdBy: Uuid | null;
+  createdAt: IsoDateTime;
+}
+
+export interface TodoMaterial {
+  id: Uuid;
+  itemId: Uuid;
+  name: string;
+  quantity: string;
+  isReady: boolean;
+  position: number;
+}
+
+/** Foto de una tarea, en el almacenamiento privado de la lista. */
+export interface TodoImage {
+  id: Uuid;
+  itemId: Uuid;
+  listId: Uuid;
+  path: string;
+  thumbPath: string;
+  width: number | null;
+  height: number | null;
+  createdBy: Uuid | null;
+  createdAt: IsoDateTime;
+}
+
+/** Todo lo que se pinta en la página de una lista. */
+export interface TodoListDetail {
+  list: TodoList;
+  items: TodoItem[];
+  materials: TodoMaterial[];
+  images: TodoImage[];
 }
 
 export interface AuditEntry {
