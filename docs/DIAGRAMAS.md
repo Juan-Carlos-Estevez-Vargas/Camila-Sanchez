@@ -16,6 +16,8 @@ directamente al abrir este archivo. La explicación de cada pieza está en
 - [Chat: fotos y stickers](#chat-fotos-y-stickers)
 - [Avisos en el celular](#avisos-en-el-celular)
 - [Colores por persona](#colores-por-persona)
+- [Perfil de cada persona](#perfil-de-cada-persona)
+- [Listas compartidas](#listas-compartidas)
 - [Tutorial guiado](#tutorial-guiado)
 - [Integración y despliegue](#integración-y-despliegue)
 - [Modelo de datos](#modelo-de-datos)
@@ -32,7 +34,7 @@ flowchart LR
   subgraph Supabase
     AUTH["Auth<br/>PKCE + rotación de tokens"]
     DB[("Postgres<br/>RLS + triggers")]
-    ST[("Storage<br/>buckets privados<br/>photos · chat-media")]
+    ST[("Storage<br/>buckets privados<br/>photos · chat-media · list-media · avatars")]
     RT["Realtime"]
     VA[("Vault<br/>URL y secreto de send-push")]
     subgraph Edge["Edge Functions"]
@@ -65,8 +67,8 @@ flowchart LR
 
 ```mermaid
 flowchart TB
-  F["features/<br/>site · auth · admin · super · messages · chat · tour"]
-  UI["ui/<br/>modal, campos, feedback, cargador"]
+  F["features/<br/>site · auth · admin · super · messages · chat · lists · tour"]
+  UI["ui/<br/>modal, campos, feedback, cargador, avatar"]
   S["state/<br/>contextos: auth, contenido, tema, avisos"]
   SV["services/<br/>cola, imágenes, notificaciones"]
   P["data/ports.ts<br/>interfaz Backend"]
@@ -353,6 +355,9 @@ Cuándo sale un aviso al celular:
 flowchart LR
   N["Notita nueva"] --> INS["insert notifications"]
   S["Sorpresa activa ya"] --> INS
+  L["Algo nuevo en una lista"] --> QL{"¿Hay un aviso de esa lista<br/>sin leer?"}
+  QL -- "no" --> INS
+  QL -- "sí" --> UPD
   C["Mensaje de chat"] --> Q{"¿Hay un aviso de chat<br/>sin leer?"}
   Q -- "no" --> INS
   Q -- "sí" --> UPD["update del aviso<br/>con el último mensaje"]
@@ -360,7 +365,7 @@ flowchart LR
   T --> V{"¿Vault tiene la URL<br/>y el secreto?"}
   V -- "no" --> X["Sólo campana en la app"]
   V -- "sí" --> SP["send-push → Web Push<br/>a cada dispositivo de la persona"]
-  SP --> SW["Service worker: los del chat<br/>se agrupan en un solo aviso"]
+  SP --> SW["Service worker: los del chat se agrupan<br/>en un aviso, y los de cada lista en otro"]
 ```
 
 ## Colores por persona
@@ -375,6 +380,280 @@ flowchart TD
   D --> F
   G["Mi cuenta → Mis colores → Guardar"] --> H["update profiles.theme_colors<br/>(sólo la propia fila, sólo #rrggbb)"]
   H --> C
+```
+
+## Perfil de cada persona
+
+Qué se ve en el círculo de cada persona (cabecera, Mi cuenta, chat y listas):
+
+```mermaid
+flowchart TD
+  A["Avatar(persona)"] --> B{"¿Tiene avatar_path?"}
+  B -- "sí" --> C["resolveAvatars():<br/>URL firmada del bucket avatars"]
+  C --> F["Foto en círculo"]
+  B -- "no" --> D{"¿Eligió un icono?<br/>avatar_emoji"}
+  D -- "sí" --> E["El icono (🌻, 🐱, 🌙…)"]
+  D -- "no" --> G["La inicial del nombre"]
+```
+
+Cambiar la foto en **Mi cuenta → Editar perfil**:
+
+```mermaid
+sequenceDiagram
+  actor P as Persona
+  participant App as Mi perfil
+  participant W as Web Worker
+  participant ST as Storage (avatars)
+  participant DB as Postgres
+
+  P->>App: 📷 Subir foto
+  App->>W: reduce a 512 px, quita metadatos (GPS)
+  W-->>App: WebP liviano
+  App->>ST: sube a avatars/<su id>/<uuid>.webp
+  Note over ST: la política sólo deja subir<br/>a la carpeta propia (2 MB)
+  App->>DB: update profiles.avatar_path
+  Note over DB: guard_profile_changes: sólo<br/>la dueña o el dueño cambia<br/>foto, icono, frase y cumpleaños
+  alt se guardó
+    App->>ST: borra la foto anterior
+    App-->>P: «Foto actualizada 📸»
+  else falló
+    App->>ST: borra la foto recién subida
+    App-->>P: aviso de error
+  end
+```
+
+En el chat, tocar a la otra persona abre su tarjeta de perfil: foto en
+grande, frase y cuenta regresiva a su cumpleaños (sólo día y mes).
+
+## Listas compartidas
+
+Diagramas de la sección **Listas** (cosas por hacer entre dos o en grupo).
+
+### Crear una lista y trabajar juntos
+
+```mermaid
+sequenceDiagram
+  actor J as Juan
+  participant App as SPA
+  participant DB as Postgres
+  participant RT as Realtime
+  actor C as Camila
+
+  J->>App: Listas → Nueva lista (elige a Camila)
+  App->>DB: create_todo_list(nombre, icono, fecha, [Camila])
+  Note over DB: add_list_owner suma a Juan<br/>y se suma a Camila
+  DB-->>C: aviso «Juan te sumó a la lista…» (campana y celular)
+  J->>App: Agrega «Comprar bloqueador»
+  App->>DB: insert todo_items (RLS: is_list_member)
+  DB-->>C: aviso «➕ Comprar bloqueador»<br/>(actualiza el de esa lista si no lo leyó)
+  RT-->>C: la tarea aparece sin recargar
+  C->>App: Abre la tarea: subtareas, materiales, fotos
+  App->>DB: insert todo_materials / todo_item_images
+  App->>DB: sube la foto a list-media/<list_id>/
+  C->>App: Marca la tarea como hecha
+  App->>DB: update done_at
+  Note over DB: guard_todo_item pone la hora<br/>y done_by = Camila
+  DB-->>J: aviso «✅ Comprar bloqueador»
+  RT-->>J: la tarea pasa a «Hechas»
+```
+
+### Cómo está armada una lista
+
+Cada lista tiene miembros y tareas; cada tarea puede tener un nivel de
+subtareas, materiales y hasta 12 fotos. Al borrar la lista se borra todo lo
+de adentro (`on delete cascade`) y la app borra también sus fotos del bucket.
+
+```mermaid
+classDiagram
+  direction LR
+  class Lista {
+    icono y nombre
+    descripción
+    fecha límite
+    dueña o dueño
+  }
+  class Miembro {
+    persona con lists.use
+    quién la sumó
+  }
+  class Tarea {
+    título y descripción
+    fecha
+    responsable: un miembro
+    hecha: cuándo y quién
+  }
+  class Subtarea {
+    título
+    hecha: cuándo y quién
+  }
+  class Material {
+    nombre
+    cantidad
+    listo sí/no
+  }
+  class Foto {
+    list-media/lista/archivo.webp
+    miniatura
+  }
+  Lista "1" *-- "1..*" Miembro : comparten
+  Lista "1" *-- "0..*" Tarea : tiene
+  Tarea "1" *-- "0..*" Subtarea : un solo nivel
+  Tarea "1" *-- "0..*" Material : necesita
+  Tarea "1" *-- "0..12" Foto : fotos
+```
+
+### Pantallas
+
+```mermaid
+flowchart LR
+  NAV["Cabecera → Listas<br/>(contador de avisos)"] --> L["/listas<br/>tarjetas con avance,<br/>fecha y caras"]
+  BELL["Campana o aviso<br/>en el celular"] --> D
+  L -- "+ Nueva lista" --> NL["Ventana: con quién,<br/>icono, nombre, fecha"]
+  NL -- "Crear lista" --> D["/listas/:id<br/>avance, agregar tarea,<br/>pendientes y hechas"]
+  L -- "toca una tarjeta" --> D
+  D -- "toca una tarea" --> T["Detalle de la tarea:<br/>fecha, responsable, descripción,<br/>subtareas, materiales, fotos"]
+  D -- "⚙️ Ajustes" --> S["Ajustes: datos de la lista,<br/>sumar o sacar personas,<br/>salirse o borrarla"]
+  T -- "Listo" --> D
+  S -- "salirse o borrar" --> L
+```
+
+### Estados de una tarea
+
+```mermaid
+stateDiagram-v2
+  [*] --> Pendiente: se agrega
+  Pendiente --> Hecha: se marca ✓
+  Hecha --> Pendiente: se desmarca
+  Hecha --> [*]: se borra
+  Pendiente --> [*]: se borra
+  state Pendiente {
+    state "Sin fecha" as SinFecha
+    state "Más adelante" as Mas_adelante
+    state "Pronto (3 días o menos)" as Pronto
+    state "Vence hoy" as Hoy
+    [*] --> SinFecha
+    SinFecha --> Mas_adelante: se le pone fecha
+    Mas_adelante --> Pronto: faltan 3 días o menos
+    Pronto --> Hoy: es el día
+    Hoy --> Vencida: pasó la fecha
+  }
+  note right of Hecha
+    guard_todo_item pone done_at y done_by;
+    el navegador no puede inventarlos.
+    Si era la última, salen 🎉 y confeti.
+  end note
+```
+
+La etiqueta de la fecha sale de `dueState()` y `dueLabel()` en
+`domain/lists.ts`: «En 5 días», «Mañana», «Vence hoy», «Venció hace 2 días».
+Las subtareas se tachan igual, pero no cambian el avance de la lista, que
+cuenta sólo las tareas principales.
+
+### Quién recibe cada aviso
+
+```mermaid
+flowchart TD
+  E1["Te suman a una lista"] --> N1["Aviso propio:<br/>«Juan te sumó a la lista…»<br/>enlace /listas/:id?nueva=1"]
+  E2["Alguien agrega una tarea"] --> G["notify_list_members()"]
+  E3["Alguien termina una tarea"] --> G
+  E4["Alguien te asigna una tarea"] --> G1["notify_list_members()<br/>sólo para la persona asignada"]
+  G --> R["Para cada miembro<br/>menos quien lo hizo<br/>y que tenga lists.use"]
+  G1 --> R
+  R --> Q{"¿Ya tiene un aviso sin leer<br/>de esta lista?"}
+  Q -- "sí" --> U["Se actualiza ese aviso<br/>(texto y hora)"]
+  Q -- "no" --> I["Se crea uno nuevo"]
+  N1 & U & I --> P["dispatch_push → send-push<br/>(celular, agrupado con<br/>tag list:/listas/:id)"]
+  N1 & U & I --> C["Campana y contador<br/>de Listas en la cabecera"]
+  C --> V{"¿La persona ya está<br/>en esa lista?"}
+  V -- "sí" --> M["No sale el globo<br/>y el aviso se marca leído"]
+  V -- "no" --> T["Globo emergente"]
+```
+
+### Fotos de una tarea
+
+```mermaid
+sequenceDiagram
+  actor P as Miembro
+  participant App as Detalle de la tarea
+  participant W as Web Worker
+  participant ST as Storage (list-media)
+  participant DB as Postgres
+
+  P->>App: 📷 Agregar fotos
+  App->>W: corrige orientación, quita GPS,<br/>reduce y genera miniatura
+  W-->>App: WebP + miniatura
+  App->>ST: sube a list-media/<list_id>/<uuid>.webp
+  Note over ST: is_list_folder_member: sólo<br/>miembros de esa lista suben,<br/>ven o borran en su carpeta
+  App->>DB: insert todo_item_images
+  Note over DB: guard_todo_image: la ruta debe<br/>ser de la lista y máximo 12 por tarea
+  alt se guardó
+    DB-->>App: foto registrada
+    App->>ST: URLs firmadas (1 h) para mostrarlas
+  else falló
+    App->>ST: borra lo que alcanzó a subir
+    App-->>P: aviso de error
+  end
+```
+
+### Cambios en vivo
+
+```mermaid
+sequenceDiagram
+  actor C as Camila
+  participant A as App de Camila
+  participant DB as Postgres
+  participant RT as Realtime
+  participant B as App de Juan
+  actor J as Juan
+
+  C->>A: marca «Reservar hotel» ✓
+  A->>A: la tacha al instante (optimista)
+  A->>DB: update done_at
+  DB-->>RT: cambio en todo_items
+  RT-->>B: aviso de cambio (RLS: sólo miembros)
+  Note over B: junta los cambios 250 ms<br/>y recarga la lista una vez
+  B-->>J: la tarea pasa a «Hechas»
+  alt falló el guardado
+    DB-->>A: error
+    A->>DB: recarga lo real
+    A-->>C: aviso de error
+  end
+```
+
+Las cinco tablas (`todo_lists`, `todo_list_members`, `todo_items`,
+`todo_materials`, `todo_item_images`) están en la publicación de Realtime.
+
+### Qué puede hacer cada miembro
+
+```mermaid
+flowchart TD
+  P["Persona con sesión"] --> U{"¿Tiene lists.use?"}
+  U -- "no" --> N["No ve listas"]
+  U -- "sí" --> M{"¿Es miembro de la lista?"}
+  M -- "no" --> X["No la ve (RLS)"]
+  M -- "sí" --> A["Ver, agregar, editar, tachar y borrar<br/>tareas, subtareas, materiales y fotos"]
+  A --> S["Sumar a alguien que use listas"]
+  A --> L["Salirse"]
+  M -- "sí, la creó" --> O["Además: sacar a otros<br/>y borrar la lista"]
+```
+
+### Sumar, sacar, salirse y borrar
+
+```mermaid
+flowchart TD
+  A["⚙️ Ajustes de la lista"] --> B{"¿Qué quiere hacer?"}
+  B -- "Sumar a alguien" --> C{"¿Esa persona<br/>tiene lists.use?"}
+  C -- "no" --> CX["No aparece para elegir<br/>(y la base lo rechaza)"]
+  C -- "sí" --> CS["insert todo_list_members<br/>→ aviso «te sumó a la lista»"]
+  B -- "Sacar a alguien" --> D{"¿Quien lo pide<br/>creó la lista?"}
+  D -- "no" --> DX["No puede (RLS)"]
+  D -- "sí" --> DS["delete todo_list_members<br/>→ deja de verla"]
+  B -- "Salirme" --> E{"¿Creó la lista?"}
+  E -- "no" --> ES["Se borra su membresía<br/>y vuelve a /listas"]
+  E -- "sí" --> EX["En su lugar ve<br/>«Borrar lista»"]
+  B -- "Borrar lista" --> F{"¿La creó?"}
+  F -- "sí" --> FS["delete todo_lists (cascade)<br/>+ borra sus fotos del bucket"]
+  F -- "no" --> FX["No puede (RLS)"]
 ```
 
 ## Tutorial guiado
@@ -440,6 +719,13 @@ erDiagram
   INTERRUPTIONS ||--o{ INTERRUPTION_VIEWS : "vista por"
   PHOTOS ||--o{ MILESTONES : "ilustra"
   AUTH_USERS ||--o{ AUDIT_LOG : "actor"
+  AUTH_USERS ||--o{ TODO_LISTS : "crea"
+  TODO_LISTS ||--|{ TODO_LIST_MEMBERS : "se comparte con"
+  AUTH_USERS ||--o{ TODO_LIST_MEMBERS : "es miembro"
+  TODO_LISTS ||--o{ TODO_ITEMS : "tiene"
+  TODO_ITEMS |o--o{ TODO_ITEMS : "subtarea de"
+  TODO_ITEMS ||--o{ TODO_MATERIALS : "necesita"
+  TODO_ITEMS ||--o{ TODO_ITEM_IMAGES : "fotos"
 
   PROFILES {
     uuid id PK
@@ -447,6 +733,10 @@ erDiagram
     app_role role
     boolean is_active
     jsonb theme_colors "colores propios"
+    text avatar_path "avatars/<id>/..."
+    text avatar_emoji
+    text bio
+    date birthday
   }
   PERMISSIONS {
     text key PK
@@ -529,7 +819,7 @@ erDiagram
   NOTIFICATIONS {
     uuid id PK
     uuid user_id FK
-    text kind "note, chat, system"
+    text kind "note, chat, system, list"
     text title
     text body
     text link
@@ -541,6 +831,44 @@ erDiagram
     text endpoint UK "un dispositivo"
     text p256dh
     text auth
+  }
+  TODO_LISTS {
+    uuid id PK
+    uuid owner_id FK "quien la creó"
+    text title
+    text emoji
+    text description
+    date due_on
+  }
+  TODO_LIST_MEMBERS {
+    uuid list_id PK
+    uuid user_id PK
+    uuid added_by FK
+  }
+  TODO_ITEMS {
+    uuid id PK
+    uuid list_id FK
+    uuid parent_id FK "subtarea (un nivel)"
+    text title
+    text description
+    date due_on
+    uuid assignee_id FK "miembro"
+    timestamptz done_at
+    uuid done_by FK
+  }
+  TODO_MATERIALS {
+    uuid id PK
+    uuid item_id FK
+    text name
+    text quantity
+    boolean is_ready
+  }
+  TODO_ITEM_IMAGES {
+    uuid id PK
+    uuid item_id FK
+    uuid list_id FK
+    text path "list-media/<list_id>/..."
+    text thumb_path
   }
   AUDIT_LOG {
     bigint id PK
@@ -571,17 +899,20 @@ flowchart LR
     E5["interruptions.manage"]
     E6["notes.send"]
     E7["chat.use"]
+    E8["lists.use"]
   end
   subgraph viewer["viewer (invitado)"]
     V1["site.view"]
     V2["notes.send"]
     V3["chat.use"]
+    V4["lists.use"]
   end
   ALL --> SUPER["/super: usuarios, permisos,<br/>apariencia, secciones, ajustes, auditoría"]
   E2 & E3 & E4 & E5 --> PANEL["/panel"]
   E6 & V2 --> MSG["/mensajes"]
   E7 & V3 --> CHAT["/chat"]
-  ANY["cualquier cuenta"] --> CUENTA["/cuenta y /cuenta/colores<br/>avisos, colores, contraseña"]
+  E8 & V4 --> LISTAS["/listas<br/>(dentro, sólo las listas<br/>donde es miembro)"]
+  ANY["cualquier cuenta"] --> CUENTA["/cuenta, /cuenta/perfil y /cuenta/colores<br/>perfil, avisos, colores, contraseña"]
 ```
 
 Estos son los permisos por defecto (migración `core_schema`). Juan los cambia

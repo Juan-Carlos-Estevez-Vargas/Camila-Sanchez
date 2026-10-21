@@ -33,7 +33,25 @@ $bubble-tail: 6px;
   &__people {
     display: flex;
     flex-wrap: wrap;
-    gap: 0 space(3);
+    gap: space(1) space(3);
+    margin-top: space(1);
+  }
+
+  &__person {
+    display: inline-flex;
+    align-items: center;
+    gap: space(2);
+    padding: 2px space(2) 2px 2px;
+    border: 0;
+    border-radius: var(--radius-pill);
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+
+    &:hover { background: var(--c-surface-2); }
+    &:focus-visible { @include focus-ring; }
   }
 
   &__status.is-online {

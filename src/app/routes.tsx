@@ -16,7 +16,10 @@ const DatesAdmin = lazy(() => import("@/features/admin/DatesAdmin"));
 const InterruptionsAdmin = lazy(() => import("@/features/admin/InterruptionsAdmin"));
 const MessagesPage = lazy(() => import("@/features/messages/MessagesPage"));
 const ChatPage = lazy(() => import("@/features/chat/ChatPage"));
+const ListsPage = lazy(() => import("@/features/lists/ListsPage"));
+const ListPage = lazy(() => import("@/features/lists/ListPage"));
 const AccountPage = lazy(() => import("@/features/auth/AccountPage"));
+const ProfilePage = lazy(() => import("@/features/auth/ProfilePage"));
 const MyColorsPage = lazy(() => import("@/features/auth/MyColorsPage"));
 const SuperLayout = lazy(() => import("@/features/super/SuperLayout"));
 const SuperHome = lazy(() => import("@/features/super/SuperHome"));
@@ -31,8 +34,11 @@ export const appRoutes = (
   <>
     <Route path="/mensajes" element={<RequirePermission check={(p) => p.can(PERMISSIONS.notesSend)}><MessagesPage /></RequirePermission>} />
     <Route path="/cuenta" element={<RequirePermission check={() => true}><AccountPage /></RequirePermission>} />
+    <Route path="/cuenta/perfil" element={<RequirePermission check={() => true}><ProfilePage /></RequirePermission>} />
     <Route path="/cuenta/colores" element={<RequirePermission check={() => true}><MyColorsPage /></RequirePermission>} />
     <Route path="/chat" element={<RequirePermission check={(p) => p.can(PERMISSIONS.chatUse)}><ChatPage /></RequirePermission>} />
+    <Route path="/listas" element={<RequirePermission check={(p) => p.can(PERMISSIONS.listsUse)}><ListsPage /></RequirePermission>} />
+    <Route path="/listas/:id" element={<RequirePermission check={(p) => p.can(PERMISSIONS.listsUse)}><ListPage /></RequirePermission>} />
     <Route path="/panel" element={<RequirePermission check={(p) => p.canUseContentPanel}><PanelLayout /></RequirePermission>}>
       <Route index element={<PanelHome />} />
       <Route path="fotos" element={<RequirePermission check={(p) => p.can(PERMISSIONS.photosManage)}><PhotosAdmin /></RequirePermission>} />

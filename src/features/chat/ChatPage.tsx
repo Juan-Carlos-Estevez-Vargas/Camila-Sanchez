@@ -4,7 +4,9 @@ import { lastSeenLabel, messagePreview, quoteSnippet, readersOf, receiptOf, upse
 import type { ChatImage, ChatKind, ChatMessage, ChatPresence, ChatReplyPreview, Profile } from "@/domain/types";
 import { ImageProcessor } from "@/services/images/ImageProcessor";
 import { isImageFile } from "@/services/images/bulk";
+import { Avatar } from "@/ui/Avatar";
 import { Modal } from "@/ui/Modal";
+import { ProfileCard } from "@/features/auth/ProfileCard";
 import { useAuth } from "@/state/AuthContext";
 import { useBackend } from "@/state/BackendContext";
 import { useNotifications } from "@/state/NotificationsContext";
@@ -131,6 +133,7 @@ export default function ChatPage() {
   const [picker, setPicker] = useState(false);
   const [imageUrls, setImageUrls] = useState<Map<string, string>>(() => new Map());
   const [viewing, setViewing] = useState<Pending | null>(null);
+  const [profileOf, setProfileOf] = useState<Profile | null>(null);
   const scroller = useRef<HTMLDivElement>(null);
   const input = useRef<HTMLTextAreaElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
@@ -370,19 +373,22 @@ export default function ChatPage() {
         <div>
           <h1>Chat</h1>
           {others.length > 0 && (
-            <p className="muted chat__people">
+            <div className="muted chat__people">
               {others.map((p) => {
                 const status = statusOf(p.id);
                 return (
-                  <span key={p.id} className="chat__person" data-tour="chat-presence">
-                    Con {p.displayName}
-                    {status && (
-                      <span className={`chat__status${status === "en línea" ? " is-online" : ""}`}> · {status}</span>
-                    )}
-                  </span>
+                  <button key={p.id} type="button" className="chat__person" data-tour="chat-presence" onClick={() => setProfileOf(p)} title={`Ver el perfil de ${p.displayName}`}>
+                    <Avatar person={p} size={30} />
+                    <span>
+                      Con {p.displayName}
+                      {status && (
+                        <span className={`chat__status${status === "en línea" ? " is-online" : ""}`}> · {status}</span>
+                      )}
+                    </span>
+                  </button>
                 );
               })}
-            </p>
+            </div>
           )}
         </div>
       </header>
@@ -550,6 +556,7 @@ export default function ChatPage() {
           </figure>
         </Modal>
       )}
+      {profileOf && <ProfileCard profile={profileOf} onClose={() => setProfileOf(null)} />}
     </main>
   );
 }
