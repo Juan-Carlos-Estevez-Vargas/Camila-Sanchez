@@ -20,6 +20,12 @@
   }
 }
 
+.envelopes {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: space(2);
+}
+
 .envelope {
   display: flex;
   align-items: center;
@@ -40,9 +46,29 @@
     color: inherit;
   }
 
-  &__icon { @include icon-tile(48px, 14px, 1.5rem); }
-  &__meta { display: block; font-size: 0.85rem; }
+  &__icon { @include icon-tile(48px, 14px, 1.5rem); flex: none; }
+
+  // El texto se ajusta al ancho disponible; el título y el nombre parten
+  // palabras largas en vez de empujar el botón de borrar fuera de la pantalla.
+  &__text {
+    flex: 1;
+    min-width: 0;
+    display: grid;
+    gap: 2px;
+
+    strong { overflow-wrap: anywhere; }
+  }
+
+  &__delete { flex: none; }
+  &__meta { display: block; font-size: 0.85rem; overflow-wrap: anywhere; }
   &__preview { @include truncate; display: block; color: var(--c-muted); font-size: 0.9rem; }
+
+  @include below(sm) {
+    padding: space(1) space(2);
+
+    &__open { gap: space(2); padding: space(2) space(1); }
+    &__icon { @include icon-tile(40px, 12px, 1.25rem); flex: none; }
+  }
 
   &.is-unread {
     border-color: var(--c-primary);
@@ -59,11 +85,23 @@
   background: tint(var(--c-accent), 8%, var(--c-surface));
   line-height: 1.6;
   white-space: pre-wrap;
+  overflow-wrap: anywhere;
+
+  @include below(sm) { padding: space(4) space(3); }
 
   &__from {
     text-align: right;
     font-style: italic;
     color: var(--c-muted);
     margin: space(4) 0 0;
+  }
+}
+
+// En el celular las pestañas ocupan todo el ancho y caben sin desplazarse.
+.messages .tabs {
+  @include below(sm) {
+    width: 100%;
+
+    .tab { flex: 1; padding-inline: space(2); }
   }
 }
