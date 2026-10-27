@@ -26,7 +26,11 @@ describe("resolveSeo", () => {
     expect(seo.robots).toMatch(/^index, follow/);
     expect(seo.canonical).toBe(`${SITE}/`);
     expect(seo.image).toBe(`${SITE}/og-image.jpg`);
-    expect(seo.structuredData).toMatchObject({ "@type": "WebSite", url: `${SITE}/`, inLanguage: "es" });
+    expect(seo.structuredData).toMatchObject({
+      "@type": "WebSite", url: `${SITE}/`, inLanguage: "es-CO", image: `${SITE}/og-image.jpg`,
+      author: { "@type": "Person", name: "Juan Carlos Estevez Vargas" },
+    });
+    expect(seo.imageAlt).toContain("Para el amor de mi vida");
   });
 
   it("una portada privada (sólo con cuenta) no se indexa", () => {
@@ -39,7 +43,7 @@ describe("resolveSeo", () => {
   });
 
   it("paneles, chat y acceso nunca se indexan y tienen su propio título", () => {
-    for (const [path, title] of [["/panel/fotos", "Mi panel"], ["/super", "Administración"], ["/chat", "Chat"], ["/entrar", "Entrar"]] as const) {
+    for (const [path, title] of [["/panel/fotos", "Mi panel"], ["/super", "Administración"], ["/chat", "Chat"], ["/entrar", "Entrar"], ["/listas/abc", "Listas"], ["/cuenta/perfil", "Mi cuenta"]] as const) {
       const seo = resolveSeo({ pathname: path, settings: settings(), siteUrl: SITE, indexingEnabled: true });
       expect(seo.robots).toBe("noindex, nofollow");
       expect(seo.title).toBe(`${title} · Para el amor de mi vida`);
@@ -82,6 +86,7 @@ describe("utilidades", () => {
     const txt = buildRobotsTxt(SITE, true);
     expect(txt).toContain("Disallow: /panel");
     expect(txt).toContain("Disallow: /super");
+    expect(txt).toContain("Disallow: /listas");
     expect(txt).toContain(`Sitemap: ${SITE}/sitemap.xml`);
     expect(buildRobotsTxt(SITE, false)).toBe("User-agent: *\nDisallow: /\n");
   });

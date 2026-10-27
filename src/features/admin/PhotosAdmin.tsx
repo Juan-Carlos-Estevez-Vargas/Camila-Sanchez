@@ -5,6 +5,7 @@ import { formatBytes } from "@/services/images/sizing";
 import { useBackend } from "@/state/BackendContext";
 import { useContentStore, useSiteContent } from "@/state/SiteContentStore";
 import { EmptyState } from "@/ui/Feedback";
+import { onRovingKeyDown, rovingTabIndex } from "@/ui/rovingFocus";
 import { useConfirm } from "@/ui/useConfirm";
 import { AdminPage } from "./AdminLayout";
 import { BulkUploadPanel } from "./BulkUploadPanel";
@@ -116,9 +117,9 @@ export default function PhotosAdmin() {
       ) : (
         <div className="card stack">
           <div className="row-between">
-            <div className="tabs" role="tablist">
+            <div className="tabs" role="tablist" aria-label="Año" onKeyDown={onRovingKeyDown}>
               {years.map((y, i) => (
-                <button key={y.year} role="tab" className="tab" aria-selected={i === yearIdx}
+                <button key={y.year} role="tab" className="tab" aria-selected={i === yearIdx} tabIndex={rovingTabIndex(i === yearIdx)}
                   onClick={() => { setYearIdx(i); setMonth(null); setOrder(null); }}>{y.year}</button>
               ))}
             </div>
@@ -131,9 +132,10 @@ export default function PhotosAdmin() {
               </div>
             )}
           </div>
-          <div className="month-pills">
+          <div className="month-pills" role="group" aria-label="Mes">
             {year?.months.map((m) => (
-              <button key={m.month} className={`month-pill${m.month === activeMonth ? " is-active" : ""}`}
+              <button key={m.month} className={`month-pill${m.month === activeMonth ? " is-active" : ""}`} aria-pressed={m.month === activeMonth}
+                aria-label={`${MONTH_NAMES[m.month]}: ${m.photos.length} ${m.photos.length === 1 ? "foto" : "fotos"}`}
                 onClick={() => { setMonth(m.month); setOrder(null); }} disabled={!m.photos.length}>
                 {MONTH_NAMES[m.month]} <span>{m.photos.length}</span>
               </button>

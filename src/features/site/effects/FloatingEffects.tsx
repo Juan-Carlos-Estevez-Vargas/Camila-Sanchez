@@ -1,5 +1,6 @@
 import { memo, useEffect, useMemo, useState } from "react";
 import type { EffectsConfig } from "@/domain/types";
+import { prefersReducedMotion, useReducedMotion } from "@/ui/motion";
 import "./effects.scss";
 
 /**
@@ -8,15 +9,9 @@ import "./effects.scss";
  * la persona pidió menos movimiento.
  */
 export const FloatingEffects = memo(function FloatingEffects({ effects }: { effects: EffectsConfig }) {
-  const [reduced, setReduced] = useState(() => matchMedia("(prefers-reduced-motion: reduce)").matches);
+  // Se apaga con prefers-reduced-motion o con "Reducir animaciones" del pie.
+  const reduced = useReducedMotion();
   const [mobile] = useState(() => matchMedia("(max-width: 640px)").matches);
-
-  useEffect(() => {
-    const mql = matchMedia("(prefers-reduced-motion: reduce)");
-    const onChange = () => setReduced(mql.matches);
-    mql.addEventListener("change", onChange);
-    return () => mql.removeEventListener("change", onChange);
-  }, []);
 
   const count = !effects.floating.enabled || reduced
     ? 0
@@ -66,7 +61,7 @@ export const FloatingEffects = memo(function FloatingEffects({ effects }: { effe
 
 /** Lluvia breve de emojis (para sorpresas e interrupciones). */
 export function burst(emojis: string[], amount = 36): void {
-  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  if (prefersReducedMotion()) return;
   const layer = document.createElement("div");
   layer.className = "burst";
   layer.setAttribute("aria-hidden", "true");

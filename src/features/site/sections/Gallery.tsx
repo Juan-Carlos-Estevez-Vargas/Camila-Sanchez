@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { groupPhotosByYearMonth, MONTH_ICONS, MONTH_NAMES } from "@/domain/dates";
+import { onRovingKeyDown, rovingTabIndex } from "@/ui/rovingFocus";
 import { SectionHeading } from "./SectionHeading";
 import { Lightbox } from "./Lightbox";
 import type { SectionProps } from "./types";
@@ -27,14 +28,16 @@ export function Gallery({ section, content, photoUrls }: SectionProps<"gallery">
     <div className="container">
       <SectionHeading title={section.title} subtitle={section.subtitle} />
       {years.length > 1 && (
-        <div className="tabs gallery__years" role="tablist" aria-label="Años">
+        <div className="tabs gallery__years" role="tablist" aria-label="Años" onKeyDown={onRovingKeyDown}>
           {years.map((y, i) => (
-            <button key={y.year} role="tab" className="tab" aria-selected={i === yearIndex} onClick={() => setYearIndex(i)}>
+            <button key={y.year} id={`galeria-${y.year}`} role="tab" className="tab" aria-selected={i === yearIndex} aria-controls="galeria-meses"
+              tabIndex={rovingTabIndex(i === yearIndex)} onClick={() => setYearIndex(i)}>
               {y.year}
             </button>
           ))}
         </div>
       )}
+      <div id="galeria-meses" {...(years.length > 1 ? { role: "tabpanel", "aria-labelledby": `galeria-${year.year}` } : {})}>
       <p className="center muted gallery__summary">
         {year.total} {year.total === 1 ? "recuerdo" : "recuerdos"} en {monthsWithPhotos} {monthsWithPhotos === 1 ? "mes" : "meses"} de {year.year}
       </p>
@@ -48,7 +51,7 @@ export function Gallery({ section, content, photoUrls }: SectionProps<"gallery">
               className={`month${empty ? " is-empty" : ""}`}
               disabled={empty}
               onClick={() => setOpenMonth(m.month)}
-              aria-label={`${MONTH_NAMES[m.month]}: ${m.photos.length} fotos`}
+              aria-label={`${MONTH_NAMES[m.month]}: ${empty ? "sin fotos aún" : `${m.photos.length} ${m.photos.length === 1 ? "recuerdo" : "recuerdos"}, ver fotos`}`}
             >
               {cover && <img className="month__cover" src={cover.thumb} alt="" loading="lazy" decoding="async" />}
               <span className="month__shade" aria-hidden />
@@ -58,6 +61,7 @@ export function Gallery({ section, content, photoUrls }: SectionProps<"gallery">
             </button>
           );
         })}
+      </div>
       </div>
       {opened && (
         <Lightbox

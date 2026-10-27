@@ -154,14 +154,13 @@ export function BulkUploadPanel({ onUploaded }: { onUploaded(): void }) {
         onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
         onDragLeave={() => setDragOver(false)}
         onDrop={(e) => void onDrop(e)}
+        // Con el mouse toda la zona abre el selector; con teclado o lector
+        // de pantalla se usan los dos botones de adentro (sin controles anidados).
         onClick={() => filesInput.current?.click()}
-        role="button"
-        tabIndex={0}
         aria-busy={preparing}
-        onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && filesInput.current?.click()}
       >
         <div className="dropzone__icon" aria-hidden>{preparing ? "⏳" : "📸"}</div>
-        <strong>{preparing ? "Buscando fotos en la carpeta…" : "Arrastra fotos o carpetas enteras aquí"}</strong>
+        <strong role="status">{preparing ? "Buscando fotos en la carpeta…" : "Arrastra fotos o carpetas enteras aquí"}</strong>
         <span className="muted">Hasta {MAX_BATCH} a la vez. Se ajustan y se aligeran solas, sin perder calidad.</span>
         <div className={`row ${styles.pickers}`} onClick={(e) => e.stopPropagation()}>
           <button type="button" className="btn btn--sm" onClick={() => filesInput.current?.click()}>Elegir fotos</button>

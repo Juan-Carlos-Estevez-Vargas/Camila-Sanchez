@@ -50,7 +50,7 @@ export default function SettingsAdmin() {
         </Field>
       </div>
       <div className="card stack">
-        <h3 style={{ margin: 0 }}>Privacidad</h3>
+        <h2 style={{ margin: 0, fontSize: "1.25rem" }}>Privacidad</h2>
         <Switch label="Cualquiera con el enlace puede ver la página" checked={d.isPublic} onChange={(isPublic) => set({ isPublic })} />
         <p className="muted" style={{ margin: 0 }}>
           {d.isPublic

@@ -15,7 +15,11 @@ export default function SitePage() {
 
   if (status === "loading" || !content) return <PageLoader />;
   if (status === "error") {
-    return <EmptyState icon="🥀" title="No pude cargar nuestros recuerdos">Revisa tu conexión y recarga la página.</EmptyState>;
+    return (
+      <main id="contenido-principal" className="container">
+        <EmptyState icon="🥀" title="No pude cargar nuestros recuerdos" heading>Revisa tu conexión y recarga la página.</EmptyState>
+      </main>
+    );
   }
 
   const sections = content.sections.filter((s) => s.isVisible);
@@ -23,7 +27,7 @@ export default function SitePage() {
 
   if (isPrivate) {
     return (
-      <main className="gate">
+      <main id="contenido-principal" className="gate">
         <div className="gate__card card">
           <div className="gate__heart" aria-hidden>💌</div>
           <h1>{content.settings.siteTitle}</h1>
@@ -43,12 +47,13 @@ export default function SitePage() {
       <FloatingEffects effects={content.settings.effects} />
       <InterruptionHost items={content.interruptions} />
       <main id="contenido-principal" className="site" data-tour="site">
-        {sections.length === 0 && <EmptyState title="Aún no hay secciones">Agrégalas desde el panel de administración.</EmptyState>}
+        {sections.length === 0 && <EmptyState title="Aún no hay secciones" heading>Agrégalas desde el panel de administración.</EmptyState>}
         {sections.map((section, index) => (
           <Reveal
             key={section.id}
             animation={section.animation}
             id={index === 1 ? "contenido" : undefined}
+            label={section.title || undefined}
             className={`site-section site-section--${section.kind}`}
           >
             {renderSection(section, content, photoUrls)}

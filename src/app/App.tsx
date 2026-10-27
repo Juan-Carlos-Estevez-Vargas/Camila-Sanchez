@@ -1,5 +1,5 @@
 import { lazy, Suspense, useMemo } from "react";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Link, Route, Routes } from "react-router-dom";
 import { DEFAULT_THEME } from "@/domain/defaults";
 import { personalTheme } from "@/domain/palettes";
 import { AuthProvider, useAuth } from "@/state/AuthContext";
@@ -13,12 +13,23 @@ import { EmptyState, PageLoader } from "@/ui/Feedback";
 import { AppFooter } from "./AppFooter";
 import { AppHeader } from "./AppHeader";
 import { ErrorBoundary } from "./ErrorBoundary";
+import { RouteAnnouncer, SkipLink } from "./RouteAnnouncer";
 import { appRoutes } from "./routes";
 
 const SitePage = lazy(() => import("@/features/site/SitePage"));
 const LoginPage = lazy(() => import("@/features/auth/LoginPage"));
 const InvitePage = lazy(() => import("@/features/auth/InvitePage"));
 const RecoverPage = lazy(() => import("@/features/auth/RecoverPage"));
+
+function NotFound() {
+  return (
+    <main id="contenido-principal" className="container">
+      <EmptyState icon="🧭" title="Esta página no existe" heading>
+        <Link className="btn" to="/">Volver al inicio</Link>
+      </EmptyState>
+    </main>
+  );
+}
 
 function ThemedShell() {
   const { content } = useSiteContent();
@@ -31,7 +42,8 @@ function ThemedShell() {
       <ThemeController theme={theme} />
       <SeoController />
       <PresenceHeartbeat />
-      <a className="skip-link" href="#contenido-principal">Saltar al contenido</a>
+      <SkipLink />
+      <RouteAnnouncer />
       <AppHeader />
       <ErrorBoundary>
         <Suspense fallback={<PageLoader />}>
@@ -41,7 +53,7 @@ function ThemedShell() {
             <Route path="/invitacion" element={<InvitePage />} />
             <Route path="/recuperar" element={<RecoverPage />} />
             {appRoutes}
-            <Route path="*" element={<EmptyState icon="🧭" title="Esta página no existe" />} />
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
       </ErrorBoundary>

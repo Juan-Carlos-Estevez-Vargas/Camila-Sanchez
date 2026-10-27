@@ -58,14 +58,14 @@ export default function ThemeAdmin() {
         <button className="btn" disabled={busy || (!theme && !effects)} onClick={save}>Guardar cambios</button>
       </>}>
       <div className="card stack">
-        <h3 style={{ margin: 0 }}>Paletas listas</h3>
+        <h2 style={{ margin: 0, fontSize: "1.25rem" }}>Paletas listas</h2>
         <p className="muted" style={{ margin: 0 }}>Son los colores de la página: los ve quien entra sin cuenta y quien no eligió los suyos. Cada persona cambia los que ve ella en Mi cuenta → Mis colores.</p>
         <PalettePicker selectedId={matchPalette(t)?.id ?? null} onSelect={(p) => set(applyPalette(t, p.colors))} />
       </div>
 
       <div className="form-grid" style={{ alignItems: "start" }}>
         <div className="card stack">
-          <h3 style={{ margin: 0 }}>Colores</h3>
+          <h2 style={{ margin: 0, fontSize: "1.25rem" }}>Colores</h2>
           <div className="form-grid">
             {(Object.keys(COLOR_LABELS) as ColorKey[]).map((k) => (
               <ColorInput key={`${k}-${t[k]}`} label={COLOR_LABELS[k]} value={t[k]} onChange={(v) => set({ [k]: v })} />
@@ -76,7 +76,7 @@ export default function ThemeAdmin() {
               ⚠️ Poco contraste {textContrast < 4.5 ? `entre texto y fondo (${textContrast.toFixed(1)}:1)` : `en los botones (${buttonContrast.toFixed(1)}:1)`}. Puede costar leer.
             </p>
           )}
-          <h3 style={{ margin: "8px 0 0" }}>Tipografía y forma</h3>
+          <h2 style={{ margin: "8px 0 0", fontSize: "1.25rem" }}>Tipografía y forma</h2>
           <div className="form-grid">
             <Field label="Títulos">
               {(id) => <select id={id} className="select" value={t.fontDisplay} onChange={(e) => set({ fontDisplay: e.target.value })}>{FONT_OPTIONS.display.map((f) => <option key={f}>{f}</option>)}</select>}
@@ -102,7 +102,7 @@ export default function ThemeAdmin() {
       </div>
 
       <div className="card stack">
-        <h3 style={{ margin: 0 }}>Efectos y dinamismo</h3>
+        <h2 style={{ margin: 0, fontSize: "1.25rem" }}>Efectos y dinamismo</h2>
         <Switch label="Emojis flotando en el fondo" checked={fx.floating.enabled} onChange={(enabled) => setFx({ floating: { ...fx.floating, enabled } })} />
         <div className="form-grid">
           <Field label="Emojis (separados por espacio)">
