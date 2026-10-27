@@ -18,6 +18,7 @@ const KNOWN: Array<[RegExp, string]> = [
   [/rate limit|too many requests|over_email_send_rate_limit|For security purposes, you can only request/i, "Espera unos minutos antes de pedir otro correo."],
   [/New password should be different/i, "La contraseña nueva debe ser distinta de la anterior."],
   [/Password should be at least|weak.?password/i, "Esa contraseña es muy débil: usa al menos 10 caracteres."],
+  [/Vas muy rápido/i, "Vas muy rápido 😅 Espera un momentito y vuelve a intentarlo."],
   [/al menos un super administrador/i, "Debe quedar al menos un super administrador activo."],
 ];
 

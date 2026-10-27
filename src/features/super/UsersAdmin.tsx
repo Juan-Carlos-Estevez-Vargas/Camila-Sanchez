@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { formatRelative } from "@/domain/dates";
 import { MIN_PASSWORD_LENGTH } from "@/domain/invitations";
+import { passwordProblem } from "@/domain/password";
 import { ROLE_LABELS } from "@/domain/permissions";
 import { ROLES, type Profile, type Role } from "@/domain/types";
 import type { NewUserInput } from "@/data/ports";
@@ -23,7 +24,10 @@ function NewUserModal({ onClose, onCreated }: { onClose(): void; onCreated(): vo
   const { run, busy } = useSaver();
   const [form, setForm] = useState<NewUserInput>({ email: "", displayName: "", role: "editor", password: "" });
   const [mode, setMode] = useState<"invite" | "password">("invite");
-  const valid = EMAIL.test(form.email) && form.displayName.trim() && (mode === "invite" || (form.password?.length ?? 0) >= MIN_PASSWORD_LENGTH);
+  const passwordError = mode === "password" && (form.password?.length ?? 0) >= MIN_PASSWORD_LENGTH
+    ? passwordProblem(form.password ?? "", [form.email, form.displayName]) : null;
+  const valid = EMAIL.test(form.email) && form.displayName.trim()
+    && (mode === "invite" || ((form.password?.length ?? 0) >= MIN_PASSWORD_LENGTH && !passwordError));
 
   const submit = async () => {
     const input = { ...form, password: mode === "password" ? form.password : undefined };
@@ -46,7 +50,7 @@ function NewUserModal({ onClose, onCreated }: { onClose(): void; onCreated(): vo
         <Field label="Nombre">{(id) => <input id={id} className="input" maxLength={80} value={form.displayName} onChange={(e) => setForm({ ...form, displayName: e.target.value })} />}</Field>
         <Field label="Correo">{(id) => <input id={id} className="input" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />}</Field>
         {mode === "password" && (
-          <Field label="Contraseña inicial" hint={`Mínimo ${MIN_PASSWORD_LENGTH} caracteres. Pídele que la cambie al entrar.`}>
+          <Field label="Contraseña inicial" hint={`Mínimo ${MIN_PASSWORD_LENGTH} caracteres. Pídele que la cambie al entrar.`} error={passwordError}>
             {(id) => <input id={id} className="input" type="password" autoComplete="new-password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />}
           </Field>
         )}

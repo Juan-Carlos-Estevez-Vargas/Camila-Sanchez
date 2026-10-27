@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { MIN_PASSWORD_LENGTH } from "@/domain/invitations";
+import { passwordProblem } from "@/domain/password";
 import { ROLE_LABELS } from "@/domain/permissions";
 import { useSaver } from "@/features/admin/useSaver";
 import { DeviceNotificationsCard } from "@/features/messages/EnableNotifications";
@@ -23,7 +24,8 @@ export default function AccountPage() {
 
   const changePassword = async (e: FormEvent) => {
     e.preventDefault();
-    if (password.length < MIN_PASSWORD_LENGTH) return setError(`Mínimo ${MIN_PASSWORD_LENGTH} caracteres.`);
+    const problem = passwordProblem(password, [user?.email, profile?.displayName]);
+    if (problem) return setError(problem);
     if (password !== repeat) return setError("Las contraseñas no coinciden.");
     setError(null);
     const ok = await run(() => backend.auth.updatePassword(password).then(() => true), "Contraseña actualizada 🔐");

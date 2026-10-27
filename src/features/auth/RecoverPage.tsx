@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toUserMessage } from "@/core/errors";
 import { MIN_PASSWORD_LENGTH } from "@/domain/invitations";
+import { passwordProblem } from "@/domain/password";
 import { readRecoveryLink, RECOVERY_PATH, type RecoveryLink } from "@/domain/recovery";
 import { useAuth } from "@/state/AuthContext";
 import { useBackend } from "@/state/BackendContext";
@@ -75,7 +76,8 @@ export default function RecoverPage() {
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
-    if (form.password.length < MIN_PASSWORD_LENGTH) return setError(`La contraseña debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres.`);
+    const problem = passwordProblem(form.password, [user?.email]);
+    if (problem) return setError(problem);
     if (form.password !== form.confirm) return setError("Las contraseñas no coinciden.");
     setBusy(true);
     try {

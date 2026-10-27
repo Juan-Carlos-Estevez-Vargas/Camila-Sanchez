@@ -60,10 +60,10 @@ jobs:
             echo "ready=true" >> "$GITHUB_OUTPUT"
           fi
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         if: steps.config.outputs.ready == 'true'
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         if: steps.config.outputs.ready == 'true'
         with:
           node-version: 22
@@ -73,7 +73,7 @@ jobs:
         if: steps.config.outputs.ready == 'true'
         run: npm ci && npm run check
 
-      - uses: supabase/setup-cli@v1
+      - uses: supabase/setup-cli@1dedf2c611547ede7232d26866dd3c56ab903bbb # v1.7.3
         if: steps.config.outputs.ready == 'true'
         with:
           version: 2.121.0
@@ -94,16 +94,22 @@ jobs:
           SMTP_SENDER_EMAIL: ${{ secrets.SMTP_SENDER_EMAIL }}
         run: |
           site="${SITE_URL%/}"
-          # Registro cerrado, contraseñas de 10+ caracteres, tokens de 1 h y
-          # rotación de tokens de refresco (uno robado deja de servir al usarse).
+          # Registro cerrado (tampoco cuentas anónimas), contraseñas de 10+
+          # caracteres, tokens de 1 h, rotación de tokens de refresco (uno
+          # robado deja de servir al usarse), cambio de correo confirmado en
+          # los dos correos y límites de intentos para frenar la fuerza bruta.
           body=$(jq -n --arg site "$site" '{
             site_url: $site,
             uri_allow_list: ($site + "/**"),
             disable_signup: true,
+            external_anonymous_users_enabled: false,
             password_min_length: 10,
             jwt_exp: 3600,
             refresh_token_rotation_enabled: true,
-            security_refresh_token_reuse_interval: 10
+            security_refresh_token_reuse_interval: 10,
+            mailer_secure_email_change_enabled: true,
+            rate_limit_verify: 30,
+            rate_limit_token_refresh: 150
           }')
           # Con un servidor de correo propio, los correos de recuperación llegan a
           # cualquier cuenta y su enlace (/recuperar#token_hash=…) sirve aunque se
@@ -208,11 +214,11 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 22
 
