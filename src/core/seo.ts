@@ -4,6 +4,7 @@
  * estructurados. Es puro (sin DOM) para poder probarlo; quien lo aplica al
  * <head> es services/seo/head.ts.
  */
+import { AUTHOR } from "./author.ts";
 import type { SiteSettings } from "@/domain/types";
 
 export const DEFAULT_TITLE = "Nuestro rincón";
@@ -12,7 +13,7 @@ export const OG_IMAGE_PATH = "/og-image.jpg";
 export const DESCRIPTION_MAX = 160;
 
 /** Rutas que nunca deben aparecer en buscadores. */
-export const PRIVATE_PREFIXES = ["/entrar", "/invitacion", "/recuperar", "/cuenta", "/panel", "/super", "/mensajes", "/chat"] as const;
+export const PRIVATE_PREFIXES = ["/entrar", "/invitacion", "/recuperar", "/cuenta", "/panel", "/super", "/mensajes", "/chat", "/listas"] as const;
 
 const PAGE_TITLES: Record<string, string> = {
   "/entrar": "Entrar",
@@ -21,6 +22,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/cuenta": "Mi cuenta",
   "/mensajes": "Cajita de mensajes",
   "/chat": "Chat",
+  "/listas": "Listas",
   "/panel": "Mi panel",
   "/super": "Administración",
 };
@@ -35,6 +37,8 @@ export interface SeoMeta {
   /** URL canónica absoluta, o null si no sabemos el dominio. */
   canonical: string | null;
   image: string;
+  /** Texto alternativo de la imagen para redes (accesible). */
+  imageAlt: string;
   type: "website";
   locale: "es_CO";
   siteName: string;
@@ -77,6 +81,7 @@ export function resolveSeo({ pathname, settings, siteUrl, indexingEnabled }: Seo
   const absolute = (path: string) => (siteUrl ? `${siteUrl}${path}` : path);
   const base = {
     image: absolute(OG_IMAGE_PATH),
+    imageAlt: `${siteName}: recuerdos, fechas especiales y notitas de amor`,
     type: "website" as const,
     locale: "es_CO" as const,
     siteName,
@@ -97,8 +102,13 @@ export function resolveSeo({ pathname, settings, siteUrl, indexingEnabled }: Seo
         "@type": "WebSite",
         name: siteName,
         description: siteDescription,
-        inLanguage: "es",
-        ...(siteUrl ? { url: `${siteUrl}/` } : {}),
+        inLanguage: "es-CO",
+        ...(siteUrl ? { url: `${siteUrl}/`, image: absolute(OG_IMAGE_PATH) } : {}),
+        author: {
+          "@type": "Person",
+          name: AUTHOR.name,
+          sameAs: Object.values(AUTHOR.links).filter(Boolean),
+        },
       },
     };
   }

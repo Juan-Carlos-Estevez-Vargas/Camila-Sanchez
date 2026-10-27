@@ -34,16 +34,16 @@ function TaskRow({ node, detail, nameOf, onToggle, onOpen }: RowProps) {
   return (
     <li className={`task${done ? " is-done" : ""}`}>
       <div className="task__main">
-        <input type="checkbox" className="check" checked={done} onChange={() => onToggle(item)} aria-label={done ? `Desmarcar «${item.title}»` : `Marcar «${item.title}» como hecha`} />
+        <input type="checkbox" className="check" checked={done} onChange={() => onToggle(item)} aria-label={`Hecha: «${item.title}»`} />
         <button className="task__open" onClick={() => onOpen(item)}>
           <span className="task__title">{item.title}</span>
           <span className="task__meta">
             {item.dueOn && <DueBadge dueOn={item.dueOn} done={done} />}
-            {item.assigneeId && <span className="badge badge--muted">👤 {nameOf(item.assigneeId)}</span>}
-            {subtasks.length > 0 && <span className="badge badge--muted">☑️ {subDone}/{subtasks.length}</span>}
-            {materials.length > 0 && <span className="badge badge--muted">🧰 {materialsLabel(materials)}</span>}
-            {photos > 0 && <span className="badge badge--muted">📷 {photos}</span>}
-            {item.description.trim() && <span className="badge badge--muted" title="Tiene descripción">📝</span>}
+            {item.assigneeId && <span className="badge badge--muted"><span aria-hidden>👤 </span><span className="visually-hidden">Encargada: </span>{nameOf(item.assigneeId)}</span>}
+            {subtasks.length > 0 && <span className="badge badge--muted"><span aria-hidden>☑️ </span>{subDone}/{subtasks.length}<span className="visually-hidden"> subtareas hechas</span></span>}
+            {materials.length > 0 && <span className="badge badge--muted"><span aria-hidden>🧰 </span><span className="visually-hidden">Materiales: </span>{materialsLabel(materials)}</span>}
+            {photos > 0 && <span className="badge badge--muted"><span aria-hidden>📷 </span>{photos}<span className="visually-hidden"> {photos === 1 ? "foto" : "fotos"}</span></span>}
+            {item.description.trim() && <span className="badge badge--muted" title="Tiene descripción"><span aria-hidden>📝</span><span className="visually-hidden">Tiene descripción</span></span>}
             {done && item.doneBy && <span className="muted task__by">Hecha por {nameOf(item.doneBy)}</span>}
           </span>
         </button>
@@ -52,7 +52,7 @@ function TaskRow({ node, detail, nameOf, onToggle, onOpen }: RowProps) {
         <ul className="task__subtasks">
           {subtasks.map((s) => (
             <li key={s.id} className={`subtask${s.doneAt ? " is-done" : ""}`}>
-              <input type="checkbox" className="check check--sm" checked={!!s.doneAt} onChange={() => onToggle(s)} aria-label={`Subtarea «${s.title}»`} />
+              <input type="checkbox" className="check check--sm" checked={!!s.doneAt} onChange={() => onToggle(s)} aria-label={`Subtarea hecha: «${s.title}»`} />
               <button className="subtask__open" onClick={() => onOpen(item)}>{s.title}</button>
             </li>
           ))}

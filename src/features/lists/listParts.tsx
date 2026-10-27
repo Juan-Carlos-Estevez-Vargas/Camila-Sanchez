@@ -4,6 +4,7 @@ import { dueLabel, dueState, LIST_EMOJIS } from "@/domain/lists";
 import type { IsoDate } from "@/domain/types";
 import { useBackend } from "@/state/BackendContext";
 import { Field } from "@/ui/Field";
+import { onRovingKeyDown, rovingTabIndex } from "@/ui/rovingFocus";
 import { Modal } from "@/ui/Modal";
 
 export interface ListFormValue {
@@ -25,9 +26,9 @@ export function ListFields({ value, onChange }: { value: ListFormValue; onChange
       </Field>
       <div className="field">
         <span className="field__label" id="list-emoji-label">Icono</span>
-        <div className="emoji-picker" role="radiogroup" aria-labelledby="list-emoji-label">
+        <div className="emoji-picker" role="radiogroup" aria-labelledby="list-emoji-label" onKeyDown={onRovingKeyDown}>
           {LIST_EMOJIS.map((emoji) => (
-            <button key={emoji} type="button" role="radio" aria-checked={value.emoji === emoji} aria-label={emoji}
+            <button key={emoji} type="button" role="radio" aria-checked={value.emoji === emoji} tabIndex={rovingTabIndex(value.emoji === emoji || (!(LIST_EMOJIS as readonly string[]).includes(value.emoji) && emoji === LIST_EMOJIS[0]))} aria-label={emoji}
               className={`emoji-picker__option${value.emoji === emoji ? " is-active" : ""}`} onClick={() => set({ emoji })}>
               {emoji}
             </button>

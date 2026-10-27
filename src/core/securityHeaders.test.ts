@@ -5,6 +5,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { PRIVATE_PREFIXES } from "./seo";
 
 const ROOT = join(__dirname, "..", "..");
 
@@ -59,5 +60,19 @@ describe("cabeceras de seguridad", () => {
   it("nadie puede incrustar los archivos del sitio desde otro dominio", () => {
     expect(netlify["Cross-Origin-Resource-Policy"]).toBe("same-origin");
     expect(netlify["X-Permitted-Cross-Domain-Policies"]).toBe("none");
+  });
+});
+
+describe("zonas privadas fuera de buscadores", () => {
+  const headersFile = readFileSync(join(ROOT, "public", "_headers"), "utf8");
+  const vercel = JSON.parse(readFileSync(join(ROOT, "vercel.json"), "utf8")) as {
+    headers: Array<{ source: string; headers: Array<{ key: string; value: string }> }>;
+  };
+  const noindex = vercel.headers.find((h) => h.headers.some((x) => x.key === "X-Robots-Tag"))!;
+  const vercelPattern = new RegExp(`^${noindex.source}$`);
+
+  it.each(PRIVATE_PREFIXES.map((p) => [p]))("%s lleva X-Robots-Tag en Netlify y Vercel", (prefix) => {
+    expect(headersFile).toMatch(new RegExp(`^${prefix}\\n  X-Robots-Tag: noindex, nofollow`, "m"));
+    expect(vercelPattern.test(prefix)).toBe(true);
   });
 });

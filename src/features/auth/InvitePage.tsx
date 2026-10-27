@@ -47,7 +47,7 @@ export default function InvitePage() {
 
   if (user && !busy) {
     return (
-      <main className="gate">
+      <main id="contenido-principal" className="gate">
         <EmptyState icon="💞" title="Ya tienes una sesión abierta">
           <p className="muted">Para crear una cuenta nueva con esta invitación, primero cierra tu sesión.</p>
           <button className="btn" onClick={() => void backend.auth.signOut()}>Cerrar sesión</button>
@@ -58,7 +58,7 @@ export default function InvitePage() {
   if (check.state === "checking") return <PageLoader />;
   if (check.state === "invalid" || !token) {
     return (
-      <main className="gate">
+      <main id="contenido-principal" className="gate">
         <EmptyState icon="💌" title="Esta invitación ya no es válida">
           <p className="muted">Puede que ya se haya usado o que haya vencido. Pide un enlace nuevo.</p>
         </EmptyState>
@@ -89,7 +89,7 @@ export default function InvitePage() {
   };
 
   return (
-    <main className="gate">
+    <main id="contenido-principal" className="gate">
       <form className="gate__card card stack" onSubmit={submit} noValidate>
         <div className="gate__heart" aria-hidden>💌</div>
         <h1 style={{ fontSize: "2rem" }}>Te invitaron</h1>

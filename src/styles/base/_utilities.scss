@@ -34,3 +34,11 @@
 
   &:focus { top: space(3); }
 }
+
+// Texto mientras carga JavaScript (index.html); React lo reemplaza al montar.
+.boot-loading {
+  margin: 0;
+  padding: space(8) space(4);
+  text-align: center;
+  color: var(--c-muted);
+}

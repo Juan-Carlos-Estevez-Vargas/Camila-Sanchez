@@ -6,17 +6,19 @@ export function Spinner({ label = "Cargando" }: { label?: string }) {
 
 export function PageLoader() {
   return (
-    <div className="page-loader">
-      <div className="love-loader__heart" style={{ position: "static", fontSize: "2.5rem" }} aria-label="Cargando">💗</div>
+    <div className="page-loader" role="status">
+      <div className="love-loader__heart" style={{ position: "static", fontSize: "2.5rem" }} aria-hidden>💗</div>
+      <span className="visually-hidden">Cargando…</span>
     </div>
   );
 }
 
-export function EmptyState({ icon = "🌷", title, children }: { icon?: string; title: string; children?: ReactNode }) {
+/** Estado vacío. Con `heading` el título es el <h1> de la página (p. ej. el 404). */
+export function EmptyState({ icon = "🌷", title, heading, children }: { icon?: string; title: string; heading?: boolean; children?: ReactNode }) {
   return (
     <div className="empty">
       <div className="empty__icon" aria-hidden>{icon}</div>
-      <strong>{title}</strong>
+      {heading ? <h1 className="empty__title">{title}</h1> : <strong>{title}</strong>}
       {children}
     </div>
   );

@@ -21,10 +21,14 @@
   transition: border-color 0.2s, box-shadow 0.2s;
 
   &:focus {
-    outline: none;
-    border-color: var(--c-primary);
-    box-shadow: 0 0 0 4px tint(var(--c-primary), 15%);
+    // Contorno transparente: invisible normalmente, pero el modo de alto
+    // contraste lo pinta y así el foco nunca se pierde.
+    outline: 2px solid transparent;
+    border-color: var(--c-focus);
+    box-shadow: 0 0 0 3px var(--c-focus);
   }
+
+  &[aria-invalid="true"] { border-color: var(--c-danger); }
 }
 
 .input:not([type="color"]),
@@ -52,7 +56,8 @@
     width: 42px;
     height: 24px;
     border-radius: 999px;
-    background: var(--c-border-strong);
+    // Apagado también contrasta ≥ 3:1 con el fondo (WCAG 1.4.11).
+    background: var(--c-muted);
     position: relative;
     transition: background 0.2s;
     cursor: pointer;

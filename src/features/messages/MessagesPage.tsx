@@ -7,6 +7,7 @@ import { useNotifications } from "@/state/NotificationsContext";
 import { useToast } from "@/state/ToastContext";
 import { EmptyState, PageLoader } from "@/ui/Feedback";
 import { Field } from "@/ui/Field";
+import { onRovingKeyDown, rovingTabIndex } from "@/ui/rovingFocus";
 import { Modal } from "@/ui/Modal";
 import { useAsync } from "@/ui/useAsync";
 import { useConfirm } from "@/ui/useConfirm";
@@ -23,6 +24,12 @@ export const NOTE_KIND_META: Record<NoteKind, { icon: string; label: string; pla
 };
 
 type Tab = "inbox" | "sent" | "write";
+
+const TABS: { id: Tab; label: string }[] = [
+  { id: "inbox", label: "Recibidas" },
+  { id: "sent", label: "Enviadas" },
+  { id: "write", label: "✍️ Escribir" },
+];
 
 function Compose({ people, onSent }: { people: Profile[]; onSent(): void }) {
   const backend = useBackend();
@@ -55,9 +62,9 @@ function Compose({ people, onSent }: { people: Profile[]; onSent(): void }) {
 
   return (
     <form className="card stack" onSubmit={send}>
-      <div className="kind-picker" role="radiogroup" aria-label="Tipo de notita">
+      <div className="kind-picker" role="radiogroup" aria-label="Tipo de notita" onKeyDown={onRovingKeyDown}>
         {NOTE_KINDS.map((k) => (
-          <button key={k} type="button" role="radio" aria-checked={kind === k} className={`kind-chip${kind === k ? " is-active" : ""}`} onClick={() => setKind(k)}>
+          <button key={k} type="button" role="radio" aria-checked={kind === k} tabIndex={rovingTabIndex(kind === k)} className={`kind-chip${kind === k ? " is-active" : ""}`} onClick={() => setKind(k)}>
             <span aria-hidden>{NOTE_KIND_META[k].icon}</span> {NOTE_KIND_META[k].label}
           </button>
         ))}
@@ -87,7 +94,7 @@ function Envelope({ note, from, mine, onOpen, onDelete }: { note: Note; from: st
   const unread = !mine && !note.readAt;
   return (
     <article className={`envelope card card--interactive${unread ? " is-unread" : ""}`}>
-      <button className="envelope__open" onClick={onOpen} aria-label={`Abrir notita de ${from}`}>
+      <button className="envelope__open" onClick={onOpen} aria-label={`${unread ? "Nueva notita" : "Abrir notita"} ${mine ? `para ${from}` : `de ${from}`}: ${note.title || meta.label}`}>
         <span className="envelope__icon" aria-hidden>{unread ? "💌" : meta.icon}</span>
         <span className="envelope__text">
           <strong>{note.title || meta.label}</strong>
@@ -96,7 +103,7 @@ function Envelope({ note, from, mine, onOpen, onDelete }: { note: Note; from: st
         </span>
         {unread && <span className="badge">Nueva</span>}
       </button>
-      <button className="btn btn--icon btn--ghost btn--sm envelope__delete" aria-label="Borrar notita" onClick={onDelete}>🗑</button>
+      <button className="btn btn--icon btn--ghost btn--sm envelope__delete" aria-label={`Borrar notita: ${note.title || meta.label}`} onClick={onDelete}><span aria-hidden>🗑</span></button>
     </article>
   );
 }
@@ -152,11 +159,16 @@ export default function MessagesPage() {
         <p className="muted">Notitas, perdones, “te amo” y sorpresas. Les llega un aviso al instante.</p>
       </header>
       <EnableNotifications />
-      <div className="tabs" role="tablist" data-tour="notes-tabs">
-        <button role="tab" className="tab" aria-selected={tab === "inbox"} onClick={() => setTab("inbox")}>Recibidas {unread > 0 && <span className="counter-dot">{unread}</span>}</button>
-        <button role="tab" className="tab" aria-selected={tab === "sent"} onClick={() => setTab("sent")}>Enviadas</button>
-        <button role="tab" className="tab" aria-selected={tab === "write"} onClick={() => setTab("write")}>✍️ Escribir</button>
+      <div className="tabs" role="tablist" aria-label="Notitas" data-tour="notes-tabs" onKeyDown={onRovingKeyDown}>
+        {TABS.map(({ id, label }) => (
+          <button key={id} id={`notas-tab-${id}`} role="tab" className="tab" aria-selected={tab === id} aria-controls="notas-panel"
+            tabIndex={rovingTabIndex(tab === id)} onClick={() => setTab(id)}>
+            {label}
+            {id === "inbox" && unread > 0 && <><span className="counter-dot" aria-hidden>{unread}</span><span className="visually-hidden">({unread} sin leer)</span></>}
+          </button>
+        ))}
       </div>
+      <div id="notas-panel" role="tabpanel" aria-labelledby={`notas-tab-${tab}`}>
       {loading && !data ? <PageLoader /> : tab === "write" ? (
         <Compose people={people} onSent={() => { void reload(); setTab("sent"); }} />
       ) : list.length === 0 ? (
@@ -171,6 +183,7 @@ export default function MessagesPage() {
           ))}
         </div>
       )}
+      </div>
       {open && (
         <Modal title={<>{NOTE_KIND_META[open.kind].icon} {open.title || NOTE_KIND_META[open.kind].label}</>} onClose={() => setOpen(null)}>
           <div className="letter-paper">

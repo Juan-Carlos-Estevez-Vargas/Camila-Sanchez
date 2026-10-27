@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { formatLongDate } from "@/domain/dates";
 import type { Photo, PhotoUrls, Uuid } from "@/domain/types";
+import { isTopDialog, useFocusTrap } from "@/ui/useFocusTrap";
 import { burst } from "../effects/FloatingEffects";
 
 interface Props {
@@ -17,6 +18,8 @@ interface Props {
 export function Lightbox({ title, photos, urls, startIndex = 0, effect, onClose }: Props) {
   const [index, setIndex] = useState(startIndex);
   const touchX = useRef<number | null>(null);
+  const dialog = useRef<HTMLDivElement>(null);
+  useFocusTrap(dialog, { initial: ".lightbox__close" });
   const count = photos.length;
   const go = useCallback((delta: number) => setIndex((i) => (i + delta + count) % count), [count]);
 
@@ -25,6 +28,7 @@ export function Lightbox({ title, photos, urls, startIndex = 0, effect, onClose 
     const overflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     const onKey = (e: KeyboardEvent) => {
+      if (!isTopDialog(dialog.current)) return;
       if (e.key === "Escape") onClose();
       if (e.key === "ArrowLeft") go(-1);
       if (e.key === "ArrowRight") go(1);
@@ -51,6 +55,7 @@ export function Lightbox({ title, photos, urls, startIndex = 0, effect, onClose 
 
   return createPortal(
     <div
+      ref={dialog}
       className="lightbox"
       role="dialog"
       aria-modal="true"
@@ -66,11 +71,14 @@ export function Lightbox({ title, photos, urls, startIndex = 0, effect, onClose 
     >
       <div className="lightbox__top">
         <span>{title}</span>
-        <span>{index + 1} / {count}</span>
-        <button className="btn btn--icon btn--ghost lightbox__close" onClick={onClose} aria-label="Cerrar">×</button>
+        <span aria-live="polite" aria-atomic="true">
+          <span aria-hidden>{index + 1} / {count}</span>
+          <span className="visually-hidden">Foto {index + 1} de {count}{photo.caption ? `: ${photo.caption}` : ""}</span>
+        </span>
+        <button className="btn btn--icon btn--ghost lightbox__close" onClick={onClose} aria-label="Cerrar el visor"><span aria-hidden>×</span></button>
       </div>
       <div className="lightbox__stage">
-        {count > 1 && <button className="lightbox__nav is-prev" onClick={() => go(-1)} aria-label="Anterior">‹</button>}
+        {count > 1 && <button className="lightbox__nav is-prev" onClick={() => go(-1)} aria-label="Foto anterior"><span aria-hidden>‹</span></button>}
         <figure className="lightbox__figure" key={photo.id}>
           {url ? <img src={url.full} alt={photo.caption || "Recuerdo"} decoding="async" /> : <div className="skeleton lightbox__placeholder" />}
           <figcaption>
@@ -78,14 +86,15 @@ export function Lightbox({ title, photos, urls, startIndex = 0, effect, onClose 
             <time dateTime={photo.takenOn}>{formatLongDate(photo.takenOn)}</time>
           </figcaption>
         </figure>
-        {count > 1 && <button className="lightbox__nav is-next" onClick={() => go(1)} aria-label="Siguiente">›</button>}
+        {count > 1 && <button className="lightbox__nav is-next" onClick={() => go(1)} aria-label="Foto siguiente"><span aria-hidden>›</span></button>}
       </div>
       {count > 1 && (
-        <div className="lightbox__thumbs">
+        <div className="lightbox__thumbs" role="group" aria-label="Todas las fotos">
           {photos.map((p, i) => {
             const u = urls.get(p.id);
             return (
-              <button key={p.id} className={`lightbox__thumb${i === index ? " is-active" : ""}`} onClick={() => setIndex(i)} aria-label={`Foto ${i + 1}`}>
+              <button key={p.id} className={`lightbox__thumb${i === index ? " is-active" : ""}`} onClick={() => setIndex(i)}
+                aria-label={`Foto ${i + 1}${p.caption ? `: ${p.caption}` : ""}`} aria-current={i === index ? "true" : undefined}>
                 {u && <img src={u.thumb} alt="" loading="lazy" decoding="async" />}
               </button>
             );

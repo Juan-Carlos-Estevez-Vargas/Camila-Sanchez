@@ -23,8 +23,8 @@ export function MusicToggle({ url }: { url: string }) {
   };
 
   return (
-    <button className="music-toggle btn btn--icon" data-tour="music" onClick={toggle} aria-pressed={playing} aria-label={playing ? "Pausar música" : "Poner música"}>
-      {playing ? "❚❚" : "♪"}
+    <button className="music-toggle btn btn--icon" data-tour="music" onClick={toggle} aria-pressed={playing} aria-label="Música de fondo" title={playing ? "Pausar música" : "Poner música"}>
+      <span aria-hidden>{playing ? "❚❚" : "♪"}</span>
     </button>
   );
 }

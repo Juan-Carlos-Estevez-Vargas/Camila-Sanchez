@@ -16,9 +16,11 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, { failed: 
   render() {
     if (this.state.failed) {
       return (
-        <EmptyState icon="🥀" title="Algo se rompió en esta parte">
-          <button className="btn btn--soft" onClick={() => window.location.reload()}>Recargar</button>
-        </EmptyState>
+        <div role="alert">
+          <EmptyState icon="🥀" title="Algo se rompió en esta parte">
+            <button className="btn btn--soft" onClick={() => window.location.reload()}>Recargar</button>
+          </EmptyState>
+        </div>
       );
     }
     return this.props.children;

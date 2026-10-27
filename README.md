@@ -16,6 +16,7 @@ cuenta regresiva y subida de fotos que se optimizan solas.
 | [Manual de arquitectura](docs/ARQUITECTURA.md) | Quien mantiene o extiende el código |
 | [Diagramas](docs/DIAGRAMAS.md) | Flujos, secuencias, despliegue, modelo de datos y permisos (Mermaid) |
 | [Seguridad OWASP](docs/SEGURIDAD_OWASP.md) | Cómo se cubre cada riesgo del OWASP Top 10 y del API Security Top 10 |
+| [Accesibilidad y SEO](docs/ACCESIBILIDAD.md) | Cómo se cumple WCAG 2.2 AA y qué se hace para los buscadores |
 
 Dentro de la app, el botón **? Tutorial** de la cabecera hace un recorrido
 guiado por la página en la que estés, según lo que tu cuenta puede usar.

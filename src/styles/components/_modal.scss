@@ -26,6 +26,11 @@
 
   @include below(sm) { padding: space(5) space(4); }
 
+  &__title {
+    margin: 0;
+    font-size: 1.25rem;
+  }
+
   &__header {
     display: flex;
     justify-content: space-between;
