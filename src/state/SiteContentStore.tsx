@@ -2,14 +2,26 @@
  * Store del contenido del sitio (patrón Observable + caché). Carga todo en
  * paralelo una vez, se mantiene al día con Realtime y sólo recarga la
  * colección que cambió (con debounce para agrupar ráfagas de cambios).
+ *
+ * La última versión se guarda en el navegador: al abrir la app se pinta al
+ * instante y luego se actualiza con lo que diga el servidor.
  */
 import { createContext, useContext, useEffect, useMemo, useSyncExternalStore, type ReactNode } from "react";
+import { clearPrivateCaches, readCache, writeCache } from "@/data/localCache";
 import type { Backend, RealtimeTable } from "@/data/ports";
 import type { PhotoUrls, SiteContent, Uuid } from "@/domain/types";
 import { useBackend } from "./BackendContext";
 import { useAuth } from "./AuthContext";
 
 export type ContentKey = keyof SiteContent;
+
+/** Dueño del contenido guardado: el id de la cuenta o null sin sesión. */
+type Owner = Uuid | null;
+interface CachedContent {
+  owner: Owner;
+  content: SiteContent;
+}
+const CONTENT_CACHE = "site-content";
 
 export interface SiteContentState {
   status: "loading" | "ready" | "error";
@@ -34,8 +46,28 @@ export class SiteContentStore {
   private timer: ReturnType<typeof setTimeout> | null = null;
   private unsubscribeRealtime: (() => void) | null = null;
   private generation = 0;
+  /** De quién es lo que hay en pantalla (puede venir de la caché). */
+  private owner: Owner | undefined;
 
   constructor(private readonly backend: Backend) {}
+
+  /**
+   * Pinta al instante lo último que se vio en este dispositivo, mientras se
+   * confirma la sesión y llegan los datos frescos.
+   */
+  hydrate(): void {
+    const cached = readCache<CachedContent>(CONTENT_CACHE);
+    if (!cached?.content || this.state.content) return;
+    this.owner = cached.owner;
+    this.set({ status: "ready", content: cached.content, error: null });
+    void this.resolvePhotoUrls(this.generation).catch(() => undefined);
+  }
+
+  private save() {
+    if (this.state.content && this.owner !== undefined) {
+      writeCache(CONTENT_CACHE, { owner: this.owner, content: this.state.content } satisfies CachedContent);
+    }
+  }
 
   getSnapshot = (): SiteContentState => this.state;
 
@@ -62,8 +94,14 @@ export class SiteContentStore {
   }
 
   /** Carga completa (al arrancar o al cambiar de sesión). */
-  async load(): Promise<void> {
+  async load(owner: Owner = this.owner ?? null): Promise<void> {
     const generation = ++this.generation;
+    if (this.owner !== undefined && this.owner !== owner) {
+      // Otra cuenta (o se cerró la sesión): lo de antes no se muestra ni se guarda.
+      if (this.owner !== null) void clearPrivateCaches();
+      this.set({ status: "loading", content: null, photoUrls: new Map(), error: null });
+    }
+    this.owner = owner;
     const l = this.loaders();
     try {
       const [settings, sections, photos, milestones, dates, interruptions] = await Promise.all([
@@ -72,9 +110,13 @@ export class SiteContentStore {
       if (generation !== this.generation) return;
       const content: SiteContent = { settings, sections, photos, milestones, dates, interruptions };
       this.set({ status: "ready", content, error: null });
+      this.save();
       await this.resolvePhotoUrls(generation);
     } catch (error) {
-      if (generation === this.generation) this.set({ status: "error", error });
+      if (generation !== this.generation) return;
+      // Sin conexión pero con algo guardado: se sigue mostrando lo guardado.
+      if (this.state.content) console.warn("[content] usando la copia guardada", error);
+      else this.set({ status: "error", error });
     }
   }
 
@@ -104,6 +146,7 @@ export class SiteContentStore {
       const content = { ...this.state.content } as Record<ContentKey, unknown>;
       for (const [k, v] of entries) content[k] = v;
       this.set({ content: content as unknown as SiteContent });
+      this.save();
       if (keys.includes("photos")) await this.resolvePhotoUrls(generation);
     } catch (error) {
       console.error("[content] no se pudo refrescar", error);
@@ -132,7 +175,11 @@ const StoreContext = createContext<SiteContentStore | null>(null);
 export function SiteContentProvider({ children }: { children: ReactNode }) {
   const backend = useBackend();
   const { user, loading } = useAuth();
-  const store = useMemo(() => new SiteContentStore(backend), [backend]);
+  const store = useMemo(() => {
+    const s = new SiteContentStore(backend);
+    s.hydrate();
+    return s;
+  }, [backend]);
 
   useEffect(() => {
     store.connectRealtime();
@@ -141,7 +188,7 @@ export function SiteContentProvider({ children }: { children: ReactNode }) {
 
   // Lo visible depende de la sesión (sitio privado, secciones ocultas...).
   useEffect(() => {
-    if (!loading) void store.load();
+    if (!loading) void store.load(user?.id ?? null);
   }, [store, user?.id, loading]);
 
   return <StoreContext.Provider value={store}>{children}</StoreContext.Provider>;
