@@ -2,10 +2,13 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "@/app/App";
 import { createBackend } from "@/data/backend";
+import { pruneOldCaches } from "@/data/localCache";
 import { BackendProvider } from "@/state/BackendContext";
 import "@/styles/main.scss";
 
 async function bootstrap() {
+  // La página principal se descarga a la vez que el backend, no después.
+  if (window.location.pathname === "/") void import("@/features/site/SitePage");
   const backend = await createBackend();
   createRoot(document.getElementById("root")!).render(
     <StrictMode>
@@ -17,6 +20,7 @@ async function bootstrap() {
 }
 
 void bootstrap();
+pruneOldCaches();
 
 // El service worker sólo en producción (en desarrollo estorba al hot reload).
 if (import.meta.env.PROD && "serviceWorker" in navigator) {

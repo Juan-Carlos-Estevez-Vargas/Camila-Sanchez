@@ -1,5 +1,5 @@
 /// <reference types="vitest/config" />
-import { defineConfig, loadEnv, type Plugin } from "vite";
+import { defineConfig, loadEnv, type HtmlTagDescriptor, type Plugin, type Rollup } from "vite";
 import react from "@vitejs/plugin-react";
 import { fileURLToPath, URL } from "node:url";
 import { resolveAppVersion } from "./scripts/release.mjs";
@@ -59,6 +59,40 @@ const seoPlugin = (siteUrl: string, indexing: boolean): Plugin => ({
   },
 });
 
+/**
+ * Arranque rápido: el navegador abre la conexión con Supabase y descarga el
+ * código del backend y de la página principal en paralelo con el JS de
+ * entrada, en vez de esperar a que éste los pida (cascada de peticiones).
+ */
+const startupPreloadPlugin = (supabaseUrl: string): Plugin => ({
+  name: "startup-preload",
+  apply: "build",
+  transformIndexHtml: {
+    order: "post",
+    handler(html, ctx) {
+      const tags: HtmlTagDescriptor[] = [];
+      const origin = URL.canParse(supabaseUrl) ? new URL(supabaseUrl).origin : "";
+      if (origin) tags.push({ tag: "link", attrs: { rel: "preconnect", href: origin, crossorigin: "" }, injectTo: "head-prepend" });
+
+      const chunks = Object.values(ctx.bundle ?? {}).filter((c): c is Rollup.OutputChunk => c.type === "chunk");
+      const byFile = new Map(chunks.map((c) => [c.fileName, c]));
+      const targets = [origin ? "/data/supabase/supabaseBackend.ts" : "/data/demo/demoBackend.ts", "/features/site/SitePage.tsx"];
+      const files = new Set<string>();
+      const visit = (chunk: Rollup.OutputChunk | undefined) => {
+        // Lo que Vite ya precarga (dependencias de la entrada) no se repite.
+        if (!chunk || chunk.isEntry || files.has(chunk.fileName) || html.includes(chunk.fileName)) return;
+        files.add(chunk.fileName);
+        chunk.imports.forEach((f) => visit(byFile.get(f)));
+      };
+      for (const target of targets) visit(chunks.find((c) => c.facadeModuleId?.endsWith(target)));
+      for (const file of files) {
+        tags.push({ tag: "link", attrs: { rel: "modulepreload", crossorigin: "", href: `/${file}` }, injectTo: "head" });
+      }
+      return tags;
+    },
+  },
+});
+
 export default defineConfig(({ mode }) => {
   // Versión SemVer del release que corresponde a este commit (pie de página).
   // Vite expone en import.meta.env las variables VITE_* del entorno.
@@ -67,7 +101,7 @@ export default defineConfig(({ mode }) => {
   const siteUrl = normalizeSiteUrl(env.VITE_SITE_URL);
   const indexing = env.VITE_SEO_INDEX?.trim() !== "false";
   return {
-    plugins: [react(), cspPlugin(), seoPlugin(siteUrl, indexing)],
+    plugins: [react(), cspPlugin(), seoPlugin(siteUrl, indexing), startupPreloadPlugin(env.VITE_SUPABASE_URL?.trim() ?? "")],
     resolve: {
       alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) },
     },
