@@ -10,6 +10,13 @@
   width: min(380px, calc(100% - 2rem));
 }
 
+.toasts__group {
+  display: grid;
+  gap: space(2);
+
+  &:empty { display: none; }
+}
+
 .toast {
   display: flex;
   gap: space(3);

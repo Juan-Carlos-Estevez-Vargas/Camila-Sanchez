@@ -1,6 +1,7 @@
 import type { ReactElement } from "react";
 import { AUTHOR, releaseUrl, type SocialNetwork } from "@/core/author";
 import { config } from "@/core/config";
+import { setReducedMotion, useReducedMotion } from "@/ui/motion";
 
 const NETWORKS: Record<SocialNetwork, { label: string; icon: ReactElement }> = {
   github: {
@@ -35,12 +36,13 @@ const NETWORKS: Record<SocialNetwork, { label: string; icon: ReactElement }> = {
 export function AppFooter() {
   const links = (Object.keys(NETWORKS) as SocialNetwork[]).filter((network) => AUTHOR.links[network]);
   const version = config.appVersion;
+  const reducedMotion = useReducedMotion();
 
   return (
     <footer className="app-footer" data-tour="footer">
       <div className="container app-footer__inner">
         <p className="app-footer__signature">
-          Hecho con mucho amor <span className="app-footer__heart" aria-label="amor">💖</span> por <strong>{AUTHOR.name}</strong>
+          Hecho con mucho amor <span className="app-footer__heart" role="img" aria-label="amor">💖</span> por <strong>{AUTHOR.name}</strong>
         </p>
         <p className="app-footer__subtitle">Diseñado y programado por mí, línea por línea, para ti.</p>
         {links.length > 0 && (
@@ -48,16 +50,20 @@ export function AppFooter() {
             {links.map((network) => (
               <li key={network}>
                 <a href={AUTHOR.links[network]} target="_blank" rel="noopener noreferrer me"
-                  aria-label={`${NETWORKS[network].label} de ${AUTHOR.name}`} title={NETWORKS[network].label}>
+                  aria-label={`${NETWORKS[network].label} de ${AUTHOR.name} (se abre en otra pestaña)`} title={NETWORKS[network].label}>
                   {NETWORKS[network].icon}
                 </a>
               </li>
             ))}
           </ul>
         )}
+        <label className="switch app-footer__motion">
+          <input type="checkbox" role="switch" checked={reducedMotion} onChange={(e) => setReducedMotion(e.target.checked)} />
+          <span>Reducir animaciones</span>
+        </label>
         {version === "dev"
           ? <span className="app-footer__version">versión de desarrollo</span>
-          : <a className="app-footer__version" href={releaseUrl(version)} target="_blank" rel="noopener noreferrer" title="Qué trae esta versión">v{version}</a>}
+          : <a className="app-footer__version" href={releaseUrl(version)} target="_blank" rel="noopener noreferrer" title="Qué trae esta versión" aria-label={`Versión ${version}: qué trae (se abre en otra pestaña)`}>v{version}</a>}
       </div>
     </footer>
   );

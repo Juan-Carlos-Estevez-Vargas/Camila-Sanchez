@@ -9,6 +9,9 @@
 html {
   -webkit-text-size-adjust: 100%;
   scroll-behavior: smooth;
+  // La cabecera es fija: lo que recibe el foco o un ancla no queda debajo
+  // de ella (WCAG 2.4.11).
+  scroll-padding-top: calc(#{$header-height} + #{space(3)});
 }
 
 body {
@@ -46,6 +49,34 @@ input[type="range"] {
 :focus-visible {
   @include focus-ring;
   border-radius: 6px;
+}
+
+// Destino de "Saltar al contenido" y del foco al cambiar de página: no
+// necesita anillo (no es un control), pero sí recibir el foco.
+[tabindex="-1"]:focus:not(:focus-visible),
+main:focus {
+  outline: none;
+}
+
+// Modo de alto contraste (Windows): los bordes y el foco usan colores del
+// sistema para no desaparecer.
+@media (forced-colors: active) {
+  .btn,
+  .tab,
+  .input,
+  .select,
+  .textarea,
+  .card {
+    border: 1px solid CanvasText;
+  }
+
+  .tab[aria-selected="true"] {
+    outline: 2px solid Highlight;
+  }
+
+  :focus-visible {
+    outline-color: Highlight;
+  }
 }
 
 ::selection {

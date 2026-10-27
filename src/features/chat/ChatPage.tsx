@@ -6,6 +6,7 @@ import { ImageProcessor } from "@/services/images/ImageProcessor";
 import { isImageFile } from "@/services/images/bulk";
 import { Avatar } from "@/ui/Avatar";
 import { Modal } from "@/ui/Modal";
+import { prefersReducedMotion } from "@/ui/motion";
 import { ProfileCard } from "@/features/auth/ProfileCard";
 import { useAuth } from "@/state/AuthContext";
 import { useBackend } from "@/state/BackendContext";
@@ -260,7 +261,10 @@ export default function ChatPage() {
       return;
     }
     stickToBottom.current = false;
-    target.scrollIntoView({ block: "center", behavior: "smooth" });
+    target.scrollIntoView({ block: "center", behavior: prefersReducedMotion() ? "auto" : "smooth" });
+    // El foco también va al mensaje, para que el teclado y el lector sigan ahí.
+    target.tabIndex = -1;
+    target.focus({ preventScroll: true });
     setFlash(id);
     window.setTimeout(() => setFlash((current) => (current === id ? null : current)), 1600);
   };
@@ -401,7 +405,10 @@ export default function ChatPage() {
           const el = e.currentTarget;
           stickToBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
         }}
-        aria-live="polite"
+        role="log"
+        aria-label="Mensajes"
+        aria-busy={loading}
+        tabIndex={0}
       >
         {loading ? <PageLoader /> : messages.length === 0 ? (
           <EmptyState icon="💬" title="Empiecen a hablar">Escribe el primer mensaje 💖</EmptyState>
@@ -416,16 +423,18 @@ export default function ChatPage() {
               const receipt = mine ? receiptOf(m, presences) : null;
               return (
                 <div key={m.id} id={`msg-${m.id}`}>
-                  {newDay && <div className="chat__day">{dayFormat.format(new Date(m.createdAt))}</div>}
+                  {newDay && <div className="chat__day" role="separator" aria-label={dayFormat.format(new Date(m.createdAt))}>{dayFormat.format(new Date(m.createdAt))}</div>}
                   <SwipeRow
                     className={`bubble-row${mine ? " is-mine" : ""}${grouped ? " is-grouped" : ""}${flash === m.id ? " is-flash" : ""}`}
                     enabled={!m.pending && !m.failed}
                     onReply={() => startReply(m)}
                   >
                     <div className={`bubble bubble--${m.kind}${m.pending ? " is-pending" : ""}${m.failed ? " is-failed" : ""}`}>
-                      {!mine && !grouped && <span className="bubble__name">{nameOf(m.senderId)}</span>}
+                      {!mine && !grouped
+                        ? <span className="bubble__name">{nameOf(m.senderId)}</span>
+                        : <span className="visually-hidden">{mine ? "Tú" : nameOf(m.senderId)}:</span>}
                       {m.replyTo && (
-                        <button type="button" className="bubble__quote" onClick={() => jumpTo(m.replyTo!.id)}>
+                        <button type="button" className="bubble__quote" onClick={() => jumpTo(m.replyTo!.id)} aria-label={`En respuesta a ${m.replyTo.senderId ? nameOf(m.replyTo.senderId) : "un mensaje"}: ${messagePreview(m.replyTo)}. Ir al mensaje`}>
                           <span className="bubble__quote-name">{m.replyTo.senderId ? nameOf(m.replyTo.senderId) : "Mensaje"}</span>
                           <span className="bubble__quote-text">{messagePreview(m.replyTo)}</span>
                         </button>
@@ -454,7 +463,7 @@ export default function ChatPage() {
                       {m.kind === "sticker" && <StickerArt id={m.sticker} />}
                       {m.body && <span className="bubble__text">{m.body}</span>}
                       <span className="bubble__time">
-                        {timeFormat.format(new Date(m.createdAt))}
+                        <time dateTime={m.createdAt}>{timeFormat.format(new Date(m.createdAt))}</time>
                         {receipt && <ReceiptMark receipt={receipt} readers={readersOf(m, presences).map(nameOf).join(", ")} />}
                       </span>
                     </div>
@@ -466,7 +475,7 @@ export default function ChatPage() {
                         title="Responder"
                         onClick={() => startReply(m)}
                       >
-                        ↩
+                        <span aria-hidden>↩</span>
                       </button>
                     )}
                   </SwipeRow>
@@ -476,7 +485,8 @@ export default function ChatPage() {
           </>
         )}
       </div>
-      <form className="chat__composer" onSubmit={send} data-tour="chat-composer">
+      <form className="chat__composer" onSubmit={send} data-tour="chat-composer" aria-label="Escribir mensaje">
+        <span id="chat-ayuda" className="visually-hidden">Enter envía; Mayúsculas más Enter hace un salto de línea.</span>
         {replyingTo && (
           <div className="chat__replying" role="status">
             <button type="button" className="chat__replying-quote" onClick={() => jumpTo(replyingTo.id)}>
@@ -485,7 +495,7 @@ export default function ChatPage() {
               </span>
               <span className="bubble__quote-text">{messagePreview(replyingTo)}</span>
             </button>
-            <button type="button" className="btn btn--icon btn--ghost btn--sm" aria-label="Cancelar respuesta" onClick={() => setReplyingTo(null)}>✕</button>
+            <button type="button" className="btn btn--icon btn--ghost btn--sm" aria-label="Cancelar respuesta" onClick={() => setReplyingTo(null)}><span aria-hidden>✕</span></button>
           </div>
         )}
         {drafts.length > 0 && (
@@ -493,14 +503,14 @@ export default function ChatPage() {
             {drafts.map((d) => (
               <li key={d.id} className="chat__draft">
                 <img src={d.url} alt={d.file.name} />
-                <button type="button" className="chat__draft-remove" aria-label={`Quitar ${d.file.name}`} onClick={() => removeDraft(d.id)}>✕</button>
+                <button type="button" className="chat__draft-remove" aria-label={`Quitar ${d.file.name}`} onClick={() => removeDraft(d.id)}><span aria-hidden>✕</span></button>
               </li>
             ))}
           </ul>
         )}
         {picker && <StickerPicker onPick={sendSticker} onClose={() => setPicker(false)} />}
         <div className="chat__tools">
-          <button type="button" className="btn btn--icon btn--ghost" aria-label="Enviar fotos" title="Fotos" onClick={() => fileInput.current?.click()} data-tour="chat-photo">📷</button>
+          <button type="button" className="btn btn--icon btn--ghost" aria-label="Enviar fotos" title="Fotos" onClick={() => fileInput.current?.click()} data-tour="chat-photo"><span aria-hidden>📷</span></button>
           <button
             type="button"
             className="btn btn--icon btn--ghost"
@@ -511,7 +521,7 @@ export default function ChatPage() {
             data-tour="chat-sticker"
             onClick={() => setPicker((open) => !open)}
           >
-            😊
+            <span aria-hidden>😊</span>
           </button>
           <input
             ref={fileInput}
@@ -527,7 +537,7 @@ export default function ChatPage() {
         </div>
         <textarea
           ref={input}
-          className="textarea" rows={1} maxLength={2000} value={text} aria-label="Mensaje"
+          className="textarea" rows={1} maxLength={2000} value={text} aria-label="Escribe un mensaje" aria-describedby="chat-ayuda"
           placeholder={drafts.length ? "Añade un mensaje a la foto…" : "Escribe algo bonito…"}
           onChange={(e) => setText(e.target.value)}
           onPaste={onPaste}
@@ -541,7 +551,7 @@ export default function ChatPage() {
             }
           }}
         />
-        <button className="btn" disabled={!text.trim() && drafts.length === 0} aria-label="Enviar"><span className="chat__send-label">Enviar </span>💌</button>
+        <button className="btn" disabled={!text.trim() && drafts.length === 0} aria-label="Enviar"><span className="chat__send-label">Enviar </span><span aria-hidden>💌</span></button>
       </form>
       {viewing?.image && (
         <Modal title={`Foto de ${nameOf(viewing.senderId)}`} onClose={() => setViewing(null)} wide>

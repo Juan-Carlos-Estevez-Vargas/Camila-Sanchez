@@ -10,6 +10,7 @@ import { useToast } from "@/state/ToastContext";
 import { Avatar } from "@/ui/Avatar";
 import { PageLoader } from "@/ui/Feedback";
 import { Field } from "@/ui/Field";
+import { onRovingKeyDown, rovingTabIndex } from "@/ui/rovingFocus";
 
 // Una foto de perfil se ve pequeña: 512 px y liviana.
 const AVATAR_IMAGE_OPTIONS = { maxEdge: 512, thumbEdge: 128, quality: 0.85, targetBytes: 120 * 1024, minQuality: 0.7 };
@@ -104,13 +105,13 @@ export default function ProfilePage() {
 
       <section className="card stack" data-tour="profile-icon">
         <h2 style={{ margin: 0, fontSize: "1.1rem" }}>Mi icono</h2>
-        <div className="emoji-grid" role="radiogroup" aria-label="Icono de perfil">
-          <button type="button" role="radio" aria-checked={!profile.avatarEmoji} className={`emoji-grid__option${!profile.avatarEmoji ? " is-active" : ""}`}
+        <div className="emoji-grid" role="radiogroup" aria-label="Icono de perfil" onKeyDown={onRovingKeyDown}>
+          <button type="button" role="radio" aria-checked={!profile.avatarEmoji} tabIndex={rovingTabIndex(!profile.avatarEmoji || !(AVATAR_EMOJIS as readonly string[]).includes(profile.avatarEmoji))} aria-label="Sin icono (la inicial)" className={`emoji-grid__option${!profile.avatarEmoji ? " is-active" : ""}`}
             disabled={busy} onClick={() => void pickEmoji(null)} title="Sin icono (la inicial)">
             <Avatar person={{ ...preview, avatarPath: null, avatarEmoji: null }} size={30} />
           </button>
           {AVATAR_EMOJIS.map((emoji) => (
-            <button key={emoji} type="button" role="radio" aria-checked={profile.avatarEmoji === emoji} aria-label={emoji}
+            <button key={emoji} type="button" role="radio" aria-checked={profile.avatarEmoji === emoji} tabIndex={rovingTabIndex(profile.avatarEmoji === emoji)} aria-label={emoji}
               className={`emoji-grid__option${profile.avatarEmoji === emoji ? " is-active" : ""}`} disabled={busy} onClick={() => void pickEmoji(emoji)}>
               {emoji}
             </button>

@@ -67,6 +67,8 @@ export function applySeo(meta: SeoMeta, currentUrl: string): void {
   upsertMeta("name", "twitter:title", meta.title);
   upsertMeta("name", "twitter:description", meta.description);
   upsertMeta("name", "twitter:image", image);
+  upsertMeta("name", "twitter:image:alt", meta.imageAlt);
+  upsertMeta("property", "og:image:alt", meta.imageAlt);
   upsertCanonical(meta.canonical);
   upsertStructuredData(meta.structuredData);
 }

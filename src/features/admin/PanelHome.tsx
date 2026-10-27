@@ -31,7 +31,7 @@ export default function PanelHome() {
       </div>
       {next.length > 0 && (
         <div className="card stack">
-          <h3 style={{ margin: 0 }}>Lo que se viene</h3>
+          <h2 style={{ margin: 0, fontSize: "1.25rem" }}>Lo que se viene</h2>
           {next.map((c) => <div key={c.date.id}>{c.date.icon} {countdownLabel(c)}</div>)}
         </div>
       )}

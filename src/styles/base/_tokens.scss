@@ -15,6 +15,10 @@
   --c-surface: #ffffff;
   --c-text: #2b1720;
   --c-muted: #7a5c66;
+  // Enlaces y anillo de foco: ThemeController los ajusta para que siempre
+  // contrasten con el fondo (4.5:1 y 3:1), aunque los colores sean a mano.
+  --c-link: var(--c-primary);
+  --c-focus: var(--c-primary);
 
   // Derivados con color-mix: cualquier paleta del panel sigue funcionando.
   --c-primary-soft: #{tint(var(--c-primary), 12%, var(--c-surface))};
@@ -54,5 +58,7 @@
   --c-surface: #1f1925;
   --c-text: #f3e9ef;
   --c-muted: #b4a3ae;
+  --c-link: #f08aab;
+  --c-focus: #f08aab;
   color-scheme: dark;
 }

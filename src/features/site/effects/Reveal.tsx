@@ -29,11 +29,13 @@ function observe(element: Element, onVisible: () => void): () => void {
   return () => observer?.unobserve(element);
 }
 
-export function Reveal({ animation, children, as: Tag = "section", id, className = "" }: {
+export function Reveal({ animation, children, as: Tag = "section", id, label, className = "" }: {
   animation: SectionAnimation;
   children: ReactNode;
   as?: "section" | "div";
   id?: string;
+  /** Nombre de la región para lectores de pantalla (el título de la sección). */
+  label?: string;
   className?: string;
 }) {
   const ref = useRef<HTMLElement>(null);
@@ -48,6 +50,7 @@ export function Reveal({ animation, children, as: Tag = "section", id, className
     <Tag
       ref={ref as never}
       id={id}
+      aria-label={label}
       className={`reveal reveal--${animation}${visible ? " is-visible" : ""} ${className}`}
     >
       {children}

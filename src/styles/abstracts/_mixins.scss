@@ -18,9 +18,16 @@
   }
 }
 
+/// Menos movimiento: lo pide el sistema o la persona desde el pie de página
+/// (ui/motion.ts pone <html data-motion="reduce">).
 @mixin reduced-motion {
   @media (prefers-reduced-motion: reduce) {
     @content;
+  }
+  @if & {
+    :root[data-motion="reduce"] & { @content; }
+  } @else {
+    :root[data-motion="reduce"] { @content; }
   }
 }
 
@@ -35,12 +42,18 @@
   width: 1px;
   height: 1px;
   overflow: hidden;
+  margin: -1px;
+  padding: 0;
+  border: 0;
   clip: rect(0 0 0 0);
+  clip-path: inset(50%);
   white-space: nowrap;
 }
 
+/// Anillo de foco sólido (contraste ≥ 3:1 garantizado por --c-focus) y
+/// visible también en el modo de alto contraste de Windows.
 @mixin focus-ring($offset: 2px) {
-  outline: 3px solid tint(var(--c-primary), 60%);
+  outline: 3px solid var(--c-focus);
   outline-offset: $offset;
 }
 

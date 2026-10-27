@@ -64,7 +64,7 @@ export default function RecoverPage() {
   if (phase === "verifying") return <PageLoader />;
   if (phase === "invalid" || phase === "expired") {
     return (
-      <main className="gate">
+      <main id="contenido-principal" className="gate">
         <EmptyState icon="🔑" title={phase === "expired" ? "Este enlace ya venció" : "Este enlace ya no es válido"}>
           <p className="muted">Los enlaces para recuperar la contraseña sirven una sola vez y duran poco. Pide uno nuevo.</p>
           <Link className="btn" to="/entrar?modo=recuperar">Pedir otro enlace</Link>
@@ -91,7 +91,7 @@ export default function RecoverPage() {
   };
 
   return (
-    <main className="gate">
+    <main id="contenido-principal" className="gate">
       <form className="gate__card card stack" onSubmit={submit} noValidate>
         <div className="gate__heart" aria-hidden>🔑</div>
         <h1 style={{ fontSize: "2rem" }}>Crea tu contraseña nueva</h1>
