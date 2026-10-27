@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { toUserMessage } from "@/core/errors";
 import { INVITE_PATH, MIN_PASSWORD_LENGTH, readInviteToken } from "@/domain/invitations";
+import { passwordProblem } from "@/domain/password";
 import { ROLE_LABELS } from "@/domain/permissions";
 import type { InvitableRole } from "@/domain/types";
 import { useAuth } from "@/state/AuthContext";
@@ -73,7 +74,8 @@ export default function InvitePage() {
     const email = form.email.trim();
     if (!form.displayName.trim()) return setError("Escribe tu nombre.");
     if (!EMAIL.test(email)) return setError("Escribe un correo válido.");
-    if (form.password.length < MIN_PASSWORD_LENGTH) return setError(`La contraseña debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres.`);
+    const problem = passwordProblem(form.password, [email, form.displayName]);
+    if (problem) return setError(problem);
     if (form.password !== form.confirm) return setError("Las contraseñas no coinciden.");
     setBusy(true);
     try {

@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { toUserMessage } from "@/core/errors";
+import { safeNextPath } from "@/core/safeRedirect";
 import type { AppNotification } from "@/domain/types";
 import { showLocalNotification, syncPushSubscription } from "@/services/notifications/browserNotifications";
 import { useAuth } from "./AuthContext";
@@ -56,7 +57,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
       if ((change.type === "INSERT" || refreshed) && record && ownerId === user.id) {
         const title = String(record.title ?? "Tienes algo nuevo");
         const body = String(record.body ?? "");
-        const link = record.link ?? null;
+        const link = record.link ? safeNextPath(record.link) : null;
         // En el chat o en la lista que ya se está viendo, el cambio se ve solo.
         const alreadyHere = (link === "/chat" || !!link?.startsWith("/listas/")) && link === window.location.pathname;
         if (!alreadyHere) {

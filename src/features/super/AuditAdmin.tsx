@@ -17,6 +17,8 @@ const TABLES: Record<string, string> = {
   milestones: "Hitos",
   important_dates: "Fechas",
   interruptions: "Sorpresas",
+  invitations: "Invitaciones",
+  accounts: "Cuentas",
 };
 const ACTIONS: Record<AuditEntry["action"], string> = { INSERT: "creó", UPDATE: "cambió", DELETE: "borró" };
 

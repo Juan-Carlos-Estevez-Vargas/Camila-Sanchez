@@ -1,0 +1,17 @@
+# Avisa con un PR cuando una dependencia o una acción de GitHub tiene una
+# versión nueva o un arreglo de seguridad (OWASP A06).
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      dependencias:
+        patterns: ["*"]
+        update-types: [minor, patch]
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
