@@ -7,6 +7,8 @@
 #      (crea las claves la primera vez y conecta la base de datos con
 #      send-push mediante Supabase Vault).
 #   4. Crea un release vX.Y.Z en GitHub con las notas de lo que cambió.
+#   5. Si lo lanzó un PR de Dependabot que CI fusionó solo y algo falla,
+#      deshace ese merge y despliega otra vez la versión anterior.
 #
 # La web la vuelve a publicar Netlify sola con cada merge (integración con Git
 # y netlify.toml).
@@ -27,6 +29,11 @@ on:
   push:
     branches: [main, master]
   workflow_dispatch:
+    inputs:
+      revertir:
+        description: Merge de Dependabot a deshacer si el despliegue falla (lo pasa CI)
+        required: false
+        default: ""
 
 permissions:
   contents: read
@@ -63,7 +70,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         if: steps.config.outputs.ready == 'true'
 
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         if: steps.config.outputs.ready == 'true'
         with:
           node-version: 22
@@ -218,7 +225,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 22
 
@@ -241,3 +248,27 @@ jobs:
             --notes-file "$NOTES" \
             --latest
           echo "::notice::Release $VERSION publicado."
+
+  deshacer:
+    needs: [supabase, release]
+    if: failure() && inputs.revertir != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+      actions: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: Volver a la versión anterior y desplegarla
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ inputs.revertir }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git revert --no-edit -m 1 "$SHA"
+          git push origin HEAD
+          gh workflow run deploy.yml --ref "$GITHUB_REF_NAME"
+          echo "::warning::El despliegue falló: se deshizo $SHA y se desplegó la versión anterior."
