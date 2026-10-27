@@ -373,7 +373,7 @@ describe("avisos en el celular", () => {
   });
 
   it("un celular queda a nombre de quien inició sesión por última vez en él", async () => {
-    const endpoint = "https://push.example.com/abc";
+    const endpoint = "https://fcm.googleapis.com/fcm/send/abc";
     await as(JUAN, `select register_push_subscription('${endpoint}', 'k', 'a', 'ua')`);
     await as(CAMI, `select register_push_subscription('${endpoint}', 'k2', 'a2', 'ua')`);
     expect(await as(CAMI, "select p256dh from push_subscriptions")).toEqual([{ p256dh: "k2" }]);
@@ -521,5 +521,77 @@ describe("perfil de cada persona", () => {
     expect(await as(GUEST, "select count(*)::int as n from storage.objects where bucket_id = 'avatars'")).toEqual([{ n: 1 }]);
     expect(await as(null, "select count(*)::int as n from storage.objects where bucket_id = 'avatars'")).toEqual([{ n: 0 }]);
     expect(await as(JUAN, "delete from storage.objects where bucket_id = 'avatars' returning name")).toEqual([]);
+  });
+});
+
+describe("refuerzo OWASP", () => {
+  it("un aviso sólo se puede marcar como leído: nadie le cambia el texto ni el enlace", async () => {
+    await as(JUAN, `insert into notes (recipient_id, kind, body) values ('${CAMI}', 'love', 'para ti')`);
+    const [n] = await as<{ id: string }>(CAMI, "select id from notifications where body = 'para ti'");
+    await expect(as(CAMI, `update notifications set link = '/chat' where id = '${n!.id}'`)).rejects.toThrow(/marcar como leído/);
+    await expect(as(CAMI, `update notifications set title = 'otro' where id = '${n!.id}'`)).rejects.toThrow(/marcar como leído/);
+    expect(await as(CAMI, `update notifications set read_at = now() where id = '${n!.id}' returning id`)).toHaveLength(1);
+  });
+
+  it("el enlace de un aviso es siempre una ruta del propio sitio", async () => {
+    for (const link of ["//sitio-malo.com", "/\\\\sitio-malo.com", "https://sitio-malo.com", "/chat\n"]) {
+      await expect(
+        db.query(`insert into notifications (user_id, kind, title, link) values ('${CAMI}', 'system', 'x', $1)`, [link]),
+      ).rejects.toThrow(/notifications_link_check/);
+    }
+    await db.query(`insert into notifications (user_id, kind, title, link, read_at) values ('${CAMI}', 'system', 'x', '/listas/1?nueva=1', now())`);
+  });
+
+  it("los avisos al celular sólo van a los servicios de push de verdad", async () => {
+    for (const endpoint of ["https://push.example.com/abc", "https://169.254.169.254/latest", "https://fcm.googleapis.com.evil.com/x"]) {
+      await expect(as(JUAN, `select register_push_subscription('${endpoint}', 'k', 'a')`)).rejects.toThrow(/push_subscriptions_endpoint_service/);
+    }
+    await expect(as(JUAN, "select register_push_subscription('https://fcm.googleapis.com/fcm/send/z', 'k<script>', 'a')"))
+      .rejects.toThrow(/push_subscriptions_keys_format/);
+    for (const endpoint of [
+      "https://updates.push.services.mozilla.com/wpush/v2/z", "https://web.push.apple.com/QK7",
+      "https://wns2-par02p.notify.windows.com/w/?token=z",
+    ]) {
+      await as(JUAN, `select register_push_subscription('${endpoint}', 'BOk_-x=', 'aZ09')`);
+    }
+  });
+
+  it("el autor de una sorpresa o foto lo pone la base, no el navegador", async () => {
+    const [row] = await as<{ created_by: string }>(CAMI,
+      `insert into interruptions (title, created_by, is_active) values ('fingida', '${JUAN}', false) returning created_by`);
+    expect(row?.created_by).toBe(CAMI);
+    const [photo] = await as<{ created_by: string }>(CAMI,
+      `insert into photos (storage_path, created_by) values ('x/autor.webp', '${JUAN}') returning created_by`);
+    expect(photo?.created_by).toBe(CAMI);
+  });
+
+  it("sin sesión no se pueden usar las funciones internas", async () => {
+    for (const call of [
+      "my_permissions()", "mark_notifications_read()", "todo_item_list(gen_random_uuid())",
+      "is_list_member(gen_random_uuid())", "is_list_folder_member('x')",
+    ]) {
+      await expect(as(null, `select ${call}`)).rejects.toThrow(/permission denied/);
+    }
+    expect(await as(null, "select can_view_site() as ok")).toEqual([{ ok: true }]);
+  });
+
+  it("frena a quien manda demasiados mensajes seguidos", async () => {
+    await expect(
+      as(GUEST, "insert into chat_messages (body) select 'spam ' || i from generate_series(1, 31) i"),
+    ).rejects.toThrow(/Vas muy rápido/);
+    await expect(
+      as(GUEST, `insert into notes (recipient_id, body) select '${CAMI}', 'spam' from generate_series(1, 21)`),
+    ).rejects.toThrow(/Vas muy rápido/);
+    expect(await as(GUEST, "insert into chat_messages (body) values ('hola, ya sin prisa') returning id")).toHaveLength(1);
+  });
+
+  it("una cuenta desactivada ya no sube fotos de perfil", async () => {
+    await db.exec(`update profiles set is_active = false where id = '${GUEST}'`);
+    try {
+      await expect(as(GUEST, `insert into storage.objects (bucket_id, name) values ('avatars', '${GUEST}/x.webp')`))
+        .rejects.toThrow(/row-level security/);
+    } finally {
+      await db.exec(`update profiles set is_active = true where id = '${GUEST}'`);
+    }
   });
 });

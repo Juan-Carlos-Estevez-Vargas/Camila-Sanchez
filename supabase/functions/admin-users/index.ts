@@ -7,8 +7,9 @@
  *
  * Acciones: invite | create | delete | set_active | recovery_link
  */
-import { createClient } from "npm:@supabase/supabase-js@2";
+import { createClient } from "npm:@supabase/supabase-js@2.117.3";
 import { corsHeaders, json } from "../_shared/cors.ts";
+import { passwordProblem } from "../_shared/password.ts";
 
 const ROLES = ["super_admin", "editor", "viewer"] as const;
 type Role = (typeof ROLES)[number];
@@ -17,6 +18,7 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const ALLOWED_ORIGIN = Deno.env.get("ALLOWED_ORIGIN") ?? "";
 
 const admin = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
 
@@ -29,6 +31,28 @@ async function assertNotLastSuperAdmin(userId: string) {
   const others = (data ?? []).filter((p) => p.id !== userId);
   const target = (data ?? []).find((p) => p.id === userId);
   if (target && others.length === 0) throw new Error("Debe quedar al menos un super administrador activo");
+}
+
+/**
+ * Deja constancia en la auditoría de quién hizo cada acción de cuentas: con la
+ * service role la base no sabe quién llamó (auth.uid() es null).
+ */
+async function audit(callerId: string, action: "INSERT" | "UPDATE" | "DELETE", userId: string, detail: Record<string, unknown>) {
+  const { error } = await admin.from("audit_log").insert({
+    actor_id: callerId, action, table_name: "accounts", record_id: userId, new_data: detail,
+  });
+  if (error) console.error("[admin-users] audit", error);
+}
+
+/** El enlace del correo de invitación sólo puede volver al propio sitio. */
+function safeRedirect(value: unknown): string | undefined {
+  const url = str(value, 500);
+  if (!url || !ALLOWED_ORIGIN || ALLOWED_ORIGIN === "*") return undefined;
+  try {
+    return new URL(url).origin === new URL(ALLOWED_ORIGIN).origin ? url : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 async function setRole(userId: string, role: Role, displayName: string) {
@@ -67,13 +91,14 @@ Deno.serve(async (req) => {
 
         let userId: string;
         if (action === "invite") {
-          const redirectTo = str(body.redirectTo, 500) || undefined;
+          const redirectTo = safeRedirect(body.redirectTo);
           const { data, error } = await admin.auth.admin.inviteUserByEmail(email, { data: { display_name: displayName }, redirectTo });
           if (error) throw error;
           userId = data.user.id;
         } else {
           const password = typeof body.password === "string" ? body.password : "";
-          if (password.length < 10) return json({ error: "La contraseña debe tener al menos 10 caracteres" }, 400);
+          const weak = passwordProblem(password, [email, displayName]);
+          if (weak) return json({ error: weak }, 400);
           const { data, error } = await admin.auth.admin.createUser({
             email, password, email_confirm: true, user_metadata: { display_name: displayName },
           });
@@ -81,6 +106,7 @@ Deno.serve(async (req) => {
           userId = data.user.id;
         }
         await setRole(userId, role, displayName);
+        await audit(callerId, "INSERT", userId, { action, email, role });
         return json({ ok: true, userId });
       }
 
@@ -91,6 +117,7 @@ Deno.serve(async (req) => {
         await assertNotLastSuperAdmin(userId);
         const { error } = await admin.auth.admin.deleteUser(userId);
         if (error) throw error;
+        await audit(callerId, "DELETE", userId, { action });
         return json({ ok: true });
       }
 
@@ -104,6 +131,7 @@ Deno.serve(async (req) => {
         const { error } = await admin.auth.admin.updateUserById(userId, { ban_duration: active ? "none" : "876000h" });
         if (error) throw error;
         await admin.from("profiles").update({ is_active: active }).eq("id", userId);
+        await audit(callerId, "UPDATE", userId, { action, active });
         return json({ ok: true });
       }
 
@@ -117,7 +145,7 @@ Deno.serve(async (req) => {
         if (getError || !target.user?.email) return json({ error: "Ese usuario no existe" }, 404);
         const { data, error } = await admin.auth.admin.generateLink({ type: "recovery", email: target.user.email });
         if (error) throw error;
-        console.log("[admin-users] recovery_link", { by: callerId, for: userId });
+        await audit(callerId, "UPDATE", userId, { action });
         return json({ tokenHash: data.properties.hashed_token });
       }
 
@@ -126,6 +154,10 @@ Deno.serve(async (req) => {
     }
   } catch (error) {
     console.error("[admin-users]", error);
-    return json({ error: error instanceof Error ? error.message : "Error inesperado" }, 400);
+    // Mensajes de Auth como «ya existe ese correo» sirven a quien administra;
+    // nada de trazas ni detalles internos de la base.
+    const message = error instanceof Error && !/sql|relation|column|syntax|constraint/i.test(error.message)
+      ? error.message : "Error inesperado";
+    return json({ error: message }, 400);
   }
 });

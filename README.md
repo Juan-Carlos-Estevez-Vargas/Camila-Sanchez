@@ -15,6 +15,7 @@ cuenta regresiva y subida de fotos que se optimizan solas.
 | [Manual de usuario](docs/MANUAL_DE_USUARIO.md) | Quien usa la app: visitantes, Camila y Juan |
 | [Manual de arquitectura](docs/ARQUITECTURA.md) | Quien mantiene o extiende el código |
 | [Diagramas](docs/DIAGRAMAS.md) | Flujos, secuencias, despliegue, modelo de datos y permisos (Mermaid) |
+| [Seguridad OWASP](docs/SEGURIDAD_OWASP.md) | Cómo se cubre cada riesgo del OWASP Top 10 y del API Security Top 10 |
 
 Dentro de la app, el botón **? Tutorial** de la cabecera hace un recorrido
 guiado por la página en la que estés, según lo que tu cuenta puede usar.
@@ -149,6 +150,13 @@ src/features/messages/styles/  cajita de mensajes y chat
 - Los avisos al celular se envían con un secreto guardado en Supabase Vault;
   cada dispositivo pertenece a una sola cuenta y se da de baja al cerrar sesión.
 - La `service_role` key sólo existe dentro de las Edge Functions.
+- Límites de velocidad en la base (chat, notitas, listas, invitaciones), los
+  avisos sólo se marcan como leídos y su enlace es siempre interno, y los
+  avisos push sólo van a servicios de push reales (sin SSRF).
+- Contraseñas sin las más usadas ni el propio nombre o correo, auditoría de
+  quién crea, desactiva o borra cuentas, `npm audit` en CI, Dependabot y
+  acciones de GitHub fijadas por SHA. El detalle, riesgo por riesgo, está en
+  [docs/SEGURIDAD_OWASP.md](docs/SEGURIDAD_OWASP.md).
 
 **Invitaciones por enlace o QR** (*Administración → Usuarios → Crear enlace*):
 el token tiene 256 bits al azar, se genera en el navegador de quien invita y
@@ -180,8 +188,8 @@ puede revocar y nunca puede crear un super administrador.
 - Cabeceras en producción (`public/_headers` y `vercel.json`, iguales y
   vigiladas por una prueba): **Content-Security-Policy** estricta (sólo
   scripts del propio sitio, conexiones sólo a Supabase, sin iframes), HSTS,
-  `X-Frame-Options`, `nosniff`, `Referrer-Policy`, `Permissions-Policy` y
-  `Cross-Origin-Opener-Policy`. La CSP es lo que protege el token guardado en
+  `X-Frame-Options`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`,
+  `Cross-Origin-Opener-Policy` y `Cross-Origin-Resource-Policy`. La CSP es lo que protege el token guardado en
   el navegador frente a scripts inyectados.
 
 ## Puesta en marcha real (pasos que debes hacer tú)

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, NavLink } from "react-router-dom";
+import { safeNextPath } from "@/core/safeRedirect";
 import { formatRelative } from "@/domain/dates";
 import { PERMISSIONS } from "@/domain/permissions";
 import { GuidedTour } from "@/features/tour/GuidedTour";
@@ -27,7 +28,7 @@ function NotificationBell() {
           <ul className="bell__list">
             {items.map((n) => (
               <li key={n.id} className={n.readAt ? "" : "is-unread"}>
-                <Link to={n.link ?? "/"} onClick={() => { setOpen(false); void markRead(n.id); }}>
+                <Link to={safeNextPath(n.link)} onClick={() => { setOpen(false); void markRead(n.id); }}>
                   <span className="bell__title">{n.title}</span>
                   {n.body && <span className="bell__body">{n.body}</span>}
                   <span className="bell__time">{formatRelative(n.createdAt)}</span>
