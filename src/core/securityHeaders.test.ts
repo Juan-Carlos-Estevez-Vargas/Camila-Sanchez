@@ -38,7 +38,7 @@ describe("cabeceras de seguridad", () => {
   it("incluyen CSP, HSTS y protección contra iframes", () => {
     expect(Object.keys(netlify)).toEqual(expect.arrayContaining([
       "Content-Security-Policy", "Strict-Transport-Security", "X-Frame-Options",
-      "X-Content-Type-Options", "Referrer-Policy", "Permissions-Policy", "Cross-Origin-Opener-Policy",
+      "X-Content-Type-Options", "Referrer-Policy", "Permissions-Policy", "Cross-Origin-Opener-Policy", "Cross-Origin-Resource-Policy",
     ]));
   });
 
@@ -49,5 +49,15 @@ describe("cabeceras de seguridad", () => {
     expect(csp).toContain("frame-ancestors 'none'");
     expect(csp).toContain("object-src 'none'");
     expect(csp).not.toContain("unsafe-eval");
+  });
+
+  it("las imágenes sólo vienen del propio sitio o de Supabase", () => {
+    const imgSrc = netlify["Content-Security-Policy"]!.split(";").map((d) => d.trim()).find((d) => d.startsWith("img-src"));
+    expect(imgSrc).toBe("img-src 'self' data: blob: https://*.supabase.co");
+  });
+
+  it("nadie puede incrustar los archivos del sitio desde otro dominio", () => {
+    expect(netlify["Cross-Origin-Resource-Policy"]).toBe("same-origin");
+    expect(netlify["X-Permitted-Cross-Domain-Policies"]).toBe("none");
   });
 });

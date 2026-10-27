@@ -8,7 +8,7 @@ import type { Invitation, InvitableRole } from "./types";
 export const INVITE_PATH = "/invitacion";
 export const INVITABLE_ROLES: readonly InvitableRole[] = ["editor", "viewer"];
 /** Debe coincidir con la Edge Function redeem-invite y la config de Auth. */
-export const MIN_PASSWORD_LENGTH = 10;
+export { MIN_PASSWORD_LENGTH } from "./password";
 
 export const INVITE_EXPIRY_OPTIONS = [
   { hours: 24, label: "24 horas" },

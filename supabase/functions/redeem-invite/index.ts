@@ -10,12 +10,12 @@
  * con caducidad. El canje marca la invitación como usada en la misma sentencia
  * que la busca, así dos personas no pueden usar el mismo enlace a la vez.
  */
-import { createClient } from "npm:@supabase/supabase-js@2";
+import { createClient } from "npm:@supabase/supabase-js@2.117.3";
 import { corsHeaders, json } from "../_shared/cors.ts";
+import { passwordProblem } from "../_shared/password.ts";
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const TOKEN = /^[A-Za-z0-9_-]{43}$/;
-const MIN_PASSWORD = 10;
 
 const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, {
   auth: { persistSession: false },
@@ -57,9 +57,8 @@ Deno.serve(async (req) => {
     const password = typeof body.password === "string" ? body.password : "";
     if (!EMAIL.test(email)) return json({ error: "Escribe un correo válido." }, 400);
     if (!displayName) return json({ error: "Escribe tu nombre." }, 400);
-    if (password.length < MIN_PASSWORD || password.length > 72) {
-      return json({ error: `La contraseña debe tener entre ${MIN_PASSWORD} y 72 caracteres.` }, 400);
-    }
+    const weak = passwordProblem(password, [email, displayName]);
+    if (weak) return json({ error: weak }, 400);
 
     // 1. Reservar la invitación (atómico: sólo un canje gana).
     const { data: invite, error: claimError } = await admin.from("invitations")

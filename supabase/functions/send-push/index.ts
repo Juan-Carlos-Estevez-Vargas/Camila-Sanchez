@@ -12,8 +12,8 @@
  * Secretos (los crea el flujo Deploy): VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY,
  * VAPID_SUBJECT y PUSH_WEBHOOK_SECRET.
  */
-import { createClient } from "npm:@supabase/supabase-js@2";
-import webpush from "npm:web-push@3";
+import { createClient } from "npm:@supabase/supabase-js@2.117.3";
+import webpush from "npm:web-push@3.6.7";
 import { corsHeaders } from "../_shared/cors.ts";
 
 const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, {
@@ -38,6 +38,12 @@ interface NotificationRow {
   link: string | null;
 }
 
+/**
+ * Sólo los servicios de push de los navegadores (igual que la restricción
+ * push_subscriptions_endpoint_service de la base): nunca otra dirección.
+ */
+const PUSH_SERVICE = /^https:\/\/(fcm\.googleapis\.com|android\.googleapis\.com|updates\.push\.services\.mozilla\.com|([a-z0-9-]+\.)*push\.apple\.com|[a-z0-9-]+\.notify\.windows\.com)\//;
+
 /** Comparación en tiempo constante para no filtrar el secreto por tiempos. */
 function safeEqual(a: string, b: string): boolean {
   if (a.length !== b.length) return false;
@@ -61,9 +67,14 @@ Deno.serve(async (req) => {
   if (payload?.type !== "INSERT" || !record?.user_id) return new Response("ignored");
 
   const { data: subs } = await admin.from("push_subscriptions").select("id, endpoint, p256dh, auth").eq("user_id", record.user_id);
-  const message = JSON.stringify({ title: record.title, body: record.body, link: record.link ?? "/", kind: record.kind ?? "system" });
+  const link = typeof record.link === "string" && /^\/(?![/\\])/.test(record.link) ? record.link : "/";
+  const message = JSON.stringify({
+    title: String(record.title ?? "").slice(0, 160), body: String(record.body ?? "").slice(0, 300),
+    link, kind: record.kind ?? "system",
+  });
 
-  const results = await Promise.allSettled((subs ?? []).map(async (s) => {
+  const targets = (subs ?? []).filter((s) => PUSH_SERVICE.test(s.endpoint));
+  const results = await Promise.allSettled(targets.map(async (s) => {
     try {
       await webpush.sendNotification({ endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } }, message, { TTL: 60 * 60 * 24 });
     } catch (error) {

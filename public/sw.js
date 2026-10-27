@@ -4,6 +4,12 @@ const VERSION = "v3";
 const STATIC_CACHE = `static-${VERSION}`;
 const PAGES_CACHE = `pages-${VERSION}`;
 
+/** Sólo rutas del propio sitio ("/chat"); nunca "//otro-sitio" ni "https://…". */
+function internalLink(link) {
+  if (typeof link !== "string" || !/^\/(?![/\\])/.test(link) || /[\u0000-\u001f]/.test(link)) return "/";
+  return link;
+}
+
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(PAGES_CACHE).then((cache) => cache.addAll(["/", "/manifest.webmanifest", "/icons/heart.svg"])));
   self.skipWaiting();
@@ -74,14 +80,14 @@ self.addEventListener("push", (event) => {
       tag,
       renotify: true,
       vibrate: [80, 40, 80],
-      data: { link: typeof data.link === "string" && data.link.startsWith("/") ? data.link : "/" },
+      data: { link: internalLink(data.link) },
     }),
   );
 });
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const link = (event.notification.data && event.notification.data.link) || "/";
+  const link = internalLink(event.notification.data && event.notification.data.link);
   event.waitUntil(
     self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
       for (const client of clients) {
