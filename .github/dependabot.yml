@@ -11,7 +11,22 @@ updates:
       dependencias:
         patterns: ["*"]
         update-types: [minor, patch]
+    # Saltos que no sirven o que aún no funcionan; así no quedan PRs que
+    # nunca se podrían fusionar solos.
+    ignore:
+      # La app corre en Node 22: los tipos deben describir esa versión.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
+      # typescript-eslint todavía exige TypeScript < 6.1.
+      - dependency-name: typescript
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: monthly
+    # Todas las acciones en un solo PR al mes. Estos PRs cambian los flujos
+    # de .github/workflows y GitHub no deja que un flujo los fusione solo:
+    # hay que fusionarlos a mano.
+    groups:
+      acciones:
+        patterns: ["*"]
