@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { readableColors } from "@/domain/accessibleColors";
 import { DEFAULT_THEME } from "@/domain/defaults";
 import type { ThemeTokens } from "@/domain/types";
 
@@ -37,9 +38,13 @@ export function ThemeController({ theme = DEFAULT_THEME }: { theme?: ThemeTokens
   useEffect(() => {
     const root = document.documentElement;
     root.dataset.theme = dark ? "dark" : "light";
+    // Colores de texto y foco corregidos si no alcanzan el contraste AA.
+    const readable = readableColors(theme, dark);
     const vars: Record<string, string> = {
       "--c-primary": theme.primary,
-      "--c-primary-contrast": theme.primaryContrast,
+      "--c-primary-contrast": readable.primaryContrast,
+      "--c-link": readable.link,
+      "--c-focus": readable.focus,
       "--c-accent": theme.accent,
       "--font-display": `"${theme.fontDisplay}", Georgia, serif`,
       "--font-body": `"${theme.fontBody}", system-ui, sans-serif`,
@@ -49,11 +54,11 @@ export function ThemeController({ theme = DEFAULT_THEME }: { theme?: ThemeTokens
     const neutrals: Record<string, string> = {
       "--c-bg": theme.background,
       "--c-surface": theme.surface,
-      "--c-text": theme.text,
-      "--c-muted": theme.muted,
     };
     Object.entries(vars).forEach(([k, v]) => root.style.setProperty(k, v));
     Object.entries(neutrals).forEach(([k, v]) => (dark ? root.style.removeProperty(k) : root.style.setProperty(k, v)));
+    root.style.setProperty("--c-text", readable.text);
+    root.style.setProperty("--c-muted", readable.muted);
     ensureFont(theme.fontDisplay);
     ensureFont(theme.fontBody);
     document.querySelector('meta[name="theme-color"]')?.setAttribute("content", theme.primary);

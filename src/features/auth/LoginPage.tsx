@@ -59,7 +59,7 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="gate">
+    <main id="contenido-principal" className="gate">
       <form className="gate__card card stack" onSubmit={submit} noValidate data-tour="login-form">
         <div className="gate__heart" aria-hidden>💗</div>
         <h1 style={{ fontSize: "2rem" }}>{titles[mode]}</h1>

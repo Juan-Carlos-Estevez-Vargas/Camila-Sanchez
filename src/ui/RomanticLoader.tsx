@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { estimateRemainingMs, formatRemaining } from "@/services/images/bulk";
 import { formatBytes } from "@/services/images/sizing";
 import type { UploadSnapshot } from "@/services/images/PhotoUploader";
 import styles from "./RomanticLoader.module.scss";
+import { useFocusTrap } from "./useFocusTrap";
 
 const PHRASES = [
   "Guardando este recuerdo con todo mi amor…",
@@ -31,6 +32,8 @@ interface Props {
  */
 export function RomanticLoader({ tasks, onCancel }: Props) {
   const [phrase, setPhrase] = useState(0);
+  const dialog = useRef<HTMLDivElement>(null);
+  useFocusTrap(dialog, { initial: "button" });
   const [startedAt] = useState(() => Date.now());
   const [now, setNow] = useState(startedAt);
 
@@ -78,14 +81,14 @@ export function RomanticLoader({ tasks, onCancel }: Props) {
   );
 
   return createPortal(
-    <div className={styles.overlay} role="alertdialog" aria-live="polite" aria-label="Guardando fotos">
+    <div ref={dialog} className={styles.overlay} role="dialog" aria-modal="true" aria-label="Guardando fotos">
       <div className={styles.sparkles} aria-hidden>
         {sparkles.map((s, i) => (
           <span key={i} style={{ left: s.left, animationDelay: s.delay }}>{s.emoji}</span>
         ))}
       </div>
       <div className={styles.inner}>
-        <div className={styles.ring}>
+        <div className={styles.ring} role="progressbar" aria-label="Fotos guardadas" aria-valuemin={0} aria-valuemax={100} aria-valuenow={percent}>
           <svg viewBox="0 0 168 168" aria-hidden>
             <defs>
               <linearGradient id="love-gradient" x1="0" x2="1">
@@ -104,10 +107,10 @@ export function RomanticLoader({ tasks, onCancel }: Props) {
         <div className={styles.percent}>{percent}%</div>
         <p key={phrase} className={styles.phrase}>{PHRASES[phrase]}</p>
         <div className={styles.meta}>
-          {stats.done} de {stats.total} {stats.total === 1 ? "foto" : "fotos"} lista{stats.total === 1 ? "" : "s"}
+          <span role="status">{stats.done} de {stats.total} {stats.total === 1 ? "foto" : "fotos"} lista{stats.total === 1 ? "" : "s"}
           {stats.duplicates > 0 && ` · ${stats.duplicates} ya estaban`}
           {stats.saved > 0 && ` · ${formatBytes(stats.saved)} más livianas`}
-          {stats.failed > 0 && ` · ${stats.failed} con problemas`}
+          {stats.failed > 0 && ` · ${stats.failed} con problemas`}</span>
           {remaining && <><br />Falta {remaining}</>}
         </div>
         {tasks.length > 1 && visible.length > 0 && (

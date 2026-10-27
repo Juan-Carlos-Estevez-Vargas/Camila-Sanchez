@@ -29,6 +29,11 @@
     @include reduced-motion { animation: none; }
   }
 
+  &__motion {
+    margin-top: space(2);
+    font-size: 0.85rem;
+  }
+
   &__subtitle {
     margin: 0;
     font-size: 0.85rem;
@@ -47,7 +52,7 @@
       width: 40px;
       height: 40px;
       border-radius: 50%;
-      color: var(--c-primary);
+      color: var(--c-link);
       background: tint(var(--c-primary), 10%);
       transition: transform 0.2s ease, background 0.2s ease;
 

@@ -11,6 +11,7 @@ import { useAuth } from "@/state/AuthContext";
 import { useBackend } from "@/state/BackendContext";
 import { PageLoader } from "@/ui/Feedback";
 import { Field } from "@/ui/Field";
+import { onRovingKeyDown, rovingTabIndex } from "@/ui/rovingFocus";
 import { Modal } from "@/ui/Modal";
 import { useAsync } from "@/ui/useAsync";
 import { useConfirm } from "@/ui/useConfirm";
@@ -43,9 +44,9 @@ function NewUserModal({ onClose, onCreated }: { onClose(): void; onCreated(): vo
     <Modal title="Nuevo usuario" onClose={onClose}
       footer={<><button className="btn btn--ghost" onClick={onClose}>Cancelar</button><button className="btn" disabled={!valid || busy} onClick={submit}>{mode === "invite" ? "Enviar invitación" : "Crear"}</button></>}>
       <div className="stack">
-        <div className="tabs" role="tablist">
-          <button role="tab" className="tab" aria-selected={mode === "invite"} onClick={() => setMode("invite")}>Invitar por correo</button>
-          <button role="tab" className="tab" aria-selected={mode === "password"} onClick={() => setMode("password")}>Con contraseña</button>
+        <div className="tabs" role="radiogroup" aria-label="Cómo crear la cuenta" onKeyDown={onRovingKeyDown}>
+          <button type="button" role="radio" className="tab" aria-checked={mode === "invite"} tabIndex={rovingTabIndex(mode === "invite")} onClick={() => setMode("invite")}>Invitar por correo</button>
+          <button type="button" role="radio" className="tab" aria-checked={mode === "password"} tabIndex={rovingTabIndex(mode === "password")} onClick={() => setMode("password")}>Con contraseña</button>
         </div>
         <Field label="Nombre">{(id) => <input id={id} className="input" maxLength={80} value={form.displayName} onChange={(e) => setForm({ ...form, displayName: e.target.value })} />}</Field>
         <Field label="Correo">{(id) => <input id={id} className="input" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />}</Field>
@@ -88,7 +89,7 @@ export default function UsersAdmin() {
       {loading && !users ? <PageLoader /> : (
         <div className="table-wrap">
           <table className="table">
-            <thead><tr><th>Nombre</th><th>Rol</th><th>Estado</th><th>Desde</th><th /></tr></thead>
+            <thead><tr><th>Nombre</th><th>Rol</th><th>Estado</th><th>Desde</th><th><span className="visually-hidden">Acciones</span></th></tr></thead>
             <tbody>
               {users?.map((u) => (
                 <tr key={u.id}>

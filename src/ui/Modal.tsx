@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, type ReactNode } from "react";
 import { createPortal } from "react-dom";
+import { isTopDialog, useFocusTrap } from "./useFocusTrap";
 
 interface ModalProps {
   title: ReactNode;
@@ -9,24 +10,24 @@ interface ModalProps {
   wide?: boolean;
 }
 
-/** Diálogo accesible: Esc para cerrar, foco inicial y bloqueo del scroll. */
+/** Diálogo accesible: Esc para cerrar, foco atrapado adentro y bloqueo del scroll. */
 export function Modal({ title, onClose, children, footer, wide }: ModalProps) {
   const titleId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
+  useFocusTrap(dialogRef);
 
   useEffect(() => {
-    const previous = document.activeElement as HTMLElement | null;
     const overflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    dialogRef.current?.querySelector<HTMLElement>("input, textarea, select, button")?.focus();
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onCloseRef.current();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isTopDialog(dialogRef.current)) onCloseRef.current();
+    };
     document.addEventListener("keydown", onKey);
     return () => {
       document.removeEventListener("keydown", onKey);
       document.body.style.overflow = overflow;
-      previous?.focus?.();
     };
   }, []);
 
@@ -34,7 +35,7 @@ export function Modal({ title, onClose, children, footer, wide }: ModalProps) {
     <div className="modal-backdrop" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
       <div ref={dialogRef} className={`modal${wide ? " modal--wide" : ""}`} role="dialog" aria-modal="true" aria-labelledby={titleId}>
         <div className="modal__header">
-          <h3 id={titleId} style={{ margin: 0 }}>{title}</h3>
+          <h2 id={titleId} className="modal__title">{title}</h2>
           <button className="btn btn--icon btn--ghost" onClick={onClose} aria-label="Cerrar">×</button>
         </div>
         {children}

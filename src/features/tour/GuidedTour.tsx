@@ -2,6 +2,7 @@ import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from
 import { createPortal } from "react-dom";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "@/state/AuthContext";
+import { prefersReducedMotion } from "@/ui/motion";
 import { placePopover, spotlightBox, type Box, type PopoverPosition } from "./tourLayout";
 import { tourFor, type TourStep } from "./tourSteps";
 
@@ -39,7 +40,6 @@ function findTarget(step: TourStep): { element: HTMLElement; fallback: boolean }
   return null;
 }
 
-const prefersReducedMotion = () => window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
 
 /**
  * Tutorial guiado. El botón vive siempre en la cabecera: al tocarlo empieza

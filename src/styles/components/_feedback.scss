@@ -9,6 +9,7 @@
   color: var(--c-muted);
 
   &__icon { font-size: 2.5rem; }
+  &__title { margin: 0; font-size: 1.5rem; color: var(--c-text); }
 }
 
 .spinner {

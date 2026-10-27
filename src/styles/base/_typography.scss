@@ -21,8 +21,16 @@ p {
 }
 
 a {
-  color: var(--c-primary);
+  color: var(--c-link);
   text-underline-offset: 3px;
+}
+
+// Texto un poco más espaciado sin romper nada (WCAG 1.4.12): nada de alturas
+// fijas en textos, y las palabras largas (enlaces, correos) se parten.
+p,
+li,
+dd {
+  overflow-wrap: break-word;
 }
 
 .prose { font-size: 1.08rem; }

@@ -22,6 +22,12 @@
   X-Robots-Tag: noindex, nofollow
 /cuenta
   X-Robots-Tag: noindex, nofollow
+/cuenta/*
+  X-Robots-Tag: noindex, nofollow
+/listas
+  X-Robots-Tag: noindex, nofollow
+/listas/*
+  X-Robots-Tag: noindex, nofollow
 /invitacion
   X-Robots-Tag: noindex, nofollow
   Cache-Control: no-store
