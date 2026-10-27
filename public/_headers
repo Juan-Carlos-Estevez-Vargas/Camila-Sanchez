@@ -36,3 +36,9 @@
   X-Robots-Tag: noindex, nofollow
 /super/*
   X-Robots-Tag: noindex, nofollow
+
+# Rendimiento: los archivos de /assets llevan hash en el nombre (o no cambian
+# nunca), así que el navegador los guarda un año sin volver a preguntar.
+# Igual que en vercel.json.
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
