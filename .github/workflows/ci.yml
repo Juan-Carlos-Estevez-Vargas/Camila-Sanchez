@@ -18,7 +18,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 22
           cache: npm
@@ -34,3 +34,97 @@ jobs:
         run: npm test
       - name: Build
         run: npm run build
+
+  # PRs de Dependabot de paquetes npm: si las pruebas pasan, se fusionan solos.
+  # Luego se vuelven a probar sobre master y, si algo falla, se deshace el
+  # merge. (Los de acciones de GitHub cambian flujos y GitHub no deja que un
+  # flujo los fusione: esos se fusionan a mano.)
+  dependabot-fusionar:
+    needs: check
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.user.login == 'dependabot[bot]' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      !contains(github.event.pull_request.labels.*.name, 'github_actions')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+      pull-requests: write
+    outputs:
+      sha: ${{ steps.merge.outputs.sha }}
+    steps:
+      - name: Fusionar
+        id: merge
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          # Sólo se fusiona exactamente el commit que pasó las pruebas.
+          gh pr merge "$PR" --merge --match-head-commit "$HEAD_SHA"
+          sha=$(gh pr view "$PR" --json mergeCommit -q .mergeCommit.oid)
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+          echo "::notice::PR #$PR fusionado ($sha)."
+
+  dependabot-verificar:
+    needs: dependabot-fusionar
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.dependabot-fusionar.outputs.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm audit --audit-level=high
+      - run: npm run check
+      - run: npm run build
+
+  # Un merge hecho por un flujo no dispara Deploy por sí solo, por eso se lanza
+  # aquí. Si el despliegue falla, Deploy deshace este merge.
+  dependabot-desplegar:
+    needs: [dependabot-fusionar, dependabot-verificar]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: write
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          BRANCH: ${{ github.event.pull_request.base.ref }}
+          SHA: ${{ needs.dependabot-fusionar.outputs.sha }}
+        run: gh workflow run deploy.yml --ref "$BRANCH" -f revertir="$SHA"
+
+  dependabot-deshacer:
+    needs: [dependabot-fusionar, dependabot-verificar]
+    if: failure() && needs.dependabot-fusionar.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.base.ref }}
+          fetch-depth: 0
+      - name: Volver a la versión anterior
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+          SHA: ${{ needs.dependabot-fusionar.outputs.sha }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git revert --no-edit -m 1 "$SHA"
+          git push origin HEAD
+          gh pr comment "$PR" --body "Las pruebas fallaron sobre master después de fusionar este PR, así que se deshizo solo."
+          echo "::warning::Se deshizo el PR #$PR porque las pruebas fallaron sobre master."
