@@ -4,6 +4,7 @@ import type {
   AuthGateway, Backend, ContentRepository, InvitationRepository, ListsRepository, MessagingRepository, PhotoRepository,
   PushRepository, RealtimeChange, RealtimeGateway, RealtimeTable, UserRepository,
 } from "@/data/ports";
+import { clearPrivateCaches, readCache, writeCache } from "@/data/localCache";
 import { setRememberSession } from "@/data/sessionPersistence";
 import { expiryFromNow, generateInviteToken, hashInviteToken } from "@/domain/invitations";
 import { nextDueOf, progressOf } from "@/domain/lists";
@@ -21,6 +22,24 @@ const AVATAR_BUCKET = "avatars";
 const SIGNED_URL_TTL_S = 3600;
 const SIGNED_URL_CACHE_MS = 50 * 60 * 1000;
 
+/**
+ * Las URLs firmadas se guardan también en el navegador: al volver a abrir la
+ * app las fotos se piden con la misma URL, el navegador las sirve de su caché
+ * y no hace falta esperar a Supabase para firmarlas otra vez.
+ */
+type SignedEntry = { url: string; expires: number };
+const SIGNED_URLS_KEY = "signed-urls";
+const signedUrlCache = new Map<string, SignedEntry>(
+  Object.entries(readCache<Record<string, SignedEntry>>(SIGNED_URLS_KEY) ?? {}).filter(([, e]) => e.expires > Date.now()),
+);
+
+function rememberSigned(entries: Array<[string, SignedEntry]>) {
+  for (const [key, entry] of entries) signedUrlCache.set(key, entry);
+  const now = Date.now();
+  for (const [key, entry] of signedUrlCache) if (entry.expires <= now) signedUrlCache.delete(key);
+  writeCache(SIGNED_URLS_KEY, Object.fromEntries(signedUrlCache));
+}
+
 const sb = () => getSupabase();
 
 const toSessionUser = (user: { id: string; email?: string | undefined } | null | undefined): SessionUser | null =>
@@ -37,6 +56,8 @@ const auth: AuthGateway = {
     const { data: verified, error } = await sb().auth.getUser();
     if (error && error.status && error.status >= 400 && error.status < 500) {
       await sb().auth.signOut({ scope: "local" });
+      signedUrlCache.clear();
+      await clearPrivateCaches();
       return null;
     }
     return toSessionUser(verified.user ?? data.session.user);
@@ -72,6 +93,8 @@ const auth: AuthGateway = {
   async signOut(options) {
     // "global" revoca los tokens de refresco de todos los dispositivos.
     await sb().auth.signOut({ scope: options?.everywhere ? "global" : "local" });
+    signedUrlCache.clear();
+    await clearPrivateCaches();
   },
 };
 
@@ -143,7 +166,6 @@ const content: ContentRepository = {
   },
 };
 
-const signedUrlCache = new Map<string, { url: string; expires: number }>();
 
 const photos: PhotoRepository = {
   async list() {
@@ -179,9 +201,7 @@ const photos: PhotoRepository = {
       const signed = await unwrap<Array<{ path: string | null; signedUrl: string }>>(
         sb().storage.from(PHOTO_BUCKET).createSignedUrls([...missing], SIGNED_URL_TTL_S),
       );
-      for (const s of signed) {
-        if (s.path && s.signedUrl) signedUrlCache.set(s.path, { url: s.signedUrl, expires: now + SIGNED_URL_CACHE_MS });
-      }
+      rememberSigned(signed.filter((s) => s.path && s.signedUrl).map((s) => [s.path!, { url: s.signedUrl, expires: now + SIGNED_URL_CACHE_MS }]));
     }
     for (const p of list) {
       if (p.externalUrl) {
@@ -211,9 +231,7 @@ async function signedUrls(bucket: string, paths: string[]): Promise<Map<string, 
     const signed = await unwrap<Array<{ path: string | null; signedUrl: string }>>(
       sb().storage.from(bucket).createSignedUrls(missing, SIGNED_URL_TTL_S),
     );
-    for (const s of signed) {
-      if (s.path && s.signedUrl) signedUrlCache.set(key(s.path), { url: s.signedUrl, expires: now + SIGNED_URL_CACHE_MS });
-    }
+    rememberSigned(signed.filter((s) => s.path && s.signedUrl).map((s) => [key(s.path!), { url: s.signedUrl, expires: now + SIGNED_URL_CACHE_MS }]));
   }
   const result = new Map<string, string>();
   for (const p of paths) {
