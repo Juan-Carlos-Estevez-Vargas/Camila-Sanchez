@@ -2,6 +2,17 @@
   "name": "camila-love-app",
   "private": true,
   "version": "2.0.0",
+  "description": "Aplicación web privada para una pareja: recuerdos, fechas especiales, chat en tiempo real y listas compartidas, con panel de administración. React, TypeScript y Supabase.",
+  "homepage": "https://camila-sanchez.netlify.app",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Juan-Carlos-Estevez-Vargas/Camila-Sanchez.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Juan-Carlos-Estevez-Vargas/Camila-Sanchez/issues"
+  },
+  "author": "Juan Carlos Estevez Vargas (https://github.com/Juan-Carlos-Estevez-Vargas)",
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "dev": "vite",
