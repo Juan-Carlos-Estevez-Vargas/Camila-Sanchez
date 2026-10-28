@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Reportar una vulnerabilidad
+    url: https://github.com/Juan-Carlos-Estevez-Vargas/Camila-Sanchez/security/advisories/new
+    about: Las fallas de seguridad se reportan en privado, nunca en un issue público.
+  - name: Manual de usuario
+    url: https://github.com/Juan-Carlos-Estevez-Vargas/Camila-Sanchez/blob/master/docs/MANUAL_DE_USUARIO.md
+    about: Cómo se usa cada parte de la app.
