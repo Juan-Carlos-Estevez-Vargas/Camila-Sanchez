@@ -5,6 +5,7 @@
  * <head> es services/seo/head.ts.
  */
 import { AUTHOR } from "./author.ts";
+import { LEGAL_DOCUMENTS, LEGAL_PATH } from "../domain/legal.ts";
 import type { SiteSettings } from "@/domain/types";
 
 export const DEFAULT_TITLE = "Nuestro rincón";
@@ -26,6 +27,12 @@ const PAGE_TITLES: Record<string, string> = {
   "/panel": "Mi panel",
   "/super": "Administración",
 };
+
+/** Título de una página legal (/legal o /legal/<documento>), o null si no lo es. */
+function legalTitle(pathname: string): string | null {
+  if (pathname === LEGAL_PATH) return "Legal y privacidad";
+  return LEGAL_DOCUMENTS.find((d) => pathname === `${LEGAL_PATH}/${d.id}`)?.title ?? null;
+}
 
 const ROBOTS_INDEX = "index, follow, max-image-preview:large";
 const ROBOTS_NOINDEX = "noindex, nofollow";
@@ -110,6 +117,18 @@ export function resolveSeo({ pathname, settings, siteUrl, indexingEnabled }: Seo
           sameAs: Object.values(AUTHOR.links).filter(Boolean),
         },
       },
+    };
+  }
+
+  const legal = legalTitle(pathname);
+  if (legal) {
+    // Públicas aunque la página sea privada: cualquiera debe poder leerlas.
+    return {
+      ...base,
+      title: `${legal} · ${siteName}`,
+      description: truncateDescription(LEGAL_DOCUMENTS.find((d) => `${LEGAL_PATH}/${d.id}` === pathname)?.summary ?? "Términos, privacidad, cookies, cobros y licencias de la app."),
+      robots: indexingEnabled ? ROBOTS_INDEX : ROBOTS_NOINDEX,
+      canonical: siteUrl ? `${siteUrl}${pathname}` : null,
     };
   }
 
