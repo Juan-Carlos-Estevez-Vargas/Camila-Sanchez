@@ -241,8 +241,8 @@ async function signedUrls(bucket: string, paths: string[]): Promise<Map<string, 
   return result;
 }
 
-/** Columnas del chat con el mensaje citado embebido (FK reply_to). */
-const CHAT_COLUMNS = "*, reply:reply_to(id, sender_id, body, kind, sticker)";
+/** Columnas del chat con el mensaje citado (FK reply_to) y las reacciones embebidos. */
+const CHAT_COLUMNS = "*, reply:reply_to(id, sender_id, body, kind, sticker, deleted_at), reactions:chat_reactions(user_id, emoji)";
 
 const messaging: MessagingRepository = {
   async listNotes() {
@@ -262,14 +262,15 @@ const messaging: MessagingRepository = {
   },
   deleteNote: (id) => remove("notes", id),
 
-  async listChat({ before, limit = 50 } = {}) {
-    let query = sb().from("chat_messages").select(CHAT_COLUMNS).order("created_at", { ascending: false }).limit(limit);
+  async listChat(conversationId, { before, limit = 50 } = {}) {
+    let query = sb().from("chat_messages").select(CHAT_COLUMNS).eq("conversation_id", conversationId)
+      .order("created_at", { ascending: false }).limit(limit);
     if (before) query = query.lt("created_at", before);
     const rows = await unwrap<Row[]>(query);
     return rows.map(map.toChatMessage).reverse();
   },
-  async sendChat(body, { replyToId = null, image, sticker } = {}) {
-    const row: Row = { body, reply_to: replyToId, kind: "text" };
+  async sendChat(conversationId, body, { replyToId = null, image, sticker } = {}) {
+    const row: Row = { conversation_id: conversationId, body, reply_to: replyToId, kind: "text" };
     const uploaded: string[] = [];
     if (image) {
       // Carpeta propia: la política del bucket sólo deja subir ahí.
@@ -295,13 +296,89 @@ const messaging: MessagingRepository = {
     }
   },
   resolveChatImages: (paths) => signedUrls(CHAT_BUCKET, paths),
-  deleteChat: (id) => remove("chat_messages", id),
+  async editChat(id, body) {
+    await unwrap(sb().rpc("chat_edit_message", { p_message: id, p_body: body }));
+  },
+  async deleteChat(id) {
+    const paths = await unwrap<string[] | null>(sb().rpc("chat_delete_message", { p_message: id }));
+    // La foto ya no la ve nadie: se quita también del almacenamiento.
+    if (paths?.length) await sb().storage.from(CHAT_BUCKET).remove(paths);
+  },
+  async hideChat(id) {
+    await unwrap(sb().from("chat_hidden_messages").insert({ message_id: id }));
+  },
+  async reactChat(id, emoji) {
+    if (emoji === null) {
+      const userId = await currentUserId();
+      await unwrap(sb().from("chat_reactions").delete().eq("message_id", id).eq("user_id", userId));
+      return;
+    }
+    await unwrap(sb().from("chat_reactions").upsert({ message_id: id, emoji }, { onConflict: "message_id,user_id" }));
+  },
+  async searchChat(conversationId, query) {
+    const rows = await unwrap<Row[]>(sb().rpc("chat_search_messages", { p_conversation: conversationId, p_query: query }));
+    return rows.map(map.toChatMessage);
+  },
   async listChatPresence() {
     const rows = await unwrap<Row[]>(sb().from("chat_reads").select("user_id, last_seen_at, last_read_at"));
     return rows.map(map.toChatPresence);
   },
   async touchChatPresence({ read = false } = {}) {
     await unwrap(sb().rpc("chat_presence", { p_read: read }));
+  },
+
+  async listConversations() {
+    const rows = await unwrap<Row[]>(sb().rpc("chat_inbox"));
+    return rows.map(map.toChatConversation);
+  },
+  async listParticipants(conversationId) {
+    const rows = await unwrap<Row[]>(sb().from("chat_participants")
+      .select("conversation_id, user_id, last_read_at, typing_at").eq("conversation_id", conversationId));
+    return rows.map(map.toChatParticipant);
+  },
+  async markConversationRead(conversationId) {
+    await unwrap(sb().rpc("chat_mark_read", { p_conversation: conversationId }));
+  },
+  async sendTyping(conversationId) {
+    await unwrap(sb().rpc("chat_typing", { p_conversation: conversationId }));
+  },
+  async updateConversation(conversationId, { pinned, archived, muted, clear }) {
+    await unwrap(sb().rpc("chat_update_conversation", {
+      p_conversation: conversationId, p_pinned: pinned ?? null, p_archived: archived ?? null,
+      p_muted: muted ?? null, p_clear: clear ?? false,
+    }));
+  },
+  async openDirectChat(userId) {
+    return unwrap<Uuid>(sb().rpc("chat_open_direct", { p_user: userId }));
+  },
+
+  async searchPeople(query) {
+    const rows = await unwrap<Row[]>(sb().rpc("chat_search_users", { p_query: query.slice(0, 80) }));
+    return rows.map(map.toChatPerson);
+  },
+  async listContacts() {
+    const rows = await unwrap<Row[]>(sb().from("chat_contacts").select("*").order("created_at", { ascending: false }));
+    return rows.map(map.toChatContact);
+  },
+  async requestContact(userId, message = "") {
+    const status = await unwrap<string>(sb().rpc("chat_request_contact", { p_user: userId, p_message: message.slice(0, 200) }));
+    return status === "accepted" ? "accepted" : "pending";
+  },
+  async respondContact(contactId, accept) {
+    return unwrap<Uuid | null>(sb().rpc("chat_respond_contact", { p_contact: contactId, p_accept: accept }));
+  },
+  async removeContact(userId) {
+    await unwrap(sb().rpc("chat_remove_contact", { p_user: userId }));
+  },
+  async blockUser(userId) {
+    await unwrap(sb().rpc("chat_block_user", { p_user: userId }));
+  },
+  async unblockUser(userId) {
+    await unwrap(sb().rpc("chat_unblock_user", { p_user: userId }));
+  },
+  async listBlocked() {
+    const rows = await unwrap<Row[]>(sb().from("chat_blocks").select("blocked_id"));
+    return rows.map((r) => String(r.blocked_id));
   },
 
   async listNotifications(limit = 30) {

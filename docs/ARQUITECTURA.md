@@ -179,10 +179,18 @@ Las tablas viven en `public` y se crean con las migraciones de
   `bio` y `birthday`), `permissions`, `role_permissions`, `invitations`.
 - **Contenido:** `site_settings` (fila única), `sections`, `photos`,
   `milestones`, `important_dates`, `interruptions`, `interruption_views`.
-- **Mensajería:** `notes`, `chat_messages` (con `reply_to` para responder
-  citando y `kind` = `text`, `image` o `sticker`), `chat_reads` (última
-  conexión y hasta dónde leyó cada persona), `notifications` y
-  `push_subscriptions` (un registro por dispositivo con avisos activados).
+- **Mensajería:** `notes`, `chat_contacts` (solicitudes `pending` y
+  contactos `accepted`, una fila por pareja), `chat_blocks`,
+  `chat_conversations` (chats directos, uno por pareja con `direct_key`, y la
+  sala de antes como grupo si hacía falta), `chat_participants` (por persona y
+  chat: hasta dónde leyó, «escribiendo…», fijado, archivado, silenciado y
+  vaciado), `chat_messages` (con `conversation_id`, `reply_to` para responder
+  citando, `kind` = `text`, `image` o `sticker`, `edited_at` y `deleted_at`),
+  `chat_reactions`, `chat_hidden_messages` (borrados sólo para alguien),
+  `chat_reads` (última conexión), `notifications` y `push_subscriptions` (un
+  registro por dispositivo con avisos activados). La app de chat
+  (`features/chat`) lee la bandeja con `chat_inbox()` y cambia todo con
+  funciones `chat_*` que validan la sesión.
 - **Listas compartidas:** `todo_lists` (nombre, icono, descripción, fecha y
   quién la creó), `todo_list_members` (con quién se comparte), `todo_items`
   (tareas; con `parent_id` son subtareas de un solo nivel, con fecha,
@@ -413,3 +421,5 @@ prueba comprueba que `supabase/setup.sql` esté al día).
 | `…1020000400_device_push` | Avisos al celular, avisos de sorpresas y aviso de prueba |
 | `…1021000100_todo_lists` | Listas compartidas con tareas, subtareas, materiales y fotos, bucket `list-media` y permiso `lists.use` |
 | `…1021000200_profile_details` | Perfil editable: foto (bucket `avatars`), icono, frase y cumpleaños |
+| `…1027000100_owasp_hardening` | Refuerzo OWASP: avisos inmutables, autoría, SSRF del push y límites de velocidad |
+| `…1103000100_chat_app` | App de chat: contactos, solicitudes, bloqueos, conversaciones privadas, vistos y «escribiendo…» por chat, edición, borrado, reacciones y búsqueda |

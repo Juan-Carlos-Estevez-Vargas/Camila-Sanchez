@@ -1,5 +1,5 @@
 import { lazy, Suspense, useMemo } from "react";
-import { BrowserRouter, Link, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Link, Route, Routes, useLocation } from "react-router-dom";
 import { DEFAULT_THEME } from "@/domain/defaults";
 import { personalTheme } from "@/domain/palettes";
 import { AuthProvider, useAuth } from "@/state/AuthContext";
@@ -31,6 +31,12 @@ function NotFound() {
   );
 }
 
+/** El chat es una app a pantalla completa: sin pie de página. */
+function Footer() {
+  const { pathname } = useLocation();
+  return pathname === "/chat" || pathname.startsWith("/chat/") ? null : <AppFooter />;
+}
+
 function ThemedShell() {
   const { content } = useSiteContent();
   const { profile } = useAuth();
@@ -57,7 +63,7 @@ function ThemedShell() {
           </Routes>
         </Suspense>
       </ErrorBoundary>
-      <AppFooter />
+      <Footer />
     </>
   );
 }

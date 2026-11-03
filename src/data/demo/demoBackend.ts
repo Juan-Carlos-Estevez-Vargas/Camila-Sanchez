@@ -11,8 +11,6 @@
  */
 import { del as idbDel, get as idbGet, set as idbSet } from "idb-keyval";
 import { AccessPolicy, DEFAULT_ROLE_PERMISSIONS, PERMISSIONS, type Permission } from "@/domain/permissions";
-import { messagePreview, upsertPresence } from "@/domain/chat";
-import { isKnownSticker } from "@/domain/stickers";
 import { MAX_TASK_IMAGES, nextDueOf, progressOf } from "@/domain/lists";
 import { sanitizeColors } from "@/domain/palettes";
 import { AppError } from "@/core/errors";
@@ -21,11 +19,12 @@ import {
 } from "@/domain/invitations";
 import { RECOVERY_LINK_HOURS } from "@/domain/recovery";
 import type {
-  AppNotification, AuditEntry, ChatImage, ChatMessage, ChatPresence, ImportantDate, Interruption, Invitation, Milestone, Note,
+  AppNotification, AuditEntry, ImportantDate, Interruption, Invitation, Milestone, Note,
   PermissionDefinition, Photo, PhotoUrls, Profile, Role, RolePermission, Section, SessionUser,
   SiteSettings, TodoImage, TodoItem, TodoList, TodoMaterial, Uuid,
 } from "@/domain/types";
 import type { Backend, ListsRepository, RealtimeChange, RealtimeTable } from "@/data/ports";
+import { createDemoChat, seedDemoChat, upgradeDemoChat, type DemoChatState } from "./demoChat";
 import { SEED_DATES, SEED_MILESTONES, SEED_PHOTOS, SEED_SECTIONS, SEED_SETTINGS } from "./seed";
 
 // Cambia de versión cuando cambian los datos de fábrica (tema, permisos...).
@@ -37,6 +36,8 @@ const CHANNEL = "love-demo";
 export const DEMO_ACCOUNTS = [
   { email: "juan@demo.local", password: "demo1234", displayName: "Juan", role: "super_admin" as Role },
   { email: "camila@demo.local", password: "demo1234", displayName: "Camila", role: "editor" as Role },
+  // Para probar la búsqueda y las solicitudes del chat.
+  { email: "valentina@demo.local", password: "demo1234", displayName: "Valentina", role: "viewer" as Role },
 ];
 
 interface DemoUser extends Profile {
@@ -54,7 +55,7 @@ interface DemoRecovery {
   expiresAt: string;
 }
 
-interface DemoState {
+interface DemoState extends Omit<DemoChatState, "users" | "notifications"> {
   settings: SiteSettings;
   sections: Section[];
   photos: Photo[];
@@ -63,8 +64,6 @@ interface DemoState {
   interruptions: Interruption[];
   interruptionViews: Record<Uuid, Uuid[]>;
   notes: Note[];
-  chat: ChatMessage[];
-  chatReads: ChatPresence[];
   notifications: AppNotification[];
   todoLists: TodoList[];
   todoItems: TodoItem[];
@@ -97,6 +96,13 @@ const uuid = () => crypto.randomUUID();
 const nowIso = () => new Date().toISOString();
 
 function initialState(): DemoState {
+  const state = baseState();
+  const [juan, camila, guest] = state.users;
+  seedDemoChat(state, juan!.id, camila!.id, guest?.id);
+  return state;
+}
+
+function baseState(): DemoState {
   const created = nowIso();
   return {
     settings: SEED_SETTINGS,
@@ -109,6 +115,12 @@ function initialState(): DemoState {
     notes: [],
     chat: [],
     chatReads: [],
+    chatConversations: [],
+    chatParticipants: [],
+    chatContacts: [],
+    chatBlocks: [],
+    chatReactions: [],
+    chatHidden: [],
     notifications: [],
     todoLists: [],
     todoItems: [],
@@ -174,7 +186,10 @@ class DemoDatabase {
     const raw = safeStorage(() => localStorage.getItem(STORAGE_KEY), null);
     if (raw) {
       try {
-        return { ...initialState(), ...(JSON.parse(raw) as DemoState) };
+        const state = { ...baseState(), ...(JSON.parse(raw) as DemoState) };
+        // Datos de antes de la app de chat: la sala pasa a ser una conversación.
+        upgradeDemoChat(state);
+        return state;
       } catch {
         /* estado corrupto: se reinicia */
       }
@@ -613,6 +628,18 @@ const demoLists: ListsRepository = {
   },
 };
 
+const demoChat = createDemoChat({
+  state: () => database().state,
+  commit: (change) => database().commit(change),
+  me: () => require(PERMISSIONS.chatUse),
+  canChat: (userId) => {
+    const user = database().state.users.find((u) => u.id === userId);
+    return Boolean(user?.isActive) && policyOf(user ?? null).can(PERMISSIONS.chatUse);
+  },
+  notify,
+  imageUrls: localImageUrls,
+});
+
 export const demoBackend: Backend = {
   mode: "demo",
 
@@ -847,85 +874,7 @@ export const demoBackend: Backend = {
       database().commit({ table: "notes", type: "DELETE", record: null, old: { id } });
     },
 
-    async listChat({ before, limit = 50 } = {}) {
-      require(PERMISSIONS.chatUse);
-      const all = database().state.chat.filter((m) => !before || m.createdAt < before);
-      // Mensajes guardados antes de que existieran las respuestas.
-      return clone(all.slice(-limit)).map((m) => ({
-        ...m, kind: m.kind ?? "text", image: m.image ?? null, sticker: m.sticker ?? null, replyTo: m.replyTo ?? null,
-      }));
-    },
-    async resolveChatImages(paths) {
-      require(PERMISSIONS.chatUse);
-      return localImageUrls(paths);
-    },
-    async sendChat(body, { replyToId = null, image, sticker } = {}) {
-      const user = require(PERMISSIONS.chatUse);
-      const original = replyToId ? database().state.chat.find((m) => m.id === replyToId) : undefined;
-      if (replyToId && !original) throw new AppError("El mensaje al que respondes ya no existe.");
-      if (sticker && !isKnownSticker(sticker)) throw new AppError("Ese sticker no existe.");
-      const text = sticker ? "" : body.trim().slice(0, 2000);
-      if (!image && !sticker && !text) throw new AppError("Escribe un mensaje.");
-      const id = uuid();
-      let chatImage: ChatImage | null = null;
-      if (image) {
-        const path = `chat/${user.id}/${id}.${image.extension}`;
-        const thumbPath = `chat/${user.id}/${id}.thumb.${image.extension}`;
-        await idbSet(path, image.full);
-        await idbSet(thumbPath, image.thumb);
-        chatImage = { path, thumbPath, width: image.width, height: image.height };
-      }
-      const message: ChatMessage = {
-        id, senderId: user.id, kind: image ? "image" : sticker ? "sticker" : "text", body: text,
-        image: chatImage, sticker: sticker ?? null, createdAt: nowIso(),
-        replyTo: original
-          ? { id: original.id, senderId: original.senderId, body: original.body, kind: original.kind ?? "text", sticker: original.sticker ?? null }
-          : null,
-      };
-      // Tras subir la foto se releen los datos por si otra pestaña escribió.
-      const state = database().state;
-      state.chat.push(message);
-      state.chat = state.chat.slice(-1000);
-      database().commit({ table: "chat_messages", type: "INSERT", record: message as never });
-      // Igual que la base de datos: si ya hay un aviso de chat sin leer se
-      // actualiza con el último mensaje en vez de crear otro.
-      for (const other of state.users) {
-        if (other.id === user.id || !other.isActive || !policyOf(other).can(PERMISSIONS.chatUse)) continue;
-        const title = `${user.displayName} te escribió 💬`;
-        const preview = messagePreview(message, 140);
-        const unread = state.notifications.find((n) => n.userId === other.id && n.kind === "chat" && !n.readAt);
-        if (unread) {
-          Object.assign(unread, { title, body: preview, createdAt: nowIso() });
-          database().commit({ table: "notifications", type: "UPDATE", record: unread as never });
-        } else {
-          notify(other.id, "chat", title, preview, "/chat");
-        }
-      }
-      return clone(message);
-    },
-    async deleteChat(id) {
-      const user = requireUser();
-      const state = database().state;
-      const deleted = state.chat.some((m) => m.id === id && m.senderId === user.id);
-      state.chat = state.chat
-        .filter((m) => !(m.id === id && m.senderId === user.id))
-        // Como en la base: las respuestas a un mensaje borrado pierden la cita.
-        .map((m) => (deleted && m.replyTo?.id === id ? { ...m, replyTo: null } : m));
-      database().commit({ table: "chat_messages", type: "DELETE", record: null, old: { id } });
-    },
-    async listChatPresence() {
-      require(PERMISSIONS.chatUse);
-      return clone(database().state.chatReads);
-    },
-    async touchChatPresence({ read = false } = {}) {
-      const user = require(PERMISSIONS.chatUse);
-      const state = database().state;
-      const now = nowIso();
-      const previous = state.chatReads.find((p) => p.userId === user.id);
-      const presence: ChatPresence = { userId: user.id, lastSeenAt: now, lastReadAt: read ? now : previous?.lastReadAt ?? null };
-      state.chatReads = upsertPresence(state.chatReads, presence);
-      database().commit({ table: "chat_reads", type: previous ? "UPDATE" : "INSERT", record: presence as never });
-    },
+    ...demoChat,
 
     async listNotifications(limit = 30) {
       const user = requireUser();

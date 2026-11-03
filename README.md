@@ -81,7 +81,7 @@ Funciona en dos modos:
 | --- | --- | --- |
 | Página principal: portada, tiempo juntos, cuentas regresivas, notas, hitos, galería por año/mes, carta y frases | `/` | Pública o con `site.view` |
 | Cajita de mensajes: notitas que se abren como una carta | `/mensajes` | `notes.send` |
-| Chat tipo WhatsApp: fotos, stickers, responder citando, última conexión y vistos (✓ ✓✓) | `/chat` | `chat.use` |
+| App de chat a pantalla completa: buscar personas, solicitudes de contacto, chats privados, fotos, stickers, responder, reacciones, editar y borrar, «escribiendo…», en línea, vistos (✓ ✓✓), buscar mensajes, fijar, silenciar, archivar y bloquear | `/chat` | `chat.use` |
 | Listas compartidas con subtareas, materiales, fotos, fechas y responsables, en vivo | `/listas` | `lists.use` |
 | Perfil: nombre, foto o icono, frase y cumpleaños | `/cuenta/perfil` | Cualquier cuenta |
 | Mis colores: cada persona elige su paleta sin cambiársela a nadie | `/cuenta/colores` | Cualquier cuenta |
@@ -129,6 +129,7 @@ para probar el chat y las notificaciones entre cuentas.
 | --- | --- | --- |
 | `juan@demo.local` | `demo1234` | Super administrador |
 | `camila@demo.local` | `demo1234` | Editora |
+| `valentina@demo.local` | `demo1234` | Invitada (le pide chatear a Juan) |
 
 Para conectarla a un proyecto de Supabase, copia `.env.example` a
 `.env.local` y completa los valores. La guía completa está en

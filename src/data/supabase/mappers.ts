@@ -7,7 +7,8 @@ import {
 } from "@/domain/defaults";
 import { sanitizeColors } from "@/domain/palettes";
 import type {
-  AppNotification, AuditEntry, ChatKind, ChatMessage, ChatPresence, ImportantDate, Interruption, Invitation, InvitableRole,
+  AppNotification, AuditEntry, ChatContact, ChatConversation, ChatKind, ChatLastMessage, ChatMessage, ChatParticipant,
+  ChatPerson, ChatPresence, ChatReaction, ChatRelation, ImportantDate, Interruption, Invitation, InvitableRole,
   Milestone, Note, Photo, Profile, Section, SectionKind, SiteSettings, TodoImage, TodoItem, TodoList, TodoMaterial,
 } from "@/domain/types";
 import type { Row } from "./client";
@@ -199,6 +200,7 @@ export const toChatMessage = (r: Row): ChatMessage => {
   const imagePath = strOrNull(r.image_path);
   return {
     id: str(r.id),
+    conversationId: str(r.conversation_id),
     senderId: str(r.sender_id),
     kind: toChatKind(r.kind),
     body: str(r.body),
@@ -208,10 +210,71 @@ export const toChatMessage = (r: Row): ChatMessage => {
     sticker: strOrNull(r.sticker),
     createdAt: str(r.created_at),
     replyTo: reply
-      ? { id: str(reply.id), senderId: str(reply.sender_id), body: str(reply.body), kind: toChatKind(reply.kind), sticker: strOrNull(reply.sticker) }
+      ? {
+        id: str(reply.id), senderId: str(reply.sender_id), body: str(reply.body), kind: toChatKind(reply.kind),
+        sticker: strOrNull(reply.sticker), deleted: Boolean(reply.deleted_at),
+      }
       : null,
+    editedAt: strOrNull(r.edited_at),
+    deletedAt: strOrNull(r.deleted_at),
+    reactions: Array.isArray(r.reactions) ? (r.reactions as Row[]).map(toChatReaction) : [],
   };
 };
+
+export const toChatReaction = (r: Row): ChatReaction => ({ userId: str(r.user_id), emoji: str(r.emoji) });
+
+const toLastMessage = (v: unknown): ChatLastMessage | null => {
+  if (!v || typeof v !== "object") return null;
+  const r = v as Row;
+  return {
+    id: str(r.id), senderId: str(r.sender_id), kind: toChatKind(r.kind), body: str(r.body),
+    sticker: strOrNull(r.sticker), createdAt: str(r.created_at), deleted: Boolean(r.deleted_at),
+  };
+};
+
+export const toChatConversation = (r: Row): ChatConversation => ({
+  id: str(r.conversation_id ?? r.id),
+  kind: r.kind === "group" ? "group" : "direct",
+  title: str(r.title),
+  createdAt: str(r.created_at),
+  lastMessageAt: strOrNull(r.last_message_at),
+  participantIds: Array.isArray(r.participant_ids) ? r.participant_ids.filter((x): x is string => typeof x === "string") : [],
+  pinnedAt: strOrNull(r.pinned_at),
+  archivedAt: strOrNull(r.archived_at),
+  muted: r.muted === true,
+  lastReadAt: strOrNull(r.last_read_at),
+  unread: num(r.unread),
+  lastMessage: toLastMessage(r.last_message),
+});
+
+export const toChatParticipant = (r: Row): ChatParticipant => ({
+  conversationId: str(r.conversation_id),
+  userId: str(r.user_id),
+  lastReadAt: strOrNull(r.last_read_at),
+  typingAt: strOrNull(r.typing_at),
+});
+
+export const toChatContact = (r: Row): ChatContact => ({
+  id: str(r.id),
+  requesterId: str(r.requester_id),
+  addresseeId: str(r.addressee_id),
+  status: r.status === "accepted" ? "accepted" : "pending",
+  message: str(r.message),
+  createdAt: str(r.created_at),
+  respondedAt: strOrNull(r.responded_at),
+});
+
+const RELATIONS: readonly ChatRelation[] = ["none", "outgoing", "incoming", "contact", "blocked"];
+
+export const toChatPerson = (r: Row): ChatPerson => ({
+  id: str(r.id),
+  displayName: str(r.display_name),
+  avatarPath: strOrNull(r.avatar_path),
+  avatarEmoji: strOrNull(r.avatar_emoji),
+  bio: str(r.bio),
+  relation: RELATIONS.includes(r.relation as ChatRelation) ? (r.relation as ChatRelation) : "none",
+  contactId: strOrNull(r.contact_id),
+});
 
 const CHAT_KINDS: readonly ChatKind[] = ["text", "image", "sticker"];
 const toChatKind = (v: unknown): ChatKind => (CHAT_KINDS.includes(v as ChatKind) ? (v as ChatKind) : "text");
