@@ -89,7 +89,7 @@ Funciona en dos modos:
 | Perfil: nombre, foto o icono, frase y cumpleaños | `/cuenta/perfil` | Cualquier cuenta |
 | Mis colores: cada persona elige su paleta sin cambiársela a nadie | `/cuenta/colores` | Cualquier cuenta |
 | Mi cuenta: avisos en el dispositivo, contraseña y sesiones | `/cuenta` | Cualquier cuenta |
-| Panel de contenido: fotos, textos y animaciones, hitos, fechas y sorpresas | `/panel` | Editora y super admin |
+| Panel de contenido: fotos, textos y animaciones, hitos, fechas y sorpresas (cada sorpresa se prepara para una persona: sólo ella la ve, nunca quien la creó) | `/panel` | Editora y super admin |
 | Super admin: usuarios, invitaciones por enlace o QR, roles y permisos, apariencia, secciones, ajustes y auditoría | `/super` | Super admin |
 | Avisos push en el celular: chat, notitas, sorpresas y listas | — | Quien los active |
 | Tutorial guiado según la página y los permisos de cada cuenta | Todas | Todos |
@@ -200,6 +200,9 @@ La seguridad vive en la base de datos, no en el navegador.
   revelar qué correos existen.
 - Cabeceras estrictas en producción: Content-Security-Policy, HSTS,
   `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`, COOP y CORP.
+- Sorpresas privadas: cada una tiene destinataria (`recipient_id`) y RLS hace
+  que sólo esa persona la vea y reciba el aviso; quien la creó la gestiona en
+  su panel, pero nunca le sale en la página.
 - Límites de velocidad en la base, auditoría de cuentas, `npm audit` en CI y
   Dependabot.
 

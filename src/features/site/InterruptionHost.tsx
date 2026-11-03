@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { isSurpriseFor } from "@/domain/surprises";
 import type { Interruption } from "@/domain/types";
 import { useAuth } from "@/state/AuthContext";
 import { useBackend } from "@/state/BackendContext";
@@ -32,8 +33,9 @@ const EFFECTS: Record<Interruption["style"], string[] | null> = {
 
 /**
  * "Interrupciones": sorpresas programadas que aparecen al abrir la página
- * (p. ej. "¡Feliz mesiversario!"). Se muestran de una en una y, si son de
- * una sola vez, se recuerda que ya se vieron (en el servidor si hay sesión).
+ * (p. ej. "¡Feliz mesiversario!"). Cada una le sale sólo a la persona para
+ * quien se preparó, nunca a quien la creó. Se muestran de una en una y, si
+ * son de una sola vez, se recuerda que ya se vieron (en el servidor).
  */
 export function InterruptionHost({ items }: { items: Interruption[] }) {
   const backend = useBackend();
@@ -53,8 +55,10 @@ export function InterruptionHost({ items }: { items: Interruption[] }) {
   }, [backend, user?.id]);
 
   const current = useMemo(
-    () => (seen ? items.find((i) => !dismissed.includes(i.id) && !(i.showOnce && seen.includes(i.id))) : undefined),
-    [items, seen, dismissed],
+    () => (seen
+      ? items.find((i) => isSurpriseFor(i, user?.id) && !dismissed.includes(i.id) && !(i.showOnce && seen.includes(i.id)))
+      : undefined),
+    [items, seen, dismissed, user?.id],
   );
 
   useEffect(() => {

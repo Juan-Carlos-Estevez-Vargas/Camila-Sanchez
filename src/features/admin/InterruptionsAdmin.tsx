@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { INTERRUPTION_STYLES, type Interruption, type InterruptionStyle } from "@/domain/types";
+import { useAuth } from "@/state/AuthContext";
 import { useBackend } from "@/state/BackendContext";
 import { useContentStore } from "@/state/SiteContentStore";
 import { EmptyState, PageLoader } from "@/ui/Feedback";
@@ -10,7 +11,7 @@ import { useConfirm } from "@/ui/useConfirm";
 import { AdminPage } from "./AdminLayout";
 import { useSaver } from "./useSaver";
 
-type Draft = Omit<Interruption, "id"> & { id?: string };
+type Draft = Omit<Interruption, "id" | "createdBy"> & { id?: string };
 
 const STYLE_LABELS: Record<InterruptionStyle, string> = {
   modal: "💌 Ventana con mensaje",
@@ -41,7 +42,16 @@ export default function InterruptionsAdmin() {
   const { run, busy } = useSaver();
   const [confirm, confirmElement] = useConfirm();
   const [draft, setDraft] = useState<Draft | null>(null);
+  const { user } = useAuth();
   const { data, loading, reload } = useAsync(() => backend.content.listInterruptions("all"), [backend]);
+  const { data: profiles } = useAsync(() => backend.users.listProfiles(), [backend]);
+  // Una sorpresa siempre es para otra persona: nunca para uno mismo.
+  const people = useMemo(() => (profiles ?? []).filter((p) => p.id !== user?.id && p.isActive), [profiles, user?.id]);
+  const nameOf = (id: string | null) => (id ? profiles?.find((p) => p.id === id)?.displayName ?? "alguien" : "todos");
+  const newDraft = (): Draft => ({
+    title: "", body: "", style: "hearts", startsAt: new Date().toISOString(), endsAt: null, isActive: true, showOnce: true,
+    recipientId: people.length === 1 ? people[0]!.id : null,
+  });
 
   const refresh = () => {
     void reload();
@@ -49,7 +59,7 @@ export default function InterruptionsAdmin() {
   };
 
   const save = async () => {
-    if (!draft?.title.trim()) return;
+    if (!draft?.title.trim() || !draft.recipientId) return;
     const ok = await run(() => backend.content.saveInterruption(draft), "Sorpresa guardada 🎁");
     if (ok) {
       setDraft(null);
@@ -60,10 +70,10 @@ export default function InterruptionsAdmin() {
   return (
     <AdminPage
       title="Sorpresas (interrupciones)"
-      description="Mensajes que aparecen solos al abrir la página durante un tiempo: un “feliz mesiversario”, un “te extraño”…"
-      actions={<button className="btn" onClick={() => setDraft({ title: "", body: "", style: "hearts", startsAt: new Date().toISOString(), endsAt: null, isActive: true, showOnce: true })}>+ Nueva sorpresa</button>}
+      description="Mensajes que le aparecen solos a la persona que elijas cuando abre la página: un “feliz mesiversario”, un “te extraño”… A ti no te salen, y aquí sólo ves las que tú preparaste."
+      actions={<button className="btn" disabled={!people.length} onClick={() => setDraft(newDraft())}>+ Nueva sorpresa</button>}
     >
-      {loading && !data ? <PageLoader /> : !data?.length ? <EmptyState icon="🎁" title="Aún no hay sorpresas programadas" /> : (
+      {loading && !data ? <PageLoader /> : !data?.length ? <EmptyState icon="🎁" title="Aún no has preparado sorpresas">{people.length ? null : "Para preparar una sorpresa debe existir otra cuenta activa."}</EmptyState> : (
         <div className="list">
           {data.map((i) => {
             const s = status(i);
@@ -73,7 +83,7 @@ export default function InterruptionsAdmin() {
                 <span className="grow">
                   <strong>{i.title}</strong> <span className={`badge ${s.tone}`}>{s.label}</span>
                   <span className="muted list__sub">
-                    Desde {new Date(i.startsAt).toLocaleString("es-CO")}{i.endsAt ? ` hasta ${new Date(i.endsAt).toLocaleString("es-CO")}` : ""}{i.showOnce ? " · se muestra una vez" : " · siempre"}
+                    Para {nameOf(i.recipientId)} · Desde {new Date(i.startsAt).toLocaleString("es-CO")}{i.endsAt ? ` hasta ${new Date(i.endsAt).toLocaleString("es-CO")}` : ""}{i.showOnce ? " · se muestra una vez" : " · siempre"}
                   </span>
                 </span>
                 <button className="btn btn--sm btn--ghost" onClick={() => setDraft(i)}>Editar</button>
@@ -90,8 +100,16 @@ export default function InterruptionsAdmin() {
       )}
       {draft && (
         <Modal title={draft.id ? "Editar sorpresa" : "Nueva sorpresa"} onClose={() => setDraft(null)}
-          footer={<><button className="btn btn--ghost" onClick={() => setDraft(null)}>Cancelar</button><button className="btn" disabled={busy || !draft.title.trim()} onClick={save}>Guardar</button></>}>
+          footer={<><button className="btn btn--ghost" onClick={() => setDraft(null)}>Cancelar</button><button className="btn" disabled={busy || !draft.title.trim() || !draft.recipientId} onClick={save}>Guardar</button></>}>
           <div className="stack">
+            <Field label="¿Para quién es?" hint="Sólo esa persona la verá al abrir la página; a ti no te sale.">
+              {(id) => (
+                <select id={id} className="select" required value={draft.recipientId ?? ""} onChange={(e) => setDraft({ ...draft, recipientId: e.target.value || null })}>
+                  <option value="" disabled>Elige a alguien…</option>
+                  {people.map((p) => <option key={p.id} value={p.id}>{p.displayName}</option>)}
+                </select>
+              )}
+            </Field>
             <Field label="Título">{(id) => <input id={id} className="input" maxLength={160} value={draft.title} placeholder="¡Feliz mesiversario, mi amor!" onChange={(e) => setDraft({ ...draft, title: e.target.value })} />}</Field>
             <Field label="Mensaje">{(id) => <textarea id={id} className="textarea" maxLength={2000} value={draft.body} onChange={(e) => setDraft({ ...draft, body: e.target.value })} />}</Field>
             <Field label="Estilo">
@@ -105,7 +123,7 @@ export default function InterruptionsAdmin() {
               <Field label="Desde">{(id) => <input id={id} type="datetime-local" className="input" value={toLocalInput(draft.startsAt)} onChange={(e) => setDraft({ ...draft, startsAt: fromLocalInput(e.target.value) ?? new Date().toISOString() })} />}</Field>
               <Field label="Hasta (opcional)">{(id) => <input id={id} type="datetime-local" className="input" value={toLocalInput(draft.endsAt)} onChange={(e) => setDraft({ ...draft, endsAt: fromLocalInput(e.target.value) })} />}</Field>
             </div>
-            <Switch label="Mostrar sólo una vez a cada persona" checked={draft.showOnce} onChange={(showOnce) => setDraft({ ...draft, showOnce })} />
+            <Switch label="Mostrar sólo una vez" checked={draft.showOnce} onChange={(showOnce) => setDraft({ ...draft, showOnce })} />
             <Switch label="Activa" checked={draft.isActive} onChange={(isActive) => setDraft({ ...draft, isActive })} />
           </div>
         </Modal>
