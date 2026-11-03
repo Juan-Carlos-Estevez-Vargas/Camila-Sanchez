@@ -226,7 +226,7 @@ Las tablas viven en `public` y se crean con las migraciones de
   ese momento. Usa `auth.uid()`, así nadie marca vistos en nombre de otro.
 - `notify_new_note`, `notify_new_chat_message` y `notify_new_interruption`:
   escriben en `notifications` cuando llega una notita, un mensaje o se
-  publica una sorpresa ya activa. Sólo los triggers y `send_test_notification`
+  publica una sorpresa ya activa (en ese caso sólo para su destinataria). Sólo los triggers y `send_test_notification`
   escriben ahí. En el chat se reutiliza el aviso sin leer.
 - `dispatch_push` (trigger `notifications_push`): por cada aviso nuevo o
   renovado llama a `send-push` con `pg_net`, usando la URL y el secreto
@@ -423,3 +423,4 @@ prueba comprueba que `supabase/setup.sql` esté al día).
 | `…1021000200_profile_details` | Perfil editable: foto (bucket `avatars`), icono, frase y cumpleaños |
 | `…1027000100_owasp_hardening` | Refuerzo OWASP: avisos inmutables, autoría, SSRF del push y límites de velocidad |
 | `…1103000100_chat_app` | App de chat: contactos, solicitudes, bloqueos, conversaciones privadas, vistos y «escribiendo…» por chat, edición, borrado, reacciones y búsqueda |
+| `…1103000500_surprise_recipient` | Cada sorpresa es para una persona (`recipient_id`): sólo ella la ve y recibe el aviso, nunca quien la creó; en el panel cada quien gestiona sólo las suyas |

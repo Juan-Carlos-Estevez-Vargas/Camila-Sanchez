@@ -383,12 +383,13 @@ describe("avisos en el celular", () => {
     expect(await calls()).toBe(0);
   });
 
-  it("una sorpresa activa avisa a los demás; una programada no", async () => {
-    await as(CAMI, "insert into interruptions (title) values ('Mira la página 🎁')");
+  it("una sorpresa activa avisa sólo a quien va dirigida; una programada no", async () => {
+    await as(CAMI, `insert into interruptions (title, recipient_id) values ('Mira la página 🎁', '${JUAN}')`);
     expect(await as(JUAN, "select title, body, link from notifications where kind = 'system' and body = 'Mira la página 🎁'"))
       .toEqual([{ title: "Camila te dejó una sorpresa 🎁", body: "Mira la página 🎁", link: "/" }]);
     expect(await as(CAMI, "select count(*)::int as n from notifications where body = 'Mira la página 🎁'")).toEqual([{ n: 0 }]);
-    await as(CAMI, "insert into interruptions (title, starts_at) values ('Para mañana', now() + interval '1 day')");
+    expect(await as(GUEST, "select count(*)::int as n from notifications where body = 'Mira la página 🎁'")).toEqual([{ n: 0 }]);
+    await as(CAMI, `insert into interruptions (title, starts_at, recipient_id) values ('Para mañana', now() + interval '1 day', '${JUAN}')`);
     expect(await as(JUAN, "select count(*)::int as n from notifications where body = 'Para mañana'")).toEqual([{ n: 0 }]);
   });
 
@@ -578,7 +579,7 @@ describe("refuerzo OWASP", () => {
 
   it("el autor de una sorpresa o foto lo pone la base, no el navegador", async () => {
     const [row] = await as<{ created_by: string }>(CAMI,
-      `insert into interruptions (title, created_by, is_active) values ('fingida', '${JUAN}', false) returning created_by`);
+      `insert into interruptions (title, created_by, is_active, recipient_id) values ('fingida', '${JUAN}', false, '${GUEST}') returning created_by`);
     expect(row?.created_by).toBe(CAMI);
     const [photo] = await as<{ created_by: string }>(CAMI,
       `insert into photos (storage_path, created_by) values ('x/autor.webp', '${JUAN}') returning created_by`);
@@ -613,5 +614,41 @@ describe("refuerzo OWASP", () => {
     } finally {
       await db.exec(`update profiles set is_active = true where id = '${GUEST}'`);
     }
+  });
+});
+
+describe("sorpresas: sólo para la persona elegida", () => {
+  let surprise = "";
+
+  beforeAll(async () => {
+    const [row] = await as<{ id: string }>(JUAN,
+      `insert into interruptions (title, recipient_id) values ('Para Cami 💖', '${CAMI}') returning id`);
+    surprise = row!.id;
+  });
+
+  it("la ve la destinataria, no quien la creó ni nadie más", async () => {
+    const visible = async (uid: string | null) =>
+      (await as<{ n: number }>(uid, `select count(*)::int as n from interruptions where id = '${surprise}'`))[0]!.n;
+    expect(await visible(CAMI)).toBe(1);
+    expect(await visible(GUEST)).toBe(0);
+    expect(await visible(null)).toBe(0);
+  });
+
+  it("quien la creó la ve en su panel, pero la destinataria no la puede editar ni borrar", async () => {
+    expect(await as(JUAN, `select recipient_id from interruptions where id = '${surprise}'`)).toEqual([{ recipient_id: CAMI }]);
+    await as(CAMI, `update interruptions set title = 'destapada' where id = '${surprise}'`);
+    await as(CAMI, `delete from interruptions where id = '${surprise}'`);
+    expect(await as(JUAN, `select title from interruptions where id = '${surprise}'`)).toEqual([{ title: "Para Cami 💖" }]);
+  });
+
+  it("no se puede crear sin destinataria ni para uno mismo", async () => {
+    await expect(as(CAMI, "insert into interruptions (title) values ('sin nadie')")).rejects.toThrow();
+    await expect(as(CAMI, `insert into interruptions (title, recipient_id) values ('para mí', '${CAMI}')`)).rejects.toThrow();
+    await expect(as(JUAN, `update interruptions set recipient_id = '${JUAN}' where id = '${surprise}'`)).rejects.toThrow();
+  });
+
+  it("si ya no está activa, la destinataria deja de verla", async () => {
+    await as(JUAN, `update interruptions set is_active = false where id = '${surprise}'`);
+    expect(await as(CAMI, `select count(*)::int as n from interruptions where id = '${surprise}'`)).toEqual([{ n: 0 }]);
   });
 });

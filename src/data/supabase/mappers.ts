@@ -146,6 +146,8 @@ export const toInterruption = (r: Row): Interruption => ({
   endsAt: strOrNull(r.ends_at),
   isActive: r.is_active !== false,
   showOnce: r.show_once !== false,
+  recipientId: strOrNull(r.recipient_id),
+  createdBy: strOrNull(r.created_by),
 });
 
 export const fromInterruption = (i: Partial<Interruption>): Row => ({
@@ -157,6 +159,7 @@ export const fromInterruption = (i: Partial<Interruption>): Row => ({
   ends_at: i.endsAt,
   is_active: i.isActive,
   show_once: i.showOnce,
+  recipient_id: i.recipientId,
 });
 
 export const toProfile = (r: Row): Profile => ({

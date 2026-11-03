@@ -48,8 +48,9 @@ Es la historia de los dos. Desplázate hacia abajo para ver:
 
 Si hay música, el botón ♪ abajo a la izquierda la pone o la pausa. A veces
 aparece una **sorpresa** en una ventanita: es un mensaje que Camila o Juan
-dejaron programado. Si tienes los avisos activados, también te llega al
-celular cuando la publican.
+te dejaron programado a ti. Cada sorpresa le sale sólo a la persona para quien
+se preparó, nunca a quien la creó. Si tienes los avisos activados, también te
+llega al celular cuando la publican.
 
 ## 3. Cajita de mensajes
 
@@ -286,14 +287,16 @@ cae sola en el mes en que se tomó. Para cambiar el orden, arrástralas o usa
 ### Programar una sorpresa
 
 1. Ve a **🎁 Sorpresas → + Nueva sorpresa**.
-2. Escribe el título y el mensaje y elige el estilo.
-3. Indica desde cuándo (y opcionalmente hasta cuándo) se muestra.
-4. Deja activado **Mostrar sólo una vez a cada persona** si no quieres que se
-   repita.
+2. En **¿Para quién es?** elige a la persona que la va a recibir. Sólo ella
+   la verá; a ti no te sale al abrir la página.
+3. Escribe el título y el mensaje y elige el estilo.
+4. Indica desde cuándo (y opcionalmente hasta cuándo) se muestra.
+5. Deja activado **Mostrar sólo una vez** si no quieres que se repita.
 
-Si la sorpresa queda activa desde ya, a los demás les llega un aviso al
-celular. Las programadas para más adelante aparecen cuando entren a la
-página.
+Si la sorpresa queda activa desde ya, a esa persona le llega un aviso al
+celular. Las programadas para más adelante le aparecen cuando entre a la
+página. En esta pantalla sólo ves las sorpresas que tú preparaste, así las que
+te preparen a ti siguen siendo sorpresa.
 
 ## 10. Administración (Juan)
 
