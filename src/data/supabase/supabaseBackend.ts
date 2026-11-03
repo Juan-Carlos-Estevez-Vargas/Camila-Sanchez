@@ -1,7 +1,7 @@
 import { FunctionsHttpError } from "@supabase/supabase-js";
 import { AppError } from "@/core/errors";
 import type {
-  AuthGateway, Backend, ContentRepository, InvitationRepository, ListsRepository, MessagingRepository, PhotoRepository,
+  AuthGateway, Backend, ContentRepository, InvitationRepository, LegalRepository, ListsRepository, MessagingRepository, PhotoRepository,
   PushRepository, RealtimeChange, RealtimeGateway, RealtimeTable, UserRepository,
 } from "@/data/ports";
 import { clearPrivateCaches, readCache, writeCache } from "@/data/localCache";
@@ -706,6 +706,24 @@ const push: PushRepository = {
   },
 };
 
+const legal: LegalRepository = {
+  async myConsents() {
+    const { data: session } = await sb().auth.getSession();
+    const userId = session.session?.user.id;
+    if (!userId) return [];
+    const rows = await unwrap(sb().from("legal_consents").select("version, accepted_at").eq("user_id", userId).order("accepted_at", { ascending: false }));
+    return (rows as Array<{ version: string; accepted_at: string }>).map((r) => ({ version: r.version, acceptedAt: r.accepted_at }));
+  },
+  async accept(version) {
+    // user_id lo pone la base (auth.uid()) y RLS no deja registrarlo por otra persona.
+    // Aceptar dos veces la misma versión (otra pestaña) no es un error.
+    await unwrap(sb().from("legal_consents").upsert(
+      { version, user_agent: navigator.userAgent.slice(0, 300) },
+      { onConflict: "user_id,version", ignoreDuplicates: true },
+    ));
+  },
+};
+
 export const supabaseBackend: Backend = {
   mode: "supabase",
   auth,
@@ -717,4 +735,5 @@ export const supabaseBackend: Backend = {
   invitations,
   realtime,
   push,
+  legal,
 };

@@ -1,10 +1,11 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { toUserMessage } from "@/core/errors";
 import { INVITE_PATH, MIN_PASSWORD_LENGTH, readInviteToken } from "@/domain/invitations";
 import { passwordProblem } from "@/domain/password";
 import { ROLE_LABELS } from "@/domain/permissions";
 import type { InvitableRole } from "@/domain/types";
+import { legalPath, markConsentPending } from "@/domain/legal";
 import { useAuth } from "@/state/AuthContext";
 import { useBackend } from "@/state/BackendContext";
 import { EmptyState, PageLoader } from "@/ui/Feedback";
@@ -31,6 +32,8 @@ export default function InvitePage() {
   const token = useInviteToken();
   const [check, setCheck] = useState<Check>({ state: token ? "checking" : "invalid" });
   const [form, setForm] = useState({ displayName: "", email: "", password: "", confirm: "" });
+  // Consentimiento expreso: la casilla nunca viene marcada.
+  const [accepted, setAccepted] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -77,6 +80,9 @@ export default function InvitePage() {
     const problem = passwordProblem(form.password, [email, form.displayName]);
     if (problem) return setError(problem);
     if (form.password !== form.confirm) return setError("Las contraseñas no coinciden.");
+    if (!accepted) return setError("Para crear tu cuenta, lee y acepta los términos y la política de privacidad.");
+    // Al entrar por primera vez, ConsentGate guarda la aceptación con esta cuenta.
+    markConsentPending(email);
     setBusy(true);
     try {
       await backend.invitations.redeem({ token, email, password: form.password, displayName: form.displayName.trim() });
@@ -109,6 +115,13 @@ export default function InvitePage() {
           {(id) => <input id={id} className="input" type="password" autoComplete="new-password" required value={form.confirm} onChange={(e) => set("confirm")(e.target.value)} />}
         </Field>
         {error && <p className="field__error" role="alert">{error}</p>}
+        <label className="consent-dialog__check">
+          <input type="checkbox" checked={accepted} onChange={(e) => setAccepted(e.target.checked)} required />
+          <span>
+            Leí y acepto los <Link to={legalPath("terminos")} target="_blank" rel="noopener noreferrer">términos y condiciones<span className="visually-hidden"> (se abre en otra pestaña)</span></Link> y autorizo el
+            tratamiento de mis datos según la <Link to={legalPath("privacidad")} target="_blank" rel="noopener noreferrer">política de privacidad<span className="visually-hidden"> (se abre en otra pestaña)</span></Link>.
+          </span>
+        </label>
         <button className="btn btn--block" disabled={busy}>{busy ? "Creando tu cuenta…" : "Crear mi cuenta 💖"}</button>
       </form>
     </main>

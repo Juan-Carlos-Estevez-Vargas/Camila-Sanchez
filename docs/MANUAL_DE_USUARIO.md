@@ -36,6 +36,22 @@ Juan puede mandarte un enlace o un código QR. Ábrelo, escribe tu nombre, tu
 correo y una contraseña de al menos 10 caracteres y listo. El enlace sirve una
 sola vez y caduca (24 horas, 3 o 7 días, según lo que eligió Juan).
 
+Antes de **Crear mi cuenta** marca la casilla **Leí y acepto los términos y
+condiciones…**: viene desmarcada a propósito, porque es tu permiso para que
+la app guarde tus datos. Los enlaces abren los textos en otra pestaña para
+que no pierdas lo que escribiste.
+
+### La primera vez (aviso de cookies y términos)
+
+- Abajo aparece **Tu privacidad 🍪**. La app no usa cookies de publicidad;
+  sólo pregunta si quieres las letras de Google Fonts. **Sólo lo necesario**
+  usa las letras de tu dispositivo; **Aceptar tipografías** las descarga de
+  Google. Las dos funcionan igual. Lo cambias cuando quieras en
+  **Preferencias de cookies**, en el pie de página.
+- Si ya tenías cuenta, o si los términos cambian, al entrar sale **Antes de
+  seguir 💌**: lee los dos documentos, marca la casilla y toca **Aceptar y
+  seguir**. Si prefieres no aceptar, **Ahora no, cerrar sesión**.
+
 ## 2. La página principal
 
 Es la historia de los dos. Desplázate hacia abajo para ver:
@@ -248,6 +264,9 @@ Sólo cada persona puede cambiar su propio perfil.
 - **Cerrar sesión aquí:** sólo en este dispositivo.
 - **Cerrar en todos los dispositivos:** úsalo si perdiste el celular o entraste
   en un equipo ajeno.
+- **Privacidad y tus datos 🔒:** cuándo aceptaste los términos y cómo pedir
+  una copia de tus datos, corregirlos o borrar tu cuenta (gratis, sin
+  preguntas).
 
 ## 8. Recuperar la contraseña
 
@@ -339,6 +358,11 @@ quien no tiene cuenta los cambia Juan en **Administración → Apariencia**.
 
 **No veo una lista que me comentaron.** Sólo la ven las personas que están
 en ella: pídele a alguien de la lista que te sume desde **⚙️ Ajustes**.
+
+**¿Dónde leo la política de privacidad o los términos?** En el pie de
+página: **Privacidad**, **Términos**, **Cookies**, **Cobros y reembolsos** y
+**Licencias**. Se pueden leer sin cuenta. La app es gratis: nunca te pedirá
+pagar ni datos de tarjeta.
 
 **Subí una foto y no aparece.** Revisa el mes en la galería: se ubica por la
 fecha en que se tomó, no por la de hoy.
