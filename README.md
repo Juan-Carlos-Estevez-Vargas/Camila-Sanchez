@@ -218,7 +218,9 @@ La seguridad vive en la base de datos, no en el navegador.
 - CI busca claves secretas en el repo, en todo el historial de git y en el
   build publicado; el build se niega a compilar si una variable `VITE_*` trae
   la `service_role`. `npm audit` revisa la app y también los paquetes `npm:`
-  de las Edge Functions; Dependabot propone las actualizaciones.
+  de las Edge Functions; Dependabot propone las actualizaciones. En cada PR,
+  CI también revisa que las migraciones nuevas vayan después de las ya
+  fusionadas (si no, `supabase db push` las rechaza al desplegar).
 
 Cobertura punto por punto del OWASP Top 10, del API Security Top 10 y de la
 [lista de verificación](docs/SEGURIDAD_OWASP.md#lista-de-verificación)
