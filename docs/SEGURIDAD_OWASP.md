@@ -21,7 +21,7 @@ y scripts de CI) · ✋ se activa a mano fuera del código.
 | **Proteger sesión / cookies** | ✅ | La app no usa cookies (nada que robar por CSRF). El token vive en `sessionStorage` o, con «Mantener la sesión», en `localStorage`; la CSP impide que un script ajeno lo lea o lo mande a otro sitio. Tokens de 1 h con rotación del de refresco, PKCE, cerrar sesión en todos los dispositivos. Si algún día se usan cookies: `HttpOnly; Secure; SameSite=Lax`. | `sessionPersistence.test.ts`, `securityHeaders.test.ts` |
 | **Hashear contraseñas** | ✅ ✋ | Supabase Auth las guarda con bcrypt; la app nunca las guarda ni las registra. Reglas de 10 a 72 caracteres sin las más comunes ni el propio nombre o correo. ✋ *Leaked password protection* (plan Pro). | `password.test.ts` |
 | **Rate limiting** | ✅ 🔧 | `enforce_rate_limit` en chat, contactos, reacciones, notitas, invitaciones, listas, tareas y fotos de tareas. Nuevo: sorpresas (20/h) y Edge Functions con `hit_edge_rate_limit`: `admin-users` 60 acciones cada 10 min por persona. Supabase Auth limita los intentos por IP. | `rls.test.ts` |
-| **Protección contra bots** | ✅ 🔧 ✋ | Registro cerrado (sólo invitación con token de 256 bits). Nuevo: `redeem-invite`, la única función sin sesión, frena a cada IP con 30 consultas o 5 intentos de crear cuenta cada 10 minutos (responde 429). ✋ Falta un CAPTCHA (p. ej. Cloudflare Turnstile en Supabase → Authentication → Bot protection) para el inicio de sesión y la recuperación. | `rls.test.ts` |
+| **Protección contra bots** | ✅ 🔧 | Registro cerrado (sólo invitación con token de 256 bits). `redeem-invite`, la única función sin sesión, frena a cada IP con 30 consultas o 5 intentos de crear cuenta cada 10 minutos (responde 429). Nuevo: **CAPTCHA con Cloudflare Turnstile** en entrar, enlace mágico, recuperar contraseña y crear cuenta por invitación (Supabase Auth y `redeem-invite` comprueban la ficha). Se enciende con `VITE_TURNSTILE_SITE_KEY` y `TURNSTILE_SECRET_KEY` ([pasos](DESPLIEGUE.md#captcha-contra-bots-opcional)); la CSP sólo se abre a Cloudflare cuando está encendido. | `tokenQueue.test.ts`, `captchaCsp.test.ts`, `rls.test.ts` |
 | **Parametrizar queries** | ✅ | Todo pasa por supabase-js / PostgREST con parámetros. El único SQL dinámico (`reorder_items`, `enforce_rate_limit`, triggers de auditoría) usa `format('%I')` con lista blanca, y las búsquedas escapan `%`, `_` y `\` del `LIKE`. Las funciones `security definer` fijan `search_path`. | `rls.test.ts` |
 | **Validar inputs** | ✅ | `CHECK` de largo y formato en cada columna de texto, rutas y colores; las Edge Functions validan y recortan cada campo; el navegador valida colores, fuentes y URLs antes de usarlas. | `validation.test.ts`, `rls.test.ts` |
 | **Sanitizar contenido** | ✅ | React escapa todo el texto y no hay `dangerouslySetInnerHTML`; los enlaces de los avisos y las redirecciones sólo van a rutas internas; CSP sin scripts en línea. | `safeRedirect.test.ts`, `securityHeaders.test.ts` |
@@ -68,8 +68,8 @@ Para revisarlo en local: `npm run security`.
 - **GitHub → Settings → Code security**: activar *Secret scanning*, *Push
   protection* y *Dependabot alerts* (complementan el buscador de secretos de
   CI: bloquean el push antes de que el secreto llegue a GitHub).
-- **CAPTCHA** contra bots en el inicio de sesión: Supabase → Authentication →
-  Bot and Abuse Protection (Cloudflare Turnstile o hCaptcha). Requiere
-  mostrar el widget en la app; aún no está hecho.
+- **CAPTCHA** contra bots: crear las claves de Cloudflare Turnstile y
+  ponerlas en Netlify y GitHub, en ese orden
+  ([pasos](DESPLIEGUE.md#captcha-contra-bots-opcional)). El código ya está.
 - Si algún día hace falta, **MFA** para el super administrador
   (Supabase → Authentication → Multi-factor).

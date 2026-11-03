@@ -21,6 +21,9 @@
 #              (opcionales, para que los correos de recuperación lleguen a
 #               cualquiera: SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS,
 #               SMTP_SENDER_EMAIL)
+#              (opcional, CAPTCHA contra bots: TURNSTILE_SECRET_KEY. Antes de
+#               ponerlo, VITE_TURNSTILE_SITE_KEY tiene que estar en Netlify y
+#               publicado; si no, nadie podría entrar)
 #   Variables: SUPABASE_PROJECT_REF, SITE_URL (p. ej. https://camila-sanchez.netlify.app)
 # Mientras falten, el flujo termina en verde avisando qué falta.
 name: Deploy
@@ -99,6 +102,7 @@ jobs:
           SMTP_USER: ${{ secrets.SMTP_USER }}
           SMTP_PASS: ${{ secrets.SMTP_PASS }}
           SMTP_SENDER_EMAIL: ${{ secrets.SMTP_SENDER_EMAIL }}
+          TURNSTILE_SECRET_KEY: ${{ secrets.TURNSTILE_SECRET_KEY }}
         run: |
           site="${SITE_URL%/}"
           # Registro cerrado (tampoco cuentas anónimas), contraseñas de 10+
@@ -136,6 +140,17 @@ jobs:
           else
             echo "::notice::Sin SMTP propio: los correos de recuperación sólo llegan a los miembros del equipo de Supabase. Usa el enlace 🔑 de Administración → Usuarios para los demás."
           fi
+          # CAPTCHA (Cloudflare Turnstile) al entrar, pedir enlace mágico y
+          # recuperar la contraseña. Sin el secreto queda apagado.
+          if [ -n "$TURNSTILE_SECRET_KEY" ]; then
+            body=$(jq --arg secret "$TURNSTILE_SECRET_KEY" '. + {
+              security_captcha_enabled: true,
+              security_captcha_provider: "turnstile",
+              security_captcha_secret: $secret
+            }' <<< "$body")
+          else
+            body=$(jq '. + { security_captcha_enabled: false }' <<< "$body")
+          fi
           curl --fail-with-body -sS -X PATCH \
             "https://api.supabase.com/v1/projects/$PROJECT_REF/config/auth" \
             -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
@@ -144,8 +159,16 @@ jobs:
 
       - name: Publicar Edge Functions
         if: steps.config.outputs.ready == 'true'
+        env:
+          TURNSTILE_SECRET_KEY: ${{ secrets.TURNSTILE_SECRET_KEY }}
         run: |
           supabase secrets set --project-ref "$PROJECT_REF" "ALLOWED_ORIGIN=${SITE_URL%/}"
+          # redeem-invite comprueba el CAPTCHA sólo si tiene este secreto.
+          if [ -n "$TURNSTILE_SECRET_KEY" ]; then
+            supabase secrets set --project-ref "$PROJECT_REF" "TURNSTILE_SECRET_KEY=$TURNSTILE_SECRET_KEY" > /dev/null
+          elif supabase secrets list --project-ref "$PROJECT_REF" | grep -qw TURNSTILE_SECRET_KEY; then
+            supabase secrets unset --project-ref "$PROJECT_REF" TURNSTILE_SECRET_KEY --yes
+          fi
           supabase functions deploy admin-users --project-ref "$PROJECT_REF" --use-api
           supabase functions deploy redeem-invite --project-ref "$PROJECT_REF" --use-api --no-verify-jwt
 

@@ -34,14 +34,14 @@ src/
   core/       configuración, validación, errores, EventBus, SEO, autor
   domain/     reglas puras: tipos, permisos, fechas, invitaciones, recuperación, paletas, chat, stickers
   data/       puertos (ports.ts) y adaptadores: supabase/ y demo/
-  services/   cola de tareas, pipeline de imágenes (Web Workers), notificaciones, <head>
+  services/   cola de tareas, pipeline de imágenes (Web Workers), notificaciones, <head>, CAPTCHA (Turnstile)
   state/      contextos de React: backend, auth, contenido, tema, notificaciones, toasts
   ui/         componentes reutilizables: modal, campos, feedback, avatar, cargador romántico
   features/   funcionalidades: site, auth, admin (panel), super, messages, chat, tour
   styles/     sistema de diseño SCSS: abstracts, base, components, layout
 supabase/
   migrations/ esquema, RLS, triggers, buckets, publicación realtime y avisos push (en orden)
-  functions/  admin-users, redeem-invite, send-push (+ _shared/cors.ts, password.ts, rateLimit.ts)
+  functions/  admin-users, redeem-invite, send-push (+ _shared/cors.ts, password.ts, rateLimit.ts, captcha.ts)
   templates/  correo de recuperación de contraseña
   tests/      pruebas de RLS sobre PGlite (Postgres en WebAssembly) con un stub de Supabase
 scripts/      release.mjs (versión SemVer y notas), build-setup-sql.mjs, check-secrets.mjs (secretos en git y en el build) y audit-edge-deps.mjs (dependencias de las Edge Functions)
@@ -380,7 +380,7 @@ Un salto manual en `package.json` manda sobre el cálculo.
 | --- | --- | --- |
 | Unitarias de dominio | `src/domain/*.test.ts` | Fechas, invitaciones, recuperación, paletas y colores por persona, chat (vistos, última conexión, vistas previas), stickers, listas (avance, fechas, subtareas), perfil (cumpleaños, inicial) |
 | Unitarias de núcleo | `src/core/*.test.ts` | Validación, redirecciones seguras, SEO, cabeceras |
-| Servicios | `src/services/**/*.test.ts` | Cola de tareas, EXIF, tamaños, carga masiva |
+| Servicios | `src/services/**/*.test.ts` | Cola de tareas, EXIF, tamaños, carga masiva, fichas del CAPTCHA |
 | Tutorial | `src/features/tour/*.test.ts` | Pasos por rol y posición de la tarjeta |
 | Base de datos | `supabase/tests/rls.test.ts` | Políticas RLS, triggers, buckets, listas compartidas, perfiles y avisos push sobre PGlite (con Vault y `pg_net` simulados en `supabaseStub.ts`) |
 | Releases | `scripts/release.test.ts` | Cálculo de versión y notas |

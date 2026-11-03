@@ -11,12 +11,14 @@
  * que la busca, así dos personas no pueden usar el mismo enlace a la vez.
  *
  * Contra bots: cada IP (anonimizada) tiene un límite de 30 consultas y 5
- * intentos de crear cuenta cada 10 minutos.
+ * intentos de crear cuenta cada 10 minutos, y si el CAPTCHA está activado
+ * (secreto TURNSTILE_SECRET_KEY) crear la cuenta exige una ficha válida.
  */
 import { createClient } from "npm:@supabase/supabase-js@2.117.3";
 import { corsHeaders, json } from "../_shared/cors.ts";
 import { passwordProblem } from "../_shared/password.ts";
-import { allow, ipKey, TOO_MANY } from "../_shared/rateLimit.ts";
+import { allow, clientIp, ipKey, TOO_MANY } from "../_shared/rateLimit.ts";
+import { CAPTCHA_FAILED, captchaOk } from "../_shared/captcha.ts";
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const TOKEN = /^[A-Za-z0-9_-]{43}$/;
@@ -59,6 +61,7 @@ Deno.serve(async (req) => {
 
     if (action !== "redeem") return json({ error: "Acción desconocida" }, 400);
     if (!(await allow(admin, `${ip}:redeem`, 5, "10 minutes"))) return json({ error: TOO_MANY }, 429);
+    if (!(await captchaOk(body.captchaToken, clientIp(req)))) return json({ error: CAPTCHA_FAILED }, 400);
 
     const email = str(body.email, 254).toLowerCase();
     const displayName = str(body.displayName, 80);

@@ -210,6 +210,9 @@ La seguridad vive en la base de datos, no en el navegador.
   invitaciones…) y en las Edge Functions: `redeem-invite`, la única pública,
   frena a cada IP (guardada como HMAC, nunca en claro) que pase de 30
   consultas o 5 intentos de crear cuenta cada 10 minutos.
+- CAPTCHA opcional con Cloudflare Turnstile al entrar, recuperar la
+  contraseña y canjear una invitación; se enciende con dos claves
+  ([pasos](docs/DESPLIEGUE.md#captcha-contra-bots-opcional)).
 - CI busca claves secretas en el repo, en todo el historial de git y en el
   build publicado; el build se niega a compilar si una variable `VITE_*` trae
   la `service_role`. `npm audit` revisa la app y también los paquetes `npm:`
