@@ -652,3 +652,50 @@ describe("sorpresas: sólo para la persona elegida", () => {
     expect(await as(CAMI, `select count(*)::int as n from interruptions where id = '${surprise}'`)).toEqual([{ n: 0 }]);
   });
 });
+
+describe("revisión de seguridad: campos que no cambian y límites", () => {
+  it("nadie reescribe quién subió una foto ni cuándo", async () => {
+    const [photo] = await as<{ id: string }>(CAMI, "select id from photos limit 1");
+    await expect(as(CAMI, `update photos set created_by = '${GUEST}' where id = '${photo!.id}'`)).rejects.toThrow(/created_by/);
+    await expect(as(CAMI, `update photos set created_at = now() - interval '1 year' where id = '${photo!.id}'`)).rejects.toThrow(/created_at/);
+    // Lo demás sí se puede editar.
+    expect(await as(CAMI, `update photos set caption = 'nuestra foto' where id = '${photo!.id}' returning caption`))
+      .toEqual([{ caption: "nuestra foto" }]);
+  });
+
+  it("una reacción no se puede mover a otro mensaje", async () => {
+    const [a] = await as<{ id: string }>(JUAN, `insert into chat_messages (conversation_id, body) values ('${GUEST_CHAT}', 'uno') returning id`);
+    const [b] = await as<{ id: string }>(JUAN, `insert into chat_messages (conversation_id, body) values ('${GUEST_CHAT}', 'dos') returning id`);
+    await as(JUAN, `insert into chat_reactions (message_id, emoji) values ('${a!.id}', '❤️')`);
+    await expect(as(JUAN, `update chat_reactions set message_id = '${b!.id}' where message_id = '${a!.id}'`)).rejects.toThrow(/message_id/);
+    expect(await as(JUAN, `update chat_reactions set emoji = '🔥' where message_id = '${a!.id}' returning emoji`)).toEqual([{ emoji: "🔥" }]);
+  });
+
+  it("las sorpresas tienen límite de velocidad (cada una avisa al celular)", async () => {
+    await expect(as(CAMI, `
+      do $$ begin
+        for i in 1..25 loop
+          insert into interruptions (title, recipient_id) values ('sorpresa ' || i, '${JUAN}');
+        end loop;
+      end $$`)).rejects.toThrow(/muy rápido/);
+  });
+
+  it("el contador de las Edge Functions sólo lo usa la service role", async () => {
+    await expect(as(null, "select hit_edge_rate_limit('x', 5, '1 minute')")).rejects.toThrow(/permission denied/);
+    await expect(as(JUAN, "select hit_edge_rate_limit('x', 5, '1 minute')")).rejects.toThrow(/permission denied/);
+    expect(await as(JUAN, "select count(*)::int as n from edge_rate_limits")).toEqual([{ n: 0 }]);
+    await expect(as(JUAN, "insert into edge_rate_limits (key) values ('x')")).rejects.toThrow();
+
+    await db.exec("grant usage on schema public to service_role");
+    const hit = async () => {
+      await db.exec("begin; set local role service_role;");
+      try {
+        const { rows } = await db.query<{ ok: boolean }>("select hit_edge_rate_limit('redeem-invite:ip:abc', 2, '10 minutes') as ok");
+        return rows[0]!.ok;
+      } finally {
+        await db.exec("commit");
+      }
+    };
+    expect([await hit(), await hit(), await hit()]).toEqual([true, true, false]);
+  });
+});

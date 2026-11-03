@@ -18,14 +18,27 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # Todo el historial, para buscar secretos también en commits viejos.
+          fetch-depth: 0
+          persist-credentials: false
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 22
           cache: npm
+      # Ninguna clave privada en el repositorio ni en su historial.
+      - name: Sin secretos en git
+        run: node scripts/check-secrets.mjs --history
       - run: npm ci
-      # OWASP A06: ninguna dependencia con fallas de seguridad altas o críticas.
+      # OWASP A06: ninguna dependencia con fallas de seguridad altas o
+      # críticas, y lo que llega al navegador ni siquiera con fallas moderadas.
       - name: Dependencias sin vulnerabilidades conocidas
-        run: npm audit --audit-level=high
+        run: |
+          npm audit --audit-level=high
+          npm audit --omit=dev --audit-level=moderate
+      # Las Edge Functions importan paquetes con npm:x@y.z (fuera de package.json).
+      - name: Dependencias de las Edge Functions
+        run: node scripts/audit-edge-deps.mjs
       - name: Typecheck
         run: npm run typecheck
       - name: Lint
@@ -34,6 +47,9 @@ jobs:
         run: npm test
       - name: Build
         run: npm run build
+      # Lo que se publica tampoco puede llevar una clave secreta.
+      - name: Sin secretos en el build
+        run: node scripts/check-secrets.mjs dist
 
   # PRs de Dependabot de paquetes npm: si las pruebas pasan, se fusionan solos.
   # Luego se vuelven a probar sobre master y, si algo falla, se deshace el

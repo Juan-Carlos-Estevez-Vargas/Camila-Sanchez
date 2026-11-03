@@ -10,6 +10,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2.117.3";
 import { corsHeaders, json } from "../_shared/cors.ts";
 import { passwordProblem } from "../_shared/password.ts";
+import { allow, TOO_MANY } from "../_shared/rateLimit.ts";
 
 const ROLES = ["super_admin", "editor", "viewer"] as const;
 type Role = (typeof ROLES)[number];
@@ -73,6 +74,11 @@ Deno.serve(async (req) => {
     });
     const { data: userData } = await caller.auth.getUser();
     if (!userData.user) return json({ error: "Sesión no válida" }, 401);
+    // Aunque alguien robara una sesión de administración, no podría crear o
+    // borrar cuentas en masa: 60 acciones cada 10 minutos por persona.
+    if (!(await allow(admin, `admin-users:user:${userData.user.id}`, 60, "10 minutes"))) {
+      return json({ error: TOO_MANY }, 429);
+    }
     const { data: allowed } = await caller.rpc("has_permission", { p_permission: "users.manage" });
     if (allowed !== true) return json({ error: "No tienes permiso para hacer esto" }, 403);
 

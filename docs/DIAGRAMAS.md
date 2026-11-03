@@ -21,6 +21,7 @@ directamente al abrir este archivo. La explicación de cada pieza está en
 - [Perfil de cada persona](#perfil-de-cada-persona)
 - [Listas compartidas](#listas-compartidas)
 - [Tutorial guiado](#tutorial-guiado)
+- [Capas de seguridad](#capas-de-seguridad)
 - [Integración y despliegue](#integración-y-despliegue)
 - [Modelo de datos](#modelo-de-datos)
 - [Roles y permisos](#roles-y-permisos)
@@ -145,10 +146,13 @@ sequenceDiagram
   I->>App2: abre el enlace
   App2->>App2: lee el #fragmento y lo borra de la barra
   App2->>RI: check(token)
+  RI->>DB: hit_edge_rate_limit(HMAC(IP), 30, 10 min)
+  Note over RI,DB: si se pasa del límite responde 429
   RI->>DB: busca SHA-256(token) vigente
   RI-->>App2: válido + rol
   I->>App2: nombre, correo y contraseña
   App2->>RI: redeem(...)
+  RI->>DB: hit_edge_rate_limit(HMAC(IP), 5, 10 min)
   RI->>DB: marca usada (update ... where used_at is null)
   RI->>Auth: crea el usuario con ese rol
   RI-->>App2: ok
@@ -882,12 +886,57 @@ flowchart LR
   F --> L["tourLayout<br/>resaltado + posición de la tarjeta"]
 ```
 
+## Capas de seguridad
+
+Qué frena a cada amenaza de la
+[lista de verificación](SEGURIDAD_OWASP.md#lista-de-verificación), desde el
+navegador hasta la base de datos.
+
+```mermaid
+flowchart TB
+  subgraph Navegador
+    CSP["CSP sin scripts ajenos<br/>React escapa el texto<br/>validation.ts: colores, URLs, fuentes"]
+    SES["Sesión en local/sessionStorage<br/>(sin cookies) · PKCE"]
+  end
+  subgraph Netlify
+    HTTPS["Sólo HTTPS<br/>HSTS + upgrade-insecure-requests"]
+    HDR["Cabeceras: X-Frame-Options, nosniff,<br/>COOP/CORP, Permissions-Policy"]
+  end
+  subgraph Supabase
+    AUTH["Auth: bcrypt, tokens de 1 h con rotación,<br/>registro cerrado, límites por IP"]
+    subgraph EF["Edge Functions"]
+      RL["hit_edge_rate_limit<br/>IP con HMAC · 429"]
+      VAL["validan y recortan cada campo"]
+    end
+    subgraph PG["Postgres"]
+      RLS["RLS en todas las tablas"]
+      TRG["Triggers: columnas inmutables,<br/>autoría puesta por la base,<br/>enforce_rate_limit"]
+      CHK["CHECK de largo y formato"]
+      PRM["supabase-js / PostgREST:<br/>consultas parametrizadas"]
+    end
+    ST[("Storage privado<br/>sólo imágenes · máx. 2–5 MB")]
+  end
+  subgraph GitHub
+    CI["CI: secretos en git y en dist/,<br/>npm audit, deps de Edge Functions"]
+    DB2["Dependabot"]
+  end
+
+  CSP --> HTTPS --> AUTH
+  SES --> AUTH
+  HTTPS --> EF
+  HTTPS --> PRM --> RLS --> TRG --> CHK
+  RL --> VAL --> PG
+  HTTPS --> ST
+  CI -. "antes de publicar" .-> Netlify
+  DB2 -. "PRs de versiones" .-> CI
+```
+
 ## Integración y despliegue
 
 ```mermaid
 flowchart LR
   DEV["Commit en una rama"] --> PR["Pull request"]
-  PR --> CI["CI<br/>typecheck · lint · pruebas · build"]
+  PR --> CI["CI<br/>secretos en git · npm audit · deps de Edge Functions<br/>typecheck · lint · pruebas · build · secretos en dist/"]
   CI -- "verde" --> M["Merge a master"]
   M --> D1["Deploy: pruebas otra vez"]
   D1 --> D2["Migraciones en Supabase"]
