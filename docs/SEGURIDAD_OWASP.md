@@ -8,7 +8,7 @@ cambio futuro.
 ## Lista de verificación
 
 Repaso punto por punto (noviembre de 2026). ✅ ya estaba cubierto ·
-🔧 se reforzó en la revisión (migración `20261103000600_security_review.sql`
+🔧 se reforzó en la revisión (migración `20261103000800_security_review.sql`
 y scripts de CI) · ✋ se activa a mano fuera del código.
 
 | Punto | Estado | Cómo se cubre | Prueba |

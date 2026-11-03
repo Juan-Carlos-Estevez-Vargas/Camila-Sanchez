@@ -29,6 +29,11 @@ jobs:
       # Ninguna clave privada en el repositorio ni en su historial.
       - name: Sin secretos en git
         run: node scripts/check-secrets.mjs --history
+      # Una migración con fecha anterior a la última ya fusionada hace fallar
+      # supabase db push en el despliegue.
+      - name: Migraciones nuevas después de las de la base
+        if: github.event_name == 'pull_request'
+        run: node scripts/check-migration-order.mjs "origin/${{ github.base_ref }}"
       - run: npm ci
       # OWASP A06: ninguna dependencia con fallas de seguridad altas o
       # críticas, y lo que llega al navegador ni siquiera con fallas moderadas.
