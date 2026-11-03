@@ -118,6 +118,36 @@ Hay dos caminos, y el primero funciona desde ya:
      bonita (`supabase/templates/recovery.html`) y el enlace funciona aunque se
      abra en otro celular.
 
+## CAPTCHA contra bots (opcional)
+
+Con Cloudflare Turnstile, entrar, pedir un enlace mágico, recuperar la
+contraseña y crear una cuenta con una invitación piden una verificación
+"no soy un robot". Casi siempre se resuelve sola, sin que la persona tenga que
+hacer nada. Mientras no se configure, la app funciona igual que antes y no
+carga nada de Cloudflare.
+
+1. Crea una cuenta gratis en <https://dash.cloudflare.com>, ve a *Turnstile →
+   Add widget*, ponle un nombre, agrega el dominio (p. ej.
+   `camila-sanchez.netlify.app`) y elige el modo **Managed**. Te da dos
+   claves: *Site key* (pública) y *Secret key* (secreta).
+2. **Primero la web.** En Netlify → *Site configuration → Environment
+   variables*, crea `VITE_TURNSTILE_SITE_KEY` con la *Site key* y vuelve a
+   publicar (*Deploys → Trigger deploy*). Así la página ya muestra el recuadro
+   y su CSP deja cargar `challenges.cloudflare.com`.
+3. **Después el servidor.** En GitHub → *Settings → Secrets and variables →
+   Actions*, crea el secreto `TURNSTILE_SECRET_KEY` con la *Secret key* y
+   ejecuta *Deploy*. El flujo enciende el CAPTCHA en Supabase Auth y se lo
+   pasa a `redeem-invite`.
+
+El orden importa: si Supabase exige el CAPTCHA antes de que la web lo muestre,
+nadie puede entrar. Para apagarlo, borra el secreto de GitHub y ejecuta
+*Deploy* (eso lo apaga en Supabase); luego, si quieres, quita la variable de
+Netlify.
+
+En Vercel la CSP vive en `vercel.json` y no se ajusta sola: agrega
+`https://challenges.cloudflare.com` a `script-src`, `connect-src` y
+`frame-src` a mano.
+
 ## Avisos en la pantalla de notificaciones del celular
 
 No hay que configurar nada: el flujo *Deploy* crea una sola vez las claves

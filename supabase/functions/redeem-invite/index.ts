@@ -9,10 +9,16 @@
  * en el token: 256 bits al azar, guardado sólo como SHA-256, de un solo uso y
  * con caducidad. El canje marca la invitación como usada en la misma sentencia
  * que la busca, así dos personas no pueden usar el mismo enlace a la vez.
+ *
+ * Contra bots: cada IP (anonimizada) tiene un límite de 30 consultas y 5
+ * intentos de crear cuenta cada 10 minutos, y si el CAPTCHA está activado
+ * (secreto TURNSTILE_SECRET_KEY) crear la cuenta exige una ficha válida.
  */
 import { createClient } from "npm:@supabase/supabase-js@2.117.3";
 import { corsHeaders, json } from "../_shared/cors.ts";
 import { passwordProblem } from "../_shared/password.ts";
+import { allow, clientIp, ipKey, TOO_MANY } from "../_shared/rateLimit.ts";
+import { CAPTCHA_FAILED, captchaOk } from "../_shared/captcha.ts";
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const TOKEN = /^[A-Za-z0-9_-]{43}$/;
@@ -37,6 +43,9 @@ Deno.serve(async (req) => {
   if (req.method !== "POST") return json({ error: "Método no permitido" }, 405);
 
   try {
+    const ip = await ipKey("redeem-invite", req);
+    if (!(await allow(admin, ip, 30, "10 minutes"))) return json({ error: TOO_MANY }, 429);
+
     const body = await req.json().catch(() => ({}));
     const action = str(body.action, 10);
     const token = typeof body.token === "string" ? body.token : "";
@@ -51,6 +60,8 @@ Deno.serve(async (req) => {
     }
 
     if (action !== "redeem") return json({ error: "Acción desconocida" }, 400);
+    if (!(await allow(admin, `${ip}:redeem`, 5, "10 minutes"))) return json({ error: TOO_MANY }, 429);
+    if (!(await captchaOk(body.captchaToken, clientIp(req)))) return json({ error: CAPTCHA_FAILED }, 400);
 
     const email = str(body.email, 254).toLowerCase();
     const displayName = str(body.displayName, 80);

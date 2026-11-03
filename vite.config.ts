@@ -1,8 +1,12 @@
 /// <reference types="vitest/config" />
 import { defineConfig, loadEnv, type HtmlTagDescriptor, type Plugin, type Rollup } from "vite";
 import react from "@vitejs/plugin-react";
+import { readFileSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 import { fileURLToPath, URL } from "node:url";
 import { resolveAppVersion } from "./scripts/release.mjs";
+import { assertPublicEnv } from "./scripts/check-secrets.mjs";
+import { withCaptchaCsp, withCaptchaHeaders } from "./src/core/captchaCsp.ts";
 import { buildRobotsTxt, buildSitemapXml, normalizeSiteUrl, OG_IMAGE_PATH } from "./src/core/seo.ts";
 
 // La CSP sólo se inyecta en el build: en desarrollo Vite necesita scripts
@@ -21,15 +25,34 @@ export const CONTENT_SECURITY_POLICY = [
   "form-action 'self'",
 ].join("; ");
 
-const cspPlugin = (): Plugin => ({
-  name: "inject-csp",
-  apply: "build",
-  transformIndexHtml: (html) =>
-    html.replace(
-      "<head>",
-      `<head>\n    <meta http-equiv="Content-Security-Policy" content="${CONTENT_SECURITY_POLICY}" />`,
-    ),
-});
+/**
+ * Con VITE_TURNSTILE_SITE_KEY (CAPTCHA), la CSP de la <meta> y la de
+ * dist/_headers dejan cargar el recuadro de Cloudflare; sin ella no cambian.
+ */
+const cspPlugin = (captcha: boolean): Plugin => {
+  let outDir = "dist";
+  return {
+    name: "inject-csp",
+    apply: "build",
+    configResolved(resolved) {
+      outDir = resolved.build.outDir;
+    },
+    transformIndexHtml: (html) =>
+      html.replace(
+        "<head>",
+        `<head>\n    <meta http-equiv="Content-Security-Policy" content="${captcha ? withCaptchaCsp(CONTENT_SECURITY_POLICY) : CONTENT_SECURITY_POLICY}" />`,
+      ),
+    writeBundle() {
+      if (!captcha) return;
+      const file = join(outDir, "_headers");
+      try {
+        writeFileSync(file, withCaptchaHeaders(readFileSync(file, "utf8")));
+      } catch {
+        // Sin _headers (otro hosting): sólo queda la <meta>.
+      }
+    },
+  };
+};
 
 /**
  * SEO en el build: robots.txt y sitemap.xml generados con el dominio real
@@ -98,10 +121,13 @@ export default defineConfig(({ mode }) => {
   // Vite expone en import.meta.env las variables VITE_* del entorno.
   process.env.VITE_APP_VERSION ??= resolveAppVersion();
   const env = loadEnv(mode, process.cwd(), "VITE_");
+  // Todo lo VITE_* termina en el JavaScript público: si alguien pegó ahí la
+  // service_role key por error, el build se detiene antes de publicarla.
+  assertPublicEnv(env);
   const siteUrl = normalizeSiteUrl(env.VITE_SITE_URL);
   const indexing = env.VITE_SEO_INDEX?.trim() !== "false";
   return {
-    plugins: [react(), cspPlugin(), seoPlugin(siteUrl, indexing), startupPreloadPlugin(env.VITE_SUPABASE_URL?.trim() ?? "")],
+    plugins: [react(), cspPlugin(Boolean(env.VITE_TURNSTILE_SITE_KEY?.trim())), seoPlugin(siteUrl, indexing), startupPreloadPlugin(env.VITE_SUPABASE_URL?.trim() ?? "")],
     resolve: {
       alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) },
     },

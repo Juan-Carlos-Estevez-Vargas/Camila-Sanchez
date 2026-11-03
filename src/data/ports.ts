@@ -18,11 +18,14 @@ export type Unsubscribe = () => void;
 export interface AuthGateway {
   getSession(): Promise<SessionUser | null>;
   onChange(listener: (user: SessionUser | null) => void): Unsubscribe;
-  /** remember=false: la sesión vive sólo en esta pestaña y termina al cerrarla. */
-  signInWithPassword(email: string, password: string, options?: { remember?: boolean }): Promise<void>;
-  sendMagicLink(email: string): Promise<void>;
+  /**
+   * remember=false: la sesión vive sólo en esta pestaña y termina al cerrarla.
+   * captchaToken: respuesta del CAPTCHA (Turnstile) cuando está activado.
+   */
+  signInWithPassword(email: string, password: string, options?: { remember?: boolean; captchaToken?: string }): Promise<void>;
+  sendMagicLink(email: string, options?: { captchaToken?: string }): Promise<void>;
   /** Correo con un enlace a /recuperar. */
-  sendPasswordReset(email: string): Promise<void>;
+  sendPasswordReset(email: string, options?: { captchaToken?: string }): Promise<void>;
   /** Abre la sesión de recuperación con el token del enlace (un solo uso). */
   verifyRecovery(tokenHash: string): Promise<void>;
   /** signOutOthers=true cierra las sesiones de los demás dispositivos. */
@@ -256,6 +259,8 @@ export interface RedeemInvitationInput {
   email: string;
   password: string;
   displayName: string;
+  /** Respuesta del CAPTCHA (Turnstile) cuando está activado. */
+  captchaToken?: string;
 }
 
 export interface InvitationRepository {
