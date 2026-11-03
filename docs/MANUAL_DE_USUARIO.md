@@ -103,8 +103,11 @@ nombre; los fijados (📌) quedan primero y los archivados, aparte.
   viejo.
 - El punto junto a **Chat** en la cabecera indica que hay mensajes sin leer.
 
-**Opciones de cada mensaje.** Pasa el mouse sobre el mensaje y toca **⌄**,
-haz clic derecho, o en el celular mantenlo pulsado:
+**Opciones de cada mensaje.** En el computador pasa el mouse sobre el mensaje
+y toca **⌄** o haz clic derecho. En el celular mantén pulsado el mensaje (o toca
+**⌄**): sube un panel desde abajo con el mensaje, las reacciones y las
+opciones; toca fuera para cerrarlo. Debajo del mensaje se ven las reacciones de
+cada uno; toca la tuya para quitarla.
 
 | Opción | Qué hace |
 | --- | --- |

@@ -329,7 +329,11 @@ flowchart TD
 
 ```mermaid
 flowchart LR
-  M["Mensaje<br/>(⌄, clic derecho o mantener pulsado)"] --> RE["Reaccionar ❤️ 😂 😮 …<br/>una por persona"]
+  T["Celular: mantener pulsado o ⌄"] --> H["Hoja que sube desde abajo<br/>con el mensaje, las reacciones<br/>y las opciones"]
+  D["Computador: ⌄ o clic derecho"] --> P["Menú junto al mensaje"]
+  H --> M["Mensaje"]
+  P --> M
+  M --> RE["Reaccionar ❤️ 😂 😮 …<br/>una por persona;<br/>tocar la propia la quita"]
   M --> RS["Responder citando"]
   M --> CP["Copiar"]
   M --> ED{"¿Mío, no sticker y<br/>de hace < 15 min?"}
