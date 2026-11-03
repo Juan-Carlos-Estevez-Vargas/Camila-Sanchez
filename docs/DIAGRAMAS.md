@@ -24,6 +24,7 @@ directamente al abrir este archivo. La explicación de cada pieza está en
 - [Integración y despliegue](#integración-y-despliegue)
 - [Modelo de datos](#modelo-de-datos)
 - [Roles y permisos](#roles-y-permisos)
+- [Legal y privacidad](#legal-y-privacidad)
 
 ## Arquitectura general
 
@@ -923,6 +924,7 @@ erDiagram
   CHAT_MESSAGES ||--o{ CHAT_HIDDEN_MESSAGES : "borrado para"
   AUTH_USERS ||--o{ NOTIFICATIONS : "recibe"
   AUTH_USERS ||--o{ PUSH_SUBSCRIPTIONS : "dispositivos"
+  AUTH_USERS ||--o{ LEGAL_CONSENTS : "acepta términos"
   AUTH_USERS ||--o{ INTERRUPTION_VIEWS : "vio"
   AUTH_USERS ||--o{ INTERRUPTIONS : "prepara"
   AUTH_USERS ||--o{ INTERRUPTIONS : "es para"
@@ -1085,6 +1087,13 @@ erDiagram
     text p256dh
     text auth
   }
+  LEGAL_CONSENTS {
+    bigint id PK
+    uuid user_id FK "lo pone la base"
+    text version "AAAA-MM-DD"
+    timestamptz accepted_at "lo pone la base"
+    text user_agent
+  }
   TODO_LISTS {
     uuid id PK
     uuid owner_id FK "quien la creó"
@@ -1171,3 +1180,81 @@ flowchart LR
 Estos son los permisos por defecto (migración `core_schema`). Juan los cambia
 en **Administración → Roles y permisos** y la base de datos los aplica al
 instante.
+
+## Legal y privacidad
+
+Qué textos hay, cuándo se pide aceptarlos y qué sale del navegador. El
+detalle (y qué falta revisar con una persona abogada) está en
+[LEGAL.md](LEGAL.md).
+
+### Aviso de cookies y tipografías
+
+Nada sale hacia Google hasta que la persona elige. Las dos opciones pesan lo
+mismo y la elección se cambia desde el pie de página.
+
+```mermaid
+flowchart TD
+  A["Abre la app"] --> B{"¿Ya eligió?<br/>(localStorage consent:cookies)"}
+  B -- "no" --> C["Aviso abajo, sin bloquear la página<br/>«Sólo lo necesario» · «Aceptar tipografías»"]
+  B -- "sí" --> D{"externalFonts"}
+  C -- "Sólo lo necesario" --> E["Letras del dispositivo<br/>(Georgia, system-ui)"]
+  C -- "Aceptar tipografías" --> F["ThemeController agrega el &lt;link&gt;<br/>a fonts.googleapis.com"]
+  D -- "false" --> E
+  D -- "true" --> F
+  G["Pie: «Preferencias de cookies»<br/>o /legal/cookies"] --> C
+```
+
+### Aceptar términos y privacidad
+
+La prueba del consentimiento (Ley 1581) queda en `legal_consents`. Al crear la
+cuenta la casilla nunca viene marcada; a quien ya tenía cuenta, o cuando sube
+`LEGAL_VERSION`, se le pregunta una vez al entrar.
+
+```mermaid
+sequenceDiagram
+  actor P as Persona
+  participant Inv as /invitacion
+  participant SS as sessionStorage
+  participant Gate as ConsentGate
+  participant DB as Postgres (legal_consents)
+
+  alt Cuenta nueva con invitación
+    P->>Inv: marca «Leí y acepto…» (desmarcada por defecto)
+    Inv->>SS: pendiente {correo, versión}
+    Inv->>Inv: crea la cuenta e inicia sesión
+    Gate->>DB: myConsents()
+    DB-->>Gate: ninguna de la versión vigente
+    Gate->>SS: ¿pendiente con este correo?
+    SS-->>Gate: sí (y se borra)
+    Gate->>DB: insert version (user_id y fecha los pone la base)
+  else Cuenta de antes o versión nueva
+    Gate->>DB: myConsents()
+    DB-->>Gate: falta la versión vigente
+    Gate->>P: diálogo: leer términos y privacidad
+    alt Acepta
+      P->>Gate: casilla + «Aceptar y seguir»
+      Gate->>DB: insert version
+    else No acepta
+      P->>Gate: «Ahora no, cerrar sesión»
+    end
+  end
+  Note over Gate: En /legal/* el diálogo no aparece:<br/>se puede leer antes de aceptar
+```
+
+### Qué sale del navegador
+
+```mermaid
+flowchart LR
+  subgraph Navegador
+    APP["App"]
+    LS[("localStorage / sessionStorage / IndexedDB<br/>sesión, caché, preferencias")]
+  end
+  APP --> LS
+  APP -- "siempre" --> NET["Netlify<br/>(la página)"]
+  APP -- "con cuenta" --> SB["Supabase<br/>datos, fotos, chat"]
+  APP -. "sólo si se acepta" .-> GF["Google Fonts"]
+  APP -. "sólo si está activado" .-> CF["Cloudflare Turnstile"]
+  APP -. "sólo si se activan los avisos" .-> PUSH["Servicio push del navegador<br/>(contenido cifrado)"]
+  APP -. "sólo al pulsar ♪" .-> MUS["Servidor de la música"]
+```
+

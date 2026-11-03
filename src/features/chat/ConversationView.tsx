@@ -825,7 +825,7 @@ export function ConversationView({ conversation }: { conversation: ChatConversat
             <ul className="chat__drafts" aria-label="Fotos para enviar">
               {drafts.map((d) => (
                 <li key={d.id} className="chat__draft">
-                  <img src={d.url} alt={d.file.name} />
+                  <img src={d.url} alt={`Vista previa de ${d.file.name}`} />
                   <button type="button" className="chat__draft-remove" aria-label={`Quitar ${d.file.name}`} onClick={() => removeDraft(d.id)}><span aria-hidden>✕</span></button>
                 </li>
               ))}

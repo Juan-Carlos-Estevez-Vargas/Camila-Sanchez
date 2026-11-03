@@ -1115,7 +1115,36 @@ export const demoBackend: Backend = {
       /* nada que hacer */
     },
   },
+
+  legal: {
+    async myConsents() {
+      const user = sessionUser();
+      if (!user) return [];
+      return delay(readDemoConsents().filter((c) => c.userId === user.id).map(({ version, acceptedAt }) => ({ version, acceptedAt })));
+    },
+    async accept(version) {
+      const user = requireUser();
+      const all = readDemoConsents();
+      all.push({ userId: user.id, version, acceptedAt: nowIso() });
+      safeStorage(() => localStorage.setItem(CONSENTS_KEY, JSON.stringify(all)), undefined);
+      await delay(undefined);
+    },
+  },
 };
+
+/** En demo las aceptaciones legales viven aparte, como en su propia tabla. */
+const CONSENTS_KEY = "demo:legal-consents";
+type DemoConsent = { userId: Uuid; version: string; acceptedAt: string };
+
+function readDemoConsents(): DemoConsent[] {
+  const raw = safeStorage(() => localStorage.getItem(CONSENTS_KEY), null);
+  try {
+    const parsed: unknown = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? (parsed as DemoConsent[]) : [];
+  } catch {
+    return [];
+  }
+}
 
 function toProfile(u: DemoUser): Profile {
   return {
