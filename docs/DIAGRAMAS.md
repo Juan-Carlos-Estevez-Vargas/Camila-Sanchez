@@ -12,6 +12,7 @@ directamente al abrir este archivo. La explicación de cada pieza está en
 - [Recuperación de contraseña](#recuperación-de-contraseña)
 - [Subida de fotos](#subida-de-fotos)
 - [Notitas, chat y notificaciones](#notitas-chat-y-notificaciones)
+- [App de chat](#app-de-chat)
 - [Chat: respuestas, conexión y vistos](#chat-respuestas-conexión-y-vistos)
 - [Chat: fotos y stickers](#chat-fotos-y-stickers)
 - [Avisos en el celular](#avisos-en-el-celular)
@@ -218,7 +219,7 @@ sequenceDiagram
 
   C->>A: escribe una notita, un mensaje o publica una sorpresa
   A->>DB: insert notes / chat_messages / interruptions (RLS)
-  DB->>DB: trigger notify_new_* → insert notifications<br/>(chat: actualiza el aviso sin leer)
+  DB->>DB: trigger notify_new_* → insert notifications<br/>(chat: sólo a quienes están en ese chat,<br/>actualiza su aviso sin leer)
   DB-->>RT: cambio publicado
   RT-->>B: nueva notificación y mensaje
   B->>B: campanita, contador y toast
@@ -230,6 +231,152 @@ sequenceDiagram
     SP->>SW: Web Push (VAPID)
     SW-->>SW: muestra el aviso y abre el enlace al tocarlo
   end
+```
+
+## App de chat
+
+Pantallas de `/chat`. En el computador se ven la bandeja y la conversación
+lado a lado; en el celular, una a la vez (y dentro de un chat se esconde la
+cabecera del sitio).
+
+```mermaid
+flowchart LR
+  subgraph Bandeja["Columna izquierda"]
+    L["/chat<br/>Chats: fijados, no leídos,<br/>«escribiendo…», archivados"]
+    R["/chat/solicitudes<br/>Recibidas · Enviadas · Bloqueados"]
+    P["/chat/personas<br/>Buscar por nombre"]
+  end
+  subgraph Conversacion["Columna derecha"]
+    V["/chat/:id<br/>Conversación"]
+    E["Sin chat elegido:<br/>«Tus mensajes»"]
+  end
+  L -- "toca un chat" --> V
+  P -- "Solicitar" --> R
+  P -- "Escribir (contacto)" --> V
+  R -- "Aceptar" --> V
+  N["Aviso «quiere chatear contigo»"] --> R
+  M["Aviso «te escribió» / «aceptó»"] --> V
+```
+
+### Solicitudes de contacto
+
+Para chatear hay que aceptarse. Todo pasa por funciones de la base que usan
+la sesión (`auth.uid()`); nadie crea contactos ni conversaciones a mano.
+
+```mermaid
+sequenceDiagram
+  actor V as Valentina
+  participant A as SPA de Valentina
+  participant DB as Postgres
+  participant RT as Realtime
+  participant B as SPA de Juan
+  actor J as Juan
+
+  V->>A: Buscar «Juan»
+  A->>DB: chat_search_users('Juan')
+  DB-->>A: Juan · relation = none
+  V->>A: Solicitar + «¡Hola!»
+  A->>DB: chat_request_contact(juan, '¡Hola!')
+  DB->>DB: ¿chat.use? ¿bloqueos? límite 20/h<br/>insert chat_contacts (pending)
+  DB->>DB: trigger → aviso a Juan<br/>«Valentina quiere chatear contigo 👋»
+  DB-->>RT: chat_contacts + notifications
+  RT-->>B: pestaña Solicitudes (1)
+  J->>B: Aceptar
+  B->>DB: chat_respond_contact(id, true)
+  DB->>DB: chat_ensure_direct → chat_conversations<br/>+ chat_participants (los dos)
+  DB->>DB: status = accepted → aviso a Valentina<br/>«Juan aceptó tu solicitud 🎉» con /chat/:id
+  DB-->>B: id del chat
+  B-->>J: abre la conversación
+  RT-->>A: el chat aparece en su bandeja
+```
+
+```mermaid
+stateDiagram-v2
+  [*] --> SinRelacion
+  SinRelacion --> Pendiente: chat_request_contact
+  Pendiente --> Contactos: la otra persona acepta<br/>(o también pide)
+  Pendiente --> SinRelacion: rechaza o se cancela
+  Contactos --> SinRelacion: quitar contacto<br/>(el historial se queda)
+  SinRelacion --> Bloqueado: bloquear
+  Pendiente --> Bloqueado: bloquear
+  Contactos --> Bloqueado: bloquear
+  Bloqueado --> SinRelacion: desbloquear
+  note right of Contactos: sólo aquí se puede escribir
+  note right of Bloqueado: no aparece en la búsqueda<br/>ni puede pedir ni escribir
+```
+
+### Quién lee y quién escribe
+
+```mermaid
+flowchart TD
+  Q["Leer un mensaje (RLS de chat_messages)"] --> P1{"¿Soy parte de<br/>esa conversación?"}
+  P1 -- "no" --> NO1["No lo ve<br/>(ni su foto ni sus reacciones)"]
+  P1 -- "sí" --> P2{"¿Es posterior a<br/>«vaciar chat»?"}
+  P2 -- "no" --> NO1
+  P2 -- "sí" --> P3{"¿Lo borré para mí?"}
+  P3 -- "sí" --> NO1
+  P3 -- "no" --> SI1["Lo ve"]
+
+  W["Escribir, reaccionar, editar<br/>(chat_can_send)"] --> G{"¿Grupo?"}
+  G -- "sí" --> SI2["Puede si es parte"]
+  G -- "no, directo" --> C1{"¿Contactos aceptados,<br/>sin bloqueos y la otra<br/>cuenta activa?"}
+  C1 -- "sí" --> SI2
+  C1 -- "no" --> NO2["La app muestra<br/>«Ya no son contactos» / «Bloqueaste a…»"]
+```
+
+### Opciones de un mensaje
+
+```mermaid
+flowchart LR
+  M["Mensaje<br/>(⌄, clic derecho o mantener pulsado)"] --> RE["Reaccionar ❤️ 😂 😮 …<br/>una por persona"]
+  M --> RS["Responder citando"]
+  M --> CP["Copiar"]
+  M --> ED{"¿Mío, no sticker y<br/>de hace < 15 min?"}
+  ED -- "sí" --> EDT["Editar → chat_edit_message<br/>queda «editado»"]
+  M --> IN["Información: enviado, editado<br/>y quién lo vio"]
+  M --> DM["Eliminar para mí<br/>insert chat_hidden_messages"]
+  M --> DA{"¿Mío?"}
+  DA -- "sí" --> DAL["Eliminar para todos → chat_delete_message<br/>«Se eliminó este mensaje»<br/>y se borra la foto de Storage"]
+```
+
+### Cambios en vivo
+
+```mermaid
+sequenceDiagram
+  participant A as SPA de Juan
+  participant DB as Postgres
+  participant RT as Realtime
+  participant B as SPA de Camila
+
+  B->>DB: chat_typing(chat) cada 2,5 s mientras teclea
+  DB-->>RT: chat_participants.typing_at
+  RT-->>A: «escribiendo…» en la cabecera y la bandeja
+  B->>DB: insert chat_messages
+  DB->>DB: chat_after_message: last_message_at,<br/>apaga typing_at · aviso a Juan si no silenció
+  RT-->>A: mensaje nuevo (o ↓ con contador si está leyendo arriba)
+  A->>DB: chat_mark_read(chat)
+  DB->>DB: last_read_at + marca leídos los avisos de ese chat
+  RT-->>B: ✓✓ visto
+  A->>DB: upsert chat_reactions ❤️
+  RT-->>B: reacción bajo la burbuja
+  B->>DB: chat_edit_message / chat_delete_message
+  RT-->>A: la burbuja se actualiza
+```
+
+### La sala de antes
+
+La migración `…1103000100_chat_app` convierte el chat único que existía en
+una conversación, sin perder nada:
+
+```mermaid
+flowchart TD
+  S{"¿Había mensajes?"} -- "no" --> F["Nada que mover"]
+  S -- "sí" --> P["Personas: quienes escribieron<br/>o abrieron el chat"]
+  P --> D{"¿Son dos?"}
+  D -- "sí (Juan y Camila)" --> DI["Chat directo de los dos"]
+  D -- "no" --> GR["Grupo «Nuestro chat»"]
+  DI & GR --> C["Quedan como contactos entre sí<br/>y conservan hasta dónde leyeron"]
+  C --> M["Todos los mensajes pasan<br/>a esa conversación"]
 ```
 
 ## Chat: respuestas, conexión y vistos
@@ -246,17 +393,17 @@ sequenceDiagram
   loop cada 30 s con la app a la vista
     B->>DB: chat_presence(false)
     DB-->>RT: chat_reads.last_seen_at
-    RT-->>A: «Camila · en línea»
+    RT-->>A: «Camila · en línea»<br/>(sólo quien comparte un chat con ella)
   end
   J->>A: escribe y envía
-  A->>DB: insert chat_messages
+  A->>DB: insert chat_messages(conversation_id, body)
   A-->>J: ✓✓ entregado (Camila se conectó después)
-  C->>B: abre el chat
-  B->>DB: chat_presence(true)
-  DB-->>RT: chat_reads.last_read_at
+  C->>B: abre ese chat
+  B->>DB: chat_mark_read(chat)
+  DB-->>RT: chat_participants.last_read_at
   RT-->>A: ✓✓ visto
   C->>B: desliza el mensaje o toca ↩
-  B->>DB: insert chat_messages(body, reply_to)
+  B->>DB: insert chat_messages(body, reply_to)<br/>(la cita tiene que ser del mismo chat)
   RT-->>A: respuesta con la cita
   Note over A: Si Camila cierra la app, sin latidos<br/>pasa a «últ. vez hace…»
 ```
@@ -265,10 +412,15 @@ sequenceDiagram
 stateDiagram-v2
   [*] --> Enviando: enviar
   Enviando --> NoEnviado: error
+  NoEnviado --> Enviando: Reintentar
   Enviando --> Enviado: guardado
   Enviado --> Entregado: la otra persona se conecta
-  Entregado --> Visto: abre el chat
-  Enviado --> Visto: abre el chat
+  Entregado --> Visto: abre ese chat
+  Enviado --> Visto: abre ese chat
+  Enviado --> Editado: editar (15 min)
+  Editado --> Visto
+  Enviado --> Eliminado: eliminar para todos
+  Visto --> Eliminado: eliminar para todos
 ```
 
 ## Chat: fotos y stickers
@@ -358,8 +510,11 @@ flowchart LR
   L["Algo nuevo en una lista"] --> QL{"¿Hay un aviso de esa lista<br/>sin leer?"}
   QL -- "no" --> INS
   QL -- "sí" --> UPD
-  C["Mensaje de chat"] --> Q{"¿Hay un aviso de chat<br/>sin leer?"}
+  C["Mensaje de chat"] --> MU{"¿Esa persona silenció<br/>el chat o bloqueó a quien escribe?"}
+  MU -- "sí" --> NADA["Sin aviso"]
+  MU -- "no" --> Q{"¿Hay un aviso sin leer<br/>de ese mismo chat?"}
   Q -- "no" --> INS
+  CR["Solicitud de contacto<br/>o solicitud aceptada"] --> INS
   Q -- "sí" --> UPD["update del aviso<br/>con el último mensaje"]
   INS & UPD --> T["trigger notifications_push"]
   T --> V{"¿Vault tiene la URL<br/>y el secreto?"}
@@ -711,8 +866,15 @@ erDiagram
   AUTH_USERS ||--o| INVITATIONS : "usa"
   AUTH_USERS ||--o{ NOTES : "envía / recibe"
   AUTH_USERS ||--o{ CHAT_MESSAGES : "escribe"
-  AUTH_USERS ||--o| CHAT_READS : "conexión y vistos"
+  AUTH_USERS ||--o| CHAT_READS : "última conexión"
   CHAT_MESSAGES |o--o{ CHAT_MESSAGES : "responde a"
+  AUTH_USERS ||--o{ CHAT_CONTACTS : "pide / acepta"
+  AUTH_USERS ||--o{ CHAT_BLOCKS : "bloquea"
+  CHAT_CONVERSATIONS ||--|{ CHAT_PARTICIPANTS : "tiene"
+  AUTH_USERS ||--o{ CHAT_PARTICIPANTS : "está en"
+  CHAT_CONVERSATIONS ||--o{ CHAT_MESSAGES : "contiene"
+  CHAT_MESSAGES ||--o{ CHAT_REACTIONS : "reacciones"
+  CHAT_MESSAGES ||--o{ CHAT_HIDDEN_MESSAGES : "borrado para"
   AUTH_USERS ||--o{ NOTIFICATIONS : "recibe"
   AUTH_USERS ||--o{ PUSH_SUBSCRIPTIONS : "dispositivos"
   AUTH_USERS ||--o{ INTERRUPTION_VIEWS : "vio"
@@ -801,8 +963,38 @@ erDiagram
     note_kind kind
     timestamptz read_at
   }
+  CHAT_CONTACTS {
+    uuid id PK
+    uuid requester_id FK
+    uuid addressee_id FK
+    text status "pending, accepted"
+    text message "mensajito opcional"
+    timestamptz responded_at
+  }
+  CHAT_BLOCKS {
+    uuid blocker_id PK
+    uuid blocked_id PK
+  }
+  CHAT_CONVERSATIONS {
+    uuid id PK
+    text kind "direct, group"
+    text title "sólo grupos"
+    text direct_key UK "uuid menor:uuid mayor"
+    timestamptz last_message_at
+  }
+  CHAT_PARTICIPANTS {
+    uuid conversation_id PK
+    uuid user_id PK
+    timestamptz last_read_at "vistos"
+    timestamptz typing_at "escribiendo…"
+    timestamptz pinned_at
+    timestamptz archived_at
+    boolean muted
+    timestamptz cleared_at "vaciar chat"
+  }
   CHAT_MESSAGES {
     uuid id PK
+    uuid conversation_id FK
     uuid sender_id FK
     chat_kind kind "text, image, sticker"
     text body
@@ -810,11 +1002,22 @@ erDiagram
     text image_path "chat-media/<user_id>/..."
     text thumb_path
     text sticker "id del catálogo"
+    timestamptz edited_at
+    timestamptz deleted_at "eliminado para todos"
+  }
+  CHAT_REACTIONS {
+    uuid message_id PK
+    uuid user_id PK
+    text emoji "lista fija"
+  }
+  CHAT_HIDDEN_MESSAGES {
+    uuid user_id PK
+    uuid message_id PK
   }
   CHAT_READS {
     uuid user_id PK
     timestamptz last_seen_at "última conexión"
-    timestamptz last_read_at "hasta dónde leyó"
+    timestamptz last_read_at "de la sala antigua"
   }
   NOTIFICATIONS {
     uuid id PK
