@@ -26,7 +26,7 @@ export const DATA_CONTROLLER = {
    * Correo para ejercer los derechos sobre los datos. Si se deja vacío, los
    * textos indican escribirle a Juan por el chat de la app o por sus redes.
    */
-  email: "",
+  email: "juank2001estevezvargas@gmail.com",
 } as const;
 
 export type LegalDocumentId = "privacidad" | "terminos" | "cookies" | "reembolsos" | "licencias";

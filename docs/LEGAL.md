@@ -188,10 +188,9 @@ No hay fotos de bancos de imágenes.
 
 ## Qué tiene que hacer el administrador
 
-1. **Correo de contacto:** poner uno en `DATA_CONTROLLER.email`
-   (`src/domain/legal.ts`). Mientras esté vacío, los textos dicen que se
-   escriba por el chat o las redes de Juan, lo cual sirve para una app
-   privada pero un correo es mejor.
+1. **Correo de contacto:** `DATA_CONTROLLER.email` (`src/domain/legal.ts`)
+   es el canal para ejercer los derechos sobre los datos; si cambia, cámbialo
+   ahí y los textos se actualizan solos.
 2. **Fotos de otras personas:** si la página se pone pública (Super →
    Ajustes), cualquiera verá las fotos. Asegúrate de que quienes salen en
    ellas estén de acuerdo.
