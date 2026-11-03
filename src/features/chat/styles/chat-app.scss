@@ -718,6 +718,70 @@ $side-width: 380px;
   }
 
   &__icon { width: 1.25em; text-align: center; }
+
+  // Hoja inferior (celular): a lo ancho, con opciones grandes para el dedo.
+  &__panel--sheet {
+    position: static;
+    width: min(480px, 100%);
+    max-height: min(80dvh, 640px);
+    overflow: auto;
+    padding: space(2);
+    border-radius: calc(var(--radius) * 1.2);
+    animation: slide-up 0.2s $ease;
+    outline: none;
+
+    .menu__item { min-height: 48px; font-size: 1rem; }
+    .reaction-bar { justify-content: space-between; padding: space(1) space(1) space(2); }
+    .reaction-bar__item { width: 42px; height: 42px; font-size: 1.6rem; }
+
+    @include reduced-motion { animation: none; }
+  }
+
+  &__preview {
+    display: grid;
+    gap: 2px;
+    margin-bottom: space(2);
+    padding: space(2) space(3);
+    border-left: 3px solid var(--c-primary);
+    border-radius: var(--radius-sm);
+    background: var(--c-surface-2);
+    font-size: 0.9rem;
+  }
+
+  &__preview-name { font-weight: 700; color: var(--c-primary); }
+
+  &__preview-text {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    color: var(--c-muted);
+    overflow-wrap: anywhere;
+  }
+}
+
+.menu-sheet {
+  position: fixed;
+  inset: 0;
+  z-index: z("modal");
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: space(2);
+  padding-bottom: calc(#{space(2)} + env(safe-area-inset-bottom));
+  background: tint(#12070c, 45%);
+  animation: fade-in 0.15s $ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+// En pantallas táctiles, mantener pulsado un mensaje abre sus opciones
+// (reacciones, copiar…) en vez de la selección de texto del sistema.
+@media (hover: none) {
+  .chat-app .bubble {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
 }
 
 .reaction-bar {
