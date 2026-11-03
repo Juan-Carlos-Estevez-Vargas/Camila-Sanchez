@@ -148,6 +148,7 @@ Para conectarla a un proyecto de Supabase, copia `.env.example` a
 | `npm run check` | Typecheck, lint y pruebas, lo mismo que exige CI |
 | `npm run build` | Compilación de producción en `dist/` |
 | `npm run preview` | Sirve la compilación de producción en local |
+| `npm run security` | Busca secretos en el repo y su historial, y revisa las dependencias de la app y de las Edge Functions |
 | `npm run db:setup-sql` | Regenera `supabase/setup.sql` a partir de las migraciones |
 | `npm run release:preview` | Muestra la versión y las notas del próximo release |
 
@@ -205,11 +206,24 @@ La seguridad vive en la base de datos, no en el navegador.
 - Sorpresas privadas: cada una tiene destinataria (`recipient_id`) y RLS hace
   que sólo esa persona la vea y reciba el aviso; quien la creó la gestiona en
   su panel, pero nunca le sale en la página.
-- Límites de velocidad en la base, auditoría de cuentas, `npm audit` en CI y
-  Dependabot.
+- Nadie reescribe desde el navegador quién creó una fila ni cuándo (fotos,
+  sorpresas, reacciones, tareas, notitas, avisos).
+- Límites de velocidad en la base (chat, notitas, sorpresas, listas,
+  invitaciones…) y en las Edge Functions: `redeem-invite`, la única pública,
+  frena a cada IP (guardada como HMAC, nunca en claro) que pase de 30
+  consultas o 5 intentos de crear cuenta cada 10 minutos.
+- CAPTCHA opcional con Cloudflare Turnstile al entrar, recuperar la
+  contraseña y canjear una invitación; se enciende con dos claves
+  ([pasos](docs/DESPLIEGUE.md#captcha-contra-bots-opcional)).
+- CI busca claves secretas en el repo, en todo el historial de git y en el
+  build publicado; el build se niega a compilar si una variable `VITE_*` trae
+  la `service_role`. `npm audit` revisa la app y también los paquetes `npm:`
+  de las Edge Functions; Dependabot propone las actualizaciones.
 
-Cobertura punto por punto del OWASP Top 10 y del API Security Top 10 en
-[docs/SEGURIDAD_OWASP.md](docs/SEGURIDAD_OWASP.md). Para reportar una
+Cobertura punto por punto del OWASP Top 10, del API Security Top 10 y de la
+[lista de verificación](docs/SEGURIDAD_OWASP.md#lista-de-verificación)
+(API keys, secretos, RLS, cifrado, cookies, contraseñas, bots, archivos,
+HTTPS…) en [docs/SEGURIDAD_OWASP.md](docs/SEGURIDAD_OWASP.md). Para reportar una
 vulnerabilidad, sigue la [política de seguridad](SECURITY.md).
 
 ## Accesibilidad y SEO
