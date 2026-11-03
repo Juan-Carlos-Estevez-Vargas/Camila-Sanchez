@@ -9,6 +9,7 @@ import { setRememberSession } from "@/data/sessionPersistence";
 import { expiryFromNow, generateInviteToken, hashInviteToken } from "@/domain/invitations";
 import { nextDueOf, progressOf } from "@/domain/lists";
 import { sanitizeColors } from "@/domain/palettes";
+import { isSurpriseFor } from "@/domain/surprises";
 import { RECOVERY_PATH } from "@/domain/recovery";
 import type { InvitableRole, PhotoUrls, SessionUser, Uuid } from "@/domain/types";
 import { getSupabase, unwrap, type Row } from "./client";
@@ -140,12 +141,19 @@ const content: ContentRepository = {
   deleteDate: (id) => remove("important_dates", id),
 
   async listInterruptions(scope) {
+    // Sin sesión no hay sorpresas: cada una es para una persona concreta.
+    const { data } = await sb().auth.getSession();
+    const me = data.session?.user.id;
+    if (!me) return [];
     let query = sb().from("interruptions").select("*").order("starts_at", { ascending: false });
-    if (scope === "active") {
-      const now = new Date().toISOString();
-      query = query.eq("is_active", true).lte("starts_at", now).or(`ends_at.is.null,ends_at.gt.${now}`);
+    if (scope === "all") {
+      // Panel: sólo las que yo preparé (las que son para mí no se destapan).
+      query = query.eq("created_by", me);
+      return (await unwrap<Row[]>(query)).map(map.toInterruption);
     }
-    return (await unwrap<Row[]>(query)).map(map.toInterruption);
+    const now = new Date().toISOString();
+    query = query.eq("is_active", true).lte("starts_at", now).or(`ends_at.is.null,ends_at.gt.${now}`);
+    return (await unwrap<Row[]>(query)).map(map.toInterruption).filter((i) => isSurpriseFor(i, me));
   },
   saveInterruption: (i) => upsert("interruptions", map.fromInterruption(i), map.toInterruption),
   deleteInterruption: (id) => remove("interruptions", id),

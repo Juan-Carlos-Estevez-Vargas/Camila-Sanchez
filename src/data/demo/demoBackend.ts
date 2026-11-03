@@ -13,6 +13,7 @@ import { del as idbDel, get as idbGet, set as idbSet } from "idb-keyval";
 import { AccessPolicy, DEFAULT_ROLE_PERMISSIONS, PERMISSIONS, type Permission } from "@/domain/permissions";
 import { MAX_TASK_IMAGES, nextDueOf, progressOf } from "@/domain/lists";
 import { sanitizeColors } from "@/domain/palettes";
+import { isSurpriseFor, isSurpriseLive } from "@/domain/surprises";
 import { AppError } from "@/core/errors";
 import {
   expiryFromNow, generateInviteToken, hashInviteToken, invitationStatus, isInviteToken, MIN_PASSWORD_LENGTH,
@@ -748,30 +749,34 @@ export const demoBackend: Backend = {
     async listInterruptions(scope) {
       const all = database().state.interruptions;
       if (scope === "all") {
-        require(PERMISSIONS.interruptionsManage);
-        return clone(all);
+        // Panel: sólo las que preparó quien está conectado.
+        const me = require(PERMISSIONS.interruptionsManage);
+        return clone(all.filter((i) => i.createdBy === me.id));
       }
-      const now = Date.now();
-      return canViewSite()
-        ? clone(all.filter((i) => i.isActive && Date.parse(i.startsAt) <= now && (!i.endsAt || Date.parse(i.endsAt) > now)))
+      const user = sessionUser();
+      return canViewSite() && user
+        ? clone(all.filter((i) => isSurpriseLive(i) && isSurpriseFor(i, user.id)))
         : [];
     },
     async saveInterruption(i) {
       const author = require(PERMISSIONS.interruptionsManage);
-      const saved = upsertIn<Interruption>("interruptions", i);
-      const now = Date.now();
-      const live = saved.isActive && new Date(saved.startsAt).getTime() <= now && (!saved.endsAt || new Date(saved.endsAt).getTime() > now);
-      if (!i.id && live) {
-        for (const other of database().state.users) {
-          if (other.id !== author.id && other.isActive && policyOf(other).can(PERMISSIONS.siteView)) {
-            notify(other.id, "system", `${author.displayName} te dejó una sorpresa 🎁`, saved.title, "/");
-          }
-        }
+      const state = database().state;
+      if (i.id) {
+        const existing = state.interruptions.find((x) => x.id === i.id);
+        if (!existing || existing.createdBy !== author.id) throw new AppError("Sólo puedes cambiar las sorpresas que tú preparaste.");
+      }
+      const recipient = state.users.find((u) => u.id === i.recipientId && u.isActive);
+      if (!recipient || recipient.id === author.id) throw new AppError("Elige para quién es la sorpresa (otra persona).");
+      const saved = upsertIn<Interruption>("interruptions", { ...i, createdBy: author.id });
+      if (!i.id && isSurpriseLive(saved) && policyOf(recipient).can(PERMISSIONS.siteView)) {
+        notify(recipient.id, "system", `${author.displayName} te dejó una sorpresa 🎁`, saved.title, "/");
       }
       return saved;
     },
     async deleteInterruption(id) {
-      require(PERMISSIONS.interruptionsManage);
+      const author = require(PERMISSIONS.interruptionsManage);
+      const existing = database().state.interruptions.find((x) => x.id === id);
+      if (existing && existing.createdBy !== author.id) throw new AppError("Sólo puedes borrar las sorpresas que tú preparaste.");
       removeFrom("interruptions", id);
     },
     async markInterruptionSeen(id) {

@@ -177,6 +177,10 @@ export interface Interruption {
   endsAt: IsoDateTime | null;
   isActive: boolean;
   showOnce: boolean;
+  /** Para quién es. Sólo esa persona la ve; nunca quien la creó. */
+  recipientId: Uuid | null;
+  /** Quién la creó (lo pone el servidor). */
+  createdBy: Uuid | null;
 }
 
 export const NOTE_KINDS = ["love", "apology", "note", "surprise", "reminder"] as const;
