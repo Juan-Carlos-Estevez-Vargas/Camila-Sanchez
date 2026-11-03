@@ -210,10 +210,20 @@ export interface ChatReplyPreview {
   body: string;
   kind?: ChatKind;
   sticker?: string | null;
+  /** El original se borró para todos. */
+  deleted?: boolean;
+}
+
+/** Reacción de una persona a un mensaje (una por persona). */
+export interface ChatReaction {
+  userId: Uuid;
+  emoji: string;
 }
 
 export interface ChatMessage {
   id: Uuid;
+  /** Conversación a la que pertenece. */
+  conversationId: Uuid;
   senderId: Uuid;
   kind: ChatKind;
   /** Texto, o pie de foto (puede ir vacío en fotos y stickers). */
@@ -224,6 +234,73 @@ export interface ChatMessage {
   createdAt: IsoDateTime;
   /** Mensaje citado, o null si no responde a nada (o el original se borró). */
   replyTo: ChatReplyPreview | null;
+  /** Cuándo se editó por última vez (null: nunca). */
+  editedAt: IsoDateTime | null;
+  /** Borrado para todos: queda «Se eliminó este mensaje». */
+  deletedAt: IsoDateTime | null;
+  reactions: ChatReaction[];
+}
+
+/** Qué relación tengo con alguien en el chat. */
+export type ChatRelation = "none" | "outgoing" | "incoming" | "contact" | "blocked";
+
+/** Persona encontrada en la búsqueda del chat. */
+export interface ChatPerson {
+  id: Uuid;
+  displayName: string;
+  avatarPath: string | null;
+  avatarEmoji: string | null;
+  bio: string;
+  relation: ChatRelation;
+  /** Solicitud o contacto que nos une (si hay). */
+  contactId: Uuid | null;
+}
+
+/** Solicitud de contacto (pending) o contacto ya aceptado. */
+export interface ChatContact {
+  id: Uuid;
+  requesterId: Uuid;
+  addresseeId: Uuid;
+  status: "pending" | "accepted";
+  /** Mensajito que acompaña la solicitud. */
+  message: string;
+  createdAt: IsoDateTime;
+  respondedAt: IsoDateTime | null;
+}
+
+/** Último mensaje de una conversación, para la bandeja. */
+export interface ChatLastMessage {
+  id: Uuid;
+  senderId: Uuid;
+  kind: ChatKind;
+  body: string;
+  sticker: string | null;
+  createdAt: IsoDateTime;
+  deleted: boolean;
+}
+
+/** Una conversación de la bandeja, con mis preferencias para ella. */
+export interface ChatConversation {
+  id: Uuid;
+  kind: "direct" | "group";
+  title: string;
+  createdAt: IsoDateTime;
+  lastMessageAt: IsoDateTime | null;
+  participantIds: Uuid[];
+  pinnedAt: IsoDateTime | null;
+  archivedAt: IsoDateTime | null;
+  muted: boolean;
+  lastReadAt: IsoDateTime | null;
+  unread: number;
+  lastMessage: ChatLastMessage | null;
+}
+
+/** Vistos y «escribiendo…» de una persona en una conversación. */
+export interface ChatParticipant {
+  conversationId: Uuid;
+  userId: Uuid;
+  lastReadAt: IsoDateTime | null;
+  typingAt: IsoDateTime | null;
 }
 
 /** Última conexión de una persona y hasta cuándo leyó el chat. */

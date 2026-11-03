@@ -59,7 +59,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
         const body = String(record.body ?? "");
         const link = record.link ? safeNextPath(record.link) : null;
         // En el chat o en la lista que ya se está viendo, el cambio se ve solo.
-        const alreadyHere = (link === "/chat" || !!link?.startsWith("/listas/")) && link === window.location.pathname;
+        const alreadyHere = (!!link?.startsWith("/chat") || !!link?.startsWith("/listas/")) && link === window.location.pathname;
         if (!alreadyHere) {
           toast.show({ title, body, action: link ? { label: "Ver", onClick: () => navigate(link) } : undefined });
           void showLocalNotification(title, body, link);
