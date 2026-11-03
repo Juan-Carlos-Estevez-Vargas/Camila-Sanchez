@@ -3,6 +3,7 @@ import { defineConfig, loadEnv, type HtmlTagDescriptor, type Plugin, type Rollup
 import react from "@vitejs/plugin-react";
 import { fileURLToPath, URL } from "node:url";
 import { resolveAppVersion } from "./scripts/release.mjs";
+import { assertPublicEnv } from "./scripts/check-secrets.mjs";
 import { buildRobotsTxt, buildSitemapXml, normalizeSiteUrl, OG_IMAGE_PATH } from "./src/core/seo.ts";
 
 // La CSP sólo se inyecta en el build: en desarrollo Vite necesita scripts
@@ -98,6 +99,9 @@ export default defineConfig(({ mode }) => {
   // Vite expone en import.meta.env las variables VITE_* del entorno.
   process.env.VITE_APP_VERSION ??= resolveAppVersion();
   const env = loadEnv(mode, process.cwd(), "VITE_");
+  // Todo lo VITE_* termina en el JavaScript público: si alguien pegó ahí la
+  // service_role key por error, el build se detiene antes de publicarla.
+  assertPublicEnv(env);
   const siteUrl = normalizeSiteUrl(env.VITE_SITE_URL);
   const indexing = env.VITE_SEO_INDEX?.trim() !== "false";
   return {
