@@ -68,14 +68,59 @@ celular te avise aunque tengas la app cerrada. Ver la sección 6.
 
 ## 4. Chat
 
-Para hablar en tiempo real, como en WhatsApp. Entra desde **Chat**.
+Una app de mensajería completa, como WhatsApp, dentro de la página. Entra
+desde **Chat**: ocupa toda la pantalla, con tus chats a la izquierda y la
+conversación abierta a la derecha (en el celular se ve una cosa a la vez y
+la flecha **←** te devuelve a la lista).
 
-- Escribe abajo y pulsa **Enter** (o **Enviar 💌**). Con **Mayúsculas + Enter**
+**Con quién puedes hablar.** Para escribirle a alguien, primero se tienen que
+aceptar como contactos:
+
+1. Toca **✏️** (o la pestaña **Buscar**) y escribe su nombre.
+2. Toca **Solicitar**. Si quieres, añade un mensajito («Hola, soy…») y toca
+   **Enviar**. A la otra persona le llega un aviso.
+3. Cuando la acepte, te llega un aviso y su chat aparece en tu lista.
+
+En la pestaña **Solicitudes** ves las que te mandaron (**Aceptar**,
+**Rechazar** o **⛔ bloquear**), las que enviaste (**Cancelar**) y a quién
+bloqueaste. Si las dos personas se mandan solicitud a la vez, queda aceptada
+sola. Nadie que no sea parte de un chat puede leerlo.
+
+**La lista de chats.** Cada chat muestra el último mensaje, la hora, cuántos
+mensajes no has leído y si la otra persona está **escribiendo…**. El punto
+verde en la foto indica que está en línea. Arriba puedes buscar un chat por
+nombre; los fijados (📌) quedan primero y los archivados, aparte.
+
+**Escribir.**
+
+- Escribe abajo y pulsa **Enter** (o **➤**). Con **Mayúsculas + Enter**
   haces un salto de línea.
-- Los mensajes nuevos aparecen solos, sin recargar.
+- Los mensajes nuevos aparecen solos, sin recargar. Si estás leyendo más
+  arriba, el botón **↓** te baja al final y dice cuántos llegaron.
+- Al abrir un chat con mensajes sin leer, empieza en la franja «N sin leer».
 - Sube en la conversación y toca **Ver mensajes anteriores** para leer lo
   viejo.
 - El punto junto a **Chat** en la cabecera indica que hay mensajes sin leer.
+
+**Opciones de cada mensaje.** Pasa el mouse sobre el mensaje y toca **⌄**,
+haz clic derecho, o en el celular mantenlo pulsado:
+
+| Opción | Qué hace |
+| --- | --- |
+| ❤️ 😂 😮 … | Reacciona (una reacción por persona; tócala otra vez para quitarla) |
+| Responder | Lo cita en tu respuesta |
+| Copiar | Copia el texto |
+| Editar | Cambia lo que escribiste (sólo los primeros 15 minutos; queda «editado»). También con **↑** en el cuadro vacío |
+| Información | Cuándo lo enviaste y cuándo lo vio cada persona |
+| Eliminar para mí | Deja de verlo sólo tú |
+| Eliminar para todos | Nadie lo ve; queda «Se eliminó este mensaje» (y la foto se borra) |
+
+**Opciones del chat.** Toca **⋮** arriba a la derecha: ver el perfil, buscar
+mensajes (también con **🔍**), **silenciar** los avisos de ese chat, **fijarlo**
+arriba, **archivarlo**, **vaciarlo** (sólo para ti), **quitar el contacto** (el
+historial se queda pero ya no se pueden escribir) o **bloquear** a la persona
+(no puede escribirte, mandarte solicitudes ni encontrarte; se desbloquea
+desde el mismo menú o desde **Solicitudes**).
 
 **Responder a un mensaje.** Pasa el mouse sobre el mensaje y toca **↩**, o en
 el celular deslízalo hacia la derecha. Arriba de donde escribes aparece
@@ -88,15 +133,17 @@ en miniatura arriba de donde escribes; quita las que no quieras con **✕** y,
 si quieres, escribe un mensaje: va pegado a la primera foto. También puedes
 pegar una imagen copiada directamente en el cuadro de texto. Las fotos se
 achican antes de subirse para que lleguen rápido y se guardan privadas: sólo
-las ven las personas que usan el chat. Toca una foto para verla en grande.
+las ven las personas de ese chat. Toca una foto para verla en grande.
 
 **Stickers.** Toca **😊**, elige uno y se envía al instante. Para cerrar la
 lista sin enviar nada, pulsa Esc o toca fuera de ella.
 
-**Última conexión.** Debajo del título dice si la otra persona está
+**Última conexión y escribiendo.** Debajo del nombre dice si la otra persona está
 **en línea** o cuándo se conectó por última vez («últ. vez hace 5 min»,
 «hoy a las 3:15 p. m.», «ayer a las…»). Cuenta como conectado tener la app
-abierta y a la vista en cualquier página.
+abierta y a la vista en cualquier página. Mientras la otra persona teclea,
+ahí mismo (y en la lista) dice **escribiendo…**. Sólo ven tu conexión las
+personas con las que tienes un chat.
 
 **Vistos.** Junto a la hora de tus mensajes:
 
@@ -104,8 +151,8 @@ abierta y a la vista en cualquier página.
 | --- | --- |
 | 🕓 | Enviándose |
 | ✓ | Enviado: la otra persona no se ha conectado desde entonces |
-| ✓✓ | Entregado: se conectó, pero todavía no abrió el chat |
-| ✓✓ de color | Visto: abrió el chat después de que llegó (con el mouse encima dice quién lo vio) |
+| ✓✓ | Entregado: se conectó, pero todavía no abrió este chat |
+| ✓✓ de color | Visto: abrió este chat después de que llegó (con el mouse encima dice quién lo vio) |
 
 ## 5. Listas
 
@@ -297,5 +344,6 @@ primero agrega la app a la pantalla de inicio. Revisa también que el modo
 «No molestar» del celular no los esté silenciando.
 
 **¿Puedo probar la app sin cuenta?** En el modo demo (sin Supabase
-configurado) entra con `juan@demo.local` o `camila@demo.local` y la contraseña
+configurado) entra con `juan@demo.local`, `camila@demo.local` o
+`valentina@demo.local` (que le manda una solicitud de chat a Juan) y la contraseña
 `demo1234`. Los datos sólo se guardan en ese navegador.

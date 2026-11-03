@@ -7,7 +7,7 @@
  * La fábrica de data/backend.ts elige uno al arrancar (patrón Strategy).
  */
 import type {
-  AppNotification, AuditEntry, ChatMessage, ChatPresence, ImportantDate, Interruption, Invitation, InvitableRole,
+  AppNotification, AuditEntry, ChatContact, ChatConversation, ChatMessage, ChatParticipant, ChatPerson, ChatPresence, ImportantDate, Interruption, Invitation, InvitableRole,
   Milestone, Note, NoteKind, PermissionDefinition, Photo, PhotoUrls, Profile, Role, RolePermission,
   Section, SessionUser, SiteSettings, TodoImage, TodoItem, TodoList, TodoListDetail, TodoListSummary, TodoMaterial, Uuid,
 } from "@/domain/types";
@@ -79,16 +79,54 @@ export interface MessagingRepository {
   markNoteRead(id: Uuid): Promise<void>;
   deleteNote(id: Uuid): Promise<void>;
 
-  listChat(options?: { before?: string; limit?: number }): Promise<ChatMessage[]>;
+  /** Mensajes de una conversación, del más viejo al más nuevo. */
+  listChat(conversationId: Uuid, options?: { before?: string; limit?: number }): Promise<ChatMessage[]>;
   /** Envía texto, una foto (con pie opcional) o un sticker. */
-  sendChat(body: string, options?: ChatSendOptions): Promise<ChatMessage>;
+  sendChat(conversationId: Uuid, body: string, options?: ChatSendOptions): Promise<ChatMessage>;
   /** URLs firmadas (o locales en demo) de las fotos del chat, por ruta. */
   resolveChatImages(paths: string[]): Promise<Map<string, string>>;
+  /** Cambia el texto de un mensaje propio (los primeros 15 minutos). */
+  editChat(id: Uuid, body: string): Promise<void>;
+  /** Borra un mensaje propio para todos (queda «Se eliminó este mensaje»). */
   deleteChat(id: Uuid): Promise<void>;
-  /** Última conexión y vistos de quienes usan el chat. */
+  /** Borra un mensaje sólo para mí. */
+  hideChat(id: Uuid): Promise<void>;
+  /** Pone, cambia (emoji) o quita (null) mi reacción. */
+  reactChat(id: Uuid, emoji: string | null): Promise<void>;
+  /** Busca texto en una conversación (los más nuevos primero). */
+  searchChat(conversationId: Uuid, query: string): Promise<ChatMessage[]>;
+  /** Última conexión y vistos de quienes comparten algún chat conmigo. */
   listChatPresence(): Promise<ChatPresence[]>;
   /** Avisa de que sigo conectado; con `read`, además, que leí el chat hasta ahora. */
   touchChatPresence(options?: { read?: boolean }): Promise<void>;
+
+  /** Mi bandeja de conversaciones. */
+  listConversations(): Promise<ChatConversation[]>;
+  /** Vistos y «escribiendo…» de una conversación. */
+  listParticipants(conversationId: Uuid): Promise<ChatParticipant[]>;
+  /** Dejo constancia de que leí la conversación hasta ahora. */
+  markConversationRead(conversationId: Uuid): Promise<void>;
+  /** «Estoy escribiendo» (la app lo manda cada pocos segundos mientras tecleo). */
+  sendTyping(conversationId: Uuid): Promise<void>;
+  /** Fijar, archivar, silenciar o vaciar un chat (sólo para mí). */
+  updateConversation(conversationId: Uuid, patch: ConversationPatch): Promise<void>;
+  /** Abre (o crea) el chat directo con un contacto. */
+  openDirectChat(userId: Uuid): Promise<Uuid>;
+
+  /** Personas con quien chatear (por nombre). */
+  searchPeople(query: string): Promise<ChatPerson[]>;
+  /** Mis solicitudes (enviadas y recibidas) y mis contactos. */
+  listContacts(): Promise<ChatContact[]>;
+  /** Manda una solicitud; si la otra persona ya me había mandado una, queda aceptada. */
+  requestContact(userId: Uuid, message?: string): Promise<"pending" | "accepted">;
+  /** Acepta (devuelve el id del chat) o rechaza (null) una solicitud recibida. */
+  respondContact(contactId: Uuid, accept: boolean): Promise<Uuid | null>;
+  /** Cancela mi solicitud o deja de ser contacto. */
+  removeContact(userId: Uuid): Promise<void>;
+  blockUser(userId: Uuid): Promise<void>;
+  unblockUser(userId: Uuid): Promise<void>;
+  /** A quiénes bloqueé. */
+  listBlocked(): Promise<Uuid[]>;
 
   listNotifications(limit?: number): Promise<AppNotification[]>;
   markNotificationRead(id: Uuid): Promise<void>;
@@ -104,6 +142,14 @@ export interface ChatImageUpload {
   extension: string;
   width: number;
   height: number;
+}
+
+export interface ConversationPatch {
+  pinned?: boolean;
+  archived?: boolean;
+  muted?: boolean;
+  /** Vaciar: lo anterior deja de mostrárseme. */
+  clear?: boolean;
 }
 
 export interface ChatSendOptions {
@@ -224,6 +270,7 @@ export interface InvitationRepository {
 export type RealtimeTable =
   | "site_settings" | "sections" | "photos" | "milestones" | "important_dates"
   | "interruptions" | "notes" | "chat_messages" | "chat_reads" | "notifications"
+  | "chat_contacts" | "chat_participants" | "chat_reactions" | "chat_hidden_messages"
   | "todo_lists" | "todo_list_members" | "todo_items" | "todo_materials" | "todo_item_images";
 
 export interface RealtimeChange<T = Record<string, unknown>> {

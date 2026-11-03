@@ -36,7 +36,8 @@ describe("recorrido del tutorial", () => {
   });
 
   it("no repite en el menú la sección en la que ya se está", () => {
-    expect(ids("/chat", "viewer")).toEqual(expect.arrayContaining(["chat-thread", "chat-composer"]));
+    expect(ids("/chat", "viewer")).toEqual(expect.arrayContaining(["chat-list", "chat-new", "chat-requests"]));
+    expect(ids("/chat/abc", "viewer")).toEqual(expect.arrayContaining(["chat-thread", "chat-composer", "chat-menu"]));
     expect(ids("/chat", "viewer")).not.toContain("nav-chat");
     expect(ids("/panel/fotos", "editor")).not.toContain("nav-panel");
     expect(ids("/cuenta", "viewer")).not.toContain("nav-cuenta");

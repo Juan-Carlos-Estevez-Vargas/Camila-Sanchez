@@ -18,6 +18,9 @@ const CAMI = "22222222-2222-2222-2222-222222222222";
 const GUEST = "33333333-3333-3333-3333-333333333333";
 
 let db: PGlite;
+/** Chat directo de Juan y Camila, y el de Juan con el invitado. */
+let CHAT = "";
+let GUEST_CHAT = "";
 
 /** Ejecuta SQL como un usuario concreto (o anónimo) dentro de una transacción. */
 async function as<T = Record<string, unknown>>(uid: string | null, sql: string): Promise<T[]> {
@@ -50,6 +53,16 @@ beforeAll(async () => {
     update public.profiles set role = 'super_admin', display_name = 'Juan' where id = '${JUAN}';
     update public.profiles set role = 'editor', display_name = 'Camila' where id = '${CAMI}';
   `);
+  // Para chatear hay que aceptarse como contactos.
+  await as(CAMI, `select chat_request_contact('${JUAN}')`);
+  await as(GUEST, `select chat_request_contact('${JUAN}')`);
+  const requests = await as<{ id: string; requester_id: string }>(JUAN, "select id, requester_id from chat_contacts");
+  for (const r of requests) {
+    const [row] = await as<{ c: string }>(JUAN, `select chat_respond_contact('${r.id}', true) as c`);
+    if (r.requester_id === CAMI) CHAT = row!.c;
+    else GUEST_CHAT = row!.c;
+  }
+  await db.exec("delete from public.notifications");
 }, 60_000);
 
 describe("visibilidad del sitio", () => {
@@ -185,19 +198,24 @@ describe("mensajes y notificaciones", () => {
   });
 
   it("un mensaje de chat avisa al resto una sola vez mientras no lo lean", async () => {
-    await as(CAMI, "insert into chat_messages (body) values ('te amo')");
-    await as(CAMI, "insert into chat_messages (body) values ('mucho')");
+    await as(CAMI, `insert into chat_messages (conversation_id, body) values ('${CHAT}', 'te amo')`);
+    await as(CAMI, `insert into chat_messages (conversation_id, body) values ('${CHAT}', 'mucho')`);
     const rows = await as(JUAN, "select count(*)::int as n, max(body) as body from notifications where kind = 'chat'");
     expect(rows).toEqual([{ n: 1, body: "mucho" }]);
   });
 });
 
 describe("chat: respuestas, conexión y vistos", () => {
-  it("un mensaje puede responder a otro y la cita se suelta si el original se borra", async () => {
-    const [original] = await as<{ id: string }>(JUAN, "insert into chat_messages (body) values ('¿cenamos?') returning id");
-    const [reply] = await as<{ id: string }>(CAMI, `insert into chat_messages (body, reply_to) values ('¡sí!', '${original!.id}') returning id`);
-    await as(JUAN, `delete from chat_messages where id = '${original!.id}'`);
-    expect(await as(CAMI, `select reply_to from chat_messages where id = '${reply!.id}'`)).toEqual([{ reply_to: null }]);
+  it("un mensaje puede responder a otro; si el original se borra para todos, la cita queda sin texto", async () => {
+    const [original] = await as<{ id: string }>(JUAN, `insert into chat_messages (conversation_id, body) values ('${CHAT}', '¿cenamos?') returning id`);
+    const [reply] = await as<{ id: string }>(CAMI, `insert into chat_messages (conversation_id, body, reply_to) values ('${CHAT}', '¡sí!', '${original!.id}') returning id`);
+    // Nadie borra filas a mano: se borra para todos con chat_delete_message.
+    expect(await as(JUAN, `delete from chat_messages where id = '${original!.id}' returning id`)).toEqual([]);
+    await expect(as(CAMI, `select chat_delete_message('${original!.id}')`)).rejects.toThrow(/tus mensajes/);
+    await as(JUAN, `select chat_delete_message('${original!.id}')`);
+    expect(await as(CAMI, `select body, deleted_at is not null as deleted from chat_messages where id = '${original!.id}'`))
+      .toEqual([{ body: "", deleted: true }]);
+    expect(await as(CAMI, `select reply_to from chat_messages where id = '${reply!.id}'`)).toEqual([{ reply_to: original!.id }]);
   });
 
   it("chat_presence guarda la conexión y, al leer, hasta dónde leyó", async () => {
@@ -231,30 +249,30 @@ describe("chat: fotos y stickers", () => {
 
   it("se puede mandar una foto (con o sin pie) y un sticker sin texto", async () => {
     await as(JUAN, "select mark_notifications_read('chat')");
-    await as(CAMI, `insert into chat_messages (kind, image_path, thumb_path, image_width, image_height) values ('image', ${photo(CAMI)}, 800, 600)`);
-    await as(CAMI, `insert into chat_messages (kind, body, image_path, thumb_path) values ('image', 'mira 😍', ${photo(CAMI)})`);
-    await as(JUAN, "insert into chat_messages (kind, sticker) values ('sticker', 'te-amo')");
+    await as(CAMI, `insert into chat_messages (conversation_id, kind, image_path, thumb_path, image_width, image_height) values ('${CHAT}', 'image', ${photo(CAMI)}, 800, 600)`);
+    await as(CAMI, `insert into chat_messages (conversation_id, kind, body, image_path, thumb_path) values ('${CHAT}', 'image', 'mira 😍', ${photo(CAMI)})`);
+    await as(JUAN, `insert into chat_messages (conversation_id, kind, sticker) values ('${CHAT}', 'sticker', 'te-amo')`);
     const [row] = await as<{ body: string }>(JUAN, "select body from notifications where kind = 'chat' order by created_at desc limit 1");
     expect(row?.body).toMatch(/^📷 Foto/);
   });
 
   it("cada tipo exige lo suyo", async () => {
-    await expect(as(CAMI, "insert into chat_messages (kind) values ('image')")).rejects.toThrow(/chat_messages_content/);
-    await expect(as(CAMI, "insert into chat_messages (kind, body) values ('text', '   ')")).rejects.toThrow(/chat_messages_content/);
-    await expect(as(CAMI, "insert into chat_messages (kind, sticker, body) values ('sticker', 'te-amo', 'hola')")).rejects.toThrow(/chat_messages_content/);
-    await expect(as(CAMI, "insert into chat_messages (kind, sticker) values ('sticker', '../../x')")).rejects.toThrow(/check/);
+    await expect(as(CAMI, `insert into chat_messages (conversation_id, kind) values ('${CHAT}', 'image')`)).rejects.toThrow(/chat_messages_content/);
+    await expect(as(CAMI, `insert into chat_messages (conversation_id, kind, body) values ('${CHAT}', 'text', '   ')`)).rejects.toThrow(/chat_messages_content/);
+    await expect(as(CAMI, `insert into chat_messages (conversation_id, kind, sticker, body) values ('${CHAT}', 'sticker', 'te-amo', 'hola')`)).rejects.toThrow(/chat_messages_content/);
+    await expect(as(CAMI, `insert into chat_messages (conversation_id, kind, sticker) values ('${CHAT}', 'sticker', '../../x')`)).rejects.toThrow(/check/);
   });
 
   it("una foto sólo puede apuntar a la carpeta de quien la envía", async () => {
     await expect(
-      as(CAMI, `insert into chat_messages (kind, image_path, thumb_path) values ('image', ${photo(JUAN)})`),
+      as(CAMI, `insert into chat_messages (conversation_id, kind, image_path, thumb_path) values ('${CHAT}', 'image', ${photo(JUAN)})`),
     ).rejects.toThrow(/row-level security/);
     await expect(
-      as(CAMI, `insert into chat_messages (kind, image_path, thumb_path) values ('image', '../${ID}.webp', '${CAMI}/${ID}.thumb.webp')`),
+      as(CAMI, `insert into chat_messages (conversation_id, kind, image_path, thumb_path) values ('${CHAT}', 'image', '../${ID}.webp', '${CAMI}/${ID}.thumb.webp')`),
     ).rejects.toThrow(/row-level security|check/);
   });
 
-  it("en el almacenamiento cada quien sube y borra sólo en su carpeta, y lo ve quien usa el chat", async () => {
+  it("en el almacenamiento cada quien sube y borra sólo en su carpeta, y lo ve quien está en ese chat", async () => {
     await db.exec(`
       alter table storage.objects enable row level security;
       grant select, insert, update, delete on storage.objects to anon, authenticated;
@@ -263,7 +281,9 @@ describe("chat: fotos y stickers", () => {
     await expect(
       as(CAMI, `insert into storage.objects (bucket_id, name) values ('chat-media', '${JUAN}/${ID}.webp')`),
     ).rejects.toThrow(/row-level security/);
+    // Juan la ve porque hay un mensaje con esa foto en su chat con Camila; el invitado no.
     expect(await as(JUAN, "select count(*)::int as n from storage.objects where bucket_id = 'chat-media'")).toEqual([{ n: 1 }]);
+    expect(await as(GUEST, "select count(*)::int as n from storage.objects where bucket_id = 'chat-media'")).toEqual([{ n: 0 }]);
     expect(await as(null, "select count(*)::int as n from storage.objects where bucket_id = 'chat-media'")).toEqual([{ n: 0 }]);
     expect(await as(JUAN, `delete from storage.objects where bucket_id = 'chat-media' returning name`)).toEqual([]);
     expect(await as(CAMI, `delete from storage.objects where bucket_id = 'chat-media' returning name`)).toHaveLength(1);
@@ -351,8 +371,8 @@ describe("avisos en el celular", () => {
 
   it("cada mensaje de chat avisa al celular aunque la campana tenga uno solo", async () => {
     await db.exec("delete from net.calls");
-    await as(CAMI, "insert into chat_messages (body) values ('uno')");
-    await as(CAMI, "insert into chat_messages (body) values ('dos')");
+    await as(CAMI, `insert into chat_messages (conversation_id, body) values ('${CHAT}', 'uno')`);
+    await as(CAMI, `insert into chat_messages (conversation_id, body) values ('${CHAT}', 'dos')`);
     const { rows } = await db.query<{ body: string }>(`select body->'record'->>'body' as body from net.calls where body->'record'->>'user_id' = '${JUAN}' order by id`);
     expect(rows).toEqual([{ body: "uno" }, { body: "dos" }]);
   });
@@ -577,12 +597,12 @@ describe("refuerzo OWASP", () => {
 
   it("frena a quien manda demasiados mensajes seguidos", async () => {
     await expect(
-      as(GUEST, "insert into chat_messages (body) select 'spam ' || i from generate_series(1, 31) i"),
+      as(GUEST, `insert into chat_messages (conversation_id, body) select '${GUEST_CHAT}', 'spam ' || i from generate_series(1, 31) i`),
     ).rejects.toThrow(/Vas muy rápido/);
     await expect(
       as(GUEST, `insert into notes (recipient_id, body) select '${CAMI}', 'spam' from generate_series(1, 21)`),
     ).rejects.toThrow(/Vas muy rápido/);
-    expect(await as(GUEST, "insert into chat_messages (body) values ('hola, ya sin prisa') returning id")).toHaveLength(1);
+    expect(await as(GUEST, `insert into chat_messages (conversation_id, body) values ('${GUEST_CHAT}', 'hola, ya sin prisa') returning id`)).toHaveLength(1);
   });
 
   it("una cuenta desactivada ya no sube fotos de perfil", async () => {
