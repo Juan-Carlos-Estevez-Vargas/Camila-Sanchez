@@ -1073,6 +1073,12 @@ function MessageRow(props: MessageRowProps) {
             className="bubble__menu"
             open={menuOpen}
             onOpenChange={setMenuOpen}
+            preview={(
+              <>
+                <span className="menu__preview-name">{mine ? "Tú" : props.senderName}</span>
+                <span className="menu__preview-text">{messagePreview(m, 120)}</span>
+              </>
+            )}
             header={live && props.canSend ? (close) => (
               <div className="reaction-bar" role="group" aria-label="Reaccionar">
                 {REACTIONS.map((emoji, i) => (
