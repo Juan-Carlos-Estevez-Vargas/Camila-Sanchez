@@ -12,6 +12,8 @@ import { ToastProvider } from "@/state/ToastContext";
 import { EmptyState, PageLoader } from "@/ui/Feedback";
 import { AppFooter } from "./AppFooter";
 import { AppHeader } from "./AppHeader";
+import { ConsentGate } from "@/features/legal/ConsentGate";
+import { CookieBanner } from "@/features/legal/CookieBanner";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { RouteAnnouncer, SkipLink } from "./RouteAnnouncer";
 import { appRoutes } from "./routes";
@@ -20,6 +22,7 @@ const SitePage = lazy(() => import("@/features/site/SitePage"));
 const LoginPage = lazy(() => import("@/features/auth/LoginPage"));
 const InvitePage = lazy(() => import("@/features/auth/InvitePage"));
 const RecoverPage = lazy(() => import("@/features/auth/RecoverPage"));
+const LegalPage = lazy(() => import("@/features/legal/LegalPage"));
 
 function NotFound() {
   return (
@@ -58,12 +61,16 @@ function ThemedShell() {
             <Route path="/entrar" element={<LoginPage />} />
             <Route path="/invitacion" element={<InvitePage />} />
             <Route path="/recuperar" element={<RecoverPage />} />
+            <Route path="/legal" element={<LegalPage />} />
+            <Route path="/legal/:doc" element={<LegalPage />} />
             {appRoutes}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
       </ErrorBoundary>
       <Footer />
+      <ConsentGate />
+      <CookieBanner />
     </>
   );
 }

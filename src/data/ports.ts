@@ -11,6 +11,7 @@ import type {
   Milestone, Note, NoteKind, PermissionDefinition, Photo, PhotoUrls, Profile, Role, RolePermission,
   Section, SessionUser, SiteSettings, TodoImage, TodoItem, TodoList, TodoListDetail, TodoListSummary, TodoMaterial, Uuid,
 } from "@/domain/types";
+import type { LegalConsent } from "@/domain/legal";
 
 export type Unsubscribe = () => void;
 
@@ -301,6 +302,14 @@ export interface PushRepository {
   unregister(endpoint: string): Promise<void>;
 }
 
+/** Aceptaciones de los términos y la política de privacidad (prueba del consentimiento). */
+export interface LegalRepository {
+  /** Las que dio quien tiene la sesión. */
+  myConsents(): Promise<LegalConsent[]>;
+  /** Registra que quien tiene la sesión acepta esta versión. */
+  accept(version: string): Promise<void>;
+}
+
 /** Agregado con todos los puertos: lo que la app recibe por contexto. */
 export interface Backend {
   readonly mode: "supabase" | "demo";
@@ -313,4 +322,5 @@ export interface Backend {
   readonly invitations: InvitationRepository;
   readonly realtime: RealtimeGateway;
   readonly push: PushRepository;
+  readonly legal: LegalRepository;
 }

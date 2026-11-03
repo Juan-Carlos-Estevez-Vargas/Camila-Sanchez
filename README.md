@@ -38,6 +38,7 @@
 - [Arquitectura](#arquitectura)
 - [Seguridad y privacidad](#seguridad-y-privacidad)
 - [Accesibilidad y SEO](#accesibilidad-y-seo)
+- [Legal y privacidad](#legal-y-privacidad)
 - [Despliegue y versiones](#despliegue-y-versiones)
 - [Documentación](#documentación)
 - [Contribuir](#contribuir)
@@ -93,6 +94,7 @@ Funciona en dos modos:
 | Super admin: usuarios, invitaciones por enlace o QR, roles y permisos, apariencia, secciones, ajustes y auditoría | `/super` | Super admin |
 | Avisos push en el celular: chat, notitas, sorpresas y listas | — | Quien los active |
 | Tutorial guiado según la página y los permisos de cada cuenta | Todas | Todos |
+| Legal: privacidad, términos, cookies, cobros y licencias; aviso de cookies y aceptación de términos | `/legal` | Pública |
 
 **Fotos optimizadas en el navegador.** Cada imagen pasa por un *pool* de Web
 Workers con `OffscreenCanvas`: corrige la orientación EXIF, elimina metadatos
@@ -235,6 +237,26 @@ vulnerabilidad, sigue la [política de seguridad](SECURITY.md).
 
 Más en [docs/ACCESIBILIDAD.md](docs/ACCESIBILIDAD.md).
 
+## Legal y privacidad
+
+> Los textos legales son **plantillas** para una app privada, gratuita y sin
+> publicidad usada en Colombia; no son asesoría legal.
+
+- Páginas públicas en `/legal`: política de privacidad y tratamiento de
+  datos (Ley 1581 de 2012), términos y condiciones, cookies, cobros y
+  reembolsos (la app es gratis) y licencias, enlazadas en el pie de página.
+- **Sin cookies de seguimiento.** Google Fonts era lo único externo que se
+  cargaba sin preguntar; ahora sólo se carga si la persona lo acepta en el
+  aviso de cookies (dos botones iguales, sin muro, se cambia desde el pie).
+- **Consentimiento con prueba:** casilla desmarcada y obligatoria al crear la
+  cuenta, diálogo único para cuentas existentes o cuando cambia
+  `LEGAL_VERSION`, y registro inmutable en `legal_consents`.
+- Auditoría de SDKs y de patrones oscuros, inventario de datos, texto
+  alternativo con prueba automática y licencias de dependencias revisadas en
+  CI (`scripts/licenses.test.ts`).
+
+Detalle y pendientes del administrador en [docs/LEGAL.md](docs/LEGAL.md).
+
 ## Despliegue y versiones
 
 Cada merge a `master` se despliega solo:
@@ -256,10 +278,11 @@ Netlify) está paso a paso en [docs/DESPLIEGUE.md](docs/DESPLIEGUE.md).
 | --- | --- |
 | [Manual de usuario](docs/MANUAL_DE_USUARIO.md) | Quien usa la app: visitantes, Camila y Juan |
 | [Manual de arquitectura](docs/ARQUITECTURA.md) | Quien mantiene o extiende el código |
-| [Diagramas](docs/DIAGRAMAS.md) | Flujos, secuencias, despliegue, modelo de datos, permisos y la app de chat (Mermaid) |
+| [Diagramas](docs/DIAGRAMAS.md) | Flujos, secuencias, despliegue, modelo de datos, permisos, la app de chat y lo legal (Mermaid) |
 | [Despliegue y operación](docs/DESPLIEGUE.md) | Quien pone la app en producción o la administra |
 | [Seguridad OWASP](docs/SEGURIDAD_OWASP.md) | Cómo se cubre cada riesgo del OWASP Top 10 y del API Security Top 10 |
 | [Accesibilidad y SEO](docs/ACCESIBILIDAD.md) | Cómo se cumple WCAG 2.2 AA y qué se hace para los buscadores |
+| [Legal y privacidad](docs/LEGAL.md) | Textos legales, consentimiento, cookies, auditoría de terceros, patrones oscuros y licencias |
 
 ## Contribuir
 

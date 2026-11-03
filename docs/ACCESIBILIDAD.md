@@ -10,7 +10,7 @@ página que Google entiende mejor.
 
 | Criterio WCAG | Qué hace la app | Dónde |
 | --- | --- | --- |
-| 1.1.1 Contenido no textual | Fotos con `alt` (el mensaje del recuerdo); iconos y emojis decorativos con `aria-hidden`; botones de solo icono con nombre accesible | `Lightbox.tsx`, `ChatPage.tsx`, `Avatar.tsx` |
+| 1.1.1 Contenido no textual | Fotos con `alt` (el mensaje del recuerdo); iconos y emojis decorativos con `aria-hidden`; botones de solo icono con nombre accesible; una prueba exige `alt` en toda `<img>` | `Lightbox.tsx`, `Milestones.tsx`, `Avatar.tsx`, `src/core/altText.test.ts` |
 | 1.3.1 Información y relaciones | Encabezados en orden (un `h1` por página), regiones `main`/`nav`/`header`/`footer`, secciones con nombre, tablas con cabeceras | `SitePage.tsx`, `Reveal.tsx`, `AppHeader.tsx` |
 | 1.3.5 Propósito de los campos | `autocomplete` en correo, nombre y contraseñas | `LoginPage.tsx`, `InvitePage.tsx` |
 | 1.4.3 / 1.4.11 Contraste | Las paletas cumplen 4.5:1; si alguien elige colores a mano, `readableColors` corrige texto, enlaces, botones (4.5:1) y anillo de foco (3:1) | `domain/accessibleColors.ts`, `ThemeController.tsx` |
