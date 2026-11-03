@@ -39,6 +39,8 @@ const ASSIGNMENT =
   /\b([A-Z0-9_]*(?:SECRET|PASSWORD|PASSWD|PRIVATE_KEY|SERVICE_ROLE_KEY|ACCESS_TOKEN|API_KEY|SMTP_PASS)[A-Z0-9_]*)\s*[=:]\s*["']?([^\s"'`$<>{}()]{12,})(?=["'\s,;]|$)/g;
 
 const PLACEHOLDER = /^(?:x+|\*+|\.+|changeme|example|your[-_]|tu[-_]|placeholder|CORREO_|<)/i;
+/** Nombres de constantes o variables (SERVICE_ROLE, SUPABASE_URL…): no son valores. */
+const IDENTIFIER = /^[A-Z_][A-Z0-9_]*$/;
 
 const JWT = /\beyJ[A-Za-z0-9_-]{10,}\.(eyJ[A-Za-z0-9_-]{10,})\.[A-Za-z0-9_-]{10,}/g;
 
@@ -69,7 +71,7 @@ export function findSecrets(text) {
       if (jwtRole(match[1]) === "service_role") add("service_role key de Supabase");
     }
     for (const match of content.matchAll(ASSIGNMENT)) {
-      if (!PLACEHOLDER.test(match[2])) add(`Valor de ${match[1]}`);
+      if (!PLACEHOLDER.test(match[2]) && !IDENTIFIER.test(match[2])) add(`Valor de ${match[1]}`);
     }
   });
   return found;
