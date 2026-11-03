@@ -32,6 +32,7 @@ describe("findSecrets", () => {
     expect(findSecrets('const SECRET = Deno.env.get("PUSH_WEBHOOK_SECRET");')).toEqual([]);
     expect(findSecrets("VAPID_PRIVATE_KEY=")).toEqual([]);
     expect(findSecrets("SMTP_PASS=xxxxxxxxxxxxxxxx")).toEqual([]);
+    expect(findSecrets("{ SUPABASE_SERVICE_ROLE_KEY: SERVICE_ROLE_TOKEN }")).toEqual([]);
   });
 
   it("respeta la marca para falsos positivos", () => {
