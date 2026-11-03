@@ -64,7 +64,7 @@ export default function LoginPage() {
         <div className="gate__heart" aria-hidden>💗</div>
         <h1 style={{ fontSize: "2rem" }}>{titles[mode]}</h1>
         {backend.mode === "demo" && (
-          <p className="badge" style={{ justifySelf: "center" }}>Modo demo · juan@demo.local o camila@demo.local · demo1234</p>
+          <p className="badge" style={{ justifySelf: "center" }}>Modo demo · juan@, camila@ o valentina@demo.local · demo1234</p>
         )}
         {mode === "reset" && (
           <p className="muted" style={{ margin: 0, textAlign: "center" }}>

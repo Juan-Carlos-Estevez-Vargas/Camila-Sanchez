@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { isOnline, lastSeenLabel, messagePreview, quoteSnippet, readersOf, receiptOf, upsertPresence } from "./chat";
+import {
+  canEditMessage, conversationPresences, DELETED_LABEL, groupReactions, inboxTime, isOnline, isTyping, lastSeenLabel,
+  matchesSearch, messagePreview, otherParticipant, quoteSnippet, readersOf, receiptOf, sortConversations, toggleReaction,
+  upsertParticipant, upsertPresence,
+} from "./chat";
 import type { ChatPresence } from "./types";
 
 const NOW = new Date("2026-10-20T15:00:00");
@@ -73,5 +77,68 @@ describe("citas y conexiones", () => {
     const first: ChatPresence = { userId: CAMI, lastSeenAt: ago(9_000), lastReadAt: null };
     const next: ChatPresence = { userId: CAMI, lastSeenAt: ago(0), lastReadAt: ago(0) };
     expect(upsertPresence([first], next)).toEqual([next]);
+  });
+});
+
+describe("app de chat", () => {
+  it("«escribiendo…» dura unos segundos después de la última tecla", () => {
+    expect(isTyping(ago(2_000), NOW)).toBe(true);
+    expect(isTyping(ago(7_000), NOW)).toBe(false);
+    expect(isTyping(null, NOW)).toBe(false);
+  });
+
+  it("sólo se edita lo propio, que no sea sticker, durante 15 minutos", () => {
+    const base = { senderId: JUAN, kind: "text" as const, createdAt: ago(60_000), deletedAt: null };
+    expect(canEditMessage(base, JUAN, NOW)).toBe(true);
+    expect(canEditMessage(base, CAMI, NOW)).toBe(false);
+    expect(canEditMessage({ ...base, kind: "sticker" }, JUAN, NOW)).toBe(false);
+    expect(canEditMessage({ ...base, createdAt: ago(16 * 60_000) }, JUAN, NOW)).toBe(false);
+    expect(canEditMessage({ ...base, deletedAt: ago(0) }, JUAN, NOW)).toBe(false);
+  });
+
+  it("una reacción por persona: la misma la quita, otra la cambia", () => {
+    const put = toggleReaction([], JUAN, "❤️");
+    expect(put).toEqual({ next: [{ userId: JUAN, emoji: "❤️" }], emoji: "❤️" });
+    const change = toggleReaction([...put.next, { userId: CAMI, emoji: "❤️" }], JUAN, "😂");
+    expect(change.emoji).toBe("😂");
+    expect(groupReactions(change.next)).toEqual([{ emoji: "❤️", userIds: [CAMI] }, { emoji: "😂", userIds: [JUAN] }]);
+    expect(toggleReaction(change.next, JUAN, "😂")).toEqual({ next: [{ userId: CAMI, emoji: "❤️" }], emoji: null });
+  });
+
+  it("los fijados van arriba y luego lo más reciente", () => {
+    const chats = [
+      { id: "a", pinnedAt: null, lastMessageAt: ago(1_000), createdAt: ago(9_000) },
+      { id: "b", pinnedAt: ago(5_000), lastMessageAt: ago(90_000), createdAt: ago(99_000) },
+      { id: "c", pinnedAt: null, lastMessageAt: null, createdAt: ago(500) },
+    ];
+    expect(sortConversations(chats).map((c) => c.id)).toEqual(["b", "c", "a"]);
+  });
+
+  it("la otra persona del chat y la búsqueda sin tildes", () => {
+    expect(otherParticipant({ participantIds: [JUAN, CAMI] }, JUAN)).toBe(CAMI);
+    expect(matchesSearch("Camíla Sánchez", "camila sanch")).toBe(true);
+    expect(matchesSearch("Juan", "cami")).toBe(false);
+  });
+
+  it("la hora de la bandeja: hoy la hora, luego «ayer», el día o la fecha", () => {
+    expect(inboxTime(ago(60_000), NOW)).toMatch(/2:59/);
+    expect(inboxTime(ago(24 * 3_600_000), NOW)).toBe("ayer");
+    expect(inboxTime(ago(3 * 24 * 3_600_000), NOW)).toBe("sábado");
+    expect(inboxTime(ago(30 * 24 * 3_600_000), NOW)).toMatch(/20\/9\/26/);
+  });
+
+  it("los vistos de la conversación usan su propia lectura y la conexión global", () => {
+    const participants = [{ conversationId: "x", userId: CAMI, lastReadAt: ago(1_000), typingAt: null }];
+    const merged = conversationPresences(participants, [{ userId: CAMI, lastSeenAt: ago(500), lastReadAt: ago(99_000) }]);
+    expect(merged).toEqual([{ userId: CAMI, lastSeenAt: ago(500), lastReadAt: ago(1_000) }]);
+    expect(receiptOf({ senderId: JUAN, createdAt: ago(2_000) }, merged)).toBe("read");
+    const updated = upsertParticipant(participants, { ...participants[0]!, typingAt: ago(0) });
+    expect(updated).toHaveLength(1);
+    expect(updated[0]?.typingAt).toBe(ago(0));
+  });
+
+  it("un mensaje borrado para todos se cita como borrado", () => {
+    expect(messagePreview({ kind: "text", body: "", deleted: true })).toBe(DELETED_LABEL);
+    expect(messagePreview({ kind: "image", body: "", deletedAt: ago(0) })).toBe(DELETED_LABEL);
   });
 });

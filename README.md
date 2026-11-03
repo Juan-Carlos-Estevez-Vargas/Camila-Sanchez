@@ -4,7 +4,7 @@
 
 # Para el amor de mi vida
 
-**Una aplicación web privada para una pareja: recuerdos, fechas, chat en tiempo real y listas compartidas, con su propio panel de administración.**
+**Una aplicación web privada para una pareja: recuerdos, fechas, una app de chat con solicitudes de contacto y listas compartidas, con su propio panel de administración.**
 
 [![CI](https://github.com/Juan-Carlos-Estevez-Vargas/Camila-Sanchez/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/Juan-Carlos-Estevez-Vargas/Camila-Sanchez/actions/workflows/ci.yml)
 [![Deploy](https://github.com/Juan-Carlos-Estevez-Vargas/Camila-Sanchez/actions/workflows/deploy.yml/badge.svg?branch=master)](https://github.com/Juan-Carlos-Estevez-Vargas/Camila-Sanchez/actions/workflows/deploy.yml)
@@ -49,7 +49,8 @@
 medida para Camila. La página principal reúne la historia de la pareja:
 tiempo juntos, cuentas regresivas a fechas especiales, hitos, una galería de
 fotos por año y mes, una carta y sorpresas. Detrás hay un producto completo:
-cuentas con roles y permisos, chat en tiempo real, listas de tareas
+cuentas con roles y permisos, una app de chat (buscar personas, solicitudes,
+chats privados con reacciones, edición y vistos), listas de tareas
 compartidas, avisos en la pantalla del celular y un panel para editar todo sin
 tocar código.
 
@@ -64,14 +65,16 @@ Funciona en dos modos:
 
 ## Capturas
 
-| Chat en tiempo real | Listas compartidas |
+| App de chat | Listas compartidas |
 | --- | --- |
-| <img src="docs/capturas/chat.png" alt="Chat con mensajes de Juan y Camila" width="420"> | <img src="docs/capturas/listas.png" alt="Lista «Viaje a la playa» con tareas, subtareas y barra de progreso" width="420"> |
+| <img src="docs/capturas/chat.png" alt="App de chat: bandeja a la izquierda y la conversación con Camila, con un mensaje editado y una reacción" width="420"> | <img src="docs/capturas/listas.png" alt="Lista «Viaje a la playa» con tareas, subtareas y barra de progreso" width="420"> |
 | **Paletas de colores por persona** | **Roles y permisos** |
 | <img src="docs/capturas/colores.png" alt="Selector de paletas con vista previa en vivo" width="420"> | <img src="docs/capturas/permisos.png" alt="Matriz de permisos por rol en el panel de administración" width="420"> |
+| **Solicitudes de contacto** | **La bandeja en el celular** |
+| <img src="docs/capturas/chat-solicitudes.png" alt="Pestaña Solicitudes con una solicitud recibida para aceptar o rechazar" width="420"> | <img src="docs/capturas/movil-bandeja.png" alt="Bandeja de chats en un celular" width="240"> |
 
 <p align="center">
-  <img src="docs/capturas/movil-chat.png" alt="Chat en un celular" width="240"><br>
+  <img src="docs/capturas/movil-chat.png" alt="Conversación a pantalla completa en un celular" width="240"><br>
   <sub>Diseño adaptable: la misma app en el celular, instalable desde el navegador.</sub>
 </p>
 
@@ -81,7 +84,7 @@ Funciona en dos modos:
 | --- | --- | --- |
 | Página principal: portada, tiempo juntos, cuentas regresivas, notas, hitos, galería por año/mes, carta y frases | `/` | Pública o con `site.view` |
 | Cajita de mensajes: notitas que se abren como una carta | `/mensajes` | `notes.send` |
-| Chat tipo WhatsApp: fotos, stickers, responder citando, última conexión y vistos (✓ ✓✓) | `/chat` | `chat.use` |
+| App de chat a pantalla completa: buscar personas, solicitudes de contacto, chats privados, fotos, stickers, responder, reacciones, editar y borrar, «escribiendo…», en línea, vistos (✓ ✓✓), buscar mensajes, fijar, silenciar, archivar y bloquear | `/chat` | `chat.use` |
 | Listas compartidas con subtareas, materiales, fotos, fechas y responsables, en vivo | `/listas` | `lists.use` |
 | Perfil: nombre, foto o icono, frase y cumpleaños | `/cuenta/perfil` | Cualquier cuenta |
 | Mis colores: cada persona elige su paleta sin cambiársela a nadie | `/cuenta/colores` | Cualquier cuenta |
@@ -129,6 +132,7 @@ para probar el chat y las notificaciones entre cuentas.
 | --- | --- | --- |
 | `juan@demo.local` | `demo1234` | Super administrador |
 | `camila@demo.local` | `demo1234` | Editora |
+| `valentina@demo.local` | `demo1234` | Invitada (le pide chatear a Juan) |
 
 Para conectarla a un proyecto de Supabase, copia `.env.example` a
 `.env.local` y completa los valores. La guía completa está en
@@ -235,7 +239,7 @@ Netlify) está paso a paso en [docs/DESPLIEGUE.md](docs/DESPLIEGUE.md).
 | --- | --- |
 | [Manual de usuario](docs/MANUAL_DE_USUARIO.md) | Quien usa la app: visitantes, Camila y Juan |
 | [Manual de arquitectura](docs/ARQUITECTURA.md) | Quien mantiene o extiende el código |
-| [Diagramas](docs/DIAGRAMAS.md) | Flujos, secuencias, despliegue, modelo de datos y permisos (Mermaid) |
+| [Diagramas](docs/DIAGRAMAS.md) | Flujos, secuencias, despliegue, modelo de datos, permisos y la app de chat (Mermaid) |
 | [Despliegue y operación](docs/DESPLIEGUE.md) | Quien pone la app en producción o la administra |
 | [Seguridad OWASP](docs/SEGURIDAD_OWASP.md) | Cómo se cubre cada riesgo del OWASP Top 10 y del API Security Top 10 |
 | [Accesibilidad y SEO](docs/ACCESIBILIDAD.md) | Cómo se cumple WCAG 2.2 AA y qué se hace para los buscadores |

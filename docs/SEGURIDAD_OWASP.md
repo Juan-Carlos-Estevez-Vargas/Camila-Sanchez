@@ -24,11 +24,11 @@ cambio futuro.
 
 | Riesgo | Control |
 | --- | --- |
-| API1 · Autorización a nivel de objeto | RLS por fila: notitas, avisos, listas y fotos sólo de sus dueños o miembros. |
+| API1 · Autorización a nivel de objeto | RLS por fila: notitas, avisos, listas y fotos sólo de sus dueños o miembros. Cada chat (mensajes, fotos, reacciones, vistos y «escribiendo…») sólo lo ven quienes están en él; sólo se escribe a un contacto aceptado y no bloqueado; la conexión de alguien sólo la ve quien comparte un chat con esa persona. |
 | API2 · Autenticación | Supabase Auth con PKCE; las funciones con service role verifican el token y el permiso antes de actuar. |
 | API3 · Autorización por propiedad | Triggers que sólo dejan cambiar las columnas permitidas (avisos sólo `read_at`, perfil sólo su dueño, etc.). |
-| API4 · Consumo sin límite | Límites de velocidad en la base: chat 30/min, notitas 20 cada 10 min, invitaciones 20/h, listas 30/h, tareas 200 y fotos de tareas 60 cada 10 min. Tamaño máximo de archivos por bucket y de cada texto. |
-| API5 · Autorización por función | `reorder_items`, `create_todo_list`, `chat_presence`… comprueban permisos; las funciones internas no tienen `execute` para `anon`. |
+| API4 · Consumo sin límite | Límites de velocidad en la base: chat 30/min, solicitudes de contacto 20/h, reacciones 60/min, notitas 20 cada 10 min, invitaciones 20/h, listas 30/h, tareas 200 y fotos de tareas 60 cada 10 min. Tamaño máximo de archivos por bucket y de cada texto. |
+| API5 · Autorización por función | `reorder_items`, `create_todo_list`, `chat_presence`, `chat_request_contact`, `chat_respond_contact`, `chat_edit_message`, `chat_delete_message`… comprueban permisos y la sesión; las funciones internas no tienen `execute` para `anon`. |
 | API6 · Flujos de negocio sensibles | Invitaciones de un solo uso; aviso de prueba una vez por minuto. |
 | API7 · SSRF | Ver A10. |
 | API8 · Configuración | Ver A05. |

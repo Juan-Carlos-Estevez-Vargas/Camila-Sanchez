@@ -179,7 +179,29 @@ function pageSteps(ctx: TourContext): TourStep[] {
       },
     ];
   }
-  if (pathname === "/chat") {
+  if (pathname === "/chat" || pathname === "/chat/solicitudes" || pathname === "/chat/personas") {
+    return [
+      {
+        id: "chat-list",
+        target: [tourTarget("chat-list")],
+        title: "Tus chats",
+        body: "Aquí están todas tus conversaciones, con los mensajes sin leer y quién está escribiendo. Las fijadas quedan arriba.",
+      },
+      {
+        id: "chat-new",
+        target: [tourTarget("chat-new")],
+        title: "Nuevo chat",
+        body: "Busca a alguien por su nombre y mándale una solicitud. Cuando la acepte, se abre su chat privado.",
+      },
+      {
+        id: "chat-requests",
+        target: [tourTarget("chat-requests")],
+        title: "Solicitudes",
+        body: "Las personas que quieren chatear contigo. Acepta, rechaza o bloquea; también ves las que tú enviaste.",
+      },
+    ];
+  }
+  if (pathname.startsWith("/chat/")) {
     return [
       {
         id: "chat-presence",
@@ -192,7 +214,7 @@ function pageSteps(ctx: TourContext): TourStep[] {
         id: "chat-thread",
         target: [tourTarget("chat-thread")],
         title: "La conversación",
-        body: "Los mensajes llegan en tiempo real. En los tuyos, ✓ es enviado, ✓✓ entregado y ✓✓ de color, visto. Para responder uno, toca ↩ o deslízalo hacia la derecha.",
+        body: "Los mensajes llegan en tiempo real. En los tuyos, ✓ es enviado, ✓✓ entregado y ✓✓ de color, visto. Para responder uno, toca ↩ o deslízalo hacia la derecha; con ⌄ (o manteniéndolo pulsado) reaccionas, copias, editas o borras.",
       },
       {
         id: "chat-composer",
@@ -211,6 +233,12 @@ function pageSteps(ctx: TourContext): TourStep[] {
         target: [tourTarget("chat-sticker")],
         title: "Stickers",
         body: "Con 😊 abres los stickers. Toca uno y se envía al instante.",
+      },
+      {
+        id: "chat-menu",
+        target: [tourTarget("chat-menu")],
+        title: "Opciones del chat",
+        body: "Busca mensajes, silencia los avisos, fija, archiva o vacía el chat, y bloquea a alguien si hace falta.",
       },
     ];
   }
