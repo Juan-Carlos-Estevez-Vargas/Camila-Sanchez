@@ -16,6 +16,7 @@ directamente al abrir este archivo. La explicación de cada pieza está en
 - [Chat: respuestas, conexión y vistos](#chat-respuestas-conexión-y-vistos)
 - [Chat: fotos y stickers](#chat-fotos-y-stickers)
 - [Avisos en el celular](#avisos-en-el-celular)
+- [Sorpresas para una persona](#sorpresas-para-una-persona)
 - [Colores por persona](#colores-por-persona)
 - [Perfil de cada persona](#perfil-de-cada-persona)
 - [Listas compartidas](#listas-compartidas)
@@ -506,7 +507,7 @@ Cuándo sale un aviso al celular:
 ```mermaid
 flowchart LR
   N["Notita nueva"] --> INS["insert notifications"]
-  S["Sorpresa activa ya"] --> INS
+  S["Sorpresa activa ya<br/>(sólo a su destinataria)"] --> INS
   L["Algo nuevo en una lista"] --> QL{"¿Hay un aviso de esa lista<br/>sin leer?"}
   QL -- "no" --> INS
   QL -- "sí" --> UPD
@@ -521,6 +522,47 @@ flowchart LR
   V -- "no" --> X["Sólo campana en la app"]
   V -- "sí" --> SP["send-push → Web Push<br/>a cada dispositivo de la persona"]
   SP --> SW["Service worker: los del chat se agrupan<br/>en un aviso, y los de cada lista en otro"]
+```
+
+## Sorpresas para una persona
+
+Cada sorpresa se prepara para alguien en concreto. Sólo esa persona la ve al
+abrir la página y sólo a ella le llega el aviso; a quien la creó nunca le sale,
+y en el panel cada quien ve únicamente las que preparó (así las que le
+prepararon a ella no se destapan).
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor J as Juan (crea)
+  participant P as Panel → Sorpresas
+  participant DB as Postgres (RLS)
+  actor C as Camila (destinataria)
+  J->>P: + Nueva sorpresa, «¿Para quién es?» = Camila
+  P->>DB: insert interruptions (recipient_id = Camila)
+  Note over DB: trigger stamp_created_by pone created_by = Juan<br/>la política exige recipient_id ≠ created_by<br/>y que sea una cuenta activa
+  DB-->>C: notify_new_interruption → aviso sólo a Camila
+  J->>DB: abre la página: select interruptions activas
+  DB-->>J: (nada para él: no es la destinataria)
+  C->>DB: abre la página: select interruptions activas
+  DB-->>C: la sorpresa (recipient_id = Camila)
+  C->>C: ventana / confeti / corazones
+  C->>DB: insert interruption_views (si es de una sola vez)
+```
+
+Quién puede ver una sorpresa:
+
+```mermaid
+flowchart TD
+  U["Persona que abre la página"] --> S{"¿Inició sesión?"}
+  S -- "no" --> N["No ve sorpresas"]
+  S -- "sí" --> A{"¿La creó ella?"}
+  A -- "sí" --> PANEL["No le sale en la página<br/>(la ve y edita en su panel)"]
+  A -- "no" --> R{"¿Es la destinataria?<br/>(o es antigua, sin destinataria)"}
+  R -- "no" --> N
+  R -- "sí" --> V{"¿Activa y dentro<br/>de su ventana de tiempo?"}
+  V -- "no" --> N
+  V -- "sí" --> OK["Le sale la sorpresa 🎁"]
 ```
 
 ## Colores por persona
@@ -878,6 +920,8 @@ erDiagram
   AUTH_USERS ||--o{ NOTIFICATIONS : "recibe"
   AUTH_USERS ||--o{ PUSH_SUBSCRIPTIONS : "dispositivos"
   AUTH_USERS ||--o{ INTERRUPTION_VIEWS : "vio"
+  AUTH_USERS ||--o{ INTERRUPTIONS : "prepara"
+  AUTH_USERS ||--o{ INTERRUPTIONS : "es para"
   INTERRUPTIONS ||--o{ INTERRUPTION_VIEWS : "vista por"
   PHOTOS ||--o{ MILESTONES : "ilustra"
   AUTH_USERS ||--o{ AUDIT_LOG : "actor"
@@ -955,6 +999,8 @@ erDiagram
     timestamptz starts_at
     boolean is_active
     boolean show_once
+    uuid created_by FK
+    uuid recipient_id FK
   }
   NOTES {
     uuid id PK

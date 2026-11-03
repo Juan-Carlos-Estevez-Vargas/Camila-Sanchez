@@ -50,7 +50,7 @@ export interface ContentRepository {
 
   /** Activas ahora (página pública) o todas (panel). */
   listInterruptions(scope: "active" | "all"): Promise<Interruption[]>;
-  saveInterruption(item: Omit<Interruption, "id"> & { id?: Uuid }): Promise<Interruption>;
+  saveInterruption(item: Omit<Interruption, "id" | "createdBy"> & { id?: Uuid }): Promise<Interruption>;
   deleteInterruption(id: Uuid): Promise<void>;
   markInterruptionSeen(id: Uuid): Promise<void>;
   listSeenInterruptions(): Promise<Uuid[]>;
