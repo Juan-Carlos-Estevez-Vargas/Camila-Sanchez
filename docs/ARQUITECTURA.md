@@ -424,4 +424,4 @@ prueba comprueba que `supabase/setup.sql` esté al día).
 | `…1027000100_owasp_hardening` | Refuerzo OWASP: avisos inmutables, autoría, SSRF del push y límites de velocidad |
 | `…1103000100_chat_app` | App de chat: contactos, solicitudes, bloqueos, conversaciones privadas, vistos y «escribiendo…» por chat, edición, borrado, reacciones y búsqueda |
 | `…1103000500_surprise_recipient` | Cada sorpresa es para una persona (`recipient_id`): sólo ella la ve y recibe el aviso, nunca quien la creó; en el panel cada quien gestiona sólo las suyas |
-| `…1103000600_security_review` | Revisión de seguridad: `created_by`/`created_at` inmutables en fotos y sorpresas, reacciones que no se mueven de mensaje, límite de sorpresas y contador `edge_rate_limits` para las Edge Functions |
+| `…1103000800_security_review` | Revisión de seguridad: `created_by`/`created_at` inmutables en fotos y sorpresas, reacciones que no se mueven de mensaje, límite de sorpresas y contador `edge_rate_limits` para las Edge Functions |

@@ -953,7 +953,7 @@ flowchart TB
 ```mermaid
 flowchart LR
   DEV["Commit en una rama"] --> PR["Pull request"]
-  PR --> CI["CI<br/>secretos en git · npm audit · deps de Edge Functions<br/>typecheck · lint · pruebas · build · secretos en dist/"]
+  PR --> CI["CI<br/>secretos en git · orden de migraciones · npm audit · deps de Edge Functions<br/>typecheck · lint · pruebas · build · secretos en dist/"]
   CI -- "verde" --> M["Merge a master"]
   M --> D1["Deploy: pruebas otra vez"]
   D1 --> D2["Migraciones en Supabase"]
