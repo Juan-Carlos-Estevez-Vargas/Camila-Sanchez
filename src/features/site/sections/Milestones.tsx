@@ -18,7 +18,7 @@ export function Milestones({ section, content, photoUrls }: SectionProps<"milest
                 <time className="timeline__date" dateTime={m.happenedOn}>{formatLongDate(m.happenedOn)}</time>
                 <h3>{m.title}</h3>
                 {m.description && <p className="muted">{m.description}</p>}
-                {photo && <img className="timeline__photo" src={photo.thumb} alt="" loading="lazy" decoding="async" />}
+                {photo && <img className="timeline__photo" src={photo.thumb} alt={`Foto de «${m.title}»`} loading="lazy" decoding="async" />}
               </article>
             </li>
           );
