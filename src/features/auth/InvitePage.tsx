@@ -7,6 +7,7 @@ import { ROLE_LABELS } from "@/domain/permissions";
 import type { InvitableRole } from "@/domain/types";
 import { useAuth } from "@/state/AuthContext";
 import { useBackend } from "@/state/BackendContext";
+import { useCaptcha } from "@/services/captcha/useCaptcha";
 import { EmptyState, PageLoader } from "@/ui/Feedback";
 import { Field } from "@/ui/Field";
 
@@ -33,6 +34,7 @@ export default function InvitePage() {
   const [form, setForm] = useState({ displayName: "", email: "", password: "", confirm: "" });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const captcha = useCaptcha();
 
   useEffect(() => {
     if (!token) return;
@@ -79,8 +81,11 @@ export default function InvitePage() {
     if (form.password !== form.confirm) return setError("Las contraseñas no coinciden.");
     setBusy(true);
     try {
-      await backend.invitations.redeem({ token, email, password: form.password, displayName: form.displayName.trim() });
-      await backend.auth.signInWithPassword(email, form.password, { remember: true });
+      await backend.invitations.redeem({
+        token, email, password: form.password, displayName: form.displayName.trim(), captchaToken: await captcha.take(),
+      });
+      // Cada ficha del CAPTCHA sirve una vez: entrar pide la siguiente.
+      await backend.auth.signInWithPassword(email, form.password, { remember: true, captchaToken: await captcha.take() });
       navigate(check.role === "editor" ? "/panel" : "/", { replace: true });
     } catch (err) {
       setError(toUserMessage(err));
@@ -108,6 +113,8 @@ export default function InvitePage() {
         <Field label="Repite la contraseña">
           {(id) => <input id={id} className="input" type="password" autoComplete="new-password" required value={form.confirm} onChange={(e) => set("confirm")(e.target.value)} />}
         </Field>
+        {captcha.widget}
+        {captcha.error && <p className="field__error" role="alert">{captcha.error}</p>}
         {error && <p className="field__error" role="alert">{error}</p>}
         <button className="btn btn--block" disabled={busy}>{busy ? "Creando tu cuenta…" : "Crear mi cuenta 💖"}</button>
       </form>

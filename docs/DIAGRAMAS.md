@@ -113,8 +113,18 @@ sequenceDiagram
   participant Auth as Supabase Auth
   participant DB as Postgres
 
+  participant CF as Cloudflare Turnstile
+
   U->>App: correo + contraseña (+ mantener sesión)
-  App->>Auth: signInWithPassword
+  opt CAPTCHA encendido (VITE_TURNSTILE_SITE_KEY)
+    App->>CF: recuadro "no soy un robot"
+    CF-->>App: ficha de un solo uso
+  end
+  App->>Auth: signInWithPassword (+ captchaToken)
+  opt CAPTCHA encendido en Supabase
+    Auth->>CF: ¿ficha válida?
+    CF-->>Auth: sí / no
+  end
   Auth-->>App: access token 1 h + refresh token
   Note over App: localStorage si «mantener sesión»,<br/>sessionStorage si no
   App->>DB: my_permissions()
@@ -151,12 +161,15 @@ sequenceDiagram
   RI->>DB: busca SHA-256(token) vigente
   RI-->>App2: válido + rol
   I->>App2: nombre, correo y contraseña
-  App2->>RI: redeem(...)
+  App2->>RI: redeem(... + captchaToken)
   RI->>DB: hit_edge_rate_limit(HMAC(IP), 5, 10 min)
+  opt TURNSTILE_SECRET_KEY
+    RI->>RI: siteverify con Cloudflare
+  end
   RI->>DB: marca usada (update ... where used_at is null)
   RI->>Auth: crea el usuario con ese rol
   RI-->>App2: ok
-  App2->>Auth: inicia sesión
+  App2->>Auth: inicia sesión (con otra ficha del CAPTCHA)
 ```
 
 ## Recuperación de contraseña
@@ -897,6 +910,7 @@ flowchart TB
   subgraph Navegador
     CSP["CSP sin scripts ajenos<br/>React escapa el texto<br/>validation.ts: colores, URLs, fuentes"]
     SES["Sesión en local/sessionStorage<br/>(sin cookies) · PKCE"]
+    CAP["CAPTCHA Turnstile (opcional)<br/>entrar · recuperar · invitación"]
   end
   subgraph Netlify
     HTTPS["Sólo HTTPS<br/>HSTS + upgrade-insecure-requests"]
@@ -923,6 +937,8 @@ flowchart TB
 
   CSP --> HTTPS --> AUTH
   SES --> AUTH
+  CAP --> AUTH
+  CAP --> EF
   HTTPS --> EF
   HTTPS --> PRM --> RLS --> TRG --> CHK
   RL --> VAL --> PG

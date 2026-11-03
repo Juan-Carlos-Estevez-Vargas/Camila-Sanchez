@@ -6,6 +6,7 @@ import { remembersSession } from "@/data/sessionPersistence";
 import { RECOVERY_PATH } from "@/domain/recovery";
 import { useAuth } from "@/state/AuthContext";
 import { useBackend } from "@/state/BackendContext";
+import { useCaptcha } from "@/services/captcha/useCaptcha";
 import { Field, Switch } from "@/ui/Field";
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -23,6 +24,7 @@ export default function LoginPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
+  const captcha = useCaptcha();
 
   // Enlaces de recuperación antiguos (/entrar?recuperar=1) ahora van a /recuperar.
   if (params.get("recuperar")) return <Navigate to={RECOVERY_PATH} replace />;
@@ -34,14 +36,15 @@ export default function LoginPage() {
     setError(null);
     setInfo(null);
     try {
-      if (mode === "password") await backend.auth.signInWithPassword(email, password, { remember });
+      if (mode === "reset" && !EMAIL.test(email.trim())) throw new AppError("Escribe un correo válido.");
+      const captchaToken = await captcha.take();
+      if (mode === "password") await backend.auth.signInWithPassword(email, password, { remember, captchaToken });
       if (mode === "magic") {
-        await backend.auth.sendMagicLink(email);
+        await backend.auth.sendMagicLink(email, { captchaToken });
         setInfo("Te envié un enlace mágico ✨ Revisa tu correo.");
       }
       if (mode === "reset") {
-        if (!EMAIL.test(email.trim())) throw new AppError("Escribe un correo válido.");
-        await backend.auth.sendPasswordReset(email.trim());
+        await backend.auth.sendPasswordReset(email.trim(), { captchaToken });
         // Mismo mensaje exista o no la cuenta: no revela qué correos están registrados.
         setInfo("Si ese correo tiene cuenta, te llegará un enlace para crear una contraseña nueva. Revisa también el spam.");
       }
@@ -88,6 +91,8 @@ export default function LoginPage() {
             <span className="field__hint">Desactívalo en un computador compartido: la sesión se cerrará al cerrar la pestaña.</span>
           </div>
         )}
+        {captcha.widget}
+        {captcha.error && <p className="field__error" role="alert">{captcha.error}</p>}
         {error && <p className="field__error" role="alert">{error}</p>}
         {info && <p className="badge badge--success" role="status" style={{ justifySelf: "center" }}>{info}</p>}
         <button className="btn btn--block" disabled={busy}>

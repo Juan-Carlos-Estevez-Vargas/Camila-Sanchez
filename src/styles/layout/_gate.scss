@@ -22,3 +22,11 @@
     animation: heartbeat 1.6s ease-in-out infinite;
   }
 }
+
+// CAPTCHA (Cloudflare Turnstile): centrado y con su alto reservado para que
+// el formulario no salte cuando aparece.
+.captcha {
+  display: flex;
+  justify-content: center;
+  min-height: 65px;
+}

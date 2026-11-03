@@ -69,19 +69,19 @@ const auth: AuthGateway = {
   },
   async signInWithPassword(email, password, options) {
     setRememberSession(options?.remember ?? true);
-    await unwrap(sb().auth.signInWithPassword({ email, password }));
+    await unwrap(sb().auth.signInWithPassword({ email, password, options: { captchaToken: options?.captchaToken } }));
   },
-  async sendMagicLink(email) {
+  async sendMagicLink(email, options) {
     // El enlace se abre en otra pestaña: la sesión tiene que poder persistir.
     setRememberSession(true);
     // shouldCreateUser: false → un enlace mágico nunca crea cuentas nuevas.
-    await unwrap(sb().auth.signInWithOtp({ email, options: { shouldCreateUser: false, emailRedirectTo: redirectTo("/") } }));
+    await unwrap(sb().auth.signInWithOtp({ email, options: { shouldCreateUser: false, emailRedirectTo: redirectTo("/"), captchaToken: options?.captchaToken } }));
   },
-  async sendPasswordReset(email) {
+  async sendPasswordReset(email, options) {
     setRememberSession(true);
     // La plantilla del correo (flujo Deploy) apunta a /recuperar#token_hash=…;
     // redirectTo cubre la plantilla por defecto mientras no se haya aplicado.
-    await unwrap(sb().auth.resetPasswordForEmail(email, { redirectTo: redirectTo(RECOVERY_PATH) }));
+    await unwrap(sb().auth.resetPasswordForEmail(email, { redirectTo: redirectTo(RECOVERY_PATH), captchaToken: options?.captchaToken }));
   },
   async verifyRecovery(tokenHash) {
     setRememberSession(true);
