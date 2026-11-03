@@ -1,6 +1,9 @@
 import type { ReactElement } from "react";
+import { Link } from "react-router-dom";
 import { AUTHOR, releaseUrl, type SocialNetwork } from "@/core/author";
 import { config } from "@/core/config";
+import { LEGAL_DOCUMENTS, legalPath } from "@/domain/legal";
+import { openCookiePreferences } from "@/services/consent/cookieConsent";
 import { setReducedMotion, useReducedMotion } from "@/ui/motion";
 
 const NETWORKS: Record<SocialNetwork, { label: string; icon: ReactElement }> = {
@@ -57,6 +60,14 @@ export function AppFooter() {
             ))}
           </ul>
         )}
+        <nav aria-label="Legal y privacidad">
+          <ul className="app-footer__legal">
+            {LEGAL_DOCUMENTS.map((doc) => (
+              <li key={doc.id}><Link to={legalPath(doc.id)}>{doc.short}</Link></li>
+            ))}
+            <li><button type="button" onClick={openCookiePreferences}>Preferencias de cookies</button></li>
+          </ul>
+        </nav>
         <label className="switch app-footer__motion">
           <input type="checkbox" role="switch" checked={reducedMotion} onChange={(e) => setReducedMotion(e.target.checked)} />
           <span>Reducir animaciones</span>

@@ -35,13 +35,13 @@ function PhotoCard({ photo, thumb, onChanged, selected, onSelect }: {
       <label className="photo-card__check">
         <input type="checkbox" checked={selected} onChange={(e) => onSelect(e.target.checked)} aria-label="Seleccionar foto" />
       </label>
-      {thumb ? <img src={thumb} alt={photo.caption} loading="lazy" decoding="async" /> : <div className="skeleton photo-card__ph" />}
+      {thumb ? <img src={thumb} alt={photo.caption || "Foto sin descripción"} loading="lazy" decoding="async" /> : <div className="skeleton photo-card__ph" />}
       <div className="photo-card__body">
         <textarea
-          className="textarea photo-card__caption" rows={2} value={caption} maxLength={500} placeholder="Escribe un mensaje…"
+          className="textarea photo-card__caption" rows={2} value={caption} maxLength={500} placeholder="Describe la foto o escribe un mensaje…"
           onChange={(e) => setCaption(e.target.value)}
           onBlur={() => caption !== photo.caption && void save({ caption }, "Mensaje guardado")}
-          aria-label="Mensaje de la foto"
+          aria-label="Mensaje de la foto (también es su texto alternativo)"
         />
         <div className="row-between">
           <input

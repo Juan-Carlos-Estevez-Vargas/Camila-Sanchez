@@ -4,6 +4,7 @@ import { MIN_PASSWORD_LENGTH } from "@/domain/invitations";
 import { passwordProblem } from "@/domain/password";
 import { ROLE_LABELS } from "@/domain/permissions";
 import { useSaver } from "@/features/admin/useSaver";
+import { PrivacyCard } from "@/features/legal/PrivacyCard";
 import { DeviceNotificationsCard } from "@/features/messages/EnableNotifications";
 import { useAuth } from "@/state/AuthContext";
 import { useBackend } from "@/state/BackendContext";
@@ -95,6 +96,8 @@ export default function AccountPage() {
           <button className="btn btn--danger" onClick={() => void signOutEverywhere()}>Cerrar en todos los dispositivos</button>
         </div>
       </section>
+
+      <PrivacyCard />
       {confirmElement}
     </main>
   );
