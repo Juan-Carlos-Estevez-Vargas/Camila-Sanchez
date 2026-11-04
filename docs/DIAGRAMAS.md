@@ -1326,5 +1326,21 @@ flowchart LR
   APP -. "sólo si está activado" .-> CF["Cloudflare Turnstile"]
   APP -. "sólo si se activan los avisos" .-> PUSH["Servicio push del navegador<br/>(contenido cifrado)"]
   APP -. "sólo al pulsar ♪" .-> MUS["Servidor de la música"]
+  APP -. "sólo al pulsar «Invítame un café»<br/>(enlace, nada se carga antes)" .-> DON["Plataforma de donación"]
+```
+
+### Botón de donación
+
+Un enlace normal configurado al compilar. Sin URL válida no se muestra y la
+app nunca toca datos de pago.
+
+```mermaid
+flowchart TD
+  ENV["VITE_DONATION_URL<br/>(variable de Netlify)"] --> P{"parseDonationUrl<br/>¿https y sin credenciales?"}
+  P -- "no o vacía" --> X["Pie sin botón"]
+  P -- "sí" --> B["Pie: «☕ Invítame un café»<br/>Voluntario. La app es y seguirá siendo gratis."]
+  B -- "la persona lo pulsa" --> T["Pestaña nueva en Ko-fi, Buy Me a Coffee,<br/>GitHub Sponsors, PayPal…<br/>(rel=noopener noreferrer)"]
+  T --> PAY["La plataforma cobra con sus propias condiciones"]
+  PAY -. "nada vuelve a la app" .-> APP["App: sin SDK, sin cookies,<br/>CSP sin cambios"]
 ```
 
