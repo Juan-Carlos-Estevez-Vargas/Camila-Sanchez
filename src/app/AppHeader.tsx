@@ -10,6 +10,7 @@ import { useSiteContent } from "@/state/SiteContentStore";
 import { Avatar } from "@/ui/Avatar";
 import { useT } from "@/i18n";
 import { LanguagePicker } from "./LanguagePicker";
+import { DonateLink } from "./DonateLink";
 
 /** Cierra un desplegable con Esc (devolviendo el foco a su botón) o con un clic fuera. */
 function useDismiss(open: boolean, close: () => void, root: RefObject<HTMLElement | null>, trigger: RefObject<HTMLElement | null>) {
@@ -140,6 +141,7 @@ export function AppHeader() {
           )}
           <LanguagePicker compact />
         </nav>
+        <DonateLink variant="header" />
         <GuidedTour />
         {user && <NotificationBell />}
       </div>
