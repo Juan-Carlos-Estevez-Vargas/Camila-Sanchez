@@ -20,6 +20,7 @@ manos de quien la administra. Los diagramas están en
 - [Auditoría de SDKs y servicios de terceros](#auditoría-de-sdks-y-servicios-de-terceros)
 - [Patrones oscuros](#patrones-oscuros)
 - [Cobros](#cobros)
+- [Donaciones](#donaciones)
 - [Texto alternativo](#texto-alternativo)
 - [Licencias de imágenes, fuentes y código](#licencias-de-imágenes-fuentes-y-código)
 - [Qué tiene que hacer el administrador](#qué-tiene-que-hacer-el-administrador)
@@ -133,6 +134,7 @@ cuenta.
 | Servicio push del navegador (FCM, APNs, Mozilla) | Sólo si se activan los avisos | Aviso cifrado | Lo pide la persona con un botón; nunca se pide permiso solo |
 | Servidor de la música | Sólo al pulsar ♪ | IP | La persona lo activa |
 | GitHub, LinkedIn, Instagram | Sólo al pulsar sus enlaces | — | Enlaces normales, sin scripts ni widgets |
+| Plataforma de donación (`VITE_DONATION_URL`) | Sólo al pulsar «Invítame un café» | Lo que la persona le dé a esa plataforma | Enlace normal: sin SDK, sin botón embebido, sin cambiar la CSP |
 
 La CSP de producción (`public/_headers`, `vercel.json`) ya impide cargar
 scripts de otros orígenes, así que ningún SDK puede colarse sin cambiarla.
@@ -154,9 +156,30 @@ Se revisaron los flujos donde suelen aparecer:
 ## Cobros
 
 La app no tiene pasarela de pago, no pide tarjetas y no muestra anuncios.
+Lo único relacionado con dinero es el botón opcional **«Invítame un café»** del
+pie de página (`VITE_DONATION_URL`, ver [Donaciones](#donaciones)).
 `Permissions-Policy: payment=()` desactiva la API de pagos del navegador en
 todas las páginas. `/legal/reembolsos` lo deja por escrito y promete que, si
 algún día cobrara, se avisaría antes y se pediría aceptarlo.
+
+## Donaciones
+
+Se evaluó poner publicidad y se descartó: con el tráfico de una app privada
+de pareja los ingresos serían de centavos al mes, obligaría a cargar scripts
+de rastreo (CSP, aviso de cookies, política) y los anuncios «ocultos» o
+disfrazados violan las políticas de AdSense y similares. En su lugar hay un
+enlace de donación voluntaria:
+
+- Es un `<a>` normal a la plataforma (Ko-fi, Buy Me a Coffee, GitHub
+  Sponsors, PayPal…). No se carga ningún script ni widget, así que la CSP y
+  el aviso de cookies no cambian.
+- Sólo se aceptan URLs `https` sin credenciales (`src/core/donation.ts`, con
+  pruebas). Si la variable está vacía o es inválida, el botón no aparece.
+- Está etiquetado como voluntario, no desbloquea nada y no aparece en el
+  chat ni en los recuerdos: sólo en el pie, con el mismo peso que las redes.
+- `/legal/reembolsos` y la política de privacidad explican que el pago lo
+  hace la plataforma con sus propias condiciones. No cambia lo que la app
+  recoge, así que `LEGAL_VERSION` no sube (sólo la fecha de actualización).
 
 ## Texto alternativo
 

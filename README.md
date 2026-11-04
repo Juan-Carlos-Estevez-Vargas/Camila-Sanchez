@@ -97,6 +97,7 @@ Funciona en dos modos:
 | Avisos push en el celular: chat, notitas, sorpresas y listas | — | Quien los active |
 | Tutorial guiado según la página y los permisos de cada cuenta | Todas | Todos |
 | Legal: privacidad, términos, cookies, cobros y licencias; aviso de cookies y aceptación de términos | `/legal` | Pública |
+| Botón opcional «Invítame un café» en el pie (donación voluntaria por un enlace externo) | Pie de página | Todos, si `VITE_DONATION_URL` tiene valor |
 
 **Fotos optimizadas en el navegador.** Cada imagen pasa por un *pool* de Web
 Workers con `OffscreenCanvas`: corrige la orientación EXIF, elimina metadatos
@@ -255,6 +256,10 @@ Más en [docs/ACCESIBILIDAD.md](docs/ACCESIBILIDAD.md).
 - **Consentimiento con prueba:** casilla desmarcada y obligatoria al crear la
   cuenta, diálogo único para cuentas existentes o cuando cambia
   `LEGAL_VERSION`, y registro inmutable en `legal_consents`.
+- **Donación voluntaria, sin publicidad:** con `VITE_DONATION_URL` el pie
+  muestra «☕ Invítame un café», un enlace normal a Ko-fi, Buy Me a Coffee,
+  GitHub Sponsors o PayPal. No carga scripts ni cookies, no toca la CSP y
+  no desbloquea nada. Vacía, no aparece.
 - Auditoría de SDKs y de patrones oscuros, inventario de datos, texto
   alternativo con prueba automática y licencias de dependencias revisadas en
   CI (`scripts/licenses.test.ts`).

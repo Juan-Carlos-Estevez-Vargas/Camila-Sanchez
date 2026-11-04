@@ -68,6 +68,7 @@ celular.
    | `VITE_SUPABASE_ANON_KEY` | la clave anon public |
    | `VITE_SITE_URL` | el mismo dominio que `SITE_URL` |
    | `VITE_SEO_INDEX` | `true` (o `false` si no quieres aparecer en Google) |
+   | `VITE_DONATION_URL` | opcional: tu enlace de Ko-fi, Buy Me a Coffee, GitHub Sponsors o PayPal (`https://…`). Muestra «Invítame un café» en el pie; vacía, no hay botón |
 
 3. *Deploys → Trigger deploy → Deploy site*. El repositorio ya trae
    `netlify.toml` (compila con `npm run build` y publica `dist/`) y la rama de
