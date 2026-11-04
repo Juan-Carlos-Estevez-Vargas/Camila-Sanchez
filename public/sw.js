@@ -35,6 +35,8 @@ self.addEventListener("install", (event) => {
 });
 
 self.addEventListener("message", (event) => {
+  // Sólo páginas de este mismo sitio pueden activar la versión nueva.
+  if (event.origin !== self.location.origin) return;
   if (event.data && event.data.type === "SKIP_WAITING") self.skipWaiting();
 });
 
