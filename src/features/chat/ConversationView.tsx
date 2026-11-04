@@ -37,6 +37,16 @@ const timeFormat = { format: (d: Date) => dateFormat({ hour: "numeric", minute: 
 const fullFormat = { format: (d: Date) => dateFormat({ dateStyle: "long", timeStyle: "short" }).format(d) };
 /** Fotos por envío, como en WhatsApp sin llegar a saturar. */
 const MAX_PHOTOS = 10;
+
+/**
+ * URL local (blob:) para previsualizar una foto antes de enviarla. Se copia el
+ * contenido a un Blob nuevo con un tipo de imagen fijo, así el navegador sólo
+ * puede mostrarlo como imagen (nunca como HTML ni como script).
+ */
+function previewUrl(file: File): string {
+  const type = /^image\/[a-z0-9.+-]+$/i.test(file.type) ? file.type : "image/jpeg";
+  return URL.createObjectURL(new Blob([file], { type }));
+}
 /** Las fotos del chat se ven en el celular: más livianas que las del álbum. */
 const CHAT_IMAGE_OPTIONS = { maxEdge: 1600, thumbEdge: 480, quality: 0.82, targetBytes: 350 * 1024, minQuality: 0.66 };
 
@@ -482,7 +492,7 @@ export function ConversationView({ conversation }: { conversation: ChatConversat
     setDrafts((current) => {
       const room = MAX_PHOTOS - current.length;
       if (images.length > room) toast.show({ title: t.maxPhotos(MAX_PHOTOS) });
-      return [...current, ...images.slice(0, Math.max(room, 0)).map((file) => ({ id: crypto.randomUUID(), file, url: URL.createObjectURL(file) }))];
+      return [...current, ...images.slice(0, Math.max(room, 0)).map((file) => ({ id: crypto.randomUUID(), file, url: previewUrl(file) }))];
     });
     input.current?.focus();
   };
