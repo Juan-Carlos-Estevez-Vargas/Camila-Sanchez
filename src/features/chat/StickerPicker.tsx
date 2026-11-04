@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
-import { STICKERS } from "@/domain/stickers";
+import { stickerById, STICKERS } from "@/domain/stickers";
 import { StickerArt } from "./StickerArt";
+import { useT } from "@/i18n";
 
 /** Panel de stickers sobre la caja de texto. Esc o un clic fuera lo cierran. */
 export function StickerPicker({ onPick, onClose }: { onPick(id: string): void; onClose(): void }) {
@@ -21,11 +22,12 @@ export function StickerPicker({ onPick, onClose }: { onPick(id: string): void; o
     };
   }, [onClose]);
 
+  const t = useT().chat;
   return (
-    <div ref={panel} className="sticker-picker card" role="dialog" aria-label="Stickers">
+    <div ref={panel} className="sticker-picker card" role="dialog" aria-label={t.stickersTitle}>
       <div className="sticker-picker__grid">
         {STICKERS.map((s) => (
-          <button key={s.id} type="button" className="sticker-picker__item" onClick={() => onPick(s.id)} aria-label={`Enviar sticker ${s.text}`}>
+          <button key={s.id} type="button" className="sticker-picker__item" onClick={() => onPick(s.id)} aria-label={t.sendSticker(stickerById(s.id).text)}>
             <StickerArt id={s.id} size="sm" />
           </button>
         ))}

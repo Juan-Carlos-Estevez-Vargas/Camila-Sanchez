@@ -19,6 +19,7 @@ import { ConversationList } from "./ConversationList";
 import { ConversationView } from "./ConversationView";
 import { PeoplePanel } from "./PeoplePanel";
 import { RequestsPanel } from "./RequestsPanel";
+import { useT } from "@/i18n";
 
 type View = "chats" | "requests" | "people";
 
@@ -37,6 +38,8 @@ function ChatLayout() {
   const conversationId = UUID.test(rest) ? rest : null;
   const view: View = rest === "solicitudes" ? "requests" : rest === "personas" ? "people" : "chats";
   const { incoming, ready, conversations, unreadTotal } = useChat();
+  const i18n = useT();
+  const t = i18n.chat.app;
 
   // En el celular, dentro de una conversación, la cabecera del sitio se
   // esconde y el chat ocupa toda la pantalla.
@@ -59,35 +62,35 @@ function ChatLayout() {
   const known = conversationId ? conversations.find((c) => c.id === conversationId) : undefined;
 
   return (
-    <main id="contenido-principal" className={`chat-app${conversationId ? " has-thread" : ""}`} aria-label="Chat">
-      <aside className="chat-app__side" aria-label="Tus chats">
+    <main id="contenido-principal" className={`chat-app${conversationId ? " has-thread" : ""}`} aria-label={t.label}>
+      <aside className="chat-app__side" aria-label={t.side}>
         <header className="chat-side__header">
-          <h1 className="chat-side__title">Chats</h1>
-          <Link to="/chat/personas" className="btn btn--icon btn--ghost" aria-label="Nuevo chat: buscar personas" title="Nuevo chat" data-tour="chat-new">
+          <h1 className="chat-side__title">{t.title}</h1>
+          <Link to="/chat/personas" className="btn btn--icon btn--ghost" aria-label={t.newChat} title={t.newChatTitle} data-tour="chat-new">
             <span aria-hidden>✏️</span>
           </Link>
         </header>
-        <nav className="chat-side__tabs" aria-label="Secciones del chat">
+        <nav className="chat-side__tabs" aria-label={t.sections}>
           <Link to="/chat" className={`chat-side__tab${view === "chats" ? " is-active" : ""}`} aria-current={view === "chats" ? "page" : undefined} data-tour="chat-list">
-            Chats
+            {t.chats}
             {unreadTotal > 0 && (
               <>
                 <span className="counter-dot" aria-hidden>{unreadTotal > 99 ? "99+" : unreadTotal}</span>
-                <span className="visually-hidden">({unreadTotal} sin leer)</span>
+                <span className="visually-hidden">{t.unread(unreadTotal)}</span>
               </>
             )}
           </Link>
           <Link to="/chat/solicitudes" className={`chat-side__tab${view === "requests" ? " is-active" : ""}`} aria-current={view === "requests" ? "page" : undefined} data-tour="chat-requests">
-            Solicitudes
+            {t.requests}
             {incoming.length > 0 && (
               <>
                 <span className="counter-dot" aria-hidden>{incoming.length}</span>
-                <span className="visually-hidden">({incoming.length} nuevas)</span>
+                <span className="visually-hidden">{t.newRequests(incoming.length)}</span>
               </>
             )}
           </Link>
           <Link to="/chat/personas" className={`chat-side__tab${view === "people" ? " is-active" : ""}`} aria-current={view === "people" ? "page" : undefined}>
-            Buscar
+            {t.search}
           </Link>
         </nav>
         <EnableNotifications />
@@ -97,26 +100,26 @@ function ChatLayout() {
           {view === "people" && <PeoplePanel />}
         </div>
       </aside>
-      <section className="chat-app__main" aria-label="Conversación">
+      <section className="chat-app__main" aria-label={t.conversation}>
         {conversationId ? (
           known ? <ConversationView key={conversationId} conversation={known} /> : (
             <div className="chat-app__placeholder">
               {ready ? (
                 <>
                   <span className="chat-app__placeholder-icon" aria-hidden>🔒</span>
-                  <h2>Este chat no está disponible</h2>
-                  <p className="muted">Puede que ya no seas parte de él o que el enlace esté mal.</p>
-                  <Link to="/chat" className="btn btn--ghost">Volver a los chats</Link>
+                  <h2>{t.unavailable}</h2>
+                  <p className="muted">{t.unavailableHint}</p>
+                  <Link to="/chat" className="btn btn--ghost">{t.backToChats}</Link>
                 </>
-              ) : <p className="muted" role="status">Cargando…</p>}
+              ) : <p className="muted" role="status">{i18n.common.loadingEllipsis}</p>}
             </div>
           )
         ) : (
           <div className="chat-app__placeholder">
             <span className="chat-app__placeholder-icon" aria-hidden>💬</span>
-            <h2>Tus mensajes</h2>
-            <p className="muted">Elige un chat de la lista, o busca a alguien y mándale una solicitud para empezar a hablar.</p>
-            <Link to="/chat/personas" className="btn">Buscar personas</Link>
+            <h2>{t.placeholderTitle}</h2>
+            <p className="muted">{t.placeholderHint}</p>
+            <Link to="/chat/personas" className="btn">{t.findPeople}</Link>
           </div>
         )}
       </section>
