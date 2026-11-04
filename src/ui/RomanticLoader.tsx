@@ -38,7 +38,7 @@ export function RomanticLoader({ tasks, onCancel }: Props) {
       setNow(Date.now());
     }, 2600);
     return () => clearInterval(timer);
-  }, []);
+  }, [PHRASES.length]);
 
   const stats = useMemo(() => {
     const total = tasks.length;
