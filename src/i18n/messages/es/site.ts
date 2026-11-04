@@ -16,7 +16,7 @@ export const site = {
   surprise: "¡Sorpresa!",
   countdown: {
     today: "¡Hoy!",
-    days: (n: number) => (n === 1 ? "día" : "días"),
+    days: (n: number): string => (n === 1 ? "día" : "días"),
     until: (title: string) => `para ${title}`,
     years: (n: number) => ` · ${n} ${n === 1 ? "año" : "años"}`,
   },
