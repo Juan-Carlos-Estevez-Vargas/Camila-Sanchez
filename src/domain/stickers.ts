@@ -3,6 +3,7 @@
  * sin imágenes externas: no pesan, se ven igual en todos lados y no hay que
  * pedir permiso a nadie para usarlos. La base de datos sólo guarda el id.
  */
+import { msg } from "@/i18n";
 export interface Sticker {
   id: string;
   emoji: string;
@@ -34,7 +35,9 @@ const BY_ID = new Map(STICKERS.map((s) => [s.id, s]));
 
 /** El sticker con ese id; si ya no existe en el catálogo, uno genérico. */
 export function stickerById(id: string | null | undefined): Sticker {
-  return (id && BY_ID.get(id)) || { id: id ?? "desconocido", emoji: "✨", text: "Sticker", tone: "accent" };
+  const sticker = (id && BY_ID.get(id)) || { id: id ?? "desconocido", emoji: "✨", text: "Sticker", tone: "accent" as const };
+  const t = msg().chat;
+  return { ...sticker, text: t.stickers[sticker.id] ?? (BY_ID.has(sticker.id) ? sticker.text : t.stickerFallback) };
 }
 
 export function isKnownSticker(id: string): boolean {

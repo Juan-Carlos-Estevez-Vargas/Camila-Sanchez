@@ -9,6 +9,7 @@ import type { ChatContact, ChatConversation, ChatPresence, Profile, Uuid } from 
 import { useAuth } from "@/state/AuthContext";
 import { useBackend } from "@/state/BackendContext";
 import { useToast } from "@/state/ToastContext";
+import { msg, useLocale } from "@/i18n";
 
 /** Cada cuánto se refrescan los textos de «hace 3 min». */
 const CLOCK_MS = 20_000;
@@ -159,16 +160,18 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     setConversations((list) => list.map((c) => (c.id === id ? { ...c, ...patch } : c)));
   }, []);
 
+  const locale = useLocale();
   const value = useMemo<ChatStore>(() => {
     const profiles = new Map(profileList.map((p) => [p.id, p]));
-    const nameOf = (id: Uuid | null | undefined) => (id && id === me ? "Tú" : (id && profiles.get(id)?.displayName) || "Alguien");
+    const t = msg();
+    const nameOf = (id: Uuid | null | undefined) => (id && id === me ? t.chat.you : (id && profiles.get(id)?.displayName) || t.common.someone);
     const peerOf = (c: ChatConversation) => {
       const other = otherParticipant(c, me);
       return other ? profiles.get(other) ?? null : null;
     };
     const titleOf = (c: ChatConversation) => {
-      if (c.kind === "group") return c.title || c.participantIds.filter((id) => id !== me).map(nameOf).join(", ") || "Grupo";
-      return peerOf(c)?.displayName || "Alguien";
+      if (c.kind === "group") return c.title || c.participantIds.filter((id) => id !== me).map(nameOf).join(", ") || t.chat.group;
+      return peerOf(c)?.displayName || t.common.someone;
     };
     const incoming = contacts.filter((c) => c.status === "pending" && c.addresseeId === me);
     const outgoing = contacts.filter((c) => c.status === "pending" && c.requesterId === me);
@@ -178,7 +181,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       reload, nameOf, titleOf, peerOf, patchConversation,
       isContact: (userId) => contacts.some((c) => c.status === "accepted" && (c.requesterId === userId || c.addresseeId === userId)),
     };
-  }, [ready, me, now, conversations, contacts, blocked, profileList, presences, typing, reload, patchConversation]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- el idioma cambia los textos de nameOf/titleOf.
+  }, [ready, me, now, conversations, contacts, blocked, profileList, presences, typing, reload, patchConversation, locale]);
 
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;
 }
