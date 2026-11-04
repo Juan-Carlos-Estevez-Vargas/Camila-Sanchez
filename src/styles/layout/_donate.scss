@@ -1,0 +1,58 @@
+@use "../abstracts" as *;
+
+// «Invítame un café». Amarillo café con texto oscuro (contraste 15:1) para
+// que destaque igual con cualquier paleta, sin parpadeos ni animaciones.
+.donate-link {
+  --donate-bg: #ffdd00;
+  --donate-fg: #1f1a17;
+
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: space(2);
+  min-height: 40px;
+  padding: space(1) space(4);
+  border-radius: var(--radius-pill, 999px);
+  border: 1px solid rgb(0 0 0 / 12%);
+  background: var(--donate-bg);
+  color: var(--donate-fg);
+  font-weight: 600;
+  font-size: 0.92rem;
+  white-space: nowrap;
+  text-decoration: none;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 12%);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover {
+    color: var(--donate-fg);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgb(0 0 0 / 18%);
+  }
+
+  &:focus-visible { @include focus-ring; }
+
+  @include reduced-motion {
+    transition: none;
+    &:hover { transform: none; }
+  }
+
+  &__icon { font-size: 1.05rem; }
+
+  &--footer {
+    min-height: 44px;
+    padding: space(2) space(5);
+    font-size: 1rem;
+  }
+
+  // En el celular la cabecera no tiene espacio: sólo la taza, igual de visible.
+  &--header {
+    @include below("sm") {
+      width: 40px;
+      height: 40px;
+      padding: 0;
+      justify-content: center;
+
+      .donate-link__text { @include visually-hidden; }
+    }
+  }
+}
