@@ -22,7 +22,11 @@
   }
 
   &--compact {
-    select { padding-left: 1.9rem; }
+    select {
+      min-height: 34px;
+      padding: 0.2rem 1.4rem 0.2rem 1.8rem;
+      font-weight: 600;
+    }
   }
 
   &__icon {
@@ -35,4 +39,75 @@
   &__label { color: var(--c-muted); }
 }
 
-.app-footer .lang-picker { margin-top: space(1); }
+
+// Pestañas de idioma de los editores del panel (original · traducciones).
+.content-lang {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: space(2);
+
+  &__label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--c-muted);
+  }
+
+  &__options {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 4px;
+    border-radius: var(--radius-pill);
+    background: var(--c-surface-2);
+  }
+
+  &__option {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 32px;
+    padding: 0.25rem 0.8rem;
+    border: 0;
+    border-radius: var(--radius-pill);
+    background: transparent;
+    color: var(--c-muted);
+    font: inherit;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+
+    &:hover { color: var(--c-text); }
+    &:focus-visible { @include focus-ring; }
+
+    &[aria-pressed="true"] {
+      background: var(--c-surface);
+      color: var(--c-text);
+      box-shadow: 0 1px 4px rgb(0 0 0 / 10%);
+    }
+  }
+
+  &__progress {
+    padding: 0 6px;
+    border-radius: var(--radius-pill);
+    background: var(--c-border);
+    font-size: 0.72rem;
+    font-variant-numeric: tabular-nums;
+
+    &.is-done {
+      background: var(--c-primary-soft);
+      color: var(--c-text);
+    }
+  }
+}
+
+.translation-field__original {
+  margin: 0;
+  padding: space(1) space(2);
+  border-left: 3px solid var(--c-primary-soft);
+  color: var(--c-muted);
+  font-size: 0.85rem;
+  white-space: pre-line;
+}
+
+.translation-field__tag { font-weight: 600; }

@@ -4,7 +4,7 @@ import { config } from "@/core/config";
 import { resolveSeo, type SeoTexts } from "@/core/seo";
 import { LOCALES, useLocale, useT, type Messages } from "@/i18n";
 import { applySeo } from "@/services/seo/head";
-import { useSiteContent } from "./SiteContentStore";
+import { useLocalizedContent } from "./SiteContentStore";
 
 function seoTexts(t: Messages, tag: string, ogLocale: string): SeoTexts {
   return {
@@ -24,7 +24,7 @@ function seoTexts(t: Messages, tag: string, ogLocale: string): SeoTexts {
 /** Mantiene título, descripción, robots y Open Graph al día con la ruta, los ajustes y el idioma. */
 export function SeoController() {
   const { pathname } = useLocation();
-  const { content } = useSiteContent();
+  const { content } = useLocalizedContent();
   const settings = content?.settings ?? null;
   const t = useT();
   const locale = useLocale();

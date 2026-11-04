@@ -2,6 +2,7 @@
  * Modelo de dominio. Refleja las tablas de supabase/migrations pero en
  * camelCase y con tipos estrictos; los repositorios hacen la traducción.
  */
+import type { ContentTranslations } from "./contentTranslations";
 
 export type Uuid = string;
 /** Fecha de calendario sin hora, formato YYYY-MM-DD. */
@@ -69,6 +70,8 @@ export interface SiteSettings {
   theme: ThemeTokens;
   effects: EffectsConfig;
   updatedAt: IsoDateTime;
+  /** Título y subtítulo en otros idiomas (ver contentTranslations.ts). */
+  translations?: ContentTranslations;
 }
 
 export const SECTION_ANIMATIONS = [
@@ -115,6 +118,8 @@ interface SectionBase {
   animation: SectionAnimation;
   position: number;
   isVisible: boolean;
+  /** Textos de la sección en otros idiomas. */
+  translations?: ContentTranslations;
 }
 
 export type Section = {
@@ -153,6 +158,7 @@ export interface Milestone {
   icon: string;
   photoId: Uuid | null;
   position: number;
+  translations?: ContentTranslations;
 }
 
 export interface ImportantDate {
@@ -163,6 +169,7 @@ export interface ImportantDate {
   icon: string;
   message: string;
   isVisible: boolean;
+  translations?: ContentTranslations;
 }
 
 export const INTERRUPTION_STYLES = ["modal", "banner", "confetti", "hearts"] as const;

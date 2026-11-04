@@ -1,4 +1,4 @@
-import { dateFormat, msg, relativeFormat } from "@/i18n/store";
+import { dateFormat, getLocale, msg, relativeFormat } from "@/i18n/store";
 import type { ImportantDate, IsoDate, Photo } from "./types";
 
 const DAY_MS = 86_400_000;
@@ -94,9 +94,19 @@ export function buildCountdowns(dates: ImportantDate[], now: Date = new Date()):
     .sort((a, b) => a.days - b.days);
 }
 
+/**
+ * El nombre de la fecha dentro de una frase («Faltan 3 días para tu
+ * cumpleaños»). En español y portugués va con minúscula inicial; en inglés se
+ * deja tal cual, porque ahí las fiestas van con mayúscula (Christmas).
+ */
+export function titleInSentence(title: string): string {
+  if (getLocale() === "en") return title;
+  return title.charAt(0).toLocaleLowerCase() + title.slice(1);
+}
+
 export function countdownLabel(c: Countdown): string {
   const t = msg().dates;
-  const title = c.date.title.toLowerCase();
+  const title = titleInSentence(c.date.title);
   if (c.days === 0) return t.countdownToday(title);
   if (c.days === 1) return t.countdownTomorrow(title);
   return t.countdownDays(c.days, title);

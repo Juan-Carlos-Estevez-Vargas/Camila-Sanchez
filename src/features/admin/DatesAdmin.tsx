@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { TRANSLATABLE, translatableSource } from "@/domain/contentTranslations";
 import { buildCountdowns, countdownLabel, formatLongDate, toIsoDate } from "@/domain/dates";
 import type { ImportantDate } from "@/domain/types";
 import { useBackend } from "@/state/BackendContext";
@@ -10,6 +11,7 @@ import { useConfirm } from "@/ui/useConfirm";
 import { AdminPage } from "./AdminLayout";
 import { useSaver } from "./useSaver";
 import { msg, useT } from "@/i18n";
+import { ContentLanguageTabs, TranslationFields, type EditLanguage } from "./ContentLanguage";
 
 type Draft = Omit<ImportantDate, "id"> & { id?: string };
 
@@ -28,7 +30,12 @@ export default function DatesAdmin() {
   const { content } = useSiteContent();
   const { run, busy } = useSaver();
   const [confirm, confirmElement] = useConfirm();
-  const [draft, setDraft] = useState<Draft | null>(null);
+  const [draft, setDraftState] = useState<Draft | null>(null);
+  const [lang, setLang] = useState<EditLanguage>("es");
+  const setDraft = (next: Draft | null) => {
+    if (!next || next.id !== draft?.id) setLang("es");
+    setDraftState(next);
+  };
   const i18n = useT();
   const a = i18n.admin;
   const t = a.dates;
@@ -79,6 +86,11 @@ export default function DatesAdmin() {
         <Modal title={draft.id ? t.editTitle : t.newTitle} onClose={() => setDraft(null)}
           footer={<><button className="btn btn--ghost" onClick={() => setDraft(null)}>{i18n.common.cancel}</button><button className="btn" disabled={busy || !draft.title.trim()} onClick={save}>{a.save}</button></>}>
           <div className="stack">
+            <ContentLanguageTabs value={lang} onChange={setLang} source={translatableSource(draft, TRANSLATABLE.date)} translations={draft.translations} />
+            {lang !== "es" ? (
+              <TranslationFields locale={lang} source={translatableSource(draft, TRANSLATABLE.date)} translations={draft.translations}
+                onChange={(translations) => setDraft({ ...draft, translations })} />
+            ) : (<>
             {!draft.id && (
               <div className="row">
                 {SUGGESTIONS.map((s) => (
@@ -96,6 +108,7 @@ export default function DatesAdmin() {
             <Field label={a.messageOptional}>{(id) => <input id={id} className="input" maxLength={500} value={draft.message} onChange={(e) => setDraft({ ...draft, message: e.target.value })} />}</Field>
             <Switch label={t.repeats} checked={draft.recursYearly} onChange={(recursYearly) => setDraft({ ...draft, recursYearly })} />
             <Switch label={t.show} checked={draft.isVisible} onChange={(isVisible) => setDraft({ ...draft, isVisible })} />
+            </>)}
           </div>
         </Modal>
       )}

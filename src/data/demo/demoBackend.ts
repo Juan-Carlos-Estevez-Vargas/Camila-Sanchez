@@ -27,6 +27,7 @@ import type {
 import type { Backend, ListsRepository, RealtimeChange, RealtimeTable } from "@/data/ports";
 import { createDemoChat, seedDemoChat, upgradeDemoChat, type DemoChatState } from "./demoChat";
 import { SEED_DATES, SEED_MILESTONES, SEED_PHOTOS, SEED_SECTIONS, SEED_SETTINGS } from "./seed";
+import { SEED_TRANSLATIONS } from "./seedTranslations";
 
 // Cambia de versión cuando cambian los datos de fábrica (tema, permisos...).
 const STORAGE_KEY = "love-demo-v3";
@@ -106,11 +107,11 @@ function initialState(): DemoState {
 function baseState(): DemoState {
   const created = nowIso();
   return {
-    settings: SEED_SETTINGS,
-    sections: SEED_SECTIONS.map((s) => ({ ...s, id: uuid() }) as Section),
+    settings: { ...SEED_SETTINGS, translations: SEED_TRANSLATIONS.settings },
+    sections: SEED_SECTIONS.map((s) => ({ ...s, id: uuid(), translations: SEED_TRANSLATIONS.sections[s.kind] ?? {} }) as Section),
     photos: SEED_PHOTOS.map((p) => ({ ...p, id: uuid() })),
-    milestones: SEED_MILESTONES.map((m) => ({ ...m, id: uuid() })),
-    dates: SEED_DATES.map((d) => ({ ...d, id: uuid() })),
+    milestones: SEED_MILESTONES.map((m) => ({ ...m, id: uuid(), translations: SEED_TRANSLATIONS.milestones[m.title] ?? {} })),
+    dates: SEED_DATES.map((d) => ({ ...d, id: uuid(), translations: SEED_TRANSLATIONS.dates[d.title] ?? {} })),
     interruptions: [],
     interruptionViews: {},
     notes: [],

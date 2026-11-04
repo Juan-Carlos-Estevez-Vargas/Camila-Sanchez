@@ -1,4 +1,4 @@
-import { buildCountdowns } from "@/domain/dates";
+import { buildCountdowns, titleInSentence } from "@/domain/dates";
 import { SectionHeading } from "./SectionHeading";
 import type { SectionProps } from "./types";
 import { dateFormat, useT } from "@/i18n";
@@ -19,7 +19,7 @@ export function Countdowns({ section, content }: SectionProps<"countdowns">) {
               {c.days === 0 ? t.today : <>{c.days}<small> {t.days(c.days)}</small></>}
             </div>
             <h3 className="countdown__title">
-              {c.days === 0 ? c.date.title : t.until(c.date.title.toLowerCase())}
+              {c.days === 0 ? c.date.title : t.until(titleInSentence(c.date.title))}
             </h3>
             <p className="muted countdown__date">
               {dayFormat.format(c.next)}
