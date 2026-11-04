@@ -4,6 +4,7 @@ import { formatLongDate } from "@/domain/dates";
 import type { Photo, PhotoUrls, Uuid } from "@/domain/types";
 import { isTopDialog, useFocusTrap } from "@/ui/useFocusTrap";
 import { burst } from "../effects/FloatingEffects";
+import { useT } from "@/i18n";
 
 interface Props {
   title: string;
@@ -17,6 +18,7 @@ interface Props {
 /** Visor de fotos: teclado (← → Esc), deslizar con el dedo y precarga. */
 export function Lightbox({ title, photos, urls, startIndex = 0, effect, onClose }: Props) {
   const [index, setIndex] = useState(startIndex);
+  const t = useT().site.lightbox;
   const touchX = useRef<number | null>(null);
   const dialog = useRef<HTMLDivElement>(null);
   useFocusTrap(dialog, { initial: ".lightbox__close" });
@@ -73,28 +75,28 @@ export function Lightbox({ title, photos, urls, startIndex = 0, effect, onClose 
         <span>{title}</span>
         <span aria-live="polite" aria-atomic="true">
           <span aria-hidden>{index + 1} / {count}</span>
-          <span className="visually-hidden">Foto {index + 1} de {count}{photo.caption ? `: ${photo.caption}` : ""}</span>
+          <span className="visually-hidden">{t.position(index + 1, count)}{photo.caption ? `: ${photo.caption}` : ""}</span>
         </span>
-        <button className="btn btn--icon btn--ghost lightbox__close" onClick={onClose} aria-label="Cerrar el visor"><span aria-hidden>×</span></button>
+        <button className="btn btn--icon btn--ghost lightbox__close" onClick={onClose} aria-label={t.close}><span aria-hidden>×</span></button>
       </div>
       <div className="lightbox__stage">
-        {count > 1 && <button className="lightbox__nav is-prev" onClick={() => go(-1)} aria-label="Foto anterior"><span aria-hidden>‹</span></button>}
+        {count > 1 && <button className="lightbox__nav is-prev" onClick={() => go(-1)} aria-label={t.prev}><span aria-hidden>‹</span></button>}
         <figure className="lightbox__figure" key={photo.id}>
-          {url ? <img src={url.full} alt={photo.caption || "Recuerdo"} decoding="async" /> : <div className="skeleton lightbox__placeholder" />}
+          {url ? <img src={url.full} alt={photo.caption || t.fallbackAlt} decoding="async" /> : <div className="skeleton lightbox__placeholder" />}
           <figcaption>
             {photo.caption && <p>{photo.caption}</p>}
             <time dateTime={photo.takenOn}>{formatLongDate(photo.takenOn)}</time>
           </figcaption>
         </figure>
-        {count > 1 && <button className="lightbox__nav is-next" onClick={() => go(1)} aria-label="Foto siguiente"><span aria-hidden>›</span></button>}
+        {count > 1 && <button className="lightbox__nav is-next" onClick={() => go(1)} aria-label={t.next}><span aria-hidden>›</span></button>}
       </div>
       {count > 1 && (
-        <div className="lightbox__thumbs" role="group" aria-label="Todas las fotos">
+        <div className="lightbox__thumbs" role="group" aria-label={t.all}>
           {photos.map((p, i) => {
             const u = urls.get(p.id);
             return (
               <button key={p.id} className={`lightbox__thumb${i === index ? " is-active" : ""}`} onClick={() => setIndex(i)}
-                aria-label={`Foto ${i + 1}${p.caption ? `: ${p.caption}` : ""}`} aria-current={i === index ? "true" : undefined}>
+                aria-label={`${t.thumb(i + 1)}${p.caption ? `: ${p.caption}` : ""}`} aria-current={i === index ? "true" : undefined}>
                 {u && <img src={u.thumb} alt="" loading="lazy" decoding="async" />}
               </button>
             );
