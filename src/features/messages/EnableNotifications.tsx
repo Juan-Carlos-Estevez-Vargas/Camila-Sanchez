@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
+import { INSTALL_PATH } from "@/core/seo";
 import { useBackend } from "@/state/BackendContext";
 import { useToast } from "@/state/ToastContext";
 import {
@@ -8,10 +10,13 @@ import { useT } from "@/i18n";
 
 /** En iPhone los avisos sólo existen con la app en la pantalla de inicio. */
 function InstallHint() {
-  const t = useT().notes.push;
+  const i18n = useT();
+  const t = i18n.notes.push;
+  const install = i18n.install;
   return (
     <span>
-      {t.iphoneBefore} <strong>{t.share}</strong> → <strong>{t.addHome}</strong>{t.iphoneAfter}
+      {t.iphoneBefore} <strong>{t.share}</strong> → <strong>{t.addHome}</strong>{t.iphoneAfter}{" "}
+      <Link to={INSTALL_PATH}>{install.account.open}</Link>
     </span>
   );
 }

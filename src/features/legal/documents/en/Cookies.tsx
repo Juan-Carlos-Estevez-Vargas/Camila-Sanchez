@@ -19,8 +19,8 @@ export function Cookies() {
         <tbody>
           <tr><td>Session</td><td>Knowing you have signed in. With "keep me signed in" it stays saved; without it, it is cleared when you close the tab.</td><td>Until you sign out</td></tr>
           <tr><td>Quick copy of the content</td><td>So the page opens instantly and works offline. It is cleared when you sign out.</td><td>Until you sign out</td></tr>
-          <tr><td>Preferences</td><td>Reduced motion, your language, the tutorial already seen, surprises already seen and your choice in this notice.</td><td>Until you clear your browser data</td></tr>
-          <tr><td>Phone notifications</td><td>The <em>service worker</em> that receives notifications, if you turn them on.</td><td>Until you turn them off</td></tr>
+          <tr><td>Preferences</td><td>Reduced motion, your language, the tutorial already seen, surprises already seen, whether you closed the install-the-app notice and your choice in this notice.</td><td>Until you clear your browser data</td></tr>
+          <tr><td>App and phone notifications</td><td>The <em>service worker</em>: keeps the app's code so it opens fast and offline, and receives notifications if you turn them on.</td><td>Until you clear your browser data or uninstall the app</td></tr>
         </tbody>
       </table>
 

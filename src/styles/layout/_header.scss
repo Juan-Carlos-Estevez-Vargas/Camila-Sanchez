@@ -7,6 +7,8 @@
   background: tint(var(--c-bg), 82%);
   backdrop-filter: saturate(1.4) blur(12px);
   border-bottom: 1px solid var(--c-border);
+  // App instalada en iPhone con la barra de estado encima: no queda tapada.
+  padding-top: env(safe-area-inset-top);
 
   // Tres zonas: marca · navegación · acciones. Más ancha que el contenido
   // para que los menús en inglés o portugués (más largos) quepan en una fila.

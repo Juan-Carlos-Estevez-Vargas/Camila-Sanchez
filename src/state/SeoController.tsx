@@ -15,6 +15,8 @@ function seoTexts(t: Messages, tag: string, ogLocale: string): SeoTexts {
     legalIndexTitle: t.legal.indexTitle,
     legalIndexDescription: t.legal.indexDescription,
     legalDocs: t.legal.docs,
+    installTitle: t.install.pageTitle,
+    installDescription: t.install.seoDescription,
     notFound: t.app.notFoundTitle,
     languageTag: tag,
     ogLocale,

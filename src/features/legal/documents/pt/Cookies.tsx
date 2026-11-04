@@ -19,8 +19,8 @@ export function Cookies() {
         <tbody>
           <tr><td>Sessão</td><td>Saber que você já entrou. Com «manter a sessão» ela fica guardada; sem isso, é apagada ao fechar a aba.</td><td>Até você sair</td></tr>
           <tr><td>Cópia rápida do conteúdo</td><td>Para a página abrir na hora e funcionar sem conexão. É apagada ao sair.</td><td>Até sair</td></tr>
-          <tr><td>Preferências</td><td>Reduzir animações, seu idioma, o tutorial já visto, as surpresas já vistas e sua escolha neste aviso.</td><td>Até você apagar os dados do navegador</td></tr>
-          <tr><td>Avisos no celular</td><td>O <em>service worker</em> que recebe os avisos, se você os ativar.</td><td>Até você desativá-los</td></tr>
+          <tr><td>Preferências</td><td>Reduzir animações, seu idioma, o tutorial já visto, as surpresas já vistas, se você fechou o aviso de instalar o app e sua escolha neste aviso.</td><td>Até você apagar os dados do navegador</td></tr>
+          <tr><td>App e avisos no celular</td><td>O <em>service worker</em>: guarda o código do app para abrir rápido e sem conexão, e recebe os avisos se você os ativar.</td><td>Até você apagar os dados do navegador ou desinstalar o app</td></tr>
         </tbody>
       </table>
 

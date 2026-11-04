@@ -13,6 +13,9 @@ export const DEFAULT_DESCRIPTION = "Nuestros recuerdos, fechas especiales, notit
 export const OG_IMAGE_PATH = "/og-image.jpg";
 export const DESCRIPTION_MAX = 160;
 
+/** Página pública para instalar la app en el celular. */
+export const INSTALL_PATH = "/app";
+
 /** Rutas que nunca deben aparecer en buscadores. */
 export const PRIVATE_PREFIXES = ["/entrar", "/invitacion", "/recuperar", "/cuenta", "/panel", "/super", "/mensajes", "/chat", "/listas"] as const;
 
@@ -42,6 +45,8 @@ export interface SeoTexts {
   legalIndexTitle: string;
   legalIndexDescription: string;
   legalDocs: Record<string, { title: string; summary: string }>;
+  installTitle: string;
+  installDescription: string;
   notFound: string;
   /** es-CO, en-US… */
   languageTag: string;
@@ -57,6 +62,8 @@ export const SPANISH_SEO: SeoTexts = {
   legalIndexTitle: "Legal y privacidad",
   legalIndexDescription: "Términos, privacidad, cookies, cobros y licencias de la app.",
   legalDocs: Object.fromEntries(LEGAL_DOCUMENTS.map((d) => [d.id, { title: d.title, summary: d.summary }])),
+  installTitle: "Descarga la app",
+  installDescription: "Instala Nuestro rincón en tu celular o computador: ícono en la pantalla de inicio, pantalla completa, avisos y sin conexión.",
   notFound: "Página no encontrada",
   languageTag: "es-CO",
   ogLocale: "es_CO",
@@ -166,6 +173,18 @@ export function resolveSeo({ pathname, settings, siteUrl, indexingEnabled, texts
       description: truncateDescription(texts.legalDocs[pathname.slice(LEGAL_PATH.length + 1)]?.summary ?? texts.legalIndexDescription),
       robots: indexingEnabled ? ROBOTS_INDEX : ROBOTS_NOINDEX,
       canonical: siteUrl ? `${siteUrl}${pathname}` : null,
+    };
+  }
+
+  if (pathname === INSTALL_PATH) {
+    // Como la portada: sólo se indexa si el sitio es público.
+    const indexable = indexingEnabled && (settings?.isPublic ?? false);
+    return {
+      ...base,
+      title: `${texts.installTitle} · ${siteName}`,
+      description: truncateDescription(texts.installDescription),
+      robots: indexable ? ROBOTS_INDEX : ROBOTS_NOINDEX,
+      canonical: siteUrl ? `${siteUrl}${INSTALL_PATH}` : null,
     };
   }
 
