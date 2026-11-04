@@ -2,6 +2,7 @@ import type { ReactElement } from "react";
 import { Link } from "react-router-dom";
 import { AUTHOR, releaseUrl, type SocialNetwork } from "@/core/author";
 import { config } from "@/core/config";
+import { DonateLink } from "./DonateLink";
 import { LEGAL_DOCUMENTS, legalPath } from "@/domain/legal";
 import { openCookiePreferences } from "@/services/consent/cookieConsent";
 import { setReducedMotion, useReducedMotion } from "@/ui/motion";
@@ -63,10 +64,7 @@ export function AppFooter() {
         )}
         {donation && (
           <p className="app-footer__donate">
-            <a href={donation.url} target="_blank" rel="noopener noreferrer"
-              aria-label={`Invítame un café: donación voluntaria en ${donation.platform} (se abre en otra pestaña)`}>
-              <span aria-hidden="true">☕</span> Invítame un café
-            </a>
+            <DonateLink variant="footer" />
             <span className="app-footer__donate-note">Voluntario. La app es y seguirá siendo gratis.</span>
           </p>
         )}
