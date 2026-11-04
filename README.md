@@ -8,6 +8,8 @@
 
 [![CI](https://github.com/Juan-Carlos-Estevez-Vargas/Camila-Sanchez/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/Juan-Carlos-Estevez-Vargas/Camila-Sanchez/actions/workflows/ci.yml)
 [![Deploy](https://github.com/Juan-Carlos-Estevez-Vargas/Camila-Sanchez/actions/workflows/deploy.yml/badge.svg?branch=master)](https://github.com/Juan-Carlos-Estevez-Vargas/Camila-Sanchez/actions/workflows/deploy.yml)
+[![CodeQL](https://github.com/Juan-Carlos-Estevez-Vargas/Camila-Sanchez/actions/workflows/codeql.yml/badge.svg?branch=master)](https://github.com/Juan-Carlos-Estevez-Vargas/Camila-Sanchez/actions/workflows/codeql.yml)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/Juan-Carlos-Estevez-Vargas/Camila-Sanchez/badge)](https://scorecard.dev/viewer/?uri=github.com/Juan-Carlos-Estevez-Vargas/Camila-Sanchez)
 [![Release](https://img.shields.io/github/v/release/Juan-Carlos-Estevez-Vargas/Camila-Sanchez?sort=semver&color=c2185b)](https://github.com/Juan-Carlos-Estevez-Vargas/Camila-Sanchez/releases)
 [![Licencia: MIT](https://img.shields.io/badge/licencia-MIT-c2185b)](LICENSE)
 
@@ -113,7 +115,7 @@ que fallen.
 | Build y pruebas | Vite 8, Vitest, ESLint |
 | Backend | Supabase: Postgres con RLS, Auth (PKCE), Storage privado, Realtime y Edge Functions en Deno |
 | Avisos | Web Push (VAPID), service worker, `pg_net` y Supabase Vault |
-| Calidad | Pruebas de RLS sobre PGlite, `npm audit`, Dependabot, acciones fijadas por SHA |
+| Calidad | Pruebas de RLS sobre PGlite, `npm audit`, Dependabot, CodeQL, OpenSSF Scorecard, acciones fijadas por SHA |
 | Publicación | Netlify (web) y GitHub Actions (migraciones, funciones y releases) |
 
 ## Inicio rápido
