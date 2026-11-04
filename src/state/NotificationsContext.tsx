@@ -7,6 +7,7 @@ import { showLocalNotification, syncPushSubscription } from "@/services/notifica
 import { useAuth } from "./AuthContext";
 import { useBackend } from "./BackendContext";
 import { useToast } from "./ToastContext";
+import { msg } from "@/i18n";
 
 interface NotificationsState {
   items: AppNotification[];
@@ -55,13 +56,13 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
       const refreshed = change.type === "UPDATE" && !(record?.read_at ?? record?.readAt)
         && !!createdAt && Date.now() - new Date(createdAt).getTime() < 15_000;
       if ((change.type === "INSERT" || refreshed) && record && ownerId === user.id) {
-        const title = String(record.title ?? "Tienes algo nuevo");
+        const title = String(record.title ?? msg().common.somethingNew);
         const body = String(record.body ?? "");
         const link = record.link ? safeNextPath(record.link) : null;
         // En el chat o en la lista que ya se está viendo, el cambio se ve solo.
         const alreadyHere = (!!link?.startsWith("/chat") || !!link?.startsWith("/listas/")) && link === window.location.pathname;
         if (!alreadyHere) {
-          toast.show({ title, body, action: link ? { label: "Ver", onClick: () => navigate(link) } : undefined });
+          toast.show({ title, body, action: link ? { label: msg().common.view, onClick: () => navigate(link) } : undefined });
           void showLocalNotification(title, body, link);
         }
       }

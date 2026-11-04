@@ -36,7 +36,7 @@ describe("texto alternativo", () => {
     // Fotos que se ven solas (no dentro de un botón que ya las describe).
     const lightbox = readFileSync(join(SRC, "features/site/sections/Lightbox.tsx"), "utf8");
     const timeline = readFileSync(join(SRC, "features/site/sections/Milestones.tsx"), "utf8");
-    expect(lightbox).toMatch(/alt=\{photo\.caption \|\| "Recuerdo"\}/);
+    expect(lightbox).toMatch(/alt=\{photo\.caption \|\| t\.fallbackAlt\}/);
     expect(timeline).not.toMatch(/timeline__photo"[^>]*alt=""/);
   });
 });

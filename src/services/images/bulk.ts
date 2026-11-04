@@ -2,6 +2,7 @@
  * Utilidades para la carga masiva de fotos: recorrer carpetas arrastradas,
  * filtrar lo que no es imagen, detectar repetidas y estimar cuánto falta.
  */
+import { msg } from "@/i18n/store";
 
 const IMAGE_EXTENSIONS = /\.(jpe?g|png|webp|gif|avif|bmp|heic|heif)$/i;
 
@@ -58,12 +59,13 @@ export function estimateRemainingMs(finished: number, total: number, elapsedMs: 
 export function formatRemaining(ms: number | null): string | null {
   if (ms === null) return null;
   const minutes = Math.round(ms / 60_000);
-  if (minutes < 1) return "menos de un minuto";
-  if (minutes === 1) return "un minuto";
-  if (minutes < 60) return `unos ${minutes} minutos`;
+  const t = msg().dates;
+  if (minutes < 1) return t.remainingLessThanMinute;
+  if (minutes === 1) return t.remainingOneMinute;
+  if (minutes < 60) return t.remainingMinutes(minutes);
   const hours = Math.floor(minutes / 60);
   const rest = minutes % 60;
-  return `${hours} h${rest ? ` ${rest} min` : ""}`;
+  return t.remainingHours(hours, rest);
 }
 
 /* --- Carpetas arrastradas ------------------------------------------------- */

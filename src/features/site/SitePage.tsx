@@ -8,16 +8,18 @@ import { InterruptionHost } from "./InterruptionHost";
 import { MusicToggle } from "./MusicToggle";
 import { renderSection } from "./sections/registry";
 import "./styles/site.scss";
+import { useT } from "@/i18n";
 
 export default function SitePage() {
   const { status, content, photoUrls } = useSiteContent();
   const { user, policy } = useAuth();
+  const t = useT().site;
 
   if (status === "loading" || !content) return <PageLoader />;
   if (status === "error") {
     return (
       <main id="contenido-principal" className="container">
-        <EmptyState icon="🥀" title="No pude cargar nuestros recuerdos" heading>Revisa tu conexión y recarga la página.</EmptyState>
+        <EmptyState icon="🥀" title={t.loadError} heading>{t.loadErrorHint}</EmptyState>
       </main>
     );
   }
@@ -31,11 +33,11 @@ export default function SitePage() {
         <div className="gate__card card">
           <div className="gate__heart" aria-hidden>💌</div>
           <h1>{content.settings.siteTitle}</h1>
-          <p className="muted">Este rincón es privado. Entra con tu cuenta para ver lo que te preparé.</p>
+          <p className="muted">{t.private}</p>
           {user ? (
-            <p className="muted">Tu cuenta todavía no tiene acceso. Pídele permiso al administrador.</p>
+            <p className="muted">{t.noAccess}</p>
           ) : (
-            <Link className="btn" to="/entrar">Entrar</Link>
+            <Link className="btn" to="/entrar">{t.signIn}</Link>
           )}
         </div>
       </main>
@@ -47,7 +49,7 @@ export default function SitePage() {
       <FloatingEffects effects={content.settings.effects} />
       <InterruptionHost items={content.interruptions} />
       <main id="contenido-principal" className="site" data-tour="site">
-        {sections.length === 0 && <EmptyState title="Aún no hay secciones" heading>Agrégalas desde el panel de administración.</EmptyState>}
+        {sections.length === 0 && <EmptyState title={t.noSections} heading>{t.noSectionsHint}</EmptyState>}
         {sections.map((section, index) => (
           <Reveal
             key={section.id}

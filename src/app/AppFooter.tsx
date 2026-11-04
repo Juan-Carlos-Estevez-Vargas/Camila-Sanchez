@@ -6,6 +6,8 @@ import { DonateLink } from "./DonateLink";
 import { LEGAL_DOCUMENTS, legalPath } from "@/domain/legal";
 import { openCookiePreferences } from "@/services/consent/cookieConsent";
 import { setReducedMotion, useReducedMotion } from "@/ui/motion";
+import { useT } from "@/i18n";
+import { LanguagePicker } from "./LanguagePicker";
 
 const NETWORKS: Record<SocialNetwork, { label: string; icon: ReactElement }> = {
   github: {
@@ -42,20 +44,23 @@ export function AppFooter() {
   const version = config.appVersion;
   const donation = config.donation;
   const reducedMotion = useReducedMotion();
+  const i18n = useT();
+  const t = i18n.app.footer;
+  const legal = i18n.legal;
 
   return (
     <footer className="app-footer" data-tour="footer">
       <div className="container app-footer__inner">
         <p className="app-footer__signature">
-          Hecho con mucho amor <span className="app-footer__heart" role="img" aria-label="amor">💖</span> por <strong>{AUTHOR.name}</strong>
+          {t.madeWith} <span className="app-footer__heart" role="img" aria-label={t.love}>💖</span> {t.by} <strong>{AUTHOR.name}</strong>
         </p>
-        <p className="app-footer__subtitle">Diseñado y programado por mí, línea por línea, para ti.</p>
+        <p className="app-footer__subtitle">{t.subtitle}</p>
         {links.length > 0 && (
-          <ul className="app-footer__social" aria-label="Redes de Juan">
+          <ul className="app-footer__social" aria-label={t.socialNav(AUTHOR.name.split(" ")[0] ?? AUTHOR.name)}>
             {links.map((network) => (
               <li key={network}>
                 <a href={AUTHOR.links[network]} target="_blank" rel="noopener noreferrer me"
-                  aria-label={`${NETWORKS[network].label} de ${AUTHOR.name} (se abre en otra pestaña)`} title={NETWORKS[network].label}>
+                  aria-label={t.socialLink(NETWORKS[network].label, AUTHOR.name)} title={NETWORKS[network].label}>
                   {NETWORKS[network].icon}
                 </a>
               </li>
@@ -65,24 +70,25 @@ export function AppFooter() {
         {donation && (
           <p className="app-footer__donate">
             <DonateLink variant="footer" />
-            <span className="app-footer__donate-note">Voluntario. La app es y seguirá siendo gratis.</span>
+            <span className="app-footer__donate-note">{i18n.donate.note}</span>
           </p>
         )}
-        <nav aria-label="Legal y privacidad">
+        <nav aria-label={t.legalNav}>
           <ul className="app-footer__legal">
             {LEGAL_DOCUMENTS.map((doc) => (
-              <li key={doc.id}><Link to={legalPath(doc.id)}>{doc.short}</Link></li>
+              <li key={doc.id}><Link to={legalPath(doc.id)}>{legal.docs[doc.id].short}</Link></li>
             ))}
-            <li><button type="button" onClick={openCookiePreferences}>Preferencias de cookies</button></li>
+            <li><button type="button" onClick={openCookiePreferences}>{t.cookiePrefs}</button></li>
           </ul>
         </nav>
         <label className="switch app-footer__motion">
           <input type="checkbox" role="switch" checked={reducedMotion} onChange={(e) => setReducedMotion(e.target.checked)} />
-          <span>Reducir animaciones</span>
+          <span>{t.reduceMotion}</span>
         </label>
+        <LanguagePicker />
         {version === "dev"
-          ? <span className="app-footer__version">versión de desarrollo</span>
-          : <a className="app-footer__version" href={releaseUrl(version)} target="_blank" rel="noopener noreferrer" title="Qué trae esta versión" aria-label={`Versión ${version}: qué trae (se abre en otra pestaña)`}>v{version}</a>}
+          ? <span className="app-footer__version">{t.devVersion}</span>
+          : <a className="app-footer__version" href={releaseUrl(version)} target="_blank" rel="noopener noreferrer" title={t.versionTitle} aria-label={t.versionLabel(version)}>v{version}</a>}
       </div>
     </footer>
   );

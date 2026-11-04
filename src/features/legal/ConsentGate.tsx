@@ -6,6 +6,7 @@ import { LEGAL_PATH, LEGAL_VERSION, hasCurrentConsent, legalPath, takePendingCon
 import { useAuth } from "@/state/AuthContext";
 import { useBackend } from "@/state/BackendContext";
 import { useFocusTrap } from "@/ui/useFocusTrap";
+import { useT } from "@/i18n";
 
 type GateState = "idle" | "checking" | "needed" | "ok";
 
@@ -57,6 +58,8 @@ function ConsentDialog({ onAccept, onSignOut }: { onAccept(): Promise<void>; onS
   const [checked, setChecked] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const i18n = useT();
+  const t = i18n.legal.consent;
   useFocusTrap(ref);
 
   useEffect(() => {
@@ -82,28 +85,22 @@ function ConsentDialog({ onAccept, onSignOut }: { onAccept(): Promise<void>; onS
     <div className="modal-backdrop">
       <div ref={ref} className="modal consent-dialog" role="dialog" aria-modal="true" aria-labelledby={titleId}>
         <div className="modal__header">
-          <h2 id={titleId} className="modal__title">Antes de seguir 💌</h2>
+          <h2 id={titleId} className="modal__title">{t.title}</h2>
         </div>
-        <p>
-          Para usar la app necesitamos tu permiso para guardar y usar tus datos como explican estos documentos.
-          Léelos con calma: son cortos y están en palabras sencillas.
-        </p>
+        <p>{t.intro}</p>
         <ul className="consent-dialog__list">
-          <li><Link to={legalPath("terminos")}>Términos y condiciones</Link></li>
-          <li><Link to={legalPath("privacidad")}>Política de privacidad y tratamiento de datos</Link></li>
+          <li><Link to={legalPath("terminos")}>{i18n.legal.docs.terminos.title}</Link></li>
+          <li><Link to={legalPath("privacidad")}>{i18n.legal.docs.privacidad.title}</Link></li>
         </ul>
         <label className="consent-dialog__check">
           <input type="checkbox" checked={checked} onChange={(e) => setChecked(e.target.checked)} />
-          <span>
-            Leí y acepto los términos y condiciones, y autorizo el tratamiento de mis datos personales según la política
-            de privacidad (Ley 1581 de 2012).
-          </span>
+          <span>{t.checkbox}</span>
         </label>
         {error && <p className="field__error" role="alert">{error}</p>}
         <div className="modal__footer">
-          <button type="button" className="btn btn--ghost" onClick={onSignOut} disabled={busy}>Ahora no, cerrar sesión</button>
+          <button type="button" className="btn btn--ghost" onClick={onSignOut} disabled={busy}>{t.signOut}</button>
           <button type="button" className="btn" onClick={() => void accept()} disabled={!checked || busy}>
-            {busy ? "Guardando…" : "Aceptar y seguir"}
+            {busy ? i18n.common.saving : t.accept}
           </button>
         </div>
       </div>

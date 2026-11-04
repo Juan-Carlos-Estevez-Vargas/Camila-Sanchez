@@ -1,4 +1,5 @@
 import type { Role } from "./types";
+import { msg } from "@/i18n/store";
 
 /** Catálogo de permisos. Debe coincidir con la tabla public.permissions. */
 export const PERMISSIONS = {
@@ -19,11 +20,10 @@ export const PERMISSIONS = {
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
 
-export const ROLE_LABELS: Record<Role, string> = {
-  super_admin: "Super administrador",
-  editor: "Editora",
-  viewer: "Invitado",
-};
+/** Nombre del rol en el idioma activo. */
+export function roleLabel(role: Role): string {
+  return msg().auth.roles[role];
+}
 
 /** Permisos por defecto (espejo del seed de la migración 001). */
 export const DEFAULT_ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {

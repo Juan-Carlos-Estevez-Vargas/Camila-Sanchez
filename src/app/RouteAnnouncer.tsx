@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
+import { useT } from "@/i18n";
 
 const MAIN = "#contenido-principal, main";
 
@@ -49,6 +50,7 @@ export function RouteAnnouncer() {
 
 /** "Saltar al contenido": funciona aunque la página no tenga el id esperado. */
 export function SkipLink() {
+  const t = useT();
   return (
     <a
       className="skip-link"
@@ -60,7 +62,7 @@ export function SkipLink() {
         }
       }}
     >
-      Saltar al contenido
+      {t.app.skipToContent}
     </a>
   );
 }

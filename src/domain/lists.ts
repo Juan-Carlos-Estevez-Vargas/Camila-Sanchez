@@ -5,6 +5,7 @@
 import { daysUntil, formatLongDate, parseIsoDate } from "./dates";
 import { PERMISSIONS } from "./permissions";
 import type { IsoDate, Profile, RolePermission, TodoItem, TodoMaterial } from "./types";
+import { msg } from "@/i18n/store";
 
 export const LIST_EMOJIS = ["📝", "🛒", "🏖️", "🏠", "🎁", "🎉", "✈️", "🍳", "💪", "📚", "🌱", "💖"] as const;
 
@@ -64,18 +65,19 @@ export function dueState(dueOn: IsoDate, now: Date = new Date()): DueState {
 /** «Vence hoy», «Mañana», «Venció hace 2 días», «En 5 días» o la fecha. */
 export function dueLabel(dueOn: IsoDate, now: Date = new Date()): string {
   const days = daysUntil(parseIsoDate(dueOn), now);
-  if (days === 0) return "Vence hoy";
-  if (days === 1) return "Mañana";
-  if (days === -1) return "Venció ayer";
-  if (days < 0) return `Venció hace ${-days} días`;
-  if (days <= 7) return `En ${days} días`;
+  const t = msg().lists.due;
+  if (days === 0) return t.today;
+  if (days === 1) return t.tomorrow;
+  if (days === -1) return t.yesterday;
+  if (days < 0) return t.ago(-days);
+  if (days <= 7) return t.inDays(days);
   return formatLongDate(dueOn);
 }
 
 /** «2 de 3 listos» para los materiales de una tarea. */
 export function materialsLabel(materials: readonly Pick<TodoMaterial, "isReady">[]): string {
   const ready = materials.filter((m) => m.isReady).length;
-  return `${ready} de ${materials.length} listo${materials.length === 1 ? "" : "s"}`;
+  return msg().lists.materialsReady(ready, materials.length);
 }
 
 /** ¿Se le puede compartir una lista a esta persona? (activa y con lists.use) */
@@ -87,5 +89,5 @@ export function canUseLists(profile: Pick<Profile, "role" | "isActive">, rolePer
 /** «Juan», «Juan y Camila», «Juan, Ana y Camila». */
 export function joinNames(names: readonly string[]): string {
   if (names.length <= 1) return names[0] ?? "";
-  return `${names.slice(0, -1).join(", ")} y ${names[names.length - 1]}`;
+  return `${names.slice(0, -1).join(", ")} ${msg().lists.and} ${names[names.length - 1]}`;
 }

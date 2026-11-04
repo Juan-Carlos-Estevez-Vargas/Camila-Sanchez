@@ -28,10 +28,45 @@ const PAGE_TITLES: Record<string, string> = {
   "/super": "Administración",
 };
 
+/**
+ * Textos de SEO en el idioma activo. Este módulo también lo usa el build
+ * (vite.config.ts), así que no importa el diccionario: lo recibe. Sin
+ * textos, todo sale en español (lo que ven WhatsApp y los buscadores en el
+ * index.html, que no ejecutan JavaScript).
+ */
+export interface SeoTexts {
+  defaultTitle: string;
+  defaultDescription: string;
+  imageAlt(siteName: string): string;
+  pageTitles: Record<string, string>;
+  legalIndexTitle: string;
+  legalIndexDescription: string;
+  legalDocs: Record<string, { title: string; summary: string }>;
+  notFound: string;
+  /** es-CO, en-US… */
+  languageTag: string;
+  /** es_CO, en_US… */
+  ogLocale: string;
+}
+
+export const SPANISH_SEO: SeoTexts = {
+  defaultTitle: DEFAULT_TITLE,
+  defaultDescription: DEFAULT_DESCRIPTION,
+  imageAlt: (siteName) => `${siteName}: recuerdos, fechas especiales y notitas de amor`,
+  pageTitles: PAGE_TITLES,
+  legalIndexTitle: "Legal y privacidad",
+  legalIndexDescription: "Términos, privacidad, cookies, cobros y licencias de la app.",
+  legalDocs: Object.fromEntries(LEGAL_DOCUMENTS.map((d) => [d.id, { title: d.title, summary: d.summary }])),
+  notFound: "Página no encontrada",
+  languageTag: "es-CO",
+  ogLocale: "es_CO",
+};
+
 /** Título de una página legal (/legal o /legal/<documento>), o null si no lo es. */
-function legalTitle(pathname: string): string | null {
-  if (pathname === LEGAL_PATH) return "Legal y privacidad";
-  return LEGAL_DOCUMENTS.find((d) => pathname === `${LEGAL_PATH}/${d.id}`)?.title ?? null;
+function legalTitle(pathname: string, texts: SeoTexts): string | null {
+  if (pathname === LEGAL_PATH) return texts.legalIndexTitle;
+  const doc = LEGAL_DOCUMENTS.find((d) => pathname === `${LEGAL_PATH}/${d.id}`);
+  return doc ? texts.legalDocs[doc.id]?.title ?? doc.title : null;
 }
 
 const ROBOTS_INDEX = "index, follow, max-image-preview:large";
@@ -47,7 +82,7 @@ export interface SeoMeta {
   /** Texto alternativo de la imagen para redes (accesible). */
   imageAlt: string;
   type: "website";
-  locale: "es_CO";
+  locale: string;
   siteName: string;
   /** JSON-LD (schema.org) para la portada; null en las demás páginas. */
   structuredData: Record<string, unknown> | null;
@@ -60,6 +95,8 @@ export interface SeoContext {
   siteUrl: string;
   /** Interruptor global (VITE_SEO_INDEX=false lo apaga). */
   indexingEnabled: boolean;
+  /** Textos del idioma activo; por defecto, español. */
+  texts?: SeoTexts;
 }
 
 export function normalizeSiteUrl(raw: string | undefined): string {
@@ -79,18 +116,18 @@ export function truncateDescription(text: string, max = DESCRIPTION_MAX): string
 const isPrivatePath = (pathname: string) =>
   PRIVATE_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
 
-const privateTitle = (pathname: string) =>
-  PAGE_TITLES[PRIVATE_PREFIXES.find((p) => pathname === p || pathname.startsWith(`${p}/`)) ?? ""] ?? "";
+const privateTitle = (pathname: string, texts: SeoTexts) =>
+  texts.pageTitles[PRIVATE_PREFIXES.find((p) => pathname === p || pathname.startsWith(`${p}/`)) ?? ""] ?? "";
 
-export function resolveSeo({ pathname, settings, siteUrl, indexingEnabled }: SeoContext): SeoMeta {
-  const siteName = settings?.siteTitle.trim() || DEFAULT_TITLE;
-  const siteDescription = truncateDescription(settings?.siteSubtitle || DEFAULT_DESCRIPTION);
+export function resolveSeo({ pathname, settings, siteUrl, indexingEnabled, texts = SPANISH_SEO }: SeoContext): SeoMeta {
+  const siteName = settings?.siteTitle.trim() || texts.defaultTitle;
+  const siteDescription = truncateDescription(settings?.siteSubtitle || texts.defaultDescription);
   const absolute = (path: string) => (siteUrl ? `${siteUrl}${path}` : path);
   const base = {
     image: absolute(OG_IMAGE_PATH),
-    imageAlt: `${siteName}: recuerdos, fechas especiales y notitas de amor`,
+    imageAlt: texts.imageAlt(siteName),
     type: "website" as const,
-    locale: "es_CO" as const,
+    locale: texts.ogLocale,
     siteName,
     structuredData: null,
   };
@@ -109,7 +146,7 @@ export function resolveSeo({ pathname, settings, siteUrl, indexingEnabled }: Seo
         "@type": "WebSite",
         name: siteName,
         description: siteDescription,
-        inLanguage: "es-CO",
+        inLanguage: texts.languageTag,
         ...(siteUrl ? { url: `${siteUrl}/`, image: absolute(OG_IMAGE_PATH) } : {}),
         author: {
           "@type": "Person",
@@ -120,13 +157,13 @@ export function resolveSeo({ pathname, settings, siteUrl, indexingEnabled }: Seo
     };
   }
 
-  const legal = legalTitle(pathname);
+  const legal = legalTitle(pathname, texts);
   if (legal) {
     // Públicas aunque la página sea privada: cualquiera debe poder leerlas.
     return {
       ...base,
       title: `${legal} · ${siteName}`,
-      description: truncateDescription(LEGAL_DOCUMENTS.find((d) => `${LEGAL_PATH}/${d.id}` === pathname)?.summary ?? "Términos, privacidad, cookies, cobros y licencias de la app."),
+      description: truncateDescription(texts.legalDocs[pathname.slice(LEGAL_PATH.length + 1)]?.summary ?? texts.legalIndexDescription),
       robots: indexingEnabled ? ROBOTS_INDEX : ROBOTS_NOINDEX,
       canonical: siteUrl ? `${siteUrl}${pathname}` : null,
     };
@@ -135,7 +172,7 @@ export function resolveSeo({ pathname, settings, siteUrl, indexingEnabled }: Seo
   if (isPrivatePath(pathname)) {
     return {
       ...base,
-      title: `${privateTitle(pathname)} · ${siteName}`,
+      title: `${privateTitle(pathname, texts)} · ${siteName}`,
       description: siteDescription,
       robots: ROBOTS_NOINDEX,
       canonical: null,
@@ -144,7 +181,7 @@ export function resolveSeo({ pathname, settings, siteUrl, indexingEnabled }: Seo
 
   return {
     ...base,
-    title: `Página no encontrada · ${siteName}`,
+    title: `${texts.notFound} · ${siteName}`,
     description: siteDescription,
     robots: ROBOTS_NOINDEX,
     canonical: null,

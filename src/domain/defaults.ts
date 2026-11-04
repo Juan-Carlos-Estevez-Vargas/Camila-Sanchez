@@ -6,6 +6,7 @@ import {
   type SectionContentMap, type SectionKind, type ThemeTokens,
 } from "./types";
 import { WINE_PALETTE } from "./palettes";
+import { msg } from "@/i18n/store";
 
 /** Tema de fábrica: los colores suaves de la versión 1, siempre en modo claro. */
 export const DEFAULT_THEME: ThemeTokens = {
@@ -104,22 +105,20 @@ export function normalizeSectionContent<K extends SectionKind>(kind: K, raw: unk
   return content[kind]() as SectionContentMap[K];
 }
 
-export const SECTION_KIND_LABELS: Record<SectionKind, { label: string; icon: string; description: string }> = {
-  hero: { label: "Portada", icon: "💖", description: "Título grande de bienvenida" },
-  together_counter: { label: "Tiempo juntos", icon: "⏳", description: "Contador desde que empezó la relación" },
-  countdowns: { label: "Cuenta regresiva", icon: "📅", description: "Faltan X días para fechas importantes" },
-  love_notes: { label: "Tarjetas de amor", icon: "💌", description: "Mensajes cortos en tarjetas" },
-  milestones: { label: "Hitos", icon: "🌟", description: "Línea de tiempo de momentos importantes" },
-  gallery: { label: "Galería", icon: "📸", description: "Fotos por año y mes" },
-  letter: { label: "Carta", icon: "✉️", description: "Carta larga con sorpresa opcional" },
-  text: { label: "Texto libre", icon: "📝", description: "Un bloque de texto" },
-  quote: { label: "Frase", icon: "❝", description: "Una cita destacada" },
+const SECTION_KIND_ICONS: Record<SectionKind, string> = {
+  hero: "💖", together_counter: "⏳", countdowns: "📅", love_notes: "💌", milestones: "🌟",
+  gallery: "📸", letter: "✉️", text: "📝", quote: "❝",
 };
+
+/** Icono, nombre y descripción de cada tipo de sección, en el idioma actual. */
+export function sectionKindMeta(kind: SectionKind): { label: string; icon: string; description: string } {
+  return { icon: SECTION_KIND_ICONS[kind], ...msg().admin.sections[kind] };
+}
 
 export function emptySection(kind: SectionKind, position: number): Omit<Section, "id"> {
   return {
     kind,
-    title: SECTION_KIND_LABELS[kind].label,
+    title: sectionKindMeta(kind).label,
     subtitle: "",
     animation: "fade-up",
     position,

@@ -10,6 +10,7 @@ import { Avatar } from "@/ui/Avatar";
 import { Modal } from "@/ui/Modal";
 import { useConfirm } from "@/ui/useConfirm";
 import { ListFields, type ListFormValue } from "./listParts";
+import { useT } from "@/i18n";
 
 interface Props {
   detail: TodoListDetail;
@@ -30,7 +31,9 @@ export function ListSettings({ detail, profiles, rolePermissions, onChanged, onC
   const [newMember, setNewMember] = useState("");
   const [busy, setBusy] = useState(false);
   const isOwner = list.ownerId === user?.id;
-  const nameOf = (id: string) => profiles.find((p) => p.id === id)?.displayName || "Alguien";
+  const i18n = useT();
+  const t = i18n.lists.settings;
+  const nameOf = (id: string) => profiles.find((p) => p.id === id)?.displayName || i18n.common.someone;
   const candidates = profiles.filter((p) => !list.memberIds.includes(p.id) && canUseLists(p, rolePermissions));
 
   /** Devuelve si salió bien. */
@@ -51,22 +54,22 @@ export function ListSettings({ detail, profiles, rolePermissions, onChanged, onC
 
   const save = (e: FormEvent) => {
     e.preventDefault();
-    void act(() => backend.lists.update(list.id, { ...form, dueOn: form.dueOn || null }), "Lista guardada").then((ok) => ok && onClose());
+    void act(() => backend.lists.update(list.id, { ...form, dueOn: form.dueOn || null }), t.saved).then((ok) => ok && onClose());
   };
 
   const addMember = (e: FormEvent) => {
     e.preventDefault();
     if (!newMember) return;
-    void act(() => backend.lists.addMember(list.id, newMember), `Sumaste a ${nameOf(newMember)} 💖`).then((ok) => ok && setNewMember(""));
+    void act(() => backend.lists.addMember(list.id, newMember), t.added(nameOf(newMember))).then((ok) => ok && setNewMember(""));
   };
 
   const removeMember = async (id: string) => {
-    if (!(await confirm({ title: `¿Sacar a ${nameOf(id)} de la lista?`, body: "Dejará de verla. Puedes volver a sumarla cuando quieras.", confirmLabel: "Sacar", danger: true }))) return;
+    if (!(await confirm({ title: t.removeTitle(nameOf(id)), body: t.removeBody, confirmLabel: t.remove, danger: true }))) return;
     void act(() => backend.lists.removeMember(list.id, id));
   };
 
   const leave = async () => {
-    if (!(await confirm({ title: "¿Salirte de esta lista?", body: "Dejarás de verla. Alguien de la lista puede volver a sumarte.", confirmLabel: "Salirme", danger: true }))) return;
+    if (!(await confirm({ title: t.leaveTitle, body: t.leaveBody, confirmLabel: t.leave, danger: true }))) return;
     try {
       await backend.lists.removeMember(list.id, user!.id);
       navigate("/listas");
@@ -76,10 +79,10 @@ export function ListSettings({ detail, profiles, rolePermissions, onChanged, onC
   };
 
   const remove = async () => {
-    if (!(await confirm({ title: `¿Borrar «${list.title}»?`, body: "Se borra para todos, con sus tareas, materiales y fotos. No se puede deshacer.", confirmLabel: "Borrar lista", danger: true }))) return;
+    if (!(await confirm({ title: t.deleteTitle(list.title), body: t.deleteBody, confirmLabel: t.delete, danger: true }))) return;
     try {
       await backend.lists.remove(list.id);
-      toast.success("Lista borrada");
+      toast.success(t.deleted);
       navigate("/listas");
     } catch (error) {
       toast.error(error);
@@ -87,39 +90,39 @@ export function ListSettings({ detail, profiles, rolePermissions, onChanged, onC
   };
 
   return (
-    <Modal title="Ajustes de la lista" onClose={onClose}
+    <Modal title={t.title} onClose={onClose}
       footer={isOwner
-        ? <button className="btn btn--ghost btn--sm list-settings__danger" onClick={() => void remove()}>🗑 Borrar lista</button>
-        : <button className="btn btn--ghost btn--sm list-settings__danger" onClick={() => void leave()}>🚪 Salirme de la lista</button>}
+        ? <button className="btn btn--ghost btn--sm list-settings__danger" onClick={() => void remove()}>{t.deleteButton}</button>
+        : <button className="btn btn--ghost btn--sm list-settings__danger" onClick={() => void leave()}>{t.leaveButton}</button>}
     >
       <div className="stack">
         <section className="stack" aria-labelledby="list-members-title">
-          <h4 id="list-members-title" style={{ margin: 0 }}>👥 Con quién</h4>
+          <h4 id="list-members-title" style={{ margin: 0 }}>{t.members}</h4>
           <ul className="mini-list">
             {list.memberIds.map((id) => (
               <li key={id}>
                 <Avatar person={profiles.find((p) => p.id === id)} size={28} />
-                <span className="grow">{id === user?.id ? `${nameOf(id)} (tú)` : nameOf(id)}</span>
-                {id === list.ownerId && <span className="badge badge--muted">Creó la lista</span>}
+                <span className="grow">{id === user?.id ? t.you(nameOf(id)) : nameOf(id)}</span>
+                {id === list.ownerId && <span className="badge badge--muted">{t.owner}</span>}
                 {isOwner && id !== list.ownerId && (
-                  <button className="btn btn--ghost btn--sm" disabled={busy} onClick={() => void removeMember(id)}>Sacar</button>
+                  <button className="btn btn--ghost btn--sm" disabled={busy} onClick={() => void removeMember(id)}>{t.remove}</button>
                 )}
               </li>
             ))}
           </ul>
           {candidates.length > 0 && (
             <form className="mini-form" onSubmit={addMember}>
-              <select className="select grow" aria-label="Persona para sumar" value={newMember} onChange={(e) => setNewMember(e.target.value)}>
-                <option value="">Sumar a alguien…</option>
-                {candidates.map((p) => <option key={p.id} value={p.id}>{p.displayName || "Sin nombre"}</option>)}
+              <select className="select grow" aria-label={t.personToAdd} value={newMember} onChange={(e) => setNewMember(e.target.value)}>
+                <option value="">{t.addSomeone}</option>
+                {candidates.map((p) => <option key={p.id} value={p.id}>{p.displayName || i18n.lists.noName}</option>)}
               </select>
-              <button className="btn btn--soft btn--sm" disabled={busy || !newMember}>Sumar</button>
+              <button className="btn btn--soft btn--sm" disabled={busy || !newMember}>{t.addButton}</button>
             </form>
           )}
         </section>
         <form className="stack" onSubmit={save}>
           <ListFields value={form} onChange={setForm} />
-          <button className="btn" disabled={busy || !form.title.trim()}>Guardar cambios</button>
+          <button className="btn" disabled={busy || !form.title.trim()}>{t.save}</button>
         </form>
       </div>
       {confirmElement}

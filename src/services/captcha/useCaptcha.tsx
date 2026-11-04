@@ -13,6 +13,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import { config, isDemoMode } from "@/core/config";
 import { AppError } from "@/core/errors";
 import { CaptchaTokenQueue } from "./tokenQueue";
+import { getLocale, msg } from "@/i18n/store";
 
 const SCRIPT_URL = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
 const WAIT_MS = 60_000;
@@ -83,7 +84,7 @@ export function useCaptcha(): Captcha {
         if (cancelled) return;
         widgetId.current = turnstile.render(container, {
           sitekey: config.turnstileSiteKey,
-          language: "es",
+          language: getLocale(),
           theme: "auto",
           callback: (token: string) => {
             setError(null);
@@ -92,12 +93,12 @@ export function useCaptcha(): Captcha {
           "expired-callback": () => queue.expire(),
           "error-callback": () => {
             queue.expire();
-            setError("No pude comprobar que no eres un robot. Recarga la página e inténtalo otra vez.");
+            setError(msg().ui.captcha.failed);
           },
         });
       })
       .catch(() => {
-        if (!cancelled) setError("No cargó la verificación anti-robots. Revisa tu conexión y recarga la página.");
+        if (!cancelled) setError(msg().ui.captcha.notLoaded);
       });
     return () => {
       cancelled = true;
@@ -114,10 +115,10 @@ export function useCaptcha(): Captcha {
       if (hadToken) refresh();
       return token;
     } catch {
-      throw new AppError("La verificación anti-robots no terminó. Márcala y vuelve a intentarlo.");
+      throw new AppError(msg().ui.captcha.unfinished);
     }
   }, [queue, refresh]);
 
-  const widget = captchaEnabled ? <div ref={setContainer} className="captcha" aria-label="Verificación anti-robots" /> : null;
+  const widget = captchaEnabled ? <div ref={setContainer} className="captcha" aria-label={msg().ui.captcha.label} /> : null;
   return { enabled: captchaEnabled, widget, error, take };
 }

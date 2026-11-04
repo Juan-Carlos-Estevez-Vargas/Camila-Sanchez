@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { isTopDialog, useFocusTrap } from "./useFocusTrap";
+import { useT } from "@/i18n";
 
 interface ModalProps {
   title: ReactNode;
@@ -14,6 +15,7 @@ interface ModalProps {
 export function Modal({ title, onClose, children, footer, wide }: ModalProps) {
   const titleId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
+  const t = useT();
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
   useFocusTrap(dialogRef);
@@ -36,7 +38,7 @@ export function Modal({ title, onClose, children, footer, wide }: ModalProps) {
       <div ref={dialogRef} className={`modal${wide ? " modal--wide" : ""}`} role="dialog" aria-modal="true" aria-labelledby={titleId}>
         <div className="modal__header">
           <h2 id={titleId} className="modal__title">{title}</h2>
-          <button className="btn btn--icon btn--ghost" onClick={onClose} aria-label="Cerrar">×</button>
+          <button className="btn btn--icon btn--ghost" onClick={onClose} aria-label={t.common.close}>×</button>
         </div>
         {children}
         {footer && <div className="modal__footer">{footer}</div>}

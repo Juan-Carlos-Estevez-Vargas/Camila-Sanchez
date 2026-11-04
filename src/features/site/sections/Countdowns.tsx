@@ -1,10 +1,11 @@
 import { buildCountdowns } from "@/domain/dates";
 import { SectionHeading } from "./SectionHeading";
 import type { SectionProps } from "./types";
-
-const dayFormat = new Intl.DateTimeFormat("es-CO", { weekday: "long", day: "numeric", month: "long" });
+import { dateFormat, useT } from "@/i18n";
 
 export function Countdowns({ section, content }: SectionProps<"countdowns">) {
+  const t = useT().site.countdown;
+  const dayFormat = dateFormat({ weekday: "long", day: "numeric", month: "long" });
   const countdowns = buildCountdowns(content.dates);
   if (!countdowns.length) return null;
   return (
@@ -15,14 +16,14 @@ export function Countdowns({ section, content }: SectionProps<"countdowns">) {
           <article key={c.date.id} className={`countdown card card--interactive${c.days === 0 ? " is-today" : ""}`}>
             <div className="countdown__icon" aria-hidden>{c.date.icon}</div>
             <div className="countdown__days">
-              {c.days === 0 ? "¡Hoy!" : <>{c.days}<small> {c.days === 1 ? "día" : "días"}</small></>}
+              {c.days === 0 ? t.today : <>{c.days}<small> {t.days(c.days)}</small></>}
             </div>
             <h3 className="countdown__title">
-              {c.days === 0 ? c.date.title : `para ${c.date.title.toLowerCase()}`}
+              {c.days === 0 ? c.date.title : t.until(c.date.title.toLowerCase())}
             </h3>
             <p className="muted countdown__date">
               {dayFormat.format(c.next)}
-              {c.years ? ` · ${c.years} ${c.years === 1 ? "año" : "años"}` : ""}
+              {c.years ? t.years(c.years) : ""}
             </p>
             {c.date.message && <p className="countdown__message">{c.date.message}</p>}
           </article>

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  canEditMessage, conversationPresences, DELETED_LABEL, groupReactions, inboxTime, isOnline, isTyping, lastSeenLabel,
+  canEditMessage, conversationPresences, deletedLabel, groupReactions, inboxTime, isOnline, isTyping, lastSeenLabel,
   matchesSearch, messagePreview, otherParticipant, quoteSnippet, readersOf, receiptOf, sortConversations, toggleReaction,
   upsertParticipant, upsertPresence,
 } from "./chat";
@@ -138,7 +138,7 @@ describe("app de chat", () => {
   });
 
   it("un mensaje borrado para todos se cita como borrado", () => {
-    expect(messagePreview({ kind: "text", body: "", deleted: true })).toBe(DELETED_LABEL);
-    expect(messagePreview({ kind: "image", body: "", deletedAt: ago(0) })).toBe(DELETED_LABEL);
+    expect(messagePreview({ kind: "text", body: "", deleted: true })).toBe(deletedLabel());
+    expect(messagePreview({ kind: "image", body: "", deletedAt: ago(0) })).toBe(deletedLabel());
   });
 });

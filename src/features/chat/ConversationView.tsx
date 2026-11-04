@@ -4,7 +4,7 @@ import {
 import { Link, useNavigate } from "react-router-dom";
 import type { ChatSendOptions } from "@/data/ports";
 import {
-  canEditMessage, conversationPresences, DELETED_LABEL, groupReactions, isTyping, lastSeenLabel, messagePreview, quoteSnippet,
+  canEditMessage, conversationPresences, deletedLabel, groupReactions, isTyping, lastSeenLabel, messagePreview, quoteSnippet,
   REACTIONS, readersOf, receiptOf, toggleReaction, TYPING_THROTTLE_MS, upsertParticipant, type Receipt,
 } from "@/domain/chat";
 import type {
@@ -24,17 +24,29 @@ import { useChat } from "./ChatStore";
 import { Menu, type MenuItem } from "./Menu";
 import { StickerArt } from "./StickerArt";
 import { StickerPicker } from "./StickerPicker";
+import { dateFormat, msg, useT } from "@/i18n";
 
 const PAGE = 40;
 /** Distancia (px) que hay que deslizar un mensaje para responderlo. */
 const SWIPE_TO_REPLY = 56;
 /** Mantener pulsado un mensaje (ms) abre sus opciones. */
 const LONG_PRESS_MS = 450;
-const dayFormat = new Intl.DateTimeFormat("es-CO", { weekday: "long", day: "numeric", month: "long" });
-const timeFormat = new Intl.DateTimeFormat("es-CO", { hour: "numeric", minute: "2-digit" });
-const fullFormat = new Intl.DateTimeFormat("es-CO", { dateStyle: "long", timeStyle: "short" });
+// Formateadores del idioma activo (Intl los guarda en caché por idioma).
+const dayFormat = { format: (d: Date) => dateFormat({ weekday: "long", day: "numeric", month: "long" }).format(d) };
+const timeFormat = { format: (d: Date) => dateFormat({ hour: "numeric", minute: "2-digit" }).format(d) };
+const fullFormat = { format: (d: Date) => dateFormat({ dateStyle: "long", timeStyle: "short" }).format(d) };
 /** Fotos por envío, como en WhatsApp sin llegar a saturar. */
 const MAX_PHOTOS = 10;
+
+/**
+ * URL local (blob:) para previsualizar una foto antes de enviarla. Se copia el
+ * contenido a un Blob nuevo con un tipo de imagen fijo, así el navegador sólo
+ * puede mostrarlo como imagen (nunca como HTML ni como script).
+ */
+function previewUrl(file: File): string {
+  const type = /^image\/[a-z0-9.+-]+$/i.test(file.type) ? file.type : "image/jpeg";
+  return URL.createObjectURL(new Blob([file], { type }));
+}
 /** Las fotos del chat se ven en el celular: más livianas que las del álbum. */
 const CHAT_IMAGE_OPTIONS = { maxEdge: 1600, thumbEdge: 480, quality: 0.82, targetBytes: 350 * 1024, minQuality: 0.66 };
 
@@ -97,7 +109,7 @@ function messageFromRecord(r: Row, known: Pending[]): ChatMessage {
       ? {
         id: replyId,
         senderId: original?.senderId ?? "",
-        body: original?.body ?? "Mensaje anterior",
+        body: original?.body ?? msg().chat.thread.previousMessage,
         kind: original?.kind ?? "text",
         sticker: original?.sticker ?? null,
         deleted: Boolean(original?.deletedAt),
@@ -106,16 +118,9 @@ function messageFromRecord(r: Row, known: Pending[]): ChatMessage {
   };
 }
 
-const RECEIPT_LABEL: Record<Receipt, string> = {
-  sending: "Enviando",
-  failed: "No enviado",
-  sent: "Enviado",
-  delivered: "Entregado",
-  read: "Visto",
-};
-
 function ReceiptMark({ receipt, readers }: { receipt: Receipt; readers: string }) {
-  const label = receipt === "read" && readers ? `Visto por ${readers}` : RECEIPT_LABEL[receipt];
+  const t = useT().chat.thread;
+  const label = receipt === "read" && readers ? t.seenBy(readers) : t.receipt[receipt];
   const icon = receipt === "sending" ? "🕓" : receipt === "failed" ? "!" : receipt === "sent" ? "✓" : "✓✓";
   return (
     <span className={`receipt receipt--${receipt}`} title={label} aria-label={label} role="img">
@@ -130,6 +135,8 @@ export function ConversationView({ conversation }: { conversation: ChatConversat
   const toast = useToast();
   const navigate = useNavigate();
   const [confirm, confirmDialog] = useConfirm();
+  const i18n = useT();
+  const t = i18n.chat.thread;
   const me = chat.me;
   const conversationId = conversation.id;
   const peer = chat.peerOf(conversation);
@@ -368,7 +375,7 @@ export function ConversationView({ conversation }: { conversation: ChatConversat
       target = document.getElementById(`msg-${id}`);
     }
     if (!target) {
-      toast.show({ title: "Ese mensaje ya no está", body: "Puede que se haya borrado o que vaciaras el chat." });
+      toast.show({ title: t.gone, body: t.goneBody });
       return;
     }
     stickToBottom.current = false;
@@ -393,7 +400,7 @@ export function ConversationView({ conversation }: { conversation: ChatConversat
       setMessages((list) => merge(list.filter((m) => m.id !== temp.id), [saved]));
     } catch (error) {
       setMessages((list) => list.map((m) => (m.id === temp.id ? { ...m, pending: false, failed: true } : m)));
-      toast.error(error, "No se envió");
+      toast.error(error, t.notSent);
     }
   };
 
@@ -418,7 +425,7 @@ export function ConversationView({ conversation }: { conversation: ChatConversat
       await backend.messaging.editChat(message.id, body);
     } catch (error) {
       if (before) setMessages((list) => list.map((m) => (m.id === message.id ? before : m)));
-      toast.error(error, "No se editó");
+      toast.error(error, t.notEdited);
     }
   };
 
@@ -453,14 +460,14 @@ export function ConversationView({ conversation }: { conversation: ChatConversat
         });
       } catch (error) {
         setMessages((list) => list.map((m) => (m.id === temp.id ? { ...m, pending: false, failed: true } : m)));
-        toast.error(error, "No se envió la foto");
+        toast.error(error, t.photoNotSent);
       }
     }
   };
 
   const retry = (m: Pending) => {
     if (m.kind !== "text") {
-      toast.show({ title: "Vuelve a elegir la foto", body: "Las fotos que no se enviaron hay que elegirlas otra vez." });
+      toast.show({ title: t.pickAgain, body: t.pickAgainBody });
       return;
     }
     setMessages((list) => list.filter((x) => x.id !== m.id));
@@ -479,13 +486,13 @@ export function ConversationView({ conversation }: { conversation: ChatConversat
   const addPhotos = (files: Iterable<File>) => {
     const images = [...files].filter(isImageFile);
     if (images.length === 0) {
-      toast.show({ title: "Eso no es una foto", body: "Elige imágenes JPG, PNG, WebP o HEIC.", tone: "error" });
+      toast.show({ title: t.notPhoto, body: t.notPhotoBody, tone: "error" });
       return;
     }
     setDrafts((current) => {
       const room = MAX_PHOTOS - current.length;
-      if (images.length > room) toast.show({ title: `Máximo ${MAX_PHOTOS} fotos por envío` });
-      return [...current, ...images.slice(0, Math.max(room, 0)).map((file) => ({ id: crypto.randomUUID(), file, url: URL.createObjectURL(file) }))];
+      if (images.length > room) toast.show({ title: t.maxPhotos(MAX_PHOTOS) });
+      return [...current, ...images.slice(0, Math.max(room, 0)).map((file) => ({ id: crypto.randomUUID(), file, url: previewUrl(file) }))];
     });
     input.current?.focus();
   };
@@ -525,16 +532,16 @@ export function ConversationView({ conversation }: { conversation: ChatConversat
       await backend.messaging.reactChat(message.id, value);
     } catch (error) {
       setMessages((list) => list.map((m) => (m.id === message.id ? { ...m, reactions: before } : m)));
-      toast.error(error, "No se guardó la reacción");
+      toast.error(error, t.reactionFailed);
     }
   };
 
   const copy = async (message: Pending) => {
     try {
       await navigator.clipboard.writeText(message.body);
-      toast.show({ title: "Mensaje copiado", tone: "success", durationMs: 2000 });
+      toast.show({ title: t.copied, tone: "success", durationMs: 2000 });
     } catch {
-      toast.show({ title: "No se pudo copiar", tone: "error" });
+      toast.show({ title: t.copyFailed, tone: "error" });
     }
   };
 
@@ -543,7 +550,7 @@ export function ConversationView({ conversation }: { conversation: ChatConversat
       setMessages((list) => list.filter((m) => m.id !== message.id));
       return;
     }
-    if (!(await confirm({ title: "¿Eliminar para ti?", body: "Dejarás de verlo; los demás lo siguen viendo.", confirmLabel: "Eliminar para mí", danger: true }))) return;
+    if (!(await confirm({ title: t.deleteMeTitle, body: t.deleteMeBody, confirmLabel: t.deleteMe, danger: true }))) return;
     setMessages((list) => list.filter((m) => m.id !== message.id));
     try {
       await backend.messaging.hideChat(message.id);
@@ -554,7 +561,7 @@ export function ConversationView({ conversation }: { conversation: ChatConversat
   };
 
   const removeForAll = async (message: Pending) => {
-    if (!(await confirm({ title: "¿Eliminar para todos?", body: "Nadie podrá verlo; quedará «Se eliminó este mensaje».", confirmLabel: "Eliminar para todos", danger: true }))) return;
+    if (!(await confirm({ title: t.deleteAllTitle, body: t.deleteAllBody, confirmLabel: t.deleteAll, danger: true }))) return;
     const deletedAt = new Date().toISOString();
     setMessages((list) => list.map((m) => (m.id === message.id ? { ...m, body: "", image: null, sticker: null, reactions: [], deletedAt } : m)));
     try {
@@ -580,8 +587,8 @@ export function ConversationView({ conversation }: { conversation: ChatConversat
   };
 
   const clearChat = async () => {
-    if (!(await confirm({ title: "¿Vaciar este chat?", body: "Los mensajes se borran sólo para ti; la otra persona los sigue viendo.", confirmLabel: "Vaciar chat", danger: true }))) return;
-    await update({ clear: true }, "Chat vaciado", { unread: 0, lastMessage: null });
+    if (!(await confirm({ title: t.clearTitle, body: t.clearBody, confirmLabel: t.clear, danger: true }))) return;
+    await update({ clear: true }, t.cleared, { unread: 0, lastMessage: null });
     setMessages([]);
     setHasMore(false);
   };
@@ -589,9 +596,9 @@ export function ConversationView({ conversation }: { conversation: ChatConversat
   const removeContact = async () => {
     if (!peer) return;
     if (!(await confirm({
-      title: `¿Dejar de ser contacto de ${peer.displayName}?`,
-      body: "El historial se queda, pero ninguno podrá escribir hasta que vuelvan a aceptarse.",
-      confirmLabel: "Quitar contacto", danger: true,
+      title: t.removeContactTitle(peer.displayName),
+      body: t.removeContactBody,
+      confirmLabel: t.removeContact, danger: true,
     }))) return;
     try {
       await backend.messaging.removeContact(peer.id);
@@ -604,14 +611,14 @@ export function ConversationView({ conversation }: { conversation: ChatConversat
   const block = async () => {
     if (!peer) return;
     if (!(await confirm({
-      title: `¿Bloquear a ${peer.displayName}?`,
-      body: "No podrá escribirte, mandarte solicitudes ni encontrarte en la búsqueda. Puedes desbloquearla cuando quieras.",
-      confirmLabel: "Bloquear", danger: true,
+      title: i18n.chat.people.blockTitle(peer.displayName),
+      body: t.blockBody,
+      confirmLabel: i18n.chat.people.block, danger: true,
     }))) return;
     try {
       await backend.messaging.blockUser(peer.id);
       await chat.reload();
-      toast.show({ title: `Bloqueaste a ${peer.displayName}` });
+      toast.show({ title: i18n.chat.people.blocked(peer.displayName) });
     } catch (error) {
       toast.error(error);
     }
@@ -622,7 +629,7 @@ export function ConversationView({ conversation }: { conversation: ChatConversat
     try {
       await backend.messaging.unblockUser(peer.id);
       await chat.reload();
-      toast.show({ title: `Desbloqueaste a ${peer.displayName}`, body: "Para volver a escribirse, mándale una solicitud." });
+      toast.show({ title: i18n.chat.people.unblocked(peer.displayName), body: t.unblockedBody });
     } catch (error) {
       toast.error(error);
     }
@@ -633,7 +640,7 @@ export function ConversationView({ conversation }: { conversation: ChatConversat
     try {
       const status = await backend.messaging.requestContact(peer.id);
       await chat.reload();
-      toast.show({ title: status === "accepted" ? "¡Ya pueden escribirse!" : "Solicitud enviada 💌", tone: "success" });
+      toast.show({ title: status === "accepted" ? t.canWrite : i18n.chat.people.requestSent, tone: "success" });
     } catch (error) {
       toast.error(error);
     }
@@ -648,37 +655,37 @@ export function ConversationView({ conversation }: { conversation: ChatConversat
     .filter((p) => p.userId !== me && p.conversationId === conversationId && isTyping(p.typingAt, chat.now))
     .map((p) => p.userId);
   const status = (() => {
-    if (typers.length) return isGroup ? `${typers.map(nameOf).join(", ")} ${typers.length > 1 ? "están" : "está"} escribiendo…` : "escribiendo…";
+    if (typers.length) return isGroup ? t.typingMany(typers.map(nameOf).join(", "), typers.length > 1) : i18n.chat.list.typing;
     if (isGroup) return conversation.participantIds.filter((id) => id !== me).map(nameOf).join(", ");
     if (!peer) return "";
-    if (blockedByMe) return "Bloqueado";
+    if (blockedByMe) return t.blockedStatus;
     const presence = chat.presences.find((p) => p.userId === peer.id);
     return presence ? lastSeenLabel(presence.lastSeenAt, chat.now) : "";
   })();
   const pendingFrom = peer ? chat.outgoing.find((c) => c.addresseeId === peer.id) : undefined;
 
   const headerItems: MenuItem[] = [
-    { label: "Ver perfil", icon: "👤", onSelect: () => setShowProfile(true), hidden: !peer },
-    { label: "Buscar en el chat", icon: "🔍", onSelect: () => setSearching(true) },
+    { label: t.viewProfile, icon: "👤", onSelect: () => setShowProfile(true), hidden: !peer },
+    { label: t.searchInChat, icon: "🔍", onSelect: () => setSearching(true) },
     conversation.muted
-      ? { label: "Activar avisos", icon: "🔔", onSelect: () => void update({ muted: false }, "Avisos activados", { muted: false }) }
-      : { label: "Silenciar avisos", icon: "🔕", onSelect: () => void update({ muted: true }, "Chat silenciado: no te llegarán avisos", { muted: true }) },
+      ? { label: t.unmute, icon: "🔔", onSelect: () => void update({ muted: false }, t.unmuted, { muted: false }) }
+      : { label: t.mute, icon: "🔕", onSelect: () => void update({ muted: true }, t.mutedDone, { muted: true }) },
     conversation.pinnedAt
-      ? { label: "Desfijar", icon: "📌", onSelect: () => void update({ pinned: false }, "Chat desfijado", { pinnedAt: null }) }
-      : { label: "Fijar arriba", icon: "📌", onSelect: () => void update({ pinned: true }, "Chat fijado", { pinnedAt: new Date().toISOString() }) },
+      ? { label: t.unpin, icon: "📌", onSelect: () => void update({ pinned: false }, t.unpinned, { pinnedAt: null }) }
+      : { label: t.pin, icon: "📌", onSelect: () => void update({ pinned: true }, t.pinned, { pinnedAt: new Date().toISOString() }) },
     conversation.archivedAt
-      ? { label: "Desarchivar", icon: "🗄️", onSelect: () => void update({ archived: false }, "Chat desarchivado", { archivedAt: null }) }
+      ? { label: t.unarchive, icon: "🗄️", onSelect: () => void update({ archived: false }, t.unarchived, { archivedAt: null }) }
       : {
-        label: "Archivar", icon: "🗄️", onSelect: () => {
-          void update({ archived: true }, "Chat archivado", { archivedAt: new Date().toISOString() });
+        label: t.archive, icon: "🗄️", onSelect: () => {
+          void update({ archived: true }, t.archived, { archivedAt: new Date().toISOString() });
           navigate("/chat");
         },
       },
-    { label: "Vaciar chat", icon: "🧹", onSelect: () => void clearChat() },
-    { label: "Quitar contacto", icon: "👋", onSelect: () => void removeContact(), danger: true, hidden: !peer || !chat.isContact(peer.id) },
+    { label: t.clear, icon: "🧹", onSelect: () => void clearChat() },
+    { label: t.removeContact, icon: "👋", onSelect: () => void removeContact(), danger: true, hidden: !peer || !chat.isContact(peer.id) },
     blockedByMe
-      ? { label: "Desbloquear", icon: "🔓", onSelect: () => void unblock(), hidden: !peer }
-      : { label: "Bloquear", icon: "⛔", onSelect: () => void block(), danger: true, hidden: !peer },
+      ? { label: i18n.chat.people.unblock, icon: "🔓", onSelect: () => void unblock(), hidden: !peer }
+      : { label: i18n.chat.people.block, icon: "⛔", onSelect: () => void block(), danger: true, hidden: !peer },
   ];
 
   let unreadShown = false;
@@ -686,25 +693,25 @@ export function ConversationView({ conversation }: { conversation: ChatConversat
   return (
     <div className="thread">
       <header className="thread__header">
-        <Link to="/chat" className="btn btn--icon btn--ghost thread__back" aria-label="Volver a los chats"><span aria-hidden>←</span></Link>
+        <Link to="/chat" className="btn btn--icon btn--ghost thread__back" aria-label={t.back}><span aria-hidden>←</span></Link>
         <button
           type="button"
           className="thread__who"
           onClick={() => peer && setShowProfile(true)}
           disabled={!peer}
           data-tour="chat-presence"
-          aria-label={peer ? `${title}${status ? `, ${status}` : ""}. Ver perfil` : title}
+          aria-label={peer ? t.headerLabel(title, status) : title}
         >
           {isGroup ? <span className="avatar avatar--emoji" style={{ "--avatar-size": "40px" } as CSSProperties} aria-hidden>👥</span> : <Avatar person={peer} size={40} />}
           <span className="thread__who-text">
             <span className="thread__name">{title}</span>
-            <span className={`thread__status${status === "en línea" ? " is-online" : ""}${typers.length ? " is-typing" : ""}`} aria-live="polite">{status}</span>
+            <span className={`thread__status${status === i18n.chat.online ? " is-online" : ""}${typers.length ? " is-typing" : ""}`} aria-live="polite">{status}</span>
           </span>
         </button>
         <button type="button" className="btn btn--icon btn--ghost" aria-label="Buscar en el chat" title="Buscar en el chat" aria-pressed={searching} onClick={() => setSearching((s) => !s)}>
           <span aria-hidden>🔍</span>
         </button>
-        <Menu label="Opciones del chat" trigger={<span aria-hidden>⋮</span>} items={headerItems} tourId="chat-menu" />
+        <Menu label={t.options} trigger={<span aria-hidden>⋮</span>} items={headerItems} tourId="chat-menu" />
       </header>
       {searching && (
         <ChatSearch
@@ -721,22 +728,22 @@ export function ConversationView({ conversation }: { conversation: ChatConversat
           data-tour="chat-thread"
           onScroll={onScroll}
           role="log"
-          aria-label={`Mensajes con ${title}`}
+          aria-label={t.messagesWith(title)}
           aria-busy={loading}
           tabIndex={0}
         >
           {loading ? <PageLoader /> : (
             <>
-              {hasMore && <button className="btn btn--sm btn--ghost chat__more" onClick={() => void loadOlder()}>Ver mensajes anteriores</button>}
+              {hasMore && <button className="btn btn--sm btn--ghost chat__more" onClick={() => void loadOlder()}>{t.older}</button>}
               {!hasMore && (
                 <p className="thread__intro">
-                  <span aria-hidden>🔒</span> Sólo {isGroup ? "quienes están en este chat" : `tú y ${title}`} pueden leer estos mensajes.
+                  <span aria-hidden>🔒</span> {isGroup ? t.privacyGroup : t.privacyDirect(title)}
                 </p>
               )}
               {messages.length === 0 && (
                 <div className="thread__empty">
                   <span aria-hidden>👋</span>
-                  <p>Salúdale a {title} para empezar.</p>
+                  <p>{t.sayHi(title)}</p>
                 </div>
               )}
               {messages.map((m, i) => {
@@ -751,8 +758,8 @@ export function ConversationView({ conversation }: { conversation: ChatConversat
                   <div key={m.id} id={`msg-${m.id}`}>
                     {newDay && <div className="chat__day" role="separator" aria-label={dayFormat.format(new Date(m.createdAt))}><span>{dayFormat.format(new Date(m.createdAt))}</span></div>}
                     {showUnread && (
-                      <div className="thread__unread" role="separator" data-unread-divider aria-label="Mensajes sin leer">
-                        <span>{conversation.unread > 0 ? `${conversation.unread} sin leer` : "Sin leer"}</span>
+                      <div className="thread__unread" role="separator" data-unread-divider aria-label={t.unreadDivider}>
+                        <span>{conversation.unread > 0 ? t.unreadCount(conversation.unread) : t.unreadPlain}</span>
                       </div>
                     )}
                     <MessageRow
@@ -792,41 +799,41 @@ export function ConversationView({ conversation }: { conversation: ChatConversat
           )}
         </div>
         {!atBottom && (
-          <button type="button" className="thread__to-bottom" onClick={scrollToBottom} aria-label={missed ? `Bajar al final, ${missed} mensajes nuevos` : "Bajar al final"}>
+          <button type="button" className="thread__to-bottom" onClick={scrollToBottom} aria-label={missed ? t.toBottomMissed(missed) : t.toBottom}>
             <span aria-hidden>↓</span>
             {missed > 0 && <span className="thread__to-bottom-count" aria-hidden>{missed}</span>}
           </button>
         )}
       </div>
       {canSend ? (
-        <form className="chat__composer thread__composer" onSubmit={send} data-tour="chat-composer" aria-label="Escribir mensaje">
-          <span id="chat-ayuda" className="visually-hidden">Enter envía; Mayúsculas más Enter hace un salto de línea.</span>
+        <form className="chat__composer thread__composer" onSubmit={send} data-tour="chat-composer" aria-label={t.composer}>
+          <span id="chat-ayuda" className="visually-hidden">{t.composerHelp}</span>
           {replyingTo && (
             <div className="chat__replying" role="status">
               <button type="button" className="chat__replying-quote" onClick={() => void jumpTo(replyingTo.id, replyingTo.createdAt)}>
                 <span className="bubble__quote-name">
-                  {replyingTo.senderId === me ? "Respondiendo a tu mensaje" : `Respondiendo a ${nameOf(replyingTo.senderId)}`}
+                  {replyingTo.senderId === me ? t.replyingMine : t.replyingTo(nameOf(replyingTo.senderId))}
                 </span>
                 <span className="bubble__quote-text">{messagePreview(replyingTo)}</span>
               </button>
-              <button type="button" className="btn btn--icon btn--ghost btn--sm" aria-label="Cancelar respuesta" onClick={() => setReplyingTo(null)}><span aria-hidden>✕</span></button>
+              <button type="button" className="btn btn--icon btn--ghost btn--sm" aria-label={t.cancelReply} onClick={() => setReplyingTo(null)}><span aria-hidden>✕</span></button>
             </div>
           )}
           {editing && (
             <div className="chat__replying chat__editing" role="status">
               <span className="chat__replying-quote">
-                <span className="bubble__quote-name">✏️ Editando mensaje</span>
+                <span className="bubble__quote-name">{t.editing}</span>
                 <span className="bubble__quote-text">{messagePreview(editing)}</span>
               </span>
-              <button type="button" className="btn btn--icon btn--ghost btn--sm" aria-label="Cancelar edición" onClick={cancelEdit}><span aria-hidden>✕</span></button>
+              <button type="button" className="btn btn--icon btn--ghost btn--sm" aria-label={t.cancelEdit} onClick={cancelEdit}><span aria-hidden>✕</span></button>
             </div>
           )}
           {drafts.length > 0 && (
-            <ul className="chat__drafts" aria-label="Fotos para enviar">
+            <ul className="chat__drafts" aria-label={t.drafts}>
               {drafts.map((d) => (
                 <li key={d.id} className="chat__draft">
-                  <img src={d.url} alt={`Vista previa de ${d.file.name}`} />
-                  <button type="button" className="chat__draft-remove" aria-label={`Quitar ${d.file.name}`} onClick={() => removeDraft(d.id)}><span aria-hidden>✕</span></button>
+                  <img src={d.url} alt={t.draftPreview(d.file.name)} />
+                  <button type="button" className="chat__draft-remove" aria-label={t.removeDraft(d.file.name)} onClick={() => removeDraft(d.id)}><span aria-hidden>✕</span></button>
                 </li>
               ))}
             </ul>
@@ -834,12 +841,12 @@ export function ConversationView({ conversation }: { conversation: ChatConversat
           {picker && <StickerPicker onPick={sendSticker} onClose={() => setPicker(false)} />}
           {!editing && (
             <div className="chat__tools">
-              <button type="button" className="btn btn--icon btn--ghost" aria-label="Enviar fotos" title="Fotos" onClick={() => fileInput.current?.click()} data-tour="chat-photo"><span aria-hidden>📷</span></button>
+              <button type="button" className="btn btn--icon btn--ghost" aria-label={t.attach} title={t.photosTitle} onClick={() => fileInput.current?.click()} data-tour="chat-photo"><span aria-hidden>📷</span></button>
               <button
                 type="button"
                 className="btn btn--icon btn--ghost"
-                aria-label="Stickers"
-                title="Stickers"
+                aria-label={i18n.chat.stickersTitle}
+                title={i18n.chat.stickersTitle}
                 aria-expanded={picker}
                 data-sticker-toggle
                 data-tour="chat-sticker"
@@ -862,8 +869,8 @@ export function ConversationView({ conversation }: { conversation: ChatConversat
           )}
           <textarea
             ref={input}
-            className="textarea" rows={1} maxLength={2000} value={text} aria-label={editing ? "Edita el mensaje" : "Escribe un mensaje"} aria-describedby="chat-ayuda"
-            placeholder={editing ? "Edita tu mensaje…" : drafts.length ? "Añade un mensaje a la foto…" : "Escribe un mensaje…"}
+            className="textarea" rows={1} maxLength={2000} value={text} aria-label={editing ? t.editLabel : t.writeLabel} aria-describedby="chat-ayuda"
+            placeholder={editing ? t.editPlaceholder : drafts.length ? t.captionPlaceholder : t.writePlaceholder}
             onChange={(e) => onType(e.target.value)}
             onPaste={onPaste}
             onKeyDown={(e) => {
@@ -884,7 +891,7 @@ export function ConversationView({ conversation }: { conversation: ChatConversat
               }
             }}
           />
-          <button className="btn chat__send" disabled={editing ? (editing.kind === "text" && !text.trim()) : !text.trim() && drafts.length === 0} aria-label={editing ? "Guardar cambios" : "Enviar"}>
+          <button className="btn chat__send" disabled={editing ? (editing.kind === "text" && !text.trim()) : !text.trim() && drafts.length === 0} aria-label={editing ? t.saveChanges : t.send}>
             <span aria-hidden>{editing ? "✓" : "➤"}</span>
           </button>
         </form>
@@ -892,27 +899,27 @@ export function ConversationView({ conversation }: { conversation: ChatConversat
         <div className="thread__locked" role="status">
           {blockedByMe ? (
             <>
-              <p>Bloqueaste a {peer?.displayName}. No puede escribirte.</p>
-              <button type="button" className="btn btn--sm btn--ghost" onClick={() => void unblock()}>Desbloquear</button>
+              <p>{t.youBlocked(peer?.displayName ?? "")}</p>
+              <button type="button" className="btn btn--sm btn--ghost" onClick={() => void unblock()}>{i18n.chat.people.unblock}</button>
             </>
           ) : peer && !peer.isActive ? (
-            <p>Esta cuenta ya no está activa.</p>
+            <p>{t.inactive}</p>
           ) : pendingFrom ? (
-            <p>Le enviaste una solicitud a {peer?.displayName}. Podrán escribirse cuando la acepte.</p>
+            <p>{t.pending(peer?.displayName ?? "")}</p>
           ) : (
             <>
-              <p>Ya no son contactos. Para volver a escribirse, mándale una solicitud.</p>
-              <button type="button" className="btn btn--sm" onClick={() => void requestAgain()}>Enviar solicitud</button>
+              <p>{t.notContacts}</p>
+              <button type="button" className="btn btn--sm" onClick={() => void requestAgain()}>{t.sendRequest}</button>
             </>
           )}
         </div>
       )}
       {viewing?.image && (
-        <Modal title={`Foto de ${nameOf(viewing.senderId)}`} onClose={() => setViewing(null)} wide>
+        <Modal title={t.photoOf(nameOf(viewing.senderId))} onClose={() => setViewing(null)} wide>
           <figure className="chat-photo">
             <img
               src={imageUrls.get(viewing.image.path) ?? imageUrls.get(viewing.image.thumbPath)}
-              alt={viewing.body || `Foto de ${nameOf(viewing.senderId)}`}
+              alt={viewing.body || t.photoOf(nameOf(viewing.senderId))}
               width={viewing.image.width ?? undefined}
               height={viewing.image.height ?? undefined}
             />
@@ -921,17 +928,17 @@ export function ConversationView({ conversation }: { conversation: ChatConversat
         </Modal>
       )}
       {info && (
-        <Modal title="Información del mensaje" onClose={() => setInfo(null)}>
+        <Modal title={t.info} onClose={() => setInfo(null)}>
           <dl className="message-info">
-            <dt>Enviado</dt>
+            <dt>{t.sentAt}</dt>
             <dd>{fullFormat.format(new Date(info.createdAt))}</dd>
-            {info.editedAt && (<><dt>Editado</dt><dd>{fullFormat.format(new Date(info.editedAt))}</dd></>)}
+            {info.editedAt && (<><dt>{t.editedAt}</dt><dd>{fullFormat.format(new Date(info.editedAt))}</dd></>)}
             {participants.filter((p) => p.userId !== info.senderId).map((p) => {
               const read = p.lastReadAt && p.lastReadAt >= info.createdAt;
               return (
                 <div key={p.userId} className="message-info__row">
                   <dt>{nameOf(p.userId)}</dt>
-                  <dd>{read ? `✓✓ Visto · ${fullFormat.format(new Date(p.lastReadAt!))}` : "Todavía no lo ve"}</dd>
+                  <dd>{read ? t.seenAt(fullFormat.format(new Date(p.lastReadAt!))) : t.notSeen}</dd>
                 </div>
               );
             })}
@@ -977,17 +984,19 @@ interface MessageRowProps {
 function MessageRow(props: MessageRowProps) {
   const { message: m, mine, grouped, me } = props;
   const [menuOpen, setMenuOpen] = useState(false);
+  const i18n = useT();
+  const t = i18n.chat.message;
   const deleted = Boolean(m.deletedAt);
   const live = !m.pending && !m.failed && !deleted;
 
   const items: MenuItem[] = [
-    { label: "Responder", icon: "↩", onSelect: props.onReply, hidden: !live || !props.canSend },
-    { label: "Copiar", icon: "📋", onSelect: props.onCopy, hidden: !live || !m.body },
-    { label: "Editar", icon: "✏️", onSelect: props.onEdit, hidden: !live || !props.canSend || !canEditMessage(m, me, props.now) },
-    { label: "Información", icon: "ℹ️", onSelect: props.onInfo, hidden: !live || !mine },
-    { label: "Reintentar", icon: "↻", onSelect: props.onRetry, hidden: !m.failed },
-    { label: "Eliminar para mí", icon: "🗑️", onSelect: props.onDeleteForMe, danger: true, hidden: m.pending },
-    { label: "Eliminar para todos", icon: "🚫", onSelect: props.onDeleteForAll, danger: true, hidden: !live || !mine },
+    { label: t.reply, icon: "↩", onSelect: props.onReply, hidden: !live || !props.canSend },
+    { label: t.copy, icon: "📋", onSelect: props.onCopy, hidden: !live || !m.body },
+    { label: t.edit, icon: "✏️", onSelect: props.onEdit, hidden: !live || !props.canSend || !canEditMessage(m, me, props.now) },
+    { label: t.info, icon: "ℹ️", onSelect: props.onInfo, hidden: !live || !mine },
+    { label: t.retry, icon: "↻", onSelect: props.onRetry, hidden: !m.failed },
+    { label: i18n.chat.thread.deleteMe, icon: "🗑️", onSelect: props.onDeleteForMe, danger: true, hidden: m.pending },
+    { label: i18n.chat.thread.deleteAll, icon: "🚫", onSelect: props.onDeleteForAll, danger: true, hidden: !live || !mine },
   ];
   const reactions = groupReactions(m.reactions);
   const myReaction = m.reactions.find((r) => r.userId === me)?.emoji;
@@ -1002,9 +1011,9 @@ function MessageRow(props: MessageRowProps) {
       <div className={`bubble bubble--${deleted ? "deleted" : m.kind}${m.pending ? " is-pending" : ""}${m.failed ? " is-failed" : ""}`}>
         {props.showName
           ? <span className="bubble__name">{props.senderName}</span>
-          : <span className="visually-hidden">{mine ? "Tú" : props.senderName}:</span>}
+          : <span className="visually-hidden">{mine ? i18n.chat.you : props.senderName}:</span>}
         {deleted ? (
-          <span className="bubble__text bubble__deleted">{DELETED_LABEL}</span>
+          <span className="bubble__text bubble__deleted">{deletedLabel()}</span>
         ) : (
           <>
             {m.replyTo && (
@@ -1012,9 +1021,9 @@ function MessageRow(props: MessageRowProps) {
                 type="button"
                 className="bubble__quote"
                 onClick={() => props.onJump(m.replyTo!.id)}
-                aria-label={`En respuesta a ${m.replyTo.senderId ? props.nameOf(m.replyTo.senderId) : "un mensaje"}: ${messagePreview(m.replyTo)}. Ir al mensaje`}
+                aria-label={t.inReplyTo(m.replyTo.senderId ? props.nameOf(m.replyTo.senderId) : t.aMessage, messagePreview(m.replyTo))}
               >
-                <span className="bubble__quote-name">{m.replyTo.senderId ? props.nameOf(m.replyTo.senderId) : "Mensaje"}</span>
+                <span className="bubble__quote-name">{m.replyTo.senderId ? props.nameOf(m.replyTo.senderId) : t.messageWord}</span>
                 <span className="bubble__quote-text">{messagePreview(m.replyTo)}</span>
               </button>
             )}
@@ -1024,12 +1033,12 @@ function MessageRow(props: MessageRowProps) {
                 className="bubble__photo"
                 disabled={m.pending || m.failed}
                 onClick={props.onOpenPhoto}
-                aria-label={`Ver foto de ${props.senderName}${m.body ? `: ${quoteSnippet(m.body, 60)}` : ""}`}
+                aria-label={t.viewPhoto(props.senderName, m.body ? quoteSnippet(m.body, 60) : "")}
               >
                 {props.imageUrl ? (
                   <img src={props.imageUrl} alt="" width={m.image?.width ?? undefined} height={m.image?.height ?? undefined} loading="lazy" decoding="async" />
                 ) : <span className="bubble__photo-placeholder" aria-hidden>📷</span>}
-                {m.pending && <span className="bubble__uploading"><span className="bubble__heart" aria-hidden>💗</span> Enviando foto…</span>}
+                {m.pending && <span className="bubble__uploading"><span className="bubble__heart" aria-hidden>💗</span> {t.sendingPhoto}</span>}
               </button>
             )}
             {m.kind === "sticker" && <StickerArt id={m.sticker} />}
@@ -1037,7 +1046,7 @@ function MessageRow(props: MessageRowProps) {
           </>
         )}
         <span className="bubble__time">
-          {m.editedAt && !deleted && <span className="bubble__edited">editado · </span>}
+          {m.editedAt && !deleted && <span className="bubble__edited">{t.edited}</span>}
           <time dateTime={m.createdAt}>{timeFormat.format(new Date(m.createdAt))}</time>
           {props.receipt && <ReceiptMark receipt={props.receipt} readers={props.readers} />}
         </span>
@@ -1049,7 +1058,7 @@ function MessageRow(props: MessageRowProps) {
                 type="button"
                 className={`reaction-chip${r.userIds.includes(me ?? "") ? " is-mine" : ""}`}
                 onClick={() => props.canSend && props.onReact(r.emoji)}
-                aria-label={`${r.emoji} de ${r.userIds.map(props.nameOf).join(", ")}${r.userIds.includes(me ?? "") ? ". Toca para quitar la tuya" : ""}`}
+                aria-label={t.reactionBy(r.emoji, r.userIds.map(props.nameOf).join(", "), r.userIds.includes(me ?? ""))}
                 title={r.userIds.map(props.nameOf).join(", ")}
               >
                 <span aria-hidden>{r.emoji}</span>{r.userIds.length > 1 && <span aria-hidden>{r.userIds.length}</span>}
@@ -1061,12 +1070,12 @@ function MessageRow(props: MessageRowProps) {
       {!m.pending && (
         <div className="bubble__actions">
           {live && props.canSend && (
-            <button type="button" className="btn btn--icon btn--ghost btn--sm bubble__reply" aria-label={`Responder a ${mine ? "tu mensaje" : props.senderName}: ${messagePreview(m, 40)}`} title="Responder" onClick={props.onReply}>
+            <button type="button" className="btn btn--icon btn--ghost btn--sm bubble__reply" aria-label={t.replyTo(mine ? t.yourMessage : props.senderName, messagePreview(m, 40))} title={t.reply} onClick={props.onReply}>
               <span aria-hidden>↩</span>
             </button>
           )}
           <Menu
-            label={`Opciones del mensaje: ${messagePreview(m, 40)}`}
+            label={t.options(messagePreview(m, 40))}
             trigger={<span aria-hidden>⌄</span>}
             items={items}
             align={mine ? "end" : "start"}
@@ -1075,12 +1084,12 @@ function MessageRow(props: MessageRowProps) {
             onOpenChange={setMenuOpen}
             preview={(
               <>
-                <span className="menu__preview-name">{mine ? "Tú" : props.senderName}</span>
+                <span className="menu__preview-name">{mine ? i18n.chat.you : props.senderName}</span>
                 <span className="menu__preview-text">{messagePreview(m, 120)}</span>
               </>
             )}
             header={live && props.canSend ? (close) => (
-              <div className="reaction-bar" role="group" aria-label="Reaccionar">
+              <div className="reaction-bar" role="group" aria-label={t.react}>
                 {REACTIONS.map((emoji, i) => (
                   <button
                     key={emoji}
@@ -1090,7 +1099,7 @@ function MessageRow(props: MessageRowProps) {
                     tabIndex={-1}
                     data-menu-first={i === 0 ? "" : undefined}
                     className={`reaction-bar__item${myReaction === emoji ? " is-mine" : ""}`}
-                    aria-label={`Reaccionar con ${emoji}`}
+                    aria-label={t.reactWith(emoji)}
                     onClick={() => {
                       close();
                       props.onReact(emoji);
@@ -1184,6 +1193,7 @@ function ChatSearch({ conversationId, nameOf, onClose, onPick }: {
   const backend = useBackend();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<ChatMessage[] | null>(null);
+  const t = useT().chat.search;
 
   useEffect(() => {
     const q = query.trim();
@@ -1206,9 +1216,9 @@ function ChatSearch({ conversationId, nameOf, onClose, onPick }: {
   return (
     <div className="thread-search" role="search">
       <div className="thread-search__bar">
-        <label htmlFor="buscar-mensajes" className="visually-hidden">Buscar mensajes en este chat</label>
+        <label htmlFor="buscar-mensajes" className="visually-hidden">{t.label}</label>
         <input
-          id="buscar-mensajes" className="input" type="search" placeholder="Buscar mensajes…" value={query} autoFocus autoComplete="off"
+          id="buscar-mensajes" className="input" type="search" placeholder={t.placeholder} value={query} autoFocus autoComplete="off"
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === "Escape") {
@@ -1217,14 +1227,14 @@ function ChatSearch({ conversationId, nameOf, onClose, onPick }: {
             }
           }}
         />
-        <button type="button" className="btn btn--icon btn--ghost" aria-label="Cerrar la búsqueda" onClick={onClose}><span aria-hidden>✕</span></button>
+        <button type="button" className="btn btn--icon btn--ghost" aria-label={t.close} onClick={onClose}><span aria-hidden>✕</span></button>
       </div>
       <p className="visually-hidden" role="status">
-        {results === null ? "" : results.length === 0 ? "Sin resultados" : `${results.length} resultados`}
+        {results === null ? "" : results.length === 0 ? t.none : t.count(results.length)}
       </p>
       {results !== null && (
         <ul className="thread-search__results">
-          {results.length === 0 && <li className="muted thread-search__none">No hay mensajes con «{query.trim()}».</li>}
+          {results.length === 0 && <li className="muted thread-search__none">{t.noMatch(query.trim())}</li>}
           {results.map((m) => (
             <li key={m.id}>
               <button type="button" className="thread-search__hit" onClick={() => onPick(m)}>
