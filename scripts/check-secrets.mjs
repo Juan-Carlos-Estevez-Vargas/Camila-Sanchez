@@ -41,6 +41,11 @@ const ASSIGNMENT =
 const PLACEHOLDER = /^(?:x+|\*+|\.+|changeme|example|your[-_]|tu[-_]|placeholder|CORREO_|<)/i;
 /** Nombres de constantes o variables (SERVICE_ROLE, SUPABASE_URL…): no son valores. */
 const IDENTIFIER = /^[A-Z_][A-Z0-9_]*$/;
+/**
+ * Referencias en código como `messages.auth.password;`: tramos de sólo letras
+ * separados por puntos. Una clave real lleva números o símbolos.
+ */
+const CODE_REFERENCE = /^[a-z_$][A-Za-z_$]{0,39}(?:\.[A-Za-z_$]{1,40})+[;,]?$/;
 
 const JWT = /\beyJ[A-Za-z0-9_-]{10,}\.(eyJ[A-Za-z0-9_-]{10,})\.[A-Za-z0-9_-]{10,}/g;
 
@@ -71,7 +76,7 @@ export function findSecrets(text) {
       if (jwtRole(match[1]) === "service_role") add("service_role key de Supabase");
     }
     for (const match of content.matchAll(ASSIGNMENT)) {
-      if (!PLACEHOLDER.test(match[2]) && !IDENTIFIER.test(match[2])) add(`Valor de ${match[1]}`);
+      if (!PLACEHOLDER.test(match[2]) && !IDENTIFIER.test(match[2]) && !CODE_REFERENCE.test(match[2])) add(`Valor de ${match[1]}`);
     }
   });
   return found;
