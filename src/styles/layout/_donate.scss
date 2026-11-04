@@ -1,32 +1,31 @@
 @use "../abstracts" as *;
 
-// «Invítame un café». Amarillo café con texto oscuro (contraste 15:1) para
-// que destaque igual con cualquier paleta, sin parpadeos ni animaciones.
+// «Invítame un café». Usa el color principal de la paleta que eligió cada
+// persona (con su color de contraste), así destaca sin desentonar con el
+// tema. Sin parpadeos ni animaciones.
 .donate-link {
-  --donate-bg: #ffdd00;
-  --donate-fg: #1f1a17;
-
   display: inline-flex;
   flex: 0 0 auto;
   align-items: center;
-  gap: space(2);
-  min-height: 40px;
-  padding: space(1) space(4);
+  gap: 6px;
+  min-height: 32px;
+  padding: 0.3rem 0.85rem;
   border-radius: var(--radius-pill, 999px);
-  border: 1px solid rgb(0 0 0 / 12%);
-  background: var(--donate-bg);
-  color: var(--donate-fg);
+  background: var(--c-primary);
+  color: var(--c-primary-contrast);
   font-weight: 600;
-  font-size: 0.92rem;
+  font-size: 0.85rem;
+  line-height: 1.2;
   white-space: nowrap;
   text-decoration: none;
-  box-shadow: 0 2px 8px rgb(0 0 0 / 12%);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 2px 8px tint(var(--c-primary), 30%);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
 
   &:hover {
-    color: var(--donate-fg);
+    color: var(--c-primary-contrast);
+    filter: brightness(1.06);
     transform: translateY(-1px);
-    box-shadow: 0 4px 14px rgb(0 0 0 / 18%);
+    box-shadow: 0 4px 12px tint(var(--c-primary), 40%);
   }
 
   &:focus-visible { @include focus-ring; }
@@ -36,19 +35,16 @@
     &:hover { transform: none; }
   }
 
-  &__icon { font-size: 1.05rem; }
+  &__icon { font-size: 0.95rem; }
 
-  &--footer {
-    min-height: 44px;
-    padding: space(2) space(5);
-    font-size: 1rem;
-  }
+  &--footer { font-size: 0.82rem; }
 
-  // En el celular la cabecera no tiene espacio: sólo la taza, igual de visible.
+  // En el celular la cabecera no tiene espacio: sólo la taza.
   &--header {
     @include below("sm") {
-      width: 40px;
-      height: 40px;
+      width: 34px;
+      height: 34px;
+      min-height: 0;
       padding: 0;
       justify-content: center;
 
