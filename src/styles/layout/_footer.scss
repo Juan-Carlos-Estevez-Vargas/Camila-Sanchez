@@ -70,6 +70,15 @@
     }
   }
 
+  &__donate {
+    display: grid;
+    justify-items: center;
+    gap: space(1);
+    margin: space(2) 0 0;
+  }
+
+  &__donate-note { font-size: 0.75rem; }
+
   &__version {
     margin-top: space(1);
     padding: 2px space(2);
