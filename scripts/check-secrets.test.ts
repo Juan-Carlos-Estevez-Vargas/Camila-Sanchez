@@ -33,6 +33,9 @@ describe("findSecrets", () => {
     expect(findSecrets("VAPID_PRIVATE_KEY=")).toEqual([]);
     expect(findSecrets("SMTP_PASS=xxxxxxxxxxxxxxxx")).toEqual([]);
     expect(findSecrets("{ SUPABASE_SERVICE_ROLE_KEY: SERVICE_ROLE_TOKEN }")).toEqual([]);
+    // Una propiedad de un objeto no es un valor; algo con números sí puede serlo.
+    expect(findSecrets("const SPANISH_PASSWORD = spanish.auth.password;")).toEqual([]);
+    expect(findSecrets("DB_PASSWORD=hunter2.hunter2.hunter2")).toHaveLength(1);
   });
 
   it("respeta la marca para falsos positivos", () => {
