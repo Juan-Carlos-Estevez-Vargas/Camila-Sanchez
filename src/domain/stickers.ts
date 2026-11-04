@@ -3,7 +3,7 @@
  * sin imágenes externas: no pesan, se ven igual en todos lados y no hay que
  * pedir permiso a nadie para usarlos. La base de datos sólo guarda el id.
  */
-import { msg } from "@/i18n";
+import { msg } from "@/i18n/store";
 export interface Sticker {
   id: string;
   emoji: string;

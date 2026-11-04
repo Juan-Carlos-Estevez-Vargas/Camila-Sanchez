@@ -1,5 +1,5 @@
 import spanish from "@/i18n/messages/es";
-import { msg, type Messages } from "@/i18n";
+import { msg, type Messages } from "@/i18n/store";
 import type { PasswordIssue } from "../../supabase/functions/_shared/password";
 
 const SPANISH_SERVER = spanish.errors.server;
