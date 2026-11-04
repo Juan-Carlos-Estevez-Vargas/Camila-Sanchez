@@ -12,18 +12,11 @@ import { Field, Switch } from "@/ui/Field";
 import { ColorInput } from "@/features/admin/theme/ColorInput";
 import { PalettePicker } from "@/features/admin/theme/PalettePicker";
 import { ThemePreview } from "@/features/admin/theme/ThemePreview";
+import { useT } from "@/i18n";
 
 type ColorKey = "primary" | "primaryContrast" | "accent" | "background" | "surface" | "text" | "muted";
 
-const COLOR_LABELS: Record<ColorKey, string> = {
-  primary: "Color principal",
-  primaryContrast: "Texto sobre el principal",
-  accent: "Color de acento",
-  background: "Fondo",
-  surface: "Tarjetas",
-  text: "Texto",
-  muted: "Texto secundario",
-};
+const COLOR_KEYS: ColorKey[] = ["primary", "primaryContrast", "accent", "background", "surface", "text", "muted"];
 
 export default function ThemeAdmin() {
   const backend = useBackend();
@@ -33,6 +26,7 @@ export default function ThemeAdmin() {
   const [theme, setTheme] = useState<ThemeTokens | null>(null);
   const [effects, setEffects] = useState<EffectsConfig | null>(null);
   const [emojiText, setEmojiText] = useState<string | null>(null);
+  const tx = useT().superAdmin.theme;
 
   if (!content) return <PageLoader />;
   const t = theme ?? content.settings.theme;
@@ -43,7 +37,7 @@ export default function ThemeAdmin() {
   const buttonContrast = contrastRatio(t.primaryContrast, t.primary);
 
   const save = async () => {
-    const ok = await run(() => backend.content.updateSettings({ theme: t, effects: fx }), "Apariencia guardada 🎨");
+    const ok = await run(() => backend.content.updateSettings({ theme: t, effects: fx }), tx.saved);
     if (ok) {
       setTheme(null);
       setEffects(null);
@@ -52,47 +46,47 @@ export default function ThemeAdmin() {
   };
 
   return (
-    <AdminPage title="Apariencia" description="Colores, tipografías, bordes, modo oscuro y efectos animados."
+    <AdminPage title={tx.title} description={tx.description}
       actions={<>
-        <button className="btn btn--ghost" onClick={() => { setTheme(DEFAULT_THEME); setEffects(DEFAULT_EFFECTS); }}>Restablecer</button>
-        <button className="btn" disabled={busy || (!theme && !effects)} onClick={save}>Guardar cambios</button>
+        <button className="btn btn--ghost" onClick={() => { setTheme(DEFAULT_THEME); setEffects(DEFAULT_EFFECTS); }}>{tx.reset}</button>
+        <button className="btn" disabled={busy || (!theme && !effects)} onClick={save}>{tx.save}</button>
       </>}>
       <div className="card stack">
-        <h2 style={{ margin: 0, fontSize: "1.25rem" }}>Paletas listas</h2>
-        <p className="muted" style={{ margin: 0 }}>Son los colores de la página: los ve quien entra sin cuenta y quien no eligió los suyos. Cada persona cambia los que ve ella en Mi cuenta → Mis colores.</p>
+        <h2 style={{ margin: 0, fontSize: "1.25rem" }}>{tx.palettes}</h2>
+        <p className="muted" style={{ margin: 0 }}>{tx.palettesHint}</p>
         <PalettePicker selectedId={matchPalette(t)?.id ?? null} onSelect={(p) => set(applyPalette(t, p.colors))} />
       </div>
 
       <div className="form-grid" style={{ alignItems: "start" }}>
         <div className="card stack">
-          <h2 style={{ margin: 0, fontSize: "1.25rem" }}>Colores</h2>
+          <h2 style={{ margin: 0, fontSize: "1.25rem" }}>{tx.colors}</h2>
           <div className="form-grid">
-            {(Object.keys(COLOR_LABELS) as ColorKey[]).map((k) => (
-              <ColorInput key={`${k}-${t[k]}`} label={COLOR_LABELS[k]} value={t[k]} onChange={(v) => set({ [k]: v })} />
+            {COLOR_KEYS.map((k) => (
+              <ColorInput key={`${k}-${t[k]}`} label={tx.colorLabels[k]} value={t[k]} onChange={(v) => set({ [k]: v })} />
             ))}
           </div>
           {(textContrast < 4.5 || buttonContrast < 3) && (
             <p className="field__error" role="alert">
-              ⚠️ Poco contraste {textContrast < 4.5 ? `entre texto y fondo (${textContrast.toFixed(1)}:1)` : `en los botones (${buttonContrast.toFixed(1)}:1)`}. Puede costar leer.
+              {textContrast < 4.5 ? tx.lowText(textContrast.toFixed(1)) : tx.lowButtons(buttonContrast.toFixed(1))}
             </p>
           )}
-          <h2 style={{ margin: "8px 0 0", fontSize: "1.25rem" }}>Tipografía y forma</h2>
+          <h2 style={{ margin: "8px 0 0", fontSize: "1.25rem" }}>{tx.typography}</h2>
           <div className="form-grid">
-            <Field label="Títulos">
+            <Field label={tx.headings}>
               {(id) => <select id={id} className="select" value={t.fontDisplay} onChange={(e) => set({ fontDisplay: e.target.value })}>{FONT_OPTIONS.display.map((f) => <option key={f}>{f}</option>)}</select>}
             </Field>
-            <Field label="Textos">
+            <Field label={tx.body}>
               {(id) => <select id={id} className="select" value={t.fontBody} onChange={(e) => set({ fontBody: e.target.value })}>{FONT_OPTIONS.body.map((f) => <option key={f}>{f}</option>)}</select>}
             </Field>
-            <Field label={`Bordes redondeados (${t.radius}px)`}>
+            <Field label={tx.radius(t.radius)}>
               {(id) => <input id={id} type="range" min={0} max={32} value={t.radius} onChange={(e) => set({ radius: Number(e.target.value) })} />}
             </Field>
-            <Field label="Modo oscuro">
+            <Field label={tx.darkMode}>
               {(id) => (
                 <select id={id} className="select" value={t.darkMode} onChange={(e) => set({ darkMode: e.target.value as ThemeTokens["darkMode"] })}>
-                  <option value="auto">Automático (según el teléfono)</option>
-                  <option value="light">Siempre claro</option>
-                  <option value="dark">Siempre oscuro</option>
+                  <option value="auto">{tx.darkAuto}</option>
+                  <option value="light">{tx.darkLight}</option>
+                  <option value="dark">{tx.darkDark}</option>
                 </select>
               )}
             </Field>
@@ -102,10 +96,10 @@ export default function ThemeAdmin() {
       </div>
 
       <div className="card stack">
-        <h2 style={{ margin: 0, fontSize: "1.25rem" }}>Efectos y dinamismo</h2>
-        <Switch label="Emojis flotando en el fondo" checked={fx.floating.enabled} onChange={(enabled) => setFx({ floating: { ...fx.floating, enabled } })} />
+        <h2 style={{ margin: 0, fontSize: "1.25rem" }}>{tx.effects}</h2>
+        <Switch label={tx.floating} checked={fx.floating.enabled} onChange={(enabled) => setFx({ floating: { ...fx.floating, enabled } })} />
         <div className="form-grid">
-          <Field label="Emojis (separados por espacio)">
+          <Field label={tx.emojis}>
             {(id) => (
               <input id={id} className="input" value={emojiText ?? fx.floating.emojis.join(" ")}
                 onChange={(e) => {
@@ -114,13 +108,13 @@ export default function ThemeAdmin() {
                 }} />
             )}
           </Field>
-          <Field label={`Cantidad (${fx.floating.density})`}>
+          <Field label={tx.density(fx.floating.density)}>
             {(id) => <input id={id} type="range" min={0} max={40} value={fx.floating.density} onChange={(e) => setFx({ floating: { ...fx.floating, density: Number(e.target.value) } })} />}
           </Field>
         </div>
-        <Switch label="Corazones que siguen el cursor" checked={fx.cursorHearts} onChange={(cursorHearts) => setFx({ cursorHearts })} />
-        <Switch label="Menos efectos en teléfonos (más rápido)" checked={fx.reduceOnMobile} onChange={(reduceOnMobile) => setFx({ reduceOnMobile })} />
-        <p className="muted" style={{ margin: 0 }}>La animación de entrada de cada sección se elige en Panel de contenido → Textos y animaciones.</p>
+        <Switch label={tx.cursorHearts} checked={fx.cursorHearts} onChange={(cursorHearts) => setFx({ cursorHearts })} />
+        <Switch label={tx.reduceOnMobile} checked={fx.reduceOnMobile} onChange={(reduceOnMobile) => setFx({ reduceOnMobile })} />
+        <p className="muted" style={{ margin: 0 }}>{tx.animationsHint}</p>
       </div>
     </AdminPage>
   );

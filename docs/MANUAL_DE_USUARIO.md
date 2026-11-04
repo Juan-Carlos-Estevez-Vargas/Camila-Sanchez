@@ -16,6 +16,13 @@ Guía para usar la app día a día. Hay tres tipos de personas:
 > tecla Esc. El recorrido cambia según la página y según lo que tu cuenta
 > puede hacer.
 
+> **Idioma.** La app se abre en el idioma de tu celular o computador
+> (español, inglés o portugués; si es otro, en español). Para cambiarlo, usa
+> el selector **🌐** de la cabecera (en el celular, dentro del menú ☰), el del
+> pie de página o la tarjeta **Idioma** de **Mi cuenta**. Tu elección se
+> recuerda en ese dispositivo. Lo que escriben las personas (notitas,
+> mensajes, textos de la página) se queda como lo escribieron.
+
 ## 1. Entrar
 
 1. Toca **Entrar** en la cabecera.
@@ -258,6 +265,8 @@ Sólo cada persona puede cambiar su propio perfil.
   que ves tú: cada persona tiene los suyos y quien entra sin cuenta siempre ve
   los de la página (Rosa vino). **Volver a los colores de la página** quita
   los tuyos.
+- **Idioma:** elige español, English o Português. Se guarda en este
+  dispositivo.
 - **Avisos en este dispositivo:** actívalos y prueba que lleguen (ver la
   sección 6).
 - **Cambiar contraseña:** al menos 10 caracteres, escrita dos veces.

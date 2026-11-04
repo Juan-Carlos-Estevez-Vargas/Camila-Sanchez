@@ -8,6 +8,8 @@ import { useAuth } from "@/state/AuthContext";
 import { useNotifications } from "@/state/NotificationsContext";
 import { useSiteContent } from "@/state/SiteContentStore";
 import { Avatar } from "@/ui/Avatar";
+import { useT } from "@/i18n";
+import { LanguagePicker } from "./LanguagePicker";
 import { DonateLink } from "./DonateLink";
 
 /** Cierra un desplegable con Esc (devolviendo el foco a su botón) o con un clic fuera. */
@@ -32,8 +34,10 @@ function useDismiss(open: boolean, close: () => void, root: RefObject<HTMLElemen
 }
 
 /** Contador visible para todos y dicho en palabras para el lector de pantalla. */
-function Unread({ count, label = "sin leer", dot }: { count: number; label?: string; dot?: boolean }) {
+function Unread({ count, label, dot }: { count: number; label?: string; dot?: boolean }) {
+  const t = useT();
   if (count <= 0) return null;
+  label ??= t.app.header.unread;
   return (
     <>
       <span className="counter-dot" aria-hidden>{dot ? "•" : count > 99 ? "99+" : count}</span>
@@ -44,6 +48,7 @@ function Unread({ count, label = "sin leer", dot }: { count: number; label?: str
 
 function NotificationBell() {
   const { items, unread, markAllRead, markRead } = useNotifications();
+  const common = useT().common;
   const [open, setOpen] = useState(false);
   const root = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
@@ -51,9 +56,10 @@ function NotificationBell() {
   const titleId = useId();
   const close = useRef(() => setOpen(false)).current;
   useDismiss(open, close, root, trigger);
+  const t = useT().app.header;
   return (
     <div className="bell" data-tour="bell" ref={root}>
-      <button ref={trigger} className="btn btn--icon btn--ghost" aria-label={unread > 0 ? `Notificaciones, ${unread} sin leer` : "Notificaciones"}
+      <button ref={trigger} className="btn btn--icon btn--ghost" aria-label={unread > 0 ? t.notificationsUnread(unread) : t.notifications}
         aria-expanded={open} aria-controls={panelId} onClick={() => setOpen((o) => !o)}>
         <span aria-hidden>🔔</span>
         {unread > 0 && <span className="counter-dot bell__dot" aria-hidden>{unread > 9 ? "9+" : unread}</span>}
@@ -61,15 +67,15 @@ function NotificationBell() {
       {open && (
         <div className="bell__panel card" id={panelId} role="region" aria-labelledby={titleId}>
           <div className="row-between">
-            <h2 className="bell__heading" id={titleId}>Notificaciones</h2>
-            {unread > 0 && <button className="btn btn--sm btn--ghost" onClick={() => void markAllRead()}>Marcar todo leído</button>}
+            <h2 className="bell__heading" id={titleId}>{t.notifications}</h2>
+            {unread > 0 && <button className="btn btn--sm btn--ghost" onClick={() => void markAllRead()}>{t.markAllRead}</button>}
           </div>
-          {items.length === 0 && <p className="muted" style={{ margin: "12px 0 0" }}>Nada nuevo por ahora 💤</p>}
+          {items.length === 0 && <p className="muted" style={{ margin: "12px 0 0" }}>{t.nothingNew}</p>}
           <ul className="bell__list">
             {items.map((n) => (
               <li key={n.id} className={n.readAt ? "" : "is-unread"}>
                 <Link to={safeNextPath(n.link)} onClick={() => { setOpen(false); void markRead(n.id); }}>
-                  {!n.readAt && <span className="visually-hidden">Nueva: </span>}
+                  {!n.readAt && <span className="visually-hidden">{common.newBadge}</span>}
                   <span className="bell__title">{n.title}</span>
                   {n.body && <span className="bell__body">{n.body}</span>}
                   <span className="bell__time">{formatRelative(n.createdAt)}</span>
@@ -92,7 +98,9 @@ export function AppHeader() {
   const navRoot = useRef<HTMLDivElement>(null);
   const closeMenu = useRef(() => setMenu(false)).current;
   useDismiss(menu, closeMenu, navRoot, burger);
-  const title = content?.settings.siteTitle.replace(/\p{Extended_Pictographic}/gu, "").trim() || "Nuestro rincón";
+  const i18n = useT();
+  const t = i18n.app.header;
+  const title = content?.settings.siteTitle.replace(/\p{Extended_Pictographic}/gu, "").trim() || i18n.app.siteTitle;
   const close = () => setMenu(false);
 
   return (
@@ -102,35 +110,36 @@ export function AppHeader() {
           <span className="brand__mark" aria-hidden>♥</span>
           <span className="brand__name">{title}</span>
         </Link>
-        <button ref={burger} className="btn btn--icon btn--ghost app-header__burger" data-tour="menu" aria-label="Menú principal"
+        <button ref={burger} className="btn btn--icon btn--ghost app-header__burger" data-tour="menu" aria-label={t.menu}
           aria-expanded={menu} aria-controls="menu-principal" onClick={() => setMenu((m) => !m)}><span aria-hidden>☰</span></button>
-        <nav id="menu-principal" className={`app-nav${menu ? " is-open" : ""}`} aria-label="Principal">
-          <NavLink to="/" end onClick={close}>Inicio</NavLink>
+        <nav id="menu-principal" className={`app-nav${menu ? " is-open" : ""}`} aria-label={t.nav}>
+          <NavLink to="/" end onClick={close}>{t.home}</NavLink>
           {user && policy.can(PERMISSIONS.notesSend) && (
             <NavLink to="/mensajes" data-tour="nav-mensajes" onClick={close}>
-              Cajita <Unread count={unreadByKind.note} label="notitas sin leer" />
+              {t.notes} <Unread count={unreadByKind.note} label={t.notesUnread} />
             </NavLink>
           )}
           {user && policy.can(PERMISSIONS.chatUse) && (
             <NavLink to="/chat" data-tour="nav-chat" onClick={close}>
-              Chat <Unread count={unreadByKind.chat} label="mensajes nuevos" dot />
+              {t.chat} <Unread count={unreadByKind.chat} label={t.chatUnread} dot />
             </NavLink>
           )}
           {user && policy.can(PERMISSIONS.listsUse) && (
             <NavLink to="/listas" data-tour="nav-listas" onClick={close}>
-              Listas <Unread count={unreadByKind.list} label="novedades" />
+              {t.lists} <Unread count={unreadByKind.list} label={t.listsUnread} />
             </NavLink>
           )}
-          {policy.canUseContentPanel && <NavLink to="/panel" data-tour="nav-panel" onClick={close}>Mi panel</NavLink>}
-          {policy.canUseSuperPanel && <NavLink to="/super" data-tour="nav-super" onClick={close}>Administración</NavLink>}
-          {user && <NavLink to="/cuenta" data-tour="nav-cuenta" className="nav-account" onClick={close}><Avatar person={profile} size={24} />Mi cuenta</NavLink>}
+          {policy.canUseContentPanel && <NavLink to="/panel" data-tour="nav-panel" onClick={close}>{t.panel}</NavLink>}
+          {policy.canUseSuperPanel && <NavLink to="/super" data-tour="nav-super" onClick={close}>{t.super}</NavLink>}
+          {user && <NavLink to="/cuenta" data-tour="nav-cuenta" className="nav-account" onClick={close}><Avatar person={profile} size={24} />{t.account}</NavLink>}
           {user ? (
             <button className="btn btn--sm btn--ghost" onClick={() => { close(); void signOut(); }}>
-              Salir{profile ? ` (${profile.displayName})` : ""}
+              {t.signOut}{profile ? ` (${profile.displayName})` : ""}
             </button>
           ) : (
-            <NavLink to="/entrar" className="btn btn--sm" data-tour="nav-entrar" onClick={close}>Entrar</NavLink>
+            <NavLink to="/entrar" className="btn btn--sm" data-tour="nav-entrar" onClick={close}>{t.signIn}</NavLink>
           )}
+          <LanguagePicker compact />
         </nav>
         <DonateLink variant="header" />
         <GuidedTour />

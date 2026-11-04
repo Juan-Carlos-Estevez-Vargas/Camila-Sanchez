@@ -1,8 +1,10 @@
 import { formatLongDate } from "@/domain/dates";
 import { SectionHeading } from "./SectionHeading";
 import type { SectionProps } from "./types";
+import { useT } from "@/i18n";
 
 export function Milestones({ section, content, photoUrls }: SectionProps<"milestones">) {
+  const t = useT().site;
   const items = content.milestones;
   if (!items.length) return null;
   return (
@@ -18,7 +20,7 @@ export function Milestones({ section, content, photoUrls }: SectionProps<"milest
                 <time className="timeline__date" dateTime={m.happenedOn}>{formatLongDate(m.happenedOn)}</time>
                 <h3>{m.title}</h3>
                 {m.description && <p className="muted">{m.description}</p>}
-                {photo && <img className="timeline__photo" src={photo.thumb} alt={`Foto de «${m.title}»`} loading="lazy" decoding="async" />}
+                {photo && <img className="timeline__photo" src={photo.thumb} alt={t.milestonePhoto(m.title)} loading="lazy" decoding="async" />}
               </article>
             </li>
           );

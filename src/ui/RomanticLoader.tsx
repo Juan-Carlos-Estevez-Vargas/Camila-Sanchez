@@ -5,16 +5,8 @@ import { formatBytes } from "@/services/images/sizing";
 import type { UploadSnapshot } from "@/services/images/PhotoUploader";
 import styles from "./RomanticLoader.module.scss";
 import { useFocusTrap } from "./useFocusTrap";
+import { useT } from "@/i18n";
 
-const PHRASES = [
-  "Guardando este recuerdo con todo mi amor…",
-  "Puliendo cada detalle de tu sonrisa…",
-  "Haciendo espacio en nuestro álbum…",
-  "Envolviendo este momento para siempre…",
-  "Cuidando que se vea tan bonita como tú…",
-  "Ajustando la luz de nuestros días felices…",
-  "Un segundito, que lo bonito toma su tiempo…",
-];
 
 const SPARKLES = ["💗", "✨", "💕", "🌸", "💖", "⭐"];
 
@@ -32,6 +24,9 @@ interface Props {
  */
 export function RomanticLoader({ tasks, onCancel }: Props) {
   const [phrase, setPhrase] = useState(0);
+  const i18n = useT();
+  const t = i18n.ui.loader;
+  const PHRASES = t.phrases;
   const dialog = useRef<HTMLDivElement>(null);
   useFocusTrap(dialog, { initial: "button" });
   const [startedAt] = useState(() => Date.now());
@@ -43,7 +38,7 @@ export function RomanticLoader({ tasks, onCancel }: Props) {
       setNow(Date.now());
     }, 2600);
     return () => clearInterval(timer);
-  }, []);
+  }, [PHRASES.length]);
 
   const stats = useMemo(() => {
     const total = tasks.length;
@@ -81,14 +76,14 @@ export function RomanticLoader({ tasks, onCancel }: Props) {
   );
 
   return createPortal(
-    <div ref={dialog} className={styles.overlay} role="dialog" aria-modal="true" aria-label="Guardando fotos">
+    <div ref={dialog} className={styles.overlay} role="dialog" aria-modal="true" aria-label={t.dialog}>
       <div className={styles.sparkles} aria-hidden>
         {sparkles.map((s, i) => (
           <span key={i} style={{ left: s.left, animationDelay: s.delay }}>{s.emoji}</span>
         ))}
       </div>
       <div className={styles.inner}>
-        <div className={styles.ring} role="progressbar" aria-label="Fotos guardadas" aria-valuemin={0} aria-valuemax={100} aria-valuenow={percent}>
+        <div className={styles.ring} role="progressbar" aria-label={t.progress} aria-valuemin={0} aria-valuemax={100} aria-valuenow={percent}>
           <svg viewBox="0 0 168 168" aria-hidden>
             <defs>
               <linearGradient id="love-gradient" x1="0" x2="1">
@@ -107,11 +102,11 @@ export function RomanticLoader({ tasks, onCancel }: Props) {
         <div className={styles.percent}>{percent}%</div>
         <p key={phrase} className={styles.phrase}>{PHRASES[phrase]}</p>
         <div className={styles.meta}>
-          <span role="status">{stats.done} de {stats.total} {stats.total === 1 ? "foto" : "fotos"} lista{stats.total === 1 ? "" : "s"}
-          {stats.duplicates > 0 && ` · ${stats.duplicates} ya estaban`}
-          {stats.saved > 0 && ` · ${formatBytes(stats.saved)} más livianas`}
-          {stats.failed > 0 && ` · ${stats.failed} con problemas`}</span>
-          {remaining && <><br />Falta {remaining}</>}
+          <span role="status">{t.ready(stats.done, stats.total)}
+          {stats.duplicates > 0 && t.duplicates(stats.duplicates)}
+          {stats.saved > 0 && t.saved(formatBytes(stats.saved))}
+          {stats.failed > 0 && t.failed(stats.failed)}</span>
+          {remaining && <><br />{t.remaining(remaining)}</>}
         </div>
         {tasks.length > 1 && visible.length > 0 && (
           <div className={styles.files}>
@@ -126,7 +121,7 @@ export function RomanticLoader({ tasks, onCancel }: Props) {
         )}
         {onCancel && (
           <button className={`btn btn--ghost btn--sm ${styles.cancel}`} onClick={onCancel}>
-            Cancelar
+            {i18n.common.cancel}
           </button>
         )}
       </div>

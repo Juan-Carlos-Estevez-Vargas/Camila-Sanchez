@@ -63,6 +63,14 @@
     font-size: 0.9rem;
   }
 
+  // Aviso en las traducciones: el texto en español es el que vale.
+  &__notice {
+    padding: space(2) space(3);
+    border-left: 3px solid var(--c-primary);
+    color: var(--c-muted);
+    font-size: 0.9rem;
+  }
+
   &__summary {
     @include surface;
     padding: space(3) space(4);

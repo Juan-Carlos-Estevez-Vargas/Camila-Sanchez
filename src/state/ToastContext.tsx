@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { toUserMessage } from "@/core/errors";
+import { msg } from "@/i18n";
 
 export type ToastTone = "info" | "success" | "error";
 
@@ -73,7 +74,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     return {
       show,
       success: (title, body) => show({ title, body, tone: "success" }),
-      error: (error, title = "Ups") => show({ title, body: toUserMessage(error), tone: "error", durationMs: 7000 }),
+      error: (error, title = msg().common.oops) => show({ title, body: toUserMessage(error), tone: "error", durationMs: 7000 }),
     };
   }, [startTimer]);
 
@@ -93,7 +94,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
           </button>
         )}
       </div>
-      <button className="btn btn--icon btn--ghost btn--sm" aria-label={`Cerrar aviso: ${t.title}`} onClick={() => dismiss(t.id)}>
+      <button className="btn btn--icon btn--ghost btn--sm" aria-label={msg().common.closeToast(t.title)} onClick={() => dismiss(t.id)}>
         <span aria-hidden>×</span>
       </button>
     </div>

@@ -11,6 +11,7 @@ import { Field, Switch } from "@/ui/Field";
 import { RomanticLoader } from "@/ui/RomanticLoader";
 import { useKeepAwake } from "@/ui/useKeepAwake";
 import styles from "./BulkUploadPanel.module.scss";
+import { useT } from "@/i18n";
 
 type DateMode = "capture" | "fixed";
 
@@ -26,22 +27,21 @@ interface Summary {
   failures: Failure[];
 }
 
-const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
-
 function SummaryCard({ summary, onRetry, onClose }: { summary: Summary; onRetry(): void; onClose(): void }) {
+  const t = useT().admin.upload;
   return (
     <div className={styles.summary} role="status">
       <div className="row-between">
-        <strong>Resumen de la carga</strong>
-        <button className="btn btn--icon btn--ghost btn--sm" aria-label="Cerrar resumen" onClick={onClose}>×</button>
+        <strong>{t.summary}</strong>
+        <button className="btn btn--icon btn--ghost btn--sm" aria-label={t.closeSummary} onClick={onClose}>×</button>
       </div>
       <div className={styles.stats}>
         {summary.uploaded > 0
-          ? <span className="badge badge--success">💖 {plural(summary.uploaded, "foto nueva", "fotos nuevas")}</span>
-          : !summary.failures.length && <span className="badge">Todas ya estaban en el álbum</span>}
-        {summary.duplicates > 0 && <span className="badge badge--muted">{plural(summary.duplicates, "repetida omitida", "repetidas omitidas")}</span>}
-        {summary.saved > 0 && <span className="badge badge--muted">{formatBytes(summary.saved)} ahorrados</span>}
-        {summary.failures.length > 0 && <span className="badge badge--danger">{plural(summary.failures.length, "no se pudo subir", "no se pudieron subir")}</span>}
+          ? <span className="badge badge--success">💖 {t.newPhotos(summary.uploaded)}</span>
+          : !summary.failures.length && <span className="badge">{t.allKnown}</span>}
+        {summary.duplicates > 0 && <span className="badge badge--muted">{t.skipped(summary.duplicates)}</span>}
+        {summary.saved > 0 && <span className="badge badge--muted">{t.saved(formatBytes(summary.saved))}</span>}
+        {summary.failures.length > 0 && <span className="badge badge--danger">{t.failed(summary.failures.length)}</span>}
       </div>
       {summary.failures.length > 0 && (
         <>
@@ -49,9 +49,9 @@ function SummaryCard({ summary, onRetry, onClose }: { summary: Summary; onRetry(
             {summary.failures.slice(0, 20).map((f, i) => (
               <li key={i}><span className={styles.fileName}>{f.file.name}</span><span className="muted">{f.reason}</span></li>
             ))}
-            {summary.failures.length > 20 && <li className="muted">y {summary.failures.length - 20} más…</li>}
+            {summary.failures.length > 20 && <li className="muted">{t.more(summary.failures.length - 20)}</li>}
           </ul>
-          <button className="btn btn--sm" style={{ justifySelf: "start" }} onClick={onRetry}>Reintentar las que fallaron</button>
+          <button className="btn btn--sm" style={{ justifySelf: "start" }} onClick={onRetry}>{t.retry}</button>
         </>
       )}
     </div>
@@ -79,6 +79,8 @@ export function BulkUploadPanel({ onUploaded }: { onUploaded(): void }) {
   const [summary, setSummary] = useState<Summary | null>(null);
   const filesInput = useRef<HTMLInputElement>(null);
   const folderInput = useRef<HTMLInputElement>(null);
+  const i18n = useT();
+  const t = i18n.admin.upload;
 
   useKeepAwake(running);
   useEffect(() => uploader.subscribe(setTasks), [uploader]);
@@ -94,13 +96,13 @@ export function BulkUploadPanel({ onUploaded }: { onUploaded(): void }) {
   const start = async (incoming: File[]) => {
     const images = incoming.filter(isImageFile);
     if (!images.length) {
-      toast.show({ title: "No encontré fotos", body: "Elige imágenes JPG, PNG, WebP o HEIC, o una carpeta que las tenga.", tone: "error" });
+      toast.show({ title: t.noPhotos, body: t.noPhotosBody, tone: "error" });
       return;
     }
     const { unique, repeated } = dedupeByIdentity(images);
     const batch = unique.slice(0, MAX_BATCH);
     if (unique.length > MAX_BATCH) {
-      toast.show({ title: `Subiré las primeras ${MAX_BATCH} fotos`, body: "Cuando terminen, carga las demás en otra tanda.", tone: "info" });
+      toast.show({ title: t.firstOnly(MAX_BATCH), body: t.firstOnlyBody, tone: "info" });
     }
 
     setSummary(null);
@@ -114,7 +116,7 @@ export function BulkUploadPanel({ onUploaded }: { onUploaded(): void }) {
     results.forEach((r, i) => {
       if (r.status === "rejected") {
         const cancelled = r.reason instanceof DOMException && r.reason.name === "AbortError";
-        next.failures.push({ file: batch[i]!, reason: cancelled ? "Cancelada" : toUserMessage(r.reason) });
+        next.failures.push({ file: batch[i]!, reason: cancelled ? t.cancelled : toUserMessage(r.reason) });
       } else if (r.value.kind === "duplicate") next.duplicates++;
       else {
         next.uploaded++;
@@ -127,7 +129,7 @@ export function BulkUploadPanel({ onUploaded }: { onUploaded(): void }) {
     setRunning(false);
     uploader.clearFinished();
     onUploaded();
-    if (next.uploaded) toast.success(`${plural(next.uploaded, "foto guardada", "fotos guardadas")} 💖`);
+    if (next.uploaded) toast.success(t.stored(next.uploaded));
     if (results.length > 1 || next.failures.length || next.duplicates) setSummary(next);
     if (filesInput.current) filesInput.current.value = "";
     if (folderInput.current) folderInput.current.value = "";
@@ -143,7 +145,7 @@ export function BulkUploadPanel({ onUploaded }: { onUploaded(): void }) {
       await start(files);
     } catch (error) {
       setPreparing(false);
-      toast.error(error, "No pude leer esa carpeta");
+      toast.error(error, t.cantReadFolder);
     }
   };
 
@@ -160,34 +162,34 @@ export function BulkUploadPanel({ onUploaded }: { onUploaded(): void }) {
         aria-busy={preparing}
       >
         <div className="dropzone__icon" aria-hidden>{preparing ? "⏳" : "📸"}</div>
-        <strong role="status">{preparing ? "Buscando fotos en la carpeta…" : "Arrastra fotos o carpetas enteras aquí"}</strong>
-        <span className="muted">Hasta {MAX_BATCH} a la vez. Se ajustan y se aligeran solas, sin perder calidad.</span>
+        <strong role="status">{preparing ? t.searching : t.drop}</strong>
+        <span className="muted">{t.limit(MAX_BATCH)}</span>
         <div className={`row ${styles.pickers}`} onClick={(e) => e.stopPropagation()}>
-          <button type="button" className="btn btn--sm" onClick={() => filesInput.current?.click()}>Elegir fotos</button>
-          <button type="button" className="btn btn--sm btn--soft" onClick={() => folderInput.current?.click()}>Elegir una carpeta</button>
+          <button type="button" className="btn btn--sm" onClick={() => filesInput.current?.click()}>{t.pickFiles}</button>
+          <button type="button" className="btn btn--sm btn--soft" onClick={() => folderInput.current?.click()}>{t.pickFolder}</button>
         </div>
         <input ref={filesInput} type="file" accept="image/*,.heic,.heif" multiple hidden onChange={(e) => void start([...(e.target.files ?? [])])} />
         <input ref={folderInput} type="file" multiple hidden onChange={(e) => void start([...(e.target.files ?? [])])} />
       </div>
       <div className="form-grid">
-        <Field label="Fecha de las fotos">
+        <Field label={t.dateLabel}>
           {(id) => (
             <select id={id} className="select" value={dateMode} onChange={(e) => setDateMode(e.target.value as DateMode)}>
-              <option value="capture">El día en que se tomó cada una</option>
-              <option value="fixed">Una fecha para todas</option>
+              <option value="capture">{t.dateCapture}</option>
+              <option value="fixed">{t.dateFixed}</option>
             </select>
           )}
         </Field>
         {dateMode === "fixed" && (
-          <Field label="¿Cuándo fue?">
+          <Field label={t.when}>
             {(id) => <input id={id} type="date" className="input" value={date} onChange={(e) => setDate(e.target.value)} />}
           </Field>
         )}
-        <Field label="Mensaje (opcional)" hint="Se puede cambiar luego en cada foto">
+        <Field label={i18n.admin.messageOptional} hint={t.captionHint}>
           {(id) => <input id={id} className="input" maxLength={500} value={caption} onChange={(e) => setCaption(e.target.value)} />}
         </Field>
       </div>
-      <Switch checked={skipDuplicates} onChange={setSkipDuplicates} label="Saltar las fotos que ya están en el álbum" />
+      <Switch checked={skipDuplicates} onChange={setSkipDuplicates} label={t.skipDuplicates} />
       {summary && (
         <SummaryCard
           summary={summary}

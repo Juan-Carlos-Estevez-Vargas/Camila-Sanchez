@@ -5,6 +5,7 @@ import { useAuth } from "@/state/AuthContext";
 import { useBackend } from "@/state/BackendContext";
 import { Modal } from "@/ui/Modal";
 import { burst } from "./effects/FloatingEffects";
+import { useT } from "@/i18n";
 
 const LOCAL_KEY = "love-seen-interruptions";
 
@@ -42,6 +43,7 @@ export function InterruptionHost({ items }: { items: Interruption[] }) {
   const { user } = useAuth();
   const [seen, setSeen] = useState<string[] | null>(null);
   const [dismissed, setDismissed] = useState<string[]>([]);
+  const t = useT();
 
   useEffect(() => {
     let active = true;
@@ -81,14 +83,14 @@ export function InterruptionHost({ items }: { items: Interruption[] }) {
       <div className="banner" role="status">
         <div className="container row-between">
           <div><strong>{current.title}</strong> {current.body && <span>{current.body}</span>}</div>
-          <button className="btn btn--sm btn--ghost" onClick={close}>Cerrar</button>
+          <button className="btn btn--sm btn--ghost" onClick={close}>{t.common.close}</button>
         </div>
       </div>
     );
   }
 
   return (
-    <Modal title={current.title} onClose={close} footer={<button className="btn" onClick={close}>💖 Gracias</button>}>
+    <Modal title={current.title} onClose={close} footer={<button className="btn" onClick={close}>{t.site.thanks}</button>}>
       {current.body.split("\n").map((line, i) => <p key={i} className="surprise-text">{line}</p>)}
     </Modal>
   );

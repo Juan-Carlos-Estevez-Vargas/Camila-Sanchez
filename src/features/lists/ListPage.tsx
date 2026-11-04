@@ -14,6 +14,7 @@ import { DueBadge, ProgressBar } from "./listParts";
 import { ListSettings } from "./ListSettings";
 import { TaskEditor } from "./TaskEditor";
 import "./styles/lists.scss";
+import { useT } from "@/i18n";
 
 const REALTIME_TABLES = ["todo_lists", "todo_list_members", "todo_items", "todo_materials", "todo_item_images"] as const;
 
@@ -31,20 +32,21 @@ function TaskRow({ node, detail, nameOf, onToggle, onOpen }: RowProps) {
   const materials = detail.materials.filter((m) => m.itemId === item.id);
   const photos = detail.images.filter((i) => i.itemId === item.id).length;
   const subDone = subtasks.filter((s) => s.doneAt).length;
+  const t = useT().lists.page;
   return (
     <li className={`task${done ? " is-done" : ""}`}>
       <div className="task__main">
-        <input type="checkbox" className="check" checked={done} onChange={() => onToggle(item)} aria-label={`Hecha: «${item.title}»`} />
+        <input type="checkbox" className="check" checked={done} onChange={() => onToggle(item)} aria-label={t.doneLabel(item.title)} />
         <button className="task__open" onClick={() => onOpen(item)}>
           <span className="task__title">{item.title}</span>
           <span className="task__meta">
             {item.dueOn && <DueBadge dueOn={item.dueOn} done={done} />}
-            {item.assigneeId && <span className="badge badge--muted"><span aria-hidden>👤 </span><span className="visually-hidden">Encargada: </span>{nameOf(item.assigneeId)}</span>}
-            {subtasks.length > 0 && <span className="badge badge--muted"><span aria-hidden>☑️ </span>{subDone}/{subtasks.length}<span className="visually-hidden"> subtareas hechas</span></span>}
-            {materials.length > 0 && <span className="badge badge--muted"><span aria-hidden>🧰 </span><span className="visually-hidden">Materiales: </span>{materialsLabel(materials)}</span>}
-            {photos > 0 && <span className="badge badge--muted"><span aria-hidden>📷 </span>{photos}<span className="visually-hidden"> {photos === 1 ? "foto" : "fotos"}</span></span>}
-            {item.description.trim() && <span className="badge badge--muted" title="Tiene descripción"><span aria-hidden>📝</span><span className="visually-hidden">Tiene descripción</span></span>}
-            {done && item.doneBy && <span className="muted task__by">Hecha por {nameOf(item.doneBy)}</span>}
+            {item.assigneeId && <span className="badge badge--muted"><span aria-hidden>👤 </span><span className="visually-hidden">{t.assignee}</span>{nameOf(item.assigneeId)}</span>}
+            {subtasks.length > 0 && <span className="badge badge--muted"><span aria-hidden>☑️ </span>{subDone}/{subtasks.length}<span className="visually-hidden">{t.subtasksDone}</span></span>}
+            {materials.length > 0 && <span className="badge badge--muted"><span aria-hidden>🧰 </span><span className="visually-hidden">{t.materials}</span>{materialsLabel(materials)}</span>}
+            {photos > 0 && <span className="badge badge--muted"><span aria-hidden>📷 </span>{photos}<span className="visually-hidden">{t.photos(photos)}</span></span>}
+            {item.description.trim() && <span className="badge badge--muted" title={t.hasDescription}><span aria-hidden>📝</span><span className="visually-hidden">{t.hasDescription}</span></span>}
+            {done && item.doneBy && <span className="muted task__by">{t.doneBy(nameOf(item.doneBy))}</span>}
           </span>
         </button>
       </div>
@@ -52,7 +54,7 @@ function TaskRow({ node, detail, nameOf, onToggle, onOpen }: RowProps) {
         <ul className="task__subtasks">
           {subtasks.map((s) => (
             <li key={s.id} className={`subtask${s.doneAt ? " is-done" : ""}`}>
-              <input type="checkbox" className="check check--sm" checked={!!s.doneAt} onChange={() => onToggle(s)} aria-label={`Subtarea hecha: «${s.title}»`} />
+              <input type="checkbox" className="check check--sm" checked={!!s.doneAt} onChange={() => onToggle(s)} aria-label={t.subtaskDone(s.title)} />
               <button className="subtask__open" onClick={() => onOpen(item)}>{s.title}</button>
             </li>
           ))}
@@ -97,9 +99,11 @@ export default function ListPage() {
     }
   }, [notifications, id, markRead]);
 
+  const i18n = useT();
+  const t = i18n.lists;
   const nameOf = useCallback(
-    (userId: string | null) => (userId === user?.id ? "ti" : profiles.find((p) => p.id === userId)?.displayName || "Alguien"),
-    [profiles, user?.id],
+    (userId: string | null) => (userId === user?.id ? i18n.lists.you : profiles.find((p) => p.id === userId)?.displayName || i18n.common.someone),
+    [profiles, user?.id, i18n],
   );
   const members = useMemo<Profile[]>(
     () => (detail ? detail.list.memberIds.map((mid) => profiles.find((p) => p.id === mid)).filter((p): p is Profile => !!p) : []),
@@ -112,15 +116,15 @@ export default function ListPage() {
   if (!detail) {
     return (
       <main id="contenido-principal" className="container lists">
-        <EmptyState icon="🔒" title="Esta lista no existe o ya no eres parte de ella">
-          <Link to="/listas" className="btn btn--soft">Ver mis listas</Link>
+        <EmptyState icon="🔒" title={t.page.missing}>
+          <Link to="/listas" className="btn btn--soft">{t.page.myLists}</Link>
         </EmptyState>
       </main>
     );
   }
   const { list } = detail;
   const otherMembers = members.filter((m) => m.id !== user?.id);
-  const others = otherMembers.map((m) => m.displayName || "Alguien");
+  const others = otherMembers.map((m) => m.displayName || i18n.common.someone);
 
   const add = async (e: FormEvent) => {
     e.preventDefault();
@@ -161,31 +165,31 @@ export default function ListPage() {
 
   return (
     <main id="contenido-principal" className="container lists list-page">
-      <Link to="/listas" className="list-page__back">← Mis listas</Link>
+      <Link to="/listas" className="list-page__back">{t.page.back}</Link>
       <header className="list-page__header">
         <span className="list-page__emoji" aria-hidden>{list.emoji}</span>
         <div className="grow">
           <h1>{list.title}</h1>
-          <p className="muted list-page__people" data-tour="list-people"><AvatarStack people={otherMembers} size={24} /> {others.length ? `Con ${joinNames(others)}` : "Sólo tú (súmale gente en Ajustes)"}</p>
+          <p className="muted list-page__people" data-tour="list-people"><AvatarStack people={otherMembers} size={24} /> {others.length ? t.withPeople(joinNames(others)) : t.page.onlyYouHint}</p>
         </div>
-        <button className="btn btn--soft btn--sm" data-tour="list-settings" onClick={() => setSettings(true)}>⚙️ Ajustes</button>
+        <button className="btn btn--soft btn--sm" data-tour="list-settings" onClick={() => setSettings(true)}>{t.page.settings}</button>
       </header>
       {list.description.trim() && <p className="list-page__description">{list.description}</p>}
       <div className="list-page__progress card">
         <div className="row-between">
-          <strong>{progress.total === 0 ? "Sin tareas todavía" : progress.done === progress.total ? "¡Todo listo! 🎉" : `${progress.done} de ${progress.total} hechas`}</strong>
+          <strong>{progress.total === 0 ? t.noTasks : progress.done === progress.total ? t.allDone : t.progress(progress.done, progress.total)}</strong>
           {list.dueOn && <DueBadge dueOn={list.dueOn} done={progress.total > 0 && progress.done === progress.total} />}
         </div>
         <ProgressBar done={progress.done} total={progress.total} />
       </div>
 
       <form className="list-page__add card" onSubmit={add} data-tour="list-add">
-        <input className="input grow" maxLength={300} placeholder="Agrega una tarea…" aria-label="Nueva tarea" value={title} onChange={(e) => setTitle(e.target.value)} />
-        <button className="btn" disabled={!title.trim()}>Agregar</button>
+        <input className="input grow" maxLength={300} placeholder={t.page.addPlaceholder} aria-label={t.page.newTask} value={title} onChange={(e) => setTitle(e.target.value)} />
+        <button className="btn" disabled={!title.trim()}>{t.add}</button>
       </form>
 
       {tasks.pending.length === 0 && tasks.done.length === 0 ? (
-        <EmptyState icon="🌱" title="La lista está vacía">Escribe arriba la primera tarea. Luego tócala para agregarle subtareas, materiales, fotos y fecha.</EmptyState>
+        <EmptyState icon="🌱" title={t.page.empty}>{t.page.emptyHint}</EmptyState>
       ) : (
         <>
           {tasks.pending.length > 0 ? (
@@ -195,11 +199,11 @@ export default function ListPage() {
               ))}
             </ul>
           ) : (
-            <p className="muted center">Nada pendiente 🎉</p>
+            <p className="muted center">{t.page.nothingPending}</p>
           )}
           {tasks.done.length > 0 && (
             <details className="tasks-done">
-              <summary>Hechas ({tasks.done.length})</summary>
+              <summary>{t.page.doneSection(tasks.done.length)}</summary>
               <ul className="tasks">
                 {tasks.done.map((node) => (
                   <TaskRow key={node.item.id} node={node} detail={detail} nameOf={nameOf} onToggle={(i) => void toggle(i)} onOpen={(i) => setOpenId(i.id)} />

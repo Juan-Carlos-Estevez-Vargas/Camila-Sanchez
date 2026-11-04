@@ -17,6 +17,7 @@ import { CookieBanner } from "@/features/legal/CookieBanner";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { RouteAnnouncer, SkipLink } from "./RouteAnnouncer";
 import { appRoutes } from "./routes";
+import { useT } from "@/i18n";
 
 const SitePage = lazy(() => import("@/features/site/SitePage"));
 const LoginPage = lazy(() => import("@/features/auth/LoginPage"));
@@ -25,10 +26,11 @@ const RecoverPage = lazy(() => import("@/features/auth/RecoverPage"));
 const LegalPage = lazy(() => import("@/features/legal/LegalPage"));
 
 function NotFound() {
+  const t = useT().app;
   return (
     <main id="contenido-principal" className="container">
-      <EmptyState icon="🧭" title="Esta página no existe" heading>
-        <Link className="btn" to="/">Volver al inicio</Link>
+      <EmptyState icon="🧭" title={t.notFound} heading>
+        <Link className="btn" to="/">{t.backHome}</Link>
       </EmptyState>
     </main>
   );

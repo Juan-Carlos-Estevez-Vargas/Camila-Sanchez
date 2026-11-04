@@ -8,6 +8,7 @@ import { AppError } from "@/core/errors";
 import { domCanvasFactory, optimizeImage, type OptimizedImage } from "./optimize";
 import { DEFAULT_IMAGE_OPTIONS, type ImageOptions } from "./sizing";
 import type { WorkerRequest, WorkerResponse } from "./image.worker";
+import { msg } from "@/i18n/store";
 
 const MAX_INPUT_BYTES = 40 * 1024 * 1024;
 
@@ -23,8 +24,8 @@ interface Job {
 
 const friendly = (message: string) =>
   message === "UNSUPPORTED_FORMAT"
-    ? new AppError("No pude abrir esta imagen. Prueba con una foto JPG, PNG o WebP.")
-    : new AppError("No pude optimizar esta imagen.");
+    ? new AppError(msg().ui.upload.cantOpen)
+    : new AppError(msg().ui.upload.cantOptimize);
 
 export class ImageProcessor {
   private readonly workers: Worker[] = [];
@@ -47,8 +48,8 @@ export class ImageProcessor {
   }
 
   async process(file: File | Blob): Promise<OptimizedImage> {
-    if (file.type && !file.type.startsWith("image/")) throw new AppError("Ese archivo no es una imagen.");
-    if (file.size > MAX_INPUT_BYTES) throw new AppError("La imagen pesa más de 40 MB.");
+    if (file.type && !file.type.startsWith("image/")) throw new AppError(msg().ui.upload.notImage);
+    if (file.size > MAX_INPUT_BYTES) throw new AppError(msg().ui.upload.tooBig);
     if (!this.useWorkers) {
       try {
         return await optimizeImage(file, this.options, domCanvasFactory);
@@ -76,7 +77,7 @@ export class ImageProcessor {
     worker.onerror = (event) => {
       event.preventDefault();
       // Un worker roto se reemplaza; las tareas que tenía fallan con mensaje claro.
-      this.inflight.forEach((p) => p.reject(new AppError("El optimizador de imágenes se detuvo. Inténtalo otra vez.")));
+      this.inflight.forEach((p) => p.reject(new AppError(msg().ui.upload.workerStopped)));
       this.inflight.clear();
       worker.terminate();
       this.workers.splice(this.workers.indexOf(worker), 1);
