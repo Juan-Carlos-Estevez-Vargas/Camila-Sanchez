@@ -364,6 +364,10 @@ página: **Privacidad**, **Términos**, **Cookies**, **Cobros y reembolsos** y
 **Licencias**. Se pueden leer sin cuenta. La app es gratis: nunca te pedirá
 pagar ni datos de tarjeta.
 
+**¿Qué es «Invítame un café» en el pie?** Un enlace para apoyar a Juan con
+una donación, si quieres. Es voluntario, no desbloquea nada y se paga en la
+plataforma que abre (por ejemplo Ko-fi); la app no ve tus datos de pago.
+
 **Subí una foto y no aparece.** Revisa el mes en la galería: se ubica por la
 fecha en que se tomó, no por la de hoy.
 
