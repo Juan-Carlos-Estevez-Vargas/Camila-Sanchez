@@ -37,7 +37,8 @@ src/
   services/   cola de tareas, pipeline de imágenes (Web Workers), notificaciones, <head>, CAPTCHA (Turnstile)
   state/      contextos de React: backend, auth, contenido, tema, notificaciones, toasts
   ui/         componentes reutilizables: modal, campos, feedback, avatar, cargador romántico
-  features/   funcionalidades: site, auth, admin (panel), super, messages, chat, tour
+  features/   funcionalidades: site, auth, admin (panel), super, messages, chat, lists, tour
+  i18n/       idiomas: store.ts (estado sin React), index.ts (hooks), locales.ts y messages/<idioma>/
   styles/     sistema de diseño SCSS: abstracts, base, components, layout
 supabase/
   migrations/ esquema, RLS, triggers, buckets, publicación realtime y avisos push (en orden)
@@ -146,9 +147,50 @@ cumpleaños (día y mes) y los días que faltan.
   dibujado con un portal sobre `document.body`.
 
 Los elementos que el tutorial resalta llevan un atributo `data-tour="…"`. Para
-agregar un paso basta con marcar el elemento y añadir su entrada en
-`tourSteps.ts`; las pruebas en `tourSteps.test.ts` comprueban que cada paso
+agregar un paso basta con marcar el elemento, añadir su entrada en
+`tourSteps.ts` y su título y texto en `i18n/messages/*/tour.ts` (por id); las pruebas en `tourSteps.test.ts` comprueban que cada paso
 tenga texto e id único.
+
+### Idiomas
+
+`src/i18n` es una internacionalización propia, sin dependencias:
+
+- `locales.ts`: los idiomas disponibles (`es`, `en`, `pt`), su etiqueta BCP 47
+  y `matchLocale()`, que elige uno a partir de `navigator.languages`.
+- `store.ts`: el estado del idioma sin React. `msg()` devuelve el diccionario
+  activo, `setLocale()` lo cambia (descarga el diccionario con `import()` si
+  hace falta, lo guarda en `localStorage` con la clave `app:lang` y actualiza
+  `<html lang>`), y `dateFormat()`, `relativeFormat()` y `formatNumber()` dan
+  formateadores de `Intl` en caché por idioma. `domain`, `core` y `services`
+  importan sólo de aquí.
+- `index.ts`: lo anterior más los hooks `useT()` y `useLocale()`
+  (`useSyncExternalStore`): al cambiar de idioma se vuelve a pintar todo sin
+  recargar.
+- `messages/<idioma>/<namespace>.ts`: un archivo por área (`app`, `auth`,
+  `chat`, `lists`, `admin`, `superAdmin`, `tour`…). El español define el tipo
+  `Messages`; `en` y `pt` se declaran como `Messages["…"]`, así que una clave
+  que falte o sobre no compila. Los textos con variables o plurales son
+  funciones (`count: (n) => …`). `i18n.test.ts` comprueba además que las
+  formas coinciden y que ninguna traducción quede vacía.
+
+`main.tsx` espera `initI18n()` antes de pintar. El español va en el paquete
+principal; `en` y `pt` son chunks aparte.
+
+`core/seo.ts` lo usa también `vite.config.ts` (Node puro), así que no importa
+`@/i18n`: recibe los textos por parámetro (`SeoContext.texts`) desde
+`SeoController`. Las Edge Functions y la base de datos siguen respondiendo en
+español; `core/errors.ts` reconoce los mensajes conocidos (`errors.server`,
+`errors.backend`, problemas de contraseña) y los muestra en el idioma activo.
+Los avisos que crean los triggers se guardan en español (traducirlos pediría
+guardar el idioma de cada persona en `profiles`).
+
+Los documentos legales en español (`features/legal/documents/*.tsx`) son los
+que valen; `documents/en` y `documents/pt` son traducciones que se cargan por
+idioma y muestran `legal.translationNotice`.
+
+Para agregar un idioma: copia `messages/en/` a `messages/<código>/`, traduce,
+suma la fila en `locales.ts`, el cargador en `store.ts`, ejecuta
+`npm run check` y, si quieres legales traducidos, `documents/<código>/`.
 
 ### Estilos
 
