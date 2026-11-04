@@ -12,6 +12,7 @@
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/Juan-Carlos-Estevez-Vargas/Camila-Sanchez/badge)](https://scorecard.dev/viewer/?uri=github.com/Juan-Carlos-Estevez-Vargas/Camila-Sanchez)
 [![Release](https://img.shields.io/github/v/release/Juan-Carlos-Estevez-Vargas/Camila-Sanchez?sort=semver&color=c2185b)](https://github.com/Juan-Carlos-Estevez-Vargas/Camila-Sanchez/releases)
 [![Licencia: MIT](https://img.shields.io/badge/licencia-MIT-c2185b)](LICENSE)
+[![Invítame un café en Ko-fi](https://img.shields.io/badge/Ko--fi-Inv%C3%ADtame%20un%20caf%C3%A9-c2185b?logo=kofi&logoColor=white)](https://ko-fi.com/juancarlosestevezvargas)
 
 ![React 19](https://img.shields.io/badge/React-19-61dafb?logo=react&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6?logo=typescript&logoColor=white)
@@ -44,6 +45,7 @@
 - [Despliegue y versiones](#despliegue-y-versiones)
 - [Documentación](#documentación)
 - [Contribuir](#contribuir)
+- [Apoyar el proyecto](#apoyar-el-proyecto)
 - [Licencia](#licencia)
 
 ## Descripción
@@ -299,6 +301,16 @@ Netlify) está paso a paso en [docs/DESPLIEGUE.md](docs/DESPLIEGUE.md).
 Es un proyecto personal, pero las sugerencias y los reportes de errores son
 bienvenidos. Lee la [guía de contribución](CONTRIBUTING.md) antes de abrir un
 issue o un pull request.
+
+## Apoyar el proyecto
+
+La app es y seguirá siendo gratis, sin anuncios ni rastreo. Si te sirvió o
+aprendiste algo del código, puedes invitarme un café:
+
+<a href="https://ko-fi.com/juancarlosestevezvargas"><img src="https://img.shields.io/badge/Ko--fi-Inv%C3%ADtame%20un%20caf%C3%A9-c2185b?style=for-the-badge&logo=kofi&logoColor=white" alt="Invítame un café en Ko-fi"></a>
+
+GitHub también muestra el botón **Sponsor** del repositorio
+(`.github/FUNDING.yml`).
 
 ## Licencia
 
