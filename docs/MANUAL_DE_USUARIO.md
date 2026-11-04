@@ -243,6 +243,28 @@ recibirlos.
 inicio**, entra desde el ícono nuevo y activa los avisos ahí (necesita iOS
 16.4 o más nuevo).
 
+### La app en tu celular 📲
+
+La página se instala como una app: queda con su ícono 💗 en la pantalla de
+inicio, se abre a pantalla completa, te llegan los avisos y abre aunque no
+haya internet. Es gratis y no ocupa casi espacio. Entra a **Descargar la
+app** (en el pie de página, en **Mi cuenta** o en el aviso que sale abajo en
+el celular) y sigue los pasos de tu dispositivo:
+
+- **Android:** toca **Instalar la app** y confirma. Si no aparece el botón,
+  menú ⋮ del navegador → **Instalar app**.
+- **iPhone:** en Safari, **Compartir** (el cuadrito con la flecha ⬆️, abajo)
+  → **Agregar a inicio** → **Agregar**.
+- **Computador:** **Instalar la app**, o el ícono de instalar al final de la
+  barra de direcciones. Desde el computador puedes escanear el código QR de
+  esa página para abrirla en el celular.
+
+Manteniendo pulsado el ícono (en Android) aparecen atajos al **Chat**, la
+**Cajita** y las **Listas**. Cuando haya una versión nueva verás arriba
+**✨ Hay una versión nueva — Actualizar**: tócalo cuando quieras. Sin
+internet ves lo último que se guardó y un aviso **Sin conexión**. Si cierras
+el aviso de instalar con la ✕, no vuelve a salir en unas semanas.
+
 ## 7. Mi cuenta
 
 Toca tu foto (o tu inicial) en la esquina de la cabecera: se abre un menú con
@@ -272,6 +294,8 @@ Sólo cada persona puede cambiar su propio perfil.
   los tuyos.
 - **Idioma:** elige español, English o Português. Se guarda en este
   dispositivo.
+- **App en el celular:** instálala con su ícono (ver
+  [La app en tu celular](#la-app-en-tu-celular-)).
 - **Avisos en este dispositivo:** actívalos y prueba que lleguen (ver la
   sección 6).
 - **Cambiar contraseña:** al menos 10 caracteres, escrita dos veces.

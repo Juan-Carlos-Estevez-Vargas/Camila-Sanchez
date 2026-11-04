@@ -16,6 +16,7 @@ directamente al abrir este archivo. La explicación de cada pieza está en
 - [Chat: respuestas, conexión y vistos](#chat-respuestas-conexión-y-vistos)
 - [Chat: fotos y stickers](#chat-fotos-y-stickers)
 - [Avisos en el celular](#avisos-en-el-celular)
+- [App de celular](#app-de-celular)
 - [Sorpresas para una persona](#sorpresas-para-una-persona)
 - [Colores por persona](#colores-por-persona)
 - [Perfil de cada persona](#perfil-de-cada-persona)
@@ -34,7 +35,8 @@ directamente al abrir este archivo. La explicación de cada pieza está en
 flowchart LR
   subgraph Navegador
     SPA["SPA React<br/>(Netlify, archivos estáticos)"]
-    SW["Service worker<br/>sw.js"]
+    SW["Service worker<br/>sw.js (sin conexión, push,<br/>versión nueva)"]
+    MF["manifest.webmanifest<br/>app instalable"]
   end
   subgraph Supabase
     AUTH["Auth<br/>PKCE + rotación de tokens"]
@@ -51,6 +53,7 @@ flowchart LR
   GH["GitHub Actions<br/>CI · Deploy · Release"]
   NL["Netlify"]
 
+  MF -. "instalar en el celular" .-> SPA
   SPA -- "sesión" --> AUTH
   SPA -- "consultas con JWT" --> DB
   SPA -- "URLs firmadas" --> ST
@@ -545,6 +548,75 @@ flowchart LR
   V -- "no" --> X["Sólo campana en la app"]
   V -- "sí" --> SP["send-push → Web Push<br/>a cada dispositivo de la persona"]
   SP --> SW["Service worker: los del chat se agrupan<br/>en un aviso, y los de cada lista en otro"]
+```
+
+## App de celular
+
+La app se instala como PWA (ver [APP_CELULAR.md](APP_CELULAR.md)). Qué ve
+cada persona en `/app`, en el aviso del celular y en Mi cuenta:
+
+```mermaid
+flowchart TD
+  A["Abre la página"] --> I{"¿Abierta desde el ícono<br/>(display-mode: standalone)?"}
+  I -- "sí" --> OK["Ya instalada: sin aviso ni enlace<br/>«Descargar la app»"]
+  I -- "no" --> D{"¿Qué dispositivo?"}
+  D -- "Android / computador<br/>con beforeinstallprompt" --> B["Botón «Instalar la app»<br/>→ diálogo del sistema"]
+  D -- "Android sin diálogo<br/>(Firefox, otros)" --> M["Pasos: menú ⋮ → Instalar app"]
+  D -- "iPhone · Safari" --> S["Pasos: Compartir ⬆️ abajo<br/>→ Agregar a inicio"]
+  D -- "iPhone · Chrome/Edge" --> C["Pasos: Compartir ⬆️ arriba<br/>→ Agregar a inicio"]
+  D -- "computador" --> Q["Pasos + QR para abrir<br/>/app en el celular"]
+  B -- "Instalar" --> OK
+  A --> BN{"¿Celular, sin instalar, sin aviso de cookies,<br/>no cerrado en 21 días y fuera del chat?"}
+  BN -- "sí (a los 4 s)" --> BA["Aviso abajo: «Instala la app»<br/>Instalar · Cómo · ×"]
+```
+
+Instalación, sin conexión y versión nueva:
+
+```mermaid
+sequenceDiagram
+  actor P as Persona
+  participant App as SPA (main.tsx)
+  participant SW as sw.js
+  participant C as Cache Storage
+  participant N as Netlify
+
+  App->>App: listenForInstallPrompt() antes de pintar
+  App->>SW: register("/sw.js")
+  SW->>N: "/", manifiesto, íconos y PRECACHE (JS/CSS del build)
+  SW->>C: pages-VERSION + static-VERSION
+  SW->>SW: primera vez: skipWaiting + clients.claim
+  Note over P,N: Sin internet
+  P->>App: abre la app desde el ícono
+  App->>SW: navegación /listas
+  SW->>N: fetch (falla)
+  SW->>C: match("/", ignoreVary) → index.html
+  SW-->>App: app guardada + módulos desde la caché
+  App-->>P: lo último guardado + «Sin conexión»
+  Note over P,N: Se publica una versión nueva
+  P->>App: vuelve a la app (visibilitychange)
+  App->>SW: registration.update()
+  SW->>N: sw.js con otra VERSION
+  SW->>C: precarga la versión nueva (queda "waiting")
+  App-->>P: «✨ Hay una versión nueva · Actualizar»
+  P->>App: Actualizar
+  App->>SW: postMessage SKIP_WAITING
+  SW->>C: borra las cachés de la versión anterior (las fotos se quedan)
+  SW-->>App: controllerchange → recarga
+```
+
+Cómo se arma en el build y, si se quiere, en Play Store:
+
+```mermaid
+flowchart LR
+  V["vite build"] --> B["dist/assets/*.js|css"]
+  B --> PL["pwaPlugin (scripts/pwa.mjs)"]
+  PL --> SWF["dist/sw.js<br/>PRECACHE + VERSION = huella"]
+  E{"¿ANDROID_PACKAGE_NAME y<br/>ANDROID_CERT_SHA256 en Netlify?"} -- "sí" --> AL["dist/.well-known/assetlinks.json"]
+  E -- "no" --> NO["no se publica"]
+  PWB["PWABuilder / Bubblewrap"] --> AAB[".aab (Trusted Web Activity)"]
+  AAB --> GP["Google Play"]
+  GP -. "verifica el dominio" .-> AL
+  GP --> TWA["App Android: abre el sitio<br/>a pantalla completa"]
 ```
 
 ## Sorpresas para una persona
