@@ -11,6 +11,7 @@ import { TaskQueue, type TaskSnapshot } from "@/services/queue/TaskQueue";
 import { fingerprint } from "./bulk";
 import { readCapturedDate } from "./exif";
 import { ImageProcessor } from "./ImageProcessor";
+import { msg } from "@/i18n";
 
 export interface UploadRequest {
   file: File;
@@ -56,10 +57,10 @@ export class PhotoUploader {
     return Promise.allSettled(
       requests.map((request, index) =>
         this.queue.add(request.file.name, async ({ report, signal }) => {
-          report(0.02, "Revisando la foto");
+          report(0.02, msg().ui.upload.checking);
           const hash = await fingerprint(request.file);
           if (hash && skip && seen.has(hash)) {
-            report(1, "Ya estaba en el álbum");
+            report(1, msg().ui.upload.duplicate);
             return { kind: "duplicate" } as const;
           }
           if (hash) seen.add(hash);
@@ -70,14 +71,14 @@ export class PhotoUploader {
               ?? toIsoDate(new Date(request.file.lastModified || Date.now()));
             abortIfNeeded(signal);
 
-            report(0.08, "Optimizando con cariño");
+            report(0.08, msg().ui.upload.optimizing);
             const optimized = await this.processor.process(request.file);
             abortIfNeeded(signal);
 
-            report(0.45, "Guardando en nuestro álbum");
+            report(0.45, msg().ui.upload.saving);
             const uploaded = await this.backend.photos.upload(optimized.full, optimized.thumb, optimized.extension);
 
-            report(0.9, "Poniéndole un lacito");
+            report(0.9, msg().ui.upload.finishing);
             const photo = await this.backend.photos.save({
               storagePath: uploaded.storagePath,
               thumbPath: uploaded.thumbPath,

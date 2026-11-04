@@ -1,0 +1,46 @@
+/** Componentes genéricos y servicios (subida de fotos, cola, captcha). */
+export const ui = {
+  loader: {
+    phrases: [
+      "Guardando este recuerdo con todo mi amor…",
+      "Puliendo cada detalle de tu sonrisa…",
+      "Haciendo espacio en nuestro álbum…",
+      "Envolviendo este momento para siempre…",
+      "Cuidando que se vea tan bonita como tú…",
+      "Ajustando la luz de nuestros días felices…",
+      "Un segundito, que lo bonito toma su tiempo…",
+    ],
+    dialog: "Guardando fotos",
+    progress: "Fotos guardadas",
+    ready: (done: number, total: number) => `${done} de ${total} ${total === 1 ? "foto lista" : "fotos listas"}`,
+    duplicates: (n: number) => ` · ${n} ya estaban`,
+    saved: (size: string) => ` · ${size} más livianas`,
+    failed: (n: number) => ` · ${n} con problemas`,
+    remaining: (time: string) => `Falta ${time}`,
+  },
+  upload: {
+    checking: "Revisando la foto",
+    duplicate: "Ya estaba en el álbum",
+    optimizing: "Optimizando con cariño",
+    saving: "Guardando en nuestro álbum",
+    finishing: "Poniéndole un lacito",
+    cantOpen: "No pude abrir esta imagen. Prueba con una foto JPG, PNG o WebP.",
+    cantOptimize: "No pude optimizar esta imagen.",
+    notImage: "Ese archivo no es una imagen.",
+    tooBig: "La imagen pesa más de 40 MB.",
+    workerStopped: "El optimizador de imágenes se detuvo. Inténtalo otra vez.",
+  },
+  queue: {
+    waiting: "En espera",
+    retrying: (n: number, max: number) => `Reintentando (${n}/${max})`,
+    done: "Listo",
+    cancelled: "Cancelado",
+    error: "Error",
+  },
+  captcha: {
+    label: "Verificación anti-robots",
+    failed: "No pude comprobar que no eres un robot. Recarga la página e inténtalo otra vez.",
+    notLoaded: "No cargó la verificación anti-robots. Revisa tu conexión y recarga la página.",
+    unfinished: "La verificación anti-robots no terminó. Márcala y vuelve a intentarlo.",
+  },
+};

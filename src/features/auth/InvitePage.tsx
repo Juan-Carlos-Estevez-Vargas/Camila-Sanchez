@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { toUserMessage } from "@/core/errors";
 import { INVITE_PATH, MIN_PASSWORD_LENGTH, readInviteToken } from "@/domain/invitations";
 import { passwordProblem } from "@/domain/password";
-import { ROLE_LABELS } from "@/domain/permissions";
+import { roleLabel } from "@/domain/permissions";
 import type { InvitableRole } from "@/domain/types";
 import { legalPath, markConsentPending } from "@/domain/legal";
 import { useAuth } from "@/state/AuthContext";
@@ -11,6 +11,7 @@ import { useBackend } from "@/state/BackendContext";
 import { useCaptcha } from "@/services/captcha/useCaptcha";
 import { EmptyState, PageLoader } from "@/ui/Feedback";
 import { Field } from "@/ui/Field";
+import { useT } from "@/i18n";
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -38,6 +39,8 @@ export default function InvitePage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const captcha = useCaptcha();
+  const i18n = useT();
+  const t = i18n.auth.invite;
 
   useEffect(() => {
     if (!token) return;
@@ -53,9 +56,9 @@ export default function InvitePage() {
   if (user && !busy) {
     return (
       <main id="contenido-principal" className="gate">
-        <EmptyState icon="💞" title="Ya tienes una sesión abierta">
-          <p className="muted">Para crear una cuenta nueva con esta invitación, primero cierra tu sesión.</p>
-          <button className="btn" onClick={() => void backend.auth.signOut()}>Cerrar sesión</button>
+        <EmptyState icon="💞" title={t.signedIn}>
+          <p className="muted">{t.signedInHint}</p>
+          <button className="btn" onClick={() => void backend.auth.signOut()}>{t.signOut}</button>
         </EmptyState>
       </main>
     );
@@ -64,8 +67,8 @@ export default function InvitePage() {
   if (check.state === "invalid" || !token) {
     return (
       <main id="contenido-principal" className="gate">
-        <EmptyState icon="💌" title="Esta invitación ya no es válida">
-          <p className="muted">Puede que ya se haya usado o que haya vencido. Pide un enlace nuevo.</p>
+        <EmptyState icon="💌" title={t.invalid}>
+          <p className="muted">{t.invalidHint}</p>
         </EmptyState>
       </main>
     );
@@ -77,12 +80,12 @@ export default function InvitePage() {
     e.preventDefault();
     setError(null);
     const email = form.email.trim();
-    if (!form.displayName.trim()) return setError("Escribe tu nombre.");
-    if (!EMAIL.test(email)) return setError("Escribe un correo válido.");
+    if (!form.displayName.trim()) return setError(i18n.auth.nameRequired);
+    if (!EMAIL.test(email)) return setError(i18n.auth.invalidEmail);
     const problem = passwordProblem(form.password, [email, form.displayName]);
     if (problem) return setError(problem);
-    if (form.password !== form.confirm) return setError("Las contraseñas no coinciden.");
-    if (!accepted) return setError("Para crear tu cuenta, lee y acepta los términos y la política de privacidad.");
+    if (form.password !== form.confirm) return setError(i18n.auth.mismatch);
+    if (!accepted) return setError(t.mustAccept);
     // Al entrar por primera vez, ConsentGate guarda la aceptación con esta cuenta.
     markConsentPending(email);
     setBusy(true);
@@ -103,20 +106,20 @@ export default function InvitePage() {
     <main id="contenido-principal" className="gate">
       <form className="gate__card card stack" onSubmit={submit} noValidate>
         <div className="gate__heart" aria-hidden>💌</div>
-        <h1 style={{ fontSize: "2rem" }}>Te invitaron</h1>
+        <h1 style={{ fontSize: "2rem" }}>{t.title}</h1>
         <p className="muted" style={{ margin: 0, textAlign: "center" }}>
-          Crea tu cuenta para entrar como <strong>{ROLE_LABELS[check.role]}</strong>.
+          {t.joinAsBefore} <strong>{roleLabel(check.role)}</strong>.
         </p>
-        <Field label="Tu nombre">
+        <Field label={t.yourName}>
           {(id) => <input id={id} className="input" autoComplete="given-name" maxLength={80} required value={form.displayName} onChange={(e) => set("displayName")(e.target.value)} />}
         </Field>
-        <Field label="Tu correo" hint="Con él vas a entrar y recuperar tu contraseña">
+        <Field label={t.yourEmail} hint={t.yourEmailHint}>
           {(id) => <input id={id} className="input" type="email" autoComplete="email" required value={form.email} onChange={(e) => set("email")(e.target.value)} />}
         </Field>
-        <Field label="Contraseña" hint={`Mínimo ${MIN_PASSWORD_LENGTH} caracteres`}>
+        <Field label={i18n.auth.passwordLabel} hint={i18n.auth.minChars(MIN_PASSWORD_LENGTH)}>
           {(id) => <input id={id} className="input" type="password" autoComplete="new-password" minLength={MIN_PASSWORD_LENGTH} required value={form.password} onChange={(e) => set("password")(e.target.value)} />}
         </Field>
-        <Field label="Repite la contraseña">
+        <Field label={i18n.auth.repeatPassword}>
           {(id) => <input id={id} className="input" type="password" autoComplete="new-password" required value={form.confirm} onChange={(e) => set("confirm")(e.target.value)} />}
         </Field>
         {captcha.widget}
@@ -125,11 +128,11 @@ export default function InvitePage() {
         <label className="consent-dialog__check">
           <input type="checkbox" checked={accepted} onChange={(e) => setAccepted(e.target.checked)} required />
           <span>
-            Leí y acepto los <Link to={legalPath("terminos")} target="_blank" rel="noopener noreferrer">términos y condiciones<span className="visually-hidden"> (se abre en otra pestaña)</span></Link> y autorizo el
-            tratamiento de mis datos según la <Link to={legalPath("privacidad")} target="_blank" rel="noopener noreferrer">política de privacidad<span className="visually-hidden"> (se abre en otra pestaña)</span></Link>.
+            {t.acceptBefore} <Link to={legalPath("terminos")} target="_blank" rel="noopener noreferrer">{t.terms}<span className="visually-hidden"> {i18n.common.opensNewTab}</span></Link> {t.acceptMiddle}{" "}
+            <Link to={legalPath("privacidad")} target="_blank" rel="noopener noreferrer">{t.privacy}<span className="visually-hidden"> {i18n.common.opensNewTab}</span></Link>.
           </span>
         </label>
-        <button className="btn btn--block" disabled={busy}>{busy ? "Creando tu cuenta…" : "Crear mi cuenta 💖"}</button>
+        <button className="btn btn--block" disabled={busy}>{busy ? t.creating : t.create}</button>
       </form>
     </main>
   );

@@ -1,14 +1,17 @@
 import type { ReactNode } from "react";
+import { useT } from "@/i18n";
 
-export function Spinner({ label = "Cargando" }: { label?: string }) {
-  return <div className="spinner" role="status" aria-label={label} />;
+export function Spinner({ label }: { label?: string }) {
+  const t = useT();
+  return <div className="spinner" role="status" aria-label={label ?? t.common.loading} />;
 }
 
 export function PageLoader() {
+  const t = useT();
   return (
     <div className="page-loader" role="status">
       <div className="love-loader__heart" style={{ position: "static", fontSize: "2.5rem" }} aria-hidden>💗</div>
-      <span className="visually-hidden">Cargando…</span>
+      <span className="visually-hidden">{t.common.loadingEllipsis}</span>
     </div>
   );
 }

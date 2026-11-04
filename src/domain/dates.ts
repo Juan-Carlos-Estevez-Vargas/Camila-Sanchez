@@ -1,11 +1,12 @@
+import { dateFormat, msg, relativeFormat } from "@/i18n";
 import type { ImportantDate, IsoDate, Photo } from "./types";
 
 const DAY_MS = 86_400_000;
 
-export const MONTH_NAMES = [
-  "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-  "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre",
-] as const;
+/** Nombre del mes (0-11) en el idioma activo. */
+export function monthName(month: number): string {
+  return msg().dates.months[month] ?? "";
+}
 
 export const MONTH_ICONS = ["❄️", "💖", "🌸", "🌧️", "🌺", "☀️", "🏖️", "🔥", "🍂", "🎃", "🍁", "🎄"] as const;
 
@@ -94,9 +95,11 @@ export function buildCountdowns(dates: ImportantDate[], now: Date = new Date()):
 }
 
 export function countdownLabel(c: Countdown): string {
-  if (c.days === 0) return `¡Hoy es ${c.date.title.toLowerCase()}!`;
-  if (c.days === 1) return `Mañana: ${c.date.title.toLowerCase()}`;
-  return `Faltan ${c.days} días para ${c.date.title.toLowerCase()}`;
+  const t = msg().dates;
+  const title = c.date.title.toLowerCase();
+  if (c.days === 0) return t.countdownToday(title);
+  if (c.days === 1) return t.countdownTomorrow(title);
+  return t.countdownDays(c.days, title);
 }
 
 export interface MonthGroup {
@@ -135,21 +138,20 @@ export function groupPhotosByYearMonth(photos: Photo[]): YearGroup[] {
     }));
 }
 
-const dateFormatter = new Intl.DateTimeFormat("es-CO", { day: "numeric", month: "long", year: "numeric" });
+const LONG_DATE: Intl.DateTimeFormatOptions = { day: "numeric", month: "long", year: "numeric" };
 
 export function formatLongDate(value: IsoDate): string {
-  return dateFormatter.format(parseIsoDate(value));
+  return dateFormat(LONG_DATE).format(parseIsoDate(value));
 }
 
-const relativeFormatter = new Intl.RelativeTimeFormat("es", { numeric: "auto" });
-
-/** "hace 5 minutos", "ayer"... */
+/** "hace 5 minutos", "ayer"... en el idioma activo. */
 export function formatRelative(iso: string, now: Date = new Date()): string {
   const diffSec = Math.round((new Date(iso).getTime() - now.getTime()) / 1000);
   const abs = Math.abs(diffSec);
-  if (abs < 60) return relativeFormatter.format(diffSec, "second");
-  if (abs < 3600) return relativeFormatter.format(Math.round(diffSec / 60), "minute");
-  if (abs < 86_400) return relativeFormatter.format(Math.round(diffSec / 3600), "hour");
-  if (abs < 2_592_000) return relativeFormatter.format(Math.round(diffSec / 86_400), "day");
-  return dateFormatter.format(new Date(iso));
+  const relative = relativeFormat();
+  if (abs < 60) return relative.format(diffSec, "second");
+  if (abs < 3600) return relative.format(Math.round(diffSec / 60), "minute");
+  if (abs < 86_400) return relative.format(Math.round(diffSec / 3600), "hour");
+  if (abs < 2_592_000) return relative.format(Math.round(diffSec / 86_400), "day");
+  return dateFormat(LONG_DATE).format(new Date(iso));
 }

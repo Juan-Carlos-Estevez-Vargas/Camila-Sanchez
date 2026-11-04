@@ -1,0 +1,22 @@
+/** Textos compartidos por toda la app (botones, estados, errores). */
+export const common = {
+  loading: "Cargando",
+  loadingEllipsis: "Cargando…",
+  close: "Cerrar",
+  cancel: "Cancelar",
+  confirm: "Confirmar",
+  save: "Guardar",
+  saving: "Guardando…",
+  delete: "Eliminar",
+  edit: "Editar",
+  back: "Volver",
+  view: "Ver",
+  reload: "Recargar",
+  oops: "Ups",
+  someone: "Alguien",
+  newBadge: "Nueva: ",
+  opensNewTab: "(se abre en otra pestaña)",
+  closeToast: (title: string) => `Cerrar aviso: ${title}`,
+  somethingNew: "Tienes algo nuevo",
+  errorBoundary: "Algo se rompió en esta parte",
+};

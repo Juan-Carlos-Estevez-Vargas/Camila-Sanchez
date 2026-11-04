@@ -1,0 +1,31 @@
+import type { Messages } from "@/i18n";
+
+export const errors: Messages["errors"] = {
+  badCredentials: "Wrong email or password.",
+  emailNotConfirmed: "Confirm your email before signing in.",
+  forbidden: "You don't have permission to do this.",
+  network: "Looks like there's no connection. Please try again.",
+  tooLarge: "The image is too large.",
+  rateLimitEmail: "Wait a few minutes before requesting another email.",
+  samePassword: "The new password must be different from the old one.",
+  weakPassword: "That password is too weak: use at least 10 characters.",
+  tooFast: "You're going too fast 😅 Wait a moment and try again.",
+  lastSuperAdmin: "At least one active super administrator must remain.",
+  generic: "Something went wrong. Please try again in a moment.",
+  server: {
+    invalidLink: "This link is no longer valid. Ask for a new one.",
+    invalidEmail: "Enter a valid email.",
+    nameRequired: "Enter your name.",
+    emailTaken: "An account with that email already exists.",
+    cantCreate: "I couldn't create the account. Please try again.",
+    unexpected: "Unexpected error. Please try again.",
+    invalidSession: "Invalid session",
+    invalidEmailOrName: "Invalid email or name",
+    missingUser: "The user is missing",
+    cantDeleteSelf: "You can't delete your own account",
+    cantDeactivateSelf: "You can't deactivate your own account",
+    userNotFound: "That user doesn't exist",
+    captcha: "I couldn't verify that you're not a robot. Reload the page and try again.",
+    tooMany: "You're going too fast: wait a few minutes and try again.",
+  },
+};

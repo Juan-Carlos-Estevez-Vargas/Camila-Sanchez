@@ -19,15 +19,30 @@ const COMMON = new Set([
   "abcdefghij", "abc1234567", "abcd123456", "nuestrorincon", "camila1234", "camila12345",
 ]);
 
-/** Devuelve por qué la contraseña no sirve, o null si está bien. */
-export function passwordProblem(password: string, personal: Array<string | null | undefined> = []): string | null {
-  if (password.length < MIN_PASSWORD_LENGTH) return `La contraseña debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres.`;
-  if (password.length > MAX_PASSWORD_LENGTH) return `La contraseña puede tener como máximo ${MAX_PASSWORD_LENGTH} caracteres.`;
+export type PasswordIssue = "short" | "long" | "common" | "personal";
+
+/** Qué le falta a la contraseña (o null si está bien). La app lo traduce al idioma activo. */
+export function passwordIssue(password: string, personal: Array<string | null | undefined> = []): PasswordIssue | null {
+  if (password.length < MIN_PASSWORD_LENGTH) return "short";
+  if (password.length > MAX_PASSWORD_LENGTH) return "long";
   const lower = password.toLowerCase();
-  if (COMMON.has(lower) || new Set(lower).size <= 2) return "Esa contraseña es muy fácil de adivinar. Prueba con una frase que sólo tú conozcas.";
+  if (COMMON.has(lower) || new Set(lower).size <= 2) return "common";
   for (const value of personal) {
     const word = (value ?? "").toLowerCase().split("@")[0]!.trim();
-    if (word.length >= 4 && lower.includes(word)) return "La contraseña no puede contener tu nombre ni tu correo.";
+    if (word.length >= 4 && lower.includes(word)) return "personal";
   }
   return null;
+}
+
+const SPANISH: Record<PasswordIssue, string> = {
+  short: `La contraseña debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres.`,
+  long: `La contraseña puede tener como máximo ${MAX_PASSWORD_LENGTH} caracteres.`,
+  common: "Esa contraseña es muy fácil de adivinar. Prueba con una frase que sólo tú conozcas.",
+  personal: "La contraseña no puede contener tu nombre ni tu correo.",
+};
+
+/** Devuelve por qué la contraseña no sirve, en español (lo que responden las Edge Functions), o null si está bien. */
+export function passwordProblem(password: string, personal: Array<string | null | undefined> = []): string | null {
+  const issue = passwordIssue(password, personal);
+  return issue ? SPANISH[issue] : null;
 }
