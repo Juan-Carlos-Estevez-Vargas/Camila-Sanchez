@@ -6,7 +6,7 @@ import {
   type SectionContentMap, type SectionKind, type ThemeTokens,
 } from "./types";
 import { WINE_PALETTE } from "./palettes";
-import { msg } from "@/i18n";
+import { msg } from "@/i18n/store";
 
 /** Tema de fábrica: los colores suaves de la versión 1, siempre en modo claro. */
 export const DEFAULT_THEME: ThemeTokens = {

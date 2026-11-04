@@ -1,7 +1,7 @@
 /** Reglas del perfil de cada persona: iniciales, icono y cumpleaños. */
 import { daysUntil, parseIsoDate } from "./dates";
 import type { IsoDate } from "./types";
-import { dateFormat, msg } from "@/i18n";
+import { dateFormat, msg } from "@/i18n/store";
 
 export const AVATAR_EMOJIS = [
   "💖", "🌸", "🌻", "🌙", "⭐", "🦋", "🐱", "🐶", "🐻", "🐰", "🦊", "🐼",

@@ -4,7 +4,7 @@
  * fotos no saturan la red ni la memoria del teléfono, y un corte de red
  * momentáneo no hace fallar la subida.
  */
-import { msg } from "@/i18n";
+import { msg } from "@/i18n/store";
 
 export type TaskStatus = "queued" | "running" | "done" | "error" | "cancelled";
 

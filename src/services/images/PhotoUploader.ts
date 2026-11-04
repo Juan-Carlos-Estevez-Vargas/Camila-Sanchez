@@ -11,7 +11,7 @@ import { TaskQueue, type TaskSnapshot } from "@/services/queue/TaskQueue";
 import { fingerprint } from "./bulk";
 import { readCapturedDate } from "./exif";
 import { ImageProcessor } from "./ImageProcessor";
-import { msg } from "@/i18n";
+import { msg } from "@/i18n/store";
 
 export interface UploadRequest {
   file: File;

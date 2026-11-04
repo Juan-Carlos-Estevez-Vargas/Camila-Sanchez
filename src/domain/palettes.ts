@@ -4,7 +4,7 @@
  * entra sin cuenta), las tipografías, los bordes, el modo oscuro y los
  * efectos son cosa del super administrador.
  */
-import { msg } from "@/i18n";
+import { msg } from "@/i18n/store";
 import type { ThemeTokens } from "./types";
 
 export const PALETTE_KEYS = ["primary", "primaryContrast", "accent", "background", "surface", "text", "muted"] as const;

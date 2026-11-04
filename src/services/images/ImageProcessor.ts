@@ -8,7 +8,7 @@ import { AppError } from "@/core/errors";
 import { domCanvasFactory, optimizeImage, type OptimizedImage } from "./optimize";
 import { DEFAULT_IMAGE_OPTIONS, type ImageOptions } from "./sizing";
 import type { WorkerRequest, WorkerResponse } from "./image.worker";
-import { msg } from "@/i18n";
+import { msg } from "@/i18n/store";
 
 const MAX_INPUT_BYTES = 40 * 1024 * 1024;
 
