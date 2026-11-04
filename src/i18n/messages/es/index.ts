@@ -7,9 +7,10 @@ import { dates } from "./dates";
 import { donate } from "./donate";
 import { errors } from "./errors";
 import { legal } from "./legal";
+import { lists } from "./lists";
 import { notes } from "./notes";
 import { site } from "./site";
 import { theme } from "./theme";
 import { ui } from "./ui";
 
-export default { app, auth, chat, common, dates, donate, errors, legal, notes, site, theme, ui };
+export default { app, auth, chat, common, dates, donate, errors, legal, lists, notes, site, theme, ui };
