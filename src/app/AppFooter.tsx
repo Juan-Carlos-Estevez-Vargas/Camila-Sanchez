@@ -2,6 +2,7 @@ import type { ReactElement } from "react";
 import { Link } from "react-router-dom";
 import { AUTHOR, releaseUrl, type SocialNetwork } from "@/core/author";
 import { config } from "@/core/config";
+import { DonateLink } from "./DonateLink";
 import { LEGAL_DOCUMENTS, legalPath } from "@/domain/legal";
 import { openCookiePreferences } from "@/services/consent/cookieConsent";
 import { setReducedMotion, useReducedMotion } from "@/ui/motion";
@@ -39,6 +40,7 @@ const NETWORKS: Record<SocialNetwork, { label: string; icon: ReactElement }> = {
 export function AppFooter() {
   const links = (Object.keys(NETWORKS) as SocialNetwork[]).filter((network) => AUTHOR.links[network]);
   const version = config.appVersion;
+  const donation = config.donation;
   const reducedMotion = useReducedMotion();
 
   return (
@@ -59,6 +61,12 @@ export function AppFooter() {
               </li>
             ))}
           </ul>
+        )}
+        {donation && (
+          <p className="app-footer__donate">
+            <DonateLink variant="footer" />
+            <span className="app-footer__donate-note">Voluntario. La app es y seguirá siendo gratis.</span>
+          </p>
         )}
         <nav aria-label="Legal y privacidad">
           <ul className="app-footer__legal">
