@@ -4,6 +4,19 @@ import type { PasswordIssue } from "../../supabase/functions/_shared/password";
 
 const SPANISH_SERVER = spanish.errors.server;
 const SPANISH_PASSWORD = spanish.auth.password;
+const SPANISH_BACKEND = spanish.errors.backend;
+
+/** Para comparar textos sin que importe el punto final ni las mayúsculas. */
+const normalize = (text: string) => text.trim().replace(/[.\s]+$/, "").toLowerCase();
+const BACKEND_KEYS = new Map(
+  (Object.keys(SPANISH_BACKEND) as Array<keyof typeof SPANISH_BACKEND>).map((k) => [normalize(SPANISH_BACKEND[k]), k]),
+);
+
+/** Un mensaje conocido de la base de datos o del modo demo, en el idioma activo. */
+function fromBackend(text: string): string | null {
+  const key = BACKEND_KEYS.get(normalize(text));
+  return key ? msg().errors.backend[key] : null;
+}
 
 /** Error de aplicación con un mensaje apto para mostrar al usuario. */
 export class AppError extends Error {
@@ -16,7 +29,7 @@ export class AppError extends Error {
   }
 }
 
-type ErrorKey = Exclude<keyof Messages["errors"], "server">;
+type ErrorKey = Exclude<keyof Messages["errors"], "server" | "backend">;
 
 // Los mensajes del servidor (Supabase, funciones, triggers) llegan en inglés
 // o en español: se reconocen por patrón y se muestran en el idioma activo.
@@ -35,8 +48,10 @@ const KNOWN: Array<[RegExp, ErrorKey]> = [
 
 /** Traduce cualquier error a un mensaje amable en el idioma activo. */
 export function toUserMessage(error: unknown): string {
-  if (error instanceof AppError) return error.userMessage;
+  if (error instanceof AppError) return fromServer(error.userMessage);
   const message = error instanceof Error ? error.message : typeof error === "string" ? error : "";
+  const known = fromBackend(message);
+  if (known) return known;
   const texts = msg().errors;
   for (const [pattern, key] of KNOWN) {
     if (pattern.test(message)) return texts[key];
@@ -55,6 +70,8 @@ export function fromServer(text: string): string {
   if (key) return t.errors.server[key];
   const password = (Object.keys(SPANISH_PASSWORD) as PasswordIssue[]).find((k) => SPANISH_PASSWORD[k] === text.trim());
   if (password) return t.auth.password[password];
+  const known = fromBackend(text);
+  if (known) return known;
   for (const [pattern, k] of KNOWN) if (pattern.test(text)) return t.errors[k];
   return text;
 }
