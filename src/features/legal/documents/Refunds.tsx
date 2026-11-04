@@ -23,7 +23,7 @@ export function Refunds() {
 
       <h2>Donaciones voluntarias</h2>
       <p>
-        El pie de página puede tener un botón «Invítame un café». Es un enlace a una plataforma externa (por ejemplo
+        La cabecera y el pie de página pueden tener un botón «Invítame un café». Es un enlace a una plataforma externa (por ejemplo
         Ko-fi): si decides donar, el pago lo hace esa plataforma con sus propios términos y su política de privacidad, y
         la app no recibe tus datos de pago. Donar es completamente opcional, no desbloquea nada y no cambia en nada cómo
         funciona la app. Si quieres que te devuelvan una donación, pídelo por esa plataforma o escríbele al

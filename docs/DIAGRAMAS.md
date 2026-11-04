@@ -1331,14 +1331,17 @@ flowchart LR
 
 ### Botón de donación
 
-Un enlace normal configurado al compilar. Sin URL válida no se muestra y la
+Un enlace normal configurado al compilar, en dos lugares (`DonateLink`): la
+cabecera, siempre a la vista, y el pie. Sin URL válida no se muestra y la
 app nunca toca datos de pago.
 
 ```mermaid
 flowchart TD
   ENV["VITE_DONATION_URL<br/>(variable de Netlify)"] --> P{"parseDonationUrl<br/>¿https y sin credenciales?"}
   P -- "no o vacía" --> X["Pie sin botón"]
-  P -- "sí" --> B["Pie: «☕ Invítame un café»<br/>Voluntario. La app es y seguirá siendo gratis."]
+  P -- "sí" --> H["Cabecera: píldora amarilla «☕ Invítame un café»<br/>(en el celular, sólo ☕)"]
+  P -- "sí" --> B["Pie: botón amarillo grande<br/>Voluntario. La app es y seguirá siendo gratis."]
+  H -- "la persona lo pulsa" --> T
   B -- "la persona lo pulsa" --> T["Pestaña nueva en Ko-fi, Buy Me a Coffee,<br/>GitHub Sponsors, PayPal…<br/>(rel=noopener noreferrer)"]
   T --> PAY["La plataforma cobra con sus propias condiciones"]
   PAY -. "nada vuelve a la app" .-> APP["App: sin SDK, sin cookies,<br/>CSP sin cambios"]

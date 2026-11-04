@@ -8,6 +8,7 @@ import { useAuth } from "@/state/AuthContext";
 import { useNotifications } from "@/state/NotificationsContext";
 import { useSiteContent } from "@/state/SiteContentStore";
 import { Avatar } from "@/ui/Avatar";
+import { DonateLink } from "./DonateLink";
 
 /** Cierra un desplegable con Esc (devolviendo el foco a su botón) o con un clic fuera. */
 function useDismiss(open: boolean, close: () => void, root: RefObject<HTMLElement | null>, trigger: RefObject<HTMLElement | null>) {
@@ -131,6 +132,7 @@ export function AppHeader() {
             <NavLink to="/entrar" className="btn btn--sm" data-tour="nav-entrar" onClick={close}>Entrar</NavLink>
           )}
         </nav>
+        <DonateLink variant="header" />
         <GuidedTour />
         {user && <NotificationBell />}
       </div>
