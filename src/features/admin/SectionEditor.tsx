@@ -1,17 +1,11 @@
 import { useState, type ReactNode } from "react";
-import { SECTION_KIND_LABELS } from "@/domain/defaults";
+import { sectionKindMeta } from "@/domain/defaults";
 import { SECTION_ANIMATIONS, type LoveNoteCard, type Section, type SectionAnimation, type SectionContentMap, type SectionKind } from "@/domain/types";
 import { Field } from "@/ui/Field";
+import { msg, useT } from "@/i18n";
 
-export const ANIMATION_LABELS: Record<SectionAnimation, string> = {
-  none: "Sin animación",
-  "fade-up": "Aparecer subiendo",
-  "zoom-in": "Acercarse",
-  "slide-left": "Entrar desde la izquierda",
-  "slide-right": "Entrar desde la derecha",
-  float: "Flotar suavemente",
-  heartbeat: "Título que late",
-};
+/** Textos del editor en el idioma actual (el editor se vuelve a pintar al cambiarlo). */
+const tx = () => msg().admin.editor;
 
 type ContentEditor<K extends SectionKind> = (props: {
   value: SectionContentMap[K];
@@ -37,10 +31,10 @@ function ListEditor({ label, items, onChange, placeholder, multiline }: {
             <input className="input grow" value={item} placeholder={placeholder} aria-label={`${label} ${i + 1}`}
               onChange={(e) => onChange(items.map((x, j) => (j === i ? e.target.value : x)))} />
           )}
-          <button type="button" className="btn btn--icon btn--ghost btn--sm" aria-label="Quitar" onClick={() => onChange(items.filter((_, j) => j !== i))}>×</button>
+          <button type="button" className="btn btn--icon btn--ghost btn--sm" aria-label={tx().remove} onClick={() => onChange(items.filter((_, j) => j !== i))}>×</button>
         </div>
       ))}
-      <button type="button" className="btn btn--sm btn--soft" style={{ justifySelf: "start" }} onClick={() => onChange([...items, ""])}>+ Agregar</button>
+      <button type="button" className="btn btn--sm btn--soft" style={{ justifySelf: "start" }} onClick={() => onChange([...items, ""])}>{tx().add}</button>
     </div>
   );
 }
@@ -53,67 +47,67 @@ const LoveNotesEditor: ContentEditor<"love_notes"> = ({ value, onChange }) => {
       {value.cards.map((card, i) => (
         <div key={i} className="card stack" style={{ padding: 16 }}>
           <div className="row">
-            <input className="input" style={{ width: 64, textAlign: "center" }} value={card.icon} maxLength={16} aria-label="Icono"
+            <input className="input" style={{ width: 64, textAlign: "center" }} value={card.icon} maxLength={16} aria-label={msg().admin.icon}
               onChange={(e) => update(i, { icon: e.target.value })} />
-            <input className="input grow" value={card.title} placeholder="Título" aria-label="Título de la tarjeta"
+            <input className="input grow" value={card.title} placeholder={msg().admin.title} aria-label={tx().cardTitle}
               onChange={(e) => update(i, { title: e.target.value })} />
-            <button type="button" className="btn btn--icon btn--ghost btn--sm" aria-label="Quitar tarjeta"
+            <button type="button" className="btn btn--icon btn--ghost btn--sm" aria-label={tx().removeCard}
               onClick={() => onChange({ cards: value.cards.filter((_, j) => j !== i) })}>×</button>
           </div>
-          <textarea className="textarea" value={card.body} placeholder="Mensaje" aria-label="Mensaje de la tarjeta"
+          <textarea className="textarea" value={card.body} placeholder={msg().admin.message} aria-label={tx().cardBody}
             onChange={(e) => update(i, { body: e.target.value })} />
         </div>
       ))}
       <button type="button" className="btn btn--soft btn--sm" style={{ justifySelf: "start" }}
-        onClick={() => onChange({ cards: [...value.cards, { icon: "💗", title: "", body: "" }] })}>+ Agregar tarjeta</button>
+        onClick={() => onChange({ cards: [...value.cards, { icon: "💗", title: "", body: "" }] })}>{tx().addCard}</button>
     </div>
   );
 };
 
 const LetterEditor: ContentEditor<"letter"> = ({ value, onChange }) => (
   <div className="stack">
-    <Field label="Saludo">{(id) => <input id={id} className="input" value={value.greeting} onChange={(e) => onChange({ ...value, greeting: e.target.value })} />}</Field>
-    <ListEditor label="Párrafos" multiline items={value.paragraphs} placeholder="Escribe un párrafo…" onChange={(paragraphs) => onChange({ ...value, paragraphs })} />
-    <ListEditor label="Deseos" items={value.wishes} placeholder="✨ Un deseo" onChange={(wishes) => onChange({ ...value, wishes })} />
-    <Field label="Firma">{(id) => <input id={id} className="input" value={value.signature} onChange={(e) => onChange({ ...value, signature: e.target.value })} />}</Field>
+    <Field label={tx().greeting}>{(id) => <input id={id} className="input" value={value.greeting} onChange={(e) => onChange({ ...value, greeting: e.target.value })} />}</Field>
+    <ListEditor label={tx().paragraphs} multiline items={value.paragraphs} placeholder={tx().paragraphPlaceholder} onChange={(paragraphs) => onChange({ ...value, paragraphs })} />
+    <ListEditor label={tx().wishes} items={value.wishes} placeholder={tx().wishPlaceholder} onChange={(wishes) => onChange({ ...value, wishes })} />
+    <Field label={tx().signature}>{(id) => <input id={id} className="input" value={value.signature} onChange={(e) => onChange({ ...value, signature: e.target.value })} />}</Field>
     <label className="switch">
       <input type="checkbox" role="switch" checked={!!value.surprise}
-        onChange={(e) => onChange({ ...value, surprise: e.target.checked ? { button: "Abrir sorpresa", title: "¡Sorpresa!", text: "" } : null })} />
-      <span>Incluir botón de sorpresa</span>
+        onChange={(e) => onChange({ ...value, surprise: e.target.checked ? { ...tx().surpriseDefaults, text: "" } : null })} />
+      <span>{tx().includeSurprise}</span>
     </label>
     {value.surprise && (
       <div className="form-grid">
-        <Field label="Texto del botón">{(id) => <input id={id} className="input" value={value.surprise!.button} onChange={(e) => onChange({ ...value, surprise: { ...value.surprise!, button: e.target.value } })} />}</Field>
-        <Field label="Título de la sorpresa">{(id) => <input id={id} className="input" value={value.surprise!.title} onChange={(e) => onChange({ ...value, surprise: { ...value.surprise!, title: e.target.value } })} />}</Field>
-        <Field label="Mensaje sorpresa">{(id) => <textarea id={id} className="textarea" value={value.surprise!.text} onChange={(e) => onChange({ ...value, surprise: { ...value.surprise!, text: e.target.value } })} />}</Field>
+        <Field label={tx().surpriseButton}>{(id) => <input id={id} className="input" value={value.surprise!.button} onChange={(e) => onChange({ ...value, surprise: { ...value.surprise!, button: e.target.value } })} />}</Field>
+        <Field label={tx().surpriseTitle}>{(id) => <input id={id} className="input" value={value.surprise!.title} onChange={(e) => onChange({ ...value, surprise: { ...value.surprise!, title: e.target.value } })} />}</Field>
+        <Field label={tx().surpriseText}>{(id) => <textarea id={id} className="textarea" value={value.surprise!.text} onChange={(e) => onChange({ ...value, surprise: { ...value.surprise!, text: e.target.value } })} />}</Field>
       </div>
     )}
   </div>
 );
 
 const TextEditor: ContentEditor<"text"> = ({ value, onChange }) => (
-  <Field label="Texto" hint="Deja una línea en blanco para separar párrafos">
+  <Field label={tx().text} hint={tx().textHint}>
     {(id) => <textarea id={id} className="textarea" rows={8} value={value.body} onChange={(e) => onChange({ body: e.target.value })} />}
   </Field>
 );
 
 const QuoteEditor: ContentEditor<"quote"> = ({ value, onChange }) => (
   <div className="form-grid">
-    <Field label="Frase">{(id) => <textarea id={id} className="textarea" value={value.text} onChange={(e) => onChange({ ...value, text: e.target.value })} />}</Field>
-    <Field label="Autor (opcional)">{(id) => <input id={id} className="input" value={value.author} onChange={(e) => onChange({ ...value, author: e.target.value })} />}</Field>
+    <Field label={tx().quote}>{(id) => <textarea id={id} className="textarea" value={value.text} onChange={(e) => onChange({ ...value, text: e.target.value })} />}</Field>
+    <Field label={tx().author}>{(id) => <input id={id} className="input" value={value.author} onChange={(e) => onChange({ ...value, author: e.target.value })} />}</Field>
   </div>
 );
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const NoContent = (hint: string): ContentEditor<any> => () => <p className="muted">{hint}</p>;
+const NoContent = (key: keyof ReturnType<typeof tx>["noContent"]): ContentEditor<any> => () => <p className="muted">{tx().noContent[key]}</p>;
 
 /** Editor de contenido por tipo (mismo patrón Registry que la página). */
 const CONTENT_EDITORS: { [K in SectionKind]: ContentEditor<K> } = {
-  hero: NoContent("La portada usa el título y subtítulo de arriba."),
-  together_counter: NoContent("El contador usa la fecha de inicio de la relación (Administración → Ajustes)."),
-  countdowns: NoContent("Las fechas se gestionan en la sección Fechas importantes."),
-  milestones: NoContent("Los hitos se gestionan en la sección Hitos."),
-  gallery: NoContent("Las fotos se gestionan en la sección Fotos."),
+  hero: NoContent("hero"),
+  together_counter: NoContent("together_counter"),
+  countdowns: NoContent("countdowns"),
+  milestones: NoContent("milestones"),
+  gallery: NoContent("gallery"),
   love_notes: LoveNotesEditor,
   letter: LetterEditor,
   text: TextEditor,
@@ -130,26 +124,28 @@ interface Props {
 export function SectionEditor({ section, busy, onSave, onCancel }: Props) {
   const [draft, setDraft] = useState<Section>(section);
   const ContentEditorFor = CONTENT_EDITORS[draft.kind] as ContentEditor<SectionKind>;
-  const meta = SECTION_KIND_LABELS[draft.kind];
+  const meta = sectionKindMeta(draft.kind);
+  const i18n = useT();
+  const a = i18n.admin;
 
   return (
     <form className="stack" onSubmit={(e) => { e.preventDefault(); onSave(draft); }}>
       <span className="badge" style={{ justifySelf: "start" }}>{meta.icon} {meta.label}</span>
       <div className="form-grid">
-        <Field label="Título">{(id) => <input id={id} className="input" maxLength={160} value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} />}</Field>
-        <Field label="Subtítulo">{(id) => <input id={id} className="input" maxLength={400} value={draft.subtitle} onChange={(e) => setDraft({ ...draft, subtitle: e.target.value })} />}</Field>
-        <Field label="Animación de entrada">
+        <Field label={a.title}>{(id) => <input id={id} className="input" maxLength={160} value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} />}</Field>
+        <Field label={a.editor.subtitle}>{(id) => <input id={id} className="input" maxLength={400} value={draft.subtitle} onChange={(e) => setDraft({ ...draft, subtitle: e.target.value })} />}</Field>
+        <Field label={a.editor.animation}>
           {(id) => (
             <select id={id} className="select" value={draft.animation} onChange={(e) => setDraft({ ...draft, animation: e.target.value as SectionAnimation })}>
-              {SECTION_ANIMATIONS.map((a) => <option key={a} value={a}>{ANIMATION_LABELS[a]}</option>)}
+              {SECTION_ANIMATIONS.map((anim) => <option key={anim} value={anim}>{a.animations[anim]}</option>)}
             </select>
           )}
         </Field>
       </div>
       <ContentEditorFor value={draft.content as never} onChange={(content) => setDraft({ ...draft, content } as Section)} />
       <div className="modal__footer">
-        <button type="button" className="btn btn--ghost" onClick={onCancel}>Cancelar</button>
-        <button className="btn" disabled={busy}>{busy ? "Guardando…" : "Guardar"}</button>
+        <button type="button" className="btn btn--ghost" onClick={onCancel}>{i18n.common.cancel}</button>
+        <button className="btn" disabled={busy}>{busy ? i18n.common.saving : a.save}</button>
       </div>
     </form>
   );

@@ -9,6 +9,7 @@ import { Field } from "@/ui/Field";
 import { Modal } from "@/ui/Modal";
 import { InviteQr } from "./invitations/InviteQr";
 import styles from "./invitations/Invitations.module.scss";
+import { useT } from "@/i18n";
 
 /**
  * Enlace para que alguien cree una contraseña nueva cuando la olvidó, sin
@@ -20,9 +21,12 @@ export function RecoveryLinkModal({ profile, onClose }: { profile: Profile; onCl
   const toast = useToast();
   const { run, busy } = useSaver();
   const [url, setUrl] = useState<string | null>(null);
+  const i18n = useT();
+  const l = i18n.superAdmin.links;
+  const t = i18n.superAdmin.recovery;
 
   const create = async () => {
-    const tokenHash = await run(() => backend.users.createRecoveryLink(profile.id), "Enlace listo 🔑");
+    const tokenHash = await run(() => backend.users.createRecoveryLink(profile.id), l.ready);
     if (tokenHash) setUrl(buildRecoveryUrl(config.siteUrl || window.location.origin, tokenHash));
   };
 
@@ -30,37 +34,35 @@ export function RecoveryLinkModal({ profile, onClose }: { profile: Profile; onCl
     if (!url) return;
     try {
       await navigator.clipboard.writeText(url);
-      toast.success("Enlace copiado");
+      toast.success(l.copied);
     } catch {
-      toast.show({ title: "No pude copiarlo", body: "Selecciona el enlace y cópialo a mano.", tone: "error" });
+      toast.show({ title: l.cantCopy, body: l.cantCopyBody, tone: "error" });
     }
   };
 
-  const hours = `${RECOVERY_LINK_HOURS} ${RECOVERY_LINK_HOURS === 1 ? "hora" : "horas"}`;
+  const hours = l.hours(RECOVERY_LINK_HOURS);
 
   return (
-    <Modal title={`Nueva contraseña para ${profile.displayName}`} onClose={onClose}
+    <Modal title={t.title(profile.displayName)} onClose={onClose}
       footer={url
-        ? <button className="btn" onClick={onClose}>Listo</button>
-        : <><button className="btn btn--ghost" onClick={onClose}>Cancelar</button><button className="btn" disabled={busy} onClick={create}>Crear enlace</button></>}>
+        ? <button className="btn" onClick={onClose}>{l.done}</button>
+        : <><button className="btn btn--ghost" onClick={onClose}>{i18n.common.cancel}</button><button className="btn" disabled={busy} onClick={create}>{l.create}</button></>}>
       {url ? (
         <div className={styles.result}>
           <p className="muted" style={{ margin: 0 }}>
-            Que lo escanee o abra el enlace: entrará directo a crear su contraseña nueva.
-            Sirve <strong>una sola vez</strong> y vence en {hours}.
+            {t.readyBefore} <strong>{t.once}</strong> {t.readyAfter(hours)}
           </p>
-          <InviteQr url={url} fileName="recuperar-contrasena.png" alt="Código QR para crear una contraseña nueva" />
-          <Field label="Enlace" hint="Compártelo sólo con esa persona: abre su cuenta.">
+          <InviteQr url={url} fileName={t.fileName} alt={t.qrAlt} />
+          <Field label={l.link} hint={t.linkHint}>
             {(id) => <input id={id} className={`input ${styles.link}`} readOnly value={url} onFocus={(e) => e.currentTarget.select()} />}
           </Field>
           <div className={styles.actions}>
-            <button className="btn btn--sm" onClick={copy}>Copiar enlace</button>
+            <button className="btn btn--sm" onClick={copy}>{l.copy}</button>
           </div>
         </div>
       ) : (
         <p className="muted" style={{ margin: 0 }}>
-          Úsalo si {profile.displayName} olvidó su contraseña y el correo de recuperación no le llega.
-          Se crea un enlace de un solo uso que vence en {hours}; su contraseña actual sigue igual hasta que elija otra.
+          {t.explain(profile.displayName, hours)}
         </p>
       )}
     </Modal>

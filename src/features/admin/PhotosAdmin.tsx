@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { groupPhotosByYearMonth, MONTH_NAMES } from "@/domain/dates";
+import { groupPhotosByYearMonth, monthName } from "@/domain/dates";
 import type { Photo } from "@/domain/types";
 import { formatBytes } from "@/services/images/sizing";
 import { useBackend } from "@/state/BackendContext";
@@ -11,6 +11,7 @@ import { AdminPage } from "./AdminLayout";
 import { BulkUploadPanel } from "./BulkUploadPanel";
 import { SortableList } from "./SortableList";
 import { useSaver } from "./useSaver";
+import { useT } from "@/i18n";
 
 function PhotoCard({ photo, thumb, onChanged, selected, onSelect }: {
   photo: Photo;
@@ -24,6 +25,8 @@ function PhotoCard({ photo, thumb, onChanged, selected, onSelect }: {
   const [confirm, confirmElement] = useConfirm();
   const [caption, setCaption] = useState(photo.caption);
   const [date, setDate] = useState(photo.takenOn);
+  const a = useT().admin;
+  const t = a.photos;
 
   const save = async (patch: Partial<Photo>, message?: string) => {
     await run(() => backend.photos.save({ ...photo, ...patch }), message);
@@ -33,27 +36,27 @@ function PhotoCard({ photo, thumb, onChanged, selected, onSelect }: {
   return (
     <div className={`photo-card${selected ? " is-selected" : ""}`}>
       <label className="photo-card__check">
-        <input type="checkbox" checked={selected} onChange={(e) => onSelect(e.target.checked)} aria-label="Seleccionar foto" />
+        <input type="checkbox" checked={selected} onChange={(e) => onSelect(e.target.checked)} aria-label={t.select} />
       </label>
-      {thumb ? <img src={thumb} alt={photo.caption || "Foto sin descripción"} loading="lazy" decoding="async" /> : <div className="skeleton photo-card__ph" />}
+      {thumb ? <img src={thumb} alt={photo.caption || t.noAlt} loading="lazy" decoding="async" /> : <div className="skeleton photo-card__ph" />}
       <div className="photo-card__body">
         <textarea
-          className="textarea photo-card__caption" rows={2} value={caption} maxLength={500} placeholder="Describe la foto o escribe un mensaje…"
+          className="textarea photo-card__caption" rows={2} value={caption} maxLength={500} placeholder={t.captionPlaceholder}
           onChange={(e) => setCaption(e.target.value)}
-          onBlur={() => caption !== photo.caption && void save({ caption }, "Mensaje guardado")}
-          aria-label="Mensaje de la foto (también es su texto alternativo)"
+          onBlur={() => caption !== photo.caption && void save({ caption }, t.captionSaved)}
+          aria-label={t.captionLabel}
         />
         <div className="row-between">
           <input
-            type="date" className="input photo-card__date" value={date} aria-label="Fecha de la foto"
+            type="date" className="input photo-card__date" value={date} aria-label={t.dateLabel}
             onChange={(e) => setDate(e.target.value)}
-            onBlur={() => date && date !== photo.takenOn && void save({ takenOn: date }, "Foto movida a otra fecha")}
+            onBlur={() => date && date !== photo.takenOn && void save({ takenOn: date }, t.moved)}
           />
           <button
-            className="btn btn--icon btn--ghost btn--sm" aria-label="Borrar foto"
+            className="btn btn--icon btn--ghost btn--sm" aria-label={t.deleteLabel}
             onClick={async () => {
-              if (await confirm({ title: "¿Borrar esta foto?", body: "No se puede deshacer.", confirmLabel: "Borrar", danger: true })) {
-                await run(() => backend.photos.delete(photo), "Foto borrada");
+              if (await confirm({ title: t.deleteTitle, body: a.cantUndo, confirmLabel: a.delete, danger: true })) {
+                await run(() => backend.photos.delete(photo), t.deleted);
                 onChanged();
               }
             }}
@@ -78,6 +81,8 @@ export default function PhotosAdmin() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkDate, setBulkDate] = useState("");
   const [order, setOrder] = useState<Photo[] | null>(null);
+  const a = useT().admin;
+  const t = a.photos;
 
   const year = years[Math.min(yearIdx, Math.max(0, years.length - 1))];
   const activeMonth = month ?? year?.months.findLast((m) => m.photos.length)?.month ?? 0;
@@ -95,29 +100,29 @@ export default function PhotosAdmin() {
 
   const moveSelected = async () => {
     const photos = (content?.photos ?? []).filter((p) => selected.has(p.id));
-    await run(() => Promise.all(photos.map((p) => backend.photos.save({ ...p, takenOn: bulkDate }))), `${photos.length} fotos movidas`);
+    await run(() => Promise.all(photos.map((p) => backend.photos.save({ ...p, takenOn: bulkDate }))), t.movedMany(photos.length));
     setSelected(new Set());
     refresh();
   };
 
   const deleteSelected = async () => {
     const photos = (content?.photos ?? []).filter((p) => selected.has(p.id));
-    if (!(await confirm({ title: `¿Borrar ${photos.length} fotos?`, body: "No se puede deshacer.", confirmLabel: "Borrar", danger: true }))) return;
-    await run(() => Promise.all(photos.map((p) => backend.photos.delete(p))), "Fotos borradas");
+    if (!(await confirm({ title: t.deleteManyTitle(photos.length), body: a.cantUndo, confirmLabel: a.delete, danger: true }))) return;
+    await run(() => Promise.all(photos.map((p) => backend.photos.delete(p))), t.deletedMany);
     setSelected(new Set());
     refresh();
   };
 
   return (
-    <AdminPage title="Fotos" description="Sube una foto o un álbum entero, ordénalas, muévelas de mes y escribe mensajes para cada recuerdo.">
+    <AdminPage title={t.title} description={t.description}>
       <BulkUploadPanel onUploaded={refresh} />
 
       {years.length === 0 ? (
-        <EmptyState icon="🖼️" title="Todavía no hay fotos">Sube la primera arriba.</EmptyState>
+        <EmptyState icon="🖼️" title={t.empty}>{t.emptyHint}</EmptyState>
       ) : (
         <div className="card stack">
           <div className="row-between">
-            <div className="tabs" role="tablist" aria-label="Año" onKeyDown={onRovingKeyDown}>
+            <div className="tabs" role="tablist" aria-label={t.year} onKeyDown={onRovingKeyDown}>
               {years.map((y, i) => (
                 <button key={y.year} role="tab" className="tab" aria-selected={i === yearIdx} tabIndex={rovingTabIndex(i === yearIdx)}
                   onClick={() => { setYearIdx(i); setMonth(null); setOrder(null); }}>{y.year}</button>
@@ -125,23 +130,23 @@ export default function PhotosAdmin() {
             </div>
             {selected.size > 0 && (
               <div className="row">
-                <span className="badge">{selected.size} seleccionadas</span>
-                <input type="date" className="input" style={{ width: "auto" }} value={bulkDate} onChange={(e) => setBulkDate(e.target.value)} aria-label="Nueva fecha" />
-                <button className="btn btn--sm" disabled={!bulkDate || busy} onClick={moveSelected}>Mover</button>
-                <button className="btn btn--sm btn--danger" disabled={busy} onClick={deleteSelected}>Borrar</button>
+                <span className="badge">{t.selected(selected.size)}</span>
+                <input type="date" className="input" style={{ width: "auto" }} value={bulkDate} onChange={(e) => setBulkDate(e.target.value)} aria-label={t.newDate} />
+                <button className="btn btn--sm" disabled={!bulkDate || busy} onClick={moveSelected}>{t.move}</button>
+                <button className="btn btn--sm btn--danger" disabled={busy} onClick={deleteSelected}>{a.delete}</button>
               </div>
             )}
           </div>
-          <div className="month-pills" role="group" aria-label="Mes">
+          <div className="month-pills" role="group" aria-label={t.month}>
             {year?.months.map((m) => (
               <button key={m.month} className={`month-pill${m.month === activeMonth ? " is-active" : ""}`} aria-pressed={m.month === activeMonth}
-                aria-label={`${MONTH_NAMES[m.month]}: ${m.photos.length} ${m.photos.length === 1 ? "foto" : "fotos"}`}
+                aria-label={t.monthCount(monthName(m.month), m.photos.length)}
                 onClick={() => { setMonth(m.month); setOrder(null); }} disabled={!m.photos.length}>
-                {MONTH_NAMES[m.month]} <span>{m.photos.length}</span>
+                {monthName(m.month)} <span>{m.photos.length}</span>
               </button>
             ))}
           </div>
-          <p className="muted" style={{ margin: 0 }}>Arrastra las fotos (o usa ↑ ↓) para cambiar el orden en que aparecen.</p>
+          <p className="muted" style={{ margin: 0 }}>{t.reorderHint}</p>
           <SortableList
             className="photo-grid"
             items={list}
