@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { contrastRatio } from "@/core/validation";
 import { DEFAULT_THEME } from "@/domain/defaults";
-import { applyPalette, matchPalette, personalTheme, pickPalette, type PaletteKey } from "@/domain/palettes";
+import { applyPalette, matchPalette, paletteName, personalTheme, pickPalette, type PaletteKey } from "@/domain/palettes";
 import type { ThemeTokens } from "@/domain/types";
 import { ColorInput } from "@/features/admin/theme/ColorInput";
 import { PalettePicker } from "@/features/admin/theme/PalettePicker";
@@ -11,14 +11,8 @@ import { useSaver } from "@/features/admin/useSaver";
 import { useAuth } from "@/state/AuthContext";
 import { useBackend } from "@/state/BackendContext";
 import { useSiteContent } from "@/state/SiteContentStore";
+import { useT } from "@/i18n";
 
-/** Los colores que tiene sentido ajustar a mano; el resto viene de la paleta. */
-const CUSTOM_KEYS: Partial<Record<PaletteKey, string>> = {
-  primary: "Color principal",
-  accent: "Detalles",
-  background: "Fondo",
-  text: "Texto",
-};
 
 /** Mis colores: cada persona elige su paleta y sólo cambia lo que ve ella. */
 export default function MyColorsPage() {
@@ -28,6 +22,10 @@ export default function MyColorsPage() {
   const { run, busy } = useSaver();
   const [draft, setDraft] = useState<ThemeTokens | null>(null);
   const [customizing, setCustomizing] = useState(false);
+  const i18n = useT();
+  const t = i18n.auth.colors;
+  /** Los colores que tiene sentido ajustar a mano; el resto viene de la paleta. */
+  const CUSTOM_KEYS: Partial<Record<PaletteKey, string>> = t.custom;
 
   const site = content?.settings.theme ?? DEFAULT_THEME;
   const saved = personalTheme(site, profile?.themeColors);
@@ -49,30 +47,28 @@ export default function MyColorsPage() {
     <main className="container stack" id="contenido-principal" style={{ maxWidth: 900, paddingBlock: "32px 64px" }}>
       <div className="row-between">
         <div>
-          <p className="muted" style={{ margin: 0 }}><Link to="/cuenta">← Mi cuenta</Link></p>
-          <h1 style={{ margin: "4px 0" }}>Mis colores</h1>
-          <p className="muted" style={{ margin: 0 }}>
-            Sólo cambian lo que ves tú. Los demás siguen viendo sus propios colores.
-          </p>
+          <p className="muted" style={{ margin: 0 }}><Link to="/cuenta">{i18n.auth.profile.back}</Link></p>
+          <h1 style={{ margin: "4px 0" }}>{t.title}</h1>
+          <p className="muted" style={{ margin: 0 }}>{t.intro}</p>
         </div>
         <div className="row">
-          {draft && <button className="btn btn--ghost" onClick={() => setDraft(null)}>Descartar</button>}
-          <button className="btn" disabled={busy || !draft} onClick={() => void save(draft, "Tus colores quedaron guardados 🎨")}>
-            {busy ? "Guardando…" : "Guardar mis colores"}
+          {draft && <button className="btn btn--ghost" onClick={() => setDraft(null)}>{t.discard}</button>}
+          <button className="btn" disabled={busy || !draft} onClick={() => void save(draft, t.saved)}>
+            {busy ? i18n.common.saving : t.save}
           </button>
         </div>
       </div>
 
       <div className="card stack" data-tour="my-colors">
         <div className="row-between">
-          <h2 style={{ margin: 0, fontSize: "1.1rem" }}>Paletas</h2>
-          <span className="badge badge--muted">{selected ? `Elegida: ${selected.name}` : "Colores personalizados"}</span>
+          <h2 style={{ margin: 0, fontSize: "1.1rem" }}>{t.palettes}</h2>
+          <span className="badge badge--muted">{selected ? t.chosen(paletteName(selected)) : t.customColors}</span>
         </div>
         <PalettePicker selectedId={selected?.id ?? null} onSelect={(p) => setDraft(applyPalette(theme, p.colors))} />
         {profile?.themeColors && (
           <button className="btn btn--sm btn--soft" style={{ justifySelf: "start" }} disabled={busy}
-            onClick={() => void save(null, "Volviste a los colores de la página")}>
-            Volver a los colores de la página{sitePalette ? ` (${sitePalette.name})` : ""}
+            onClick={() => void save(null, t.reset)}>
+            {t.useSite(sitePalette ? paletteName(sitePalette) : "")}
           </button>
         )}
       </div>
@@ -80,9 +76,9 @@ export default function MyColorsPage() {
       <div className="form-grid" style={{ alignItems: "start" }}>
         <div className="card stack">
           <div className="row-between">
-            <h2 style={{ margin: 0, fontSize: "1.1rem" }}>Ajustar a mi gusto</h2>
+            <h2 style={{ margin: 0, fontSize: "1.1rem" }}>{t.adjust}</h2>
             <button className="btn btn--sm btn--ghost" onClick={() => setCustomizing((v) => !v)} aria-expanded={customizing}>
-              {customizing ? "Ocultar" : "Personalizar"}
+              {customizing ? t.hide : t.customize}
             </button>
           </div>
           {customizing ? (
@@ -92,11 +88,11 @@ export default function MyColorsPage() {
               ))}
             </div>
           ) : (
-            <p className="muted" style={{ margin: 0 }}>Parte de una paleta y cambia el color que quieras.</p>
+            <p className="muted" style={{ margin: 0 }}>{t.adjustHint}</p>
           )}
           {(textContrast < 4.5 || buttonContrast < 3) && (
             <p className="field__error" role="alert">
-              ⚠️ Con estos colores {textContrast < 4.5 ? "el texto se lee poco sobre el fondo" : "el texto de los botones se lee poco"}.
+              {textContrast < 4.5 ? t.lowText : t.lowButtons}
             </p>
           )}
         </div>

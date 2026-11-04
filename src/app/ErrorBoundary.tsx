@@ -1,5 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
 import { EmptyState } from "@/ui/Feedback";
+import { msg } from "@/i18n";
 
 /** Evita que un error en una sección deje toda la página en blanco. */
 export class ErrorBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
@@ -17,8 +18,8 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, { failed: 
     if (this.state.failed) {
       return (
         <div role="alert">
-          <EmptyState icon="🥀" title="Algo se rompió en esta parte">
-            <button className="btn btn--soft" onClick={() => window.location.reload()}>Recargar</button>
+          <EmptyState icon="🥀" title={msg().common.errorBoundary}>
+            <button className="btn btn--soft" onClick={() => window.location.reload()}>{msg().common.reload}</button>
           </EmptyState>
         </div>
       );

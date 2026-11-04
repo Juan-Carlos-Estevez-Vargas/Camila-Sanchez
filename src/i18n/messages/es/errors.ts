@@ -1,0 +1,31 @@
+/** Mensajes amables para errores conocidos (core/errors.ts). */
+export const errors = {
+  badCredentials: "Correo o contraseña incorrectos.",
+  emailNotConfirmed: "Confirma tu correo antes de entrar.",
+  forbidden: "No tienes permiso para hacer esto.",
+  network: "Parece que no hay conexión. Inténtalo de nuevo.",
+  tooLarge: "La imagen es demasiado pesada.",
+  rateLimitEmail: "Espera unos minutos antes de pedir otro correo.",
+  samePassword: "La contraseña nueva debe ser distinta de la anterior.",
+  weakPassword: "Esa contraseña es muy débil: usa al menos 10 caracteres.",
+  tooFast: "Vas muy rápido 😅 Espera un momentito y vuelve a intentarlo.",
+  lastSuperAdmin: "Debe quedar al menos un super administrador activo.",
+  generic: "Algo salió mal. Inténtalo otra vez en un momento.",
+  /** Respuestas de las Edge Functions (vienen en español y se traducen aquí). */
+  server: {
+    invalidLink: "Este enlace ya no es válido. Pide uno nuevo.",
+    invalidEmail: "Escribe un correo válido.",
+    nameRequired: "Escribe tu nombre.",
+    emailTaken: "Ya existe una cuenta con ese correo.",
+    cantCreate: "No pude crear la cuenta. Inténtalo de nuevo.",
+    unexpected: "Error inesperado. Inténtalo de nuevo.",
+    invalidSession: "Sesión no válida",
+    invalidEmailOrName: "Correo o nombre inválidos",
+    missingUser: "Falta el usuario",
+    cantDeleteSelf: "No puedes eliminar tu propia cuenta",
+    cantDeactivateSelf: "No puedes desactivar tu propia cuenta",
+    userNotFound: "Ese usuario no existe",
+    captcha: "No pude comprobar que no eres un robot. Recarga la página e inténtalo otra vez.",
+    tooMany: "Vas muy rápido: espera unos minutos y vuelve a intentarlo.",
+  },
+};

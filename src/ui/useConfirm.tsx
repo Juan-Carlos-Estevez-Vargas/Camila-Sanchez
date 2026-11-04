@@ -1,5 +1,6 @@
 import { useCallback, useState, type ReactNode } from "react";
 import { Modal } from "./Modal";
+import { useT } from "@/i18n";
 
 interface ConfirmOptions {
   title: string;
@@ -10,6 +11,7 @@ interface ConfirmOptions {
 
 /** Confirmación con un modal propio (en vez de window.confirm). */
 export function useConfirm(): [(options: ConfirmOptions) => Promise<boolean>, ReactNode] {
+  const t = useT();
   const [state, setState] = useState<(ConfirmOptions & { resolve(v: boolean): void }) | null>(null);
 
   const confirm = useCallback(
@@ -28,9 +30,9 @@ export function useConfirm(): [(options: ConfirmOptions) => Promise<boolean>, Re
       onClose={() => close(false)}
       footer={
         <>
-          <button className="btn btn--ghost" onClick={() => close(false)}>Cancelar</button>
+          <button className="btn btn--ghost" onClick={() => close(false)}>{t.common.cancel}</button>
           <button className={`btn ${state.danger ? "btn--danger" : ""}`} onClick={() => close(true)}>
-            {state.confirmLabel ?? "Confirmar"}
+            {state.confirmLabel ?? t.common.confirm}
           </button>
         </>
       }

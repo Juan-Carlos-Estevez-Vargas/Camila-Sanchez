@@ -2,7 +2,7 @@ import { AUTHOR } from "@/core/author";
 import { FONT_OPTIONS } from "@/domain/defaults";
 
 /** Bibliotecas que llegan al navegador (las de desarrollo no se publican). */
-const LIBRARIES = [
+export const LIBRARIES = [
   { name: "React y React DOM", license: "MIT", url: "https://github.com/facebook/react" },
   { name: "React Router", license: "MIT", url: "https://github.com/remix-run/react-router" },
   { name: "Supabase JS", license: "MIT", url: "https://github.com/supabase/supabase-js" },
@@ -10,7 +10,7 @@ const LIBRARIES = [
   { name: "node-qrcode", license: "MIT", url: "https://github.com/soldair/node-qrcode" },
 ] as const;
 
-const FONTS = [...new Set([...FONT_OPTIONS.display, ...FONT_OPTIONS.body])];
+export const FONTS = [...new Set([...FONT_OPTIONS.display, ...FONT_OPTIONS.body])];
 
 export function Licenses() {
   return (

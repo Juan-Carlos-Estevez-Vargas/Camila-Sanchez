@@ -8,6 +8,7 @@ import { useAuth } from "@/state/AuthContext";
 import { useBackend } from "@/state/BackendContext";
 import { useCaptcha } from "@/services/captcha/useCaptcha";
 import { Field, Switch } from "@/ui/Field";
+import { useT } from "@/i18n";
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -25,6 +26,8 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const captcha = useCaptcha();
+  const i18n = useT();
+  const t = i18n.auth.login;
 
   // Enlaces de recuperación antiguos (/entrar?recuperar=1) ahora van a /recuperar.
   if (params.get("recuperar")) return <Navigate to={RECOVERY_PATH} replace />;
@@ -36,17 +39,17 @@ export default function LoginPage() {
     setError(null);
     setInfo(null);
     try {
-      if (mode === "reset" && !EMAIL.test(email.trim())) throw new AppError("Escribe un correo válido.");
+      if (mode === "reset" && !EMAIL.test(email.trim())) throw new AppError(i18n.auth.invalidEmail);
       const captchaToken = await captcha.take();
       if (mode === "password") await backend.auth.signInWithPassword(email, password, { remember, captchaToken });
       if (mode === "magic") {
         await backend.auth.sendMagicLink(email, { captchaToken });
-        setInfo("Te envié un enlace mágico ✨ Revisa tu correo.");
+        setInfo(t.magicSent);
       }
       if (mode === "reset") {
         await backend.auth.sendPasswordReset(email.trim(), { captchaToken });
         // Mismo mensaje exista o no la cuenta: no revela qué correos están registrados.
-        setInfo("Si ese correo tiene cuenta, te llegará un enlace para crear una contraseña nueva. Revisa también el spam.");
+        setInfo(t.resetSent);
       }
     } catch (err) {
       setError(toUserMessage(err));
@@ -55,11 +58,7 @@ export default function LoginPage() {
     }
   };
 
-  const titles: Record<Mode, string> = {
-    password: "Bienvenida de nuevo",
-    magic: "Entrar con enlace mágico",
-    reset: "Recuperar contraseña",
-  };
+  const titles: Record<Mode, string> = t.titles;
 
   return (
     <main id="contenido-principal" className="gate">
@@ -67,18 +66,18 @@ export default function LoginPage() {
         <div className="gate__heart" aria-hidden>💗</div>
         <h1 style={{ fontSize: "2rem" }}>{titles[mode]}</h1>
         {backend.mode === "demo" && (
-          <p className="badge" style={{ justifySelf: "center" }}>Modo demo · juan@, camila@ o valentina@demo.local · demo1234</p>
+          <p className="badge" style={{ justifySelf: "center" }}>{t.demo}</p>
         )}
         {mode === "reset" && (
           <p className="muted" style={{ margin: 0, textAlign: "center" }}>
-            Escribe el correo de tu cuenta y te enviaré un enlace para crear una contraseña nueva.
+            {t.resetIntro}
           </p>
         )}
-        <Field label="Correo">
+        <Field label={i18n.auth.email}>
           {(id) => <input id={id} className="input" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />}
         </Field>
         {mode === "password" && (
-          <Field label="Contraseña">
+          <Field label={i18n.auth.passwordLabel}>
             {(id) => (
               <input id={id} className="input" type="password" required autoComplete="current-password"
                 value={password} onChange={(e) => setPassword(e.target.value)} />
@@ -87,8 +86,8 @@ export default function LoginPage() {
         )}
         {mode === "password" && backend.mode === "supabase" && (
           <div className="stack" style={{ gap: 2 }}>
-            <Switch checked={remember} onChange={setRemember} label="Mantener la sesión iniciada" />
-            <span className="field__hint">Desactívalo en un computador compartido: la sesión se cerrará al cerrar la pestaña.</span>
+            <Switch checked={remember} onChange={setRemember} label={t.remember} />
+            <span className="field__hint">{t.rememberHint}</span>
           </div>
         )}
         {captcha.widget}
@@ -96,16 +95,16 @@ export default function LoginPage() {
         {error && <p className="field__error" role="alert">{error}</p>}
         {info && <p className="badge badge--success" role="status" style={{ justifySelf: "center" }}>{info}</p>}
         <button className="btn btn--block" disabled={busy}>
-          {busy ? "Un momento…" : mode === "password" ? "Entrar" : "Enviar enlace"}
+          {busy ? t.wait : mode === "password" ? t.signIn : t.sendLink}
         </button>
         <div className="row" style={{ justifyContent: "center" }} data-tour="login-modes">
-          {mode !== "password" && <button type="button" className="btn btn--sm btn--ghost" onClick={() => setMode("password")}>Usar contraseña</button>}
-          {mode !== "magic" && <button type="button" className="btn btn--sm btn--ghost" onClick={() => setMode("magic")}>Enlace mágico</button>}
-          {mode === "password" && <button type="button" className="btn btn--sm btn--ghost" onClick={() => setMode("reset")}>Olvidé mi contraseña</button>}
+          {mode !== "password" && <button type="button" className="btn btn--sm btn--ghost" onClick={() => setMode("password")}>{t.usePassword}</button>}
+          {mode !== "magic" && <button type="button" className="btn btn--sm btn--ghost" onClick={() => setMode("magic")}>{t.magicLink}</button>}
+          {mode === "password" && <button type="button" className="btn btn--sm btn--ghost" onClick={() => setMode("reset")}>{t.forgot}</button>}
         </div>
         {mode === "reset" && (
           <p className="field__hint" style={{ margin: 0, textAlign: "center" }}>
-            ¿No te llega? Quien administra la página puede darte un enlace o QR para recuperarla.
+            {t.noEmail}
           </p>
         )}
       </form>
