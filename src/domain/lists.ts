@@ -5,7 +5,7 @@
 import { daysUntil, formatLongDate, parseIsoDate } from "./dates";
 import { PERMISSIONS } from "./permissions";
 import type { IsoDate, Profile, RolePermission, TodoItem, TodoMaterial } from "./types";
-import { msg } from "@/i18n";
+import { msg } from "@/i18n/store";
 
 export const LIST_EMOJIS = ["📝", "🛒", "🏖️", "🏠", "🎁", "🎉", "✈️", "🍳", "💪", "📚", "🌱", "💖"] as const;
 

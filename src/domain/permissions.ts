@@ -1,5 +1,5 @@
 import type { Role } from "./types";
-import { msg } from "@/i18n";
+import { msg } from "@/i18n/store";
 
 /** Catálogo de permisos. Debe coincidir con la tabla public.permissions. */
 export const PERMISSIONS = {

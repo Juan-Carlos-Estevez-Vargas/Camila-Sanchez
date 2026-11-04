@@ -4,7 +4,7 @@
  */
 import { stickerById } from "./stickers";
 import type { ChatConversation, ChatKind, ChatMessage, ChatParticipant, ChatPresence, ChatReaction, Uuid } from "./types";
-import { dateFormat, msg } from "@/i18n";
+import { dateFormat, msg } from "@/i18n/store";
 
 /** Cada cuánto avisa la app de que la persona sigue conectada. */
 export const PRESENCE_HEARTBEAT_MS = 30_000;

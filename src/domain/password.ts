@@ -1,5 +1,5 @@
 /** Las mismas reglas de contraseña que aplican las Edge Functions, con el mensaje en el idioma activo. */
-import { msg } from "@/i18n";
+import { msg } from "@/i18n/store";
 import { passwordIssue } from "../../supabase/functions/_shared/password";
 
 export { MAX_PASSWORD_LENGTH, MIN_PASSWORD_LENGTH, passwordIssue, type PasswordIssue } from "../../supabase/functions/_shared/password";

@@ -13,7 +13,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import { config, isDemoMode } from "@/core/config";
 import { AppError } from "@/core/errors";
 import { CaptchaTokenQueue } from "./tokenQueue";
-import { getLocale, msg } from "@/i18n";
+import { getLocale, msg } from "@/i18n/store";
 
 const SCRIPT_URL = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
 const WAIT_MS = 60_000;

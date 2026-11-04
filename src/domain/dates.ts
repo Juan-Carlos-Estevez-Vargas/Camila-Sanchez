@@ -1,4 +1,4 @@
-import { dateFormat, msg, relativeFormat } from "@/i18n";
+import { dateFormat, msg, relativeFormat } from "@/i18n/store";
 import type { ImportantDate, IsoDate, Photo } from "./types";
 
 const DAY_MS = 86_400_000;

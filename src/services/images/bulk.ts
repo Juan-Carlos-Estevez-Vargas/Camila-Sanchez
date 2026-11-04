@@ -2,7 +2,7 @@
  * Utilidades para la carga masiva de fotos: recorrer carpetas arrastradas,
  * filtrar lo que no es imagen, detectar repetidas y estimar cuánto falta.
  */
-import { msg } from "@/i18n";
+import { msg } from "@/i18n/store";
 
 const IMAGE_EXTENSIONS = /\.(jpe?g|png|webp|gif|avif|bmp|heic|heif)$/i;
 
