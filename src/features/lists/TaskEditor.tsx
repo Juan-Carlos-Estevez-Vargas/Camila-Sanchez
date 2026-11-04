@@ -14,6 +14,7 @@ import { Field } from "@/ui/Field";
 import { Modal } from "@/ui/Modal";
 import { useConfirm } from "@/ui/useConfirm";
 import { ImageViewer, useListImages } from "./listParts";
+import { useT } from "@/i18n";
 
 const TASK_IMAGE_OPTIONS = { maxEdge: 1600, thumbEdge: 480, quality: 0.82, targetBytes: 350 * 1024, minQuality: 0.66 };
 
@@ -48,6 +49,8 @@ export function TaskEditor({ item, detail, members, nameOf, onChanged, onToggle,
   const [uploading, setUploading] = useState(0);
   const [viewing, setViewing] = useState<string | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
+  const i18n = useT();
+  const t = i18n.lists.task;
   const processor = useMemo(() => new ImageProcessor(TASK_IMAGE_OPTIONS), []);
   useEffect(() => () => processor.dispose(), [processor]);
 
@@ -97,7 +100,7 @@ export function TaskEditor({ item, detail, members, nameOf, onChanged, onToggle,
     e.target.value = "";
     if (files.length === 0) return;
     const room = MAX_TASK_IMAGES - images.length;
-    if (files.length > room) toast.show({ title: `Máximo ${MAX_TASK_IMAGES} fotos por tarea` });
+    if (files.length > room) toast.show({ title: t.maxPhotos(MAX_TASK_IMAGES) });
     const batch = files.slice(0, Math.max(room, 0));
     setUploading((n) => n + batch.length);
     for (const file of batch) {
@@ -107,7 +110,7 @@ export function TaskEditor({ item, detail, members, nameOf, onChanged, onToggle,
           full: optimized.full, thumb: optimized.thumb, extension: optimized.extension, width: optimized.width, height: optimized.height,
         });
       } catch (error) {
-        toast.error(error, "No se subió la foto");
+        toast.error(error, t.photoFailed);
       } finally {
         setUploading((n) => n - 1);
       }
@@ -116,13 +119,13 @@ export function TaskEditor({ item, detail, members, nameOf, onChanged, onToggle,
   };
 
   const removeImage = async (image: TodoImage) => {
-    if (!(await confirm({ title: "¿Quitar esta foto?", confirmLabel: "Quitar", danger: true }))) return;
+    if (!(await confirm({ title: t.removePhotoTitle, confirmLabel: t.remove, danger: true }))) return;
     void run(() => backend.lists.deleteImage(image));
   };
 
   const removeTask = async () => {
-    const extra = subtasks.length ? ` y sus ${subtasks.length} subtareas` : "";
-    if (!(await confirm({ title: `¿Borrar «${item.title}»?`, body: `Se borra para todos${extra}, con sus materiales y fotos.`, confirmLabel: "Borrar", danger: true }))) return;
+    const extra = subtasks.length ? t.deleteExtra(subtasks.length) : "";
+    if (!(await confirm({ title: t.deleteTitle(item.title), body: t.deleteBody(extra), confirmLabel: t.delete, danger: true }))) return;
     try {
       await backend.lists.deleteItem(item.id);
       onClose();
@@ -136,107 +139,107 @@ export function TaskEditor({ item, detail, members, nameOf, onChanged, onToggle,
 
   return (
     <Modal
-      title={<label className="task-editor__done"><input type="checkbox" className="check" checked={!!item.doneAt} onChange={() => onToggle(item)} aria-label="Hecha" /> {isSubtask ? "Subtarea" : "Tarea"}</label>}
+      title={<label className="task-editor__done"><input type="checkbox" className="check" checked={!!item.doneAt} onChange={() => onToggle(item)} aria-label={t.done} /> {isSubtask ? t.subtask : t.task}</label>}
       wide
       onClose={onClose}
       footer={
         <>
-          <button className="btn btn--ghost btn--sm task-editor__delete" onClick={() => void removeTask()}>🗑 Borrar</button>
-          <button className="btn" onClick={onClose}>Listo</button>
+          <button className="btn btn--ghost btn--sm task-editor__delete" onClick={() => void removeTask()}>{t.deleteButton}</button>
+          <button className="btn" onClick={onClose}>{t.close}</button>
         </>
       }
     >
       <div className="task-editor stack">
-        {parent && <p className="muted task-editor__parent">De la tarea «{parent.title}»</p>}
-        <input className="input task-editor__title" aria-label="Título de la tarea" maxLength={300} value={title}
+        {parent && <p className="muted task-editor__parent">{t.fromTask(parent.title)}</p>}
+        <input className="input task-editor__title" aria-label={t.titleLabel} maxLength={300} value={title}
           onChange={(e) => setTitle(e.target.value)} {...titleFocus}
           onBlur={() => { titleFocus.onBlur(); saveTitle(); }}
           onKeyDown={(e) => e.key === "Enter" && (e.currentTarget as HTMLInputElement).blur()} />
         <p className="muted task-editor__meta">
-          {item.createdBy && <>Agregada por {nameOf(item.createdBy)} {formatRelative(item.createdAt)}</>}
-          {item.doneAt && <> · Hecha por {nameOf(item.doneBy)} {formatRelative(item.doneAt)}</>}
+          {item.createdBy && <>{t.addedBy(nameOf(item.createdBy), formatRelative(item.createdAt))}</>}
+          {item.doneAt && <>{t.doneBy(nameOf(item.doneBy), formatRelative(item.doneAt))}</>}
         </p>
 
         <div className="form-grid">
-          <Field label="Fecha límite">
+          <Field label={t.due}>
             {(id) => <input id={id} type="date" className="input" value={item.dueOn ?? ""}
               onChange={(e) => void run(() => backend.lists.saveItem({ id: item.id, listId: item.listId, dueOn: e.target.value || null }))} />}
           </Field>
-          <Field label="¿Quién se encarga?">
+          <Field label={t.assignee}>
             {(id) => (
               <select id={id} className="select" value={item.assigneeId ?? ""}
                 onChange={(e) => void run(() => backend.lists.saveItem({ id: item.id, listId: item.listId, assigneeId: e.target.value || null }))}>
-                <option value="">Nadie en particular</option>
-                {members.map((m) => <option key={m.id} value={m.id}>{m.displayName || "Sin nombre"}</option>)}
+                <option value="">{t.nobody}</option>
+                {members.map((m) => <option key={m.id} value={m.id}>{m.displayName || i18n.lists.noName}</option>)}
               </select>
             )}
           </Field>
         </div>
 
-        <Field label="Descripción" hint="Se guarda sola al salir del cuadro.">
-          {(id) => <textarea id={id} className="textarea" rows={3} maxLength={4000} placeholder="Detalles, ideas, enlaces…" value={description}
+        <Field label={t.description} hint={t.descriptionHint}>
+          {(id) => <textarea id={id} className="textarea" rows={3} maxLength={4000} placeholder={t.descriptionPlaceholder} value={description}
             onChange={(e) => setDescription(e.target.value)} {...descriptionFocus}
             onBlur={() => { descriptionFocus.onBlur(); saveDescription(); }} />}
         </Field>
 
         {!isSubtask && (
           <section className="task-editor__section" aria-labelledby="subtasks-title">
-            <h4 id="subtasks-title">☑️ Subtareas {subtasks.length > 0 && <span className="muted">{subtasks.filter((s) => s.doneAt).length}/{subtasks.length}</span>}</h4>
+            <h4 id="subtasks-title">{t.subtasks} {subtasks.length > 0 && <span className="muted">{subtasks.filter((s) => s.doneAt).length}/{subtasks.length}</span>}</h4>
             {subtasks.length > 0 && (
               <ul className="mini-list">
                 {subtasks.map((s) => (
                   <li key={s.id} className={s.doneAt ? "is-done" : ""}>
-                    <input type="checkbox" className="check check--sm" checked={!!s.doneAt} onChange={() => onToggle(s)} aria-label={`Subtarea «${s.title}»`} />
+                    <input type="checkbox" className="check check--sm" checked={!!s.doneAt} onChange={() => onToggle(s)} aria-label={t.subtaskLabel(s.title)} />
                     <span className="grow">{s.title}</span>
-                    <button className="btn btn--icon btn--ghost btn--sm" aria-label={`Borrar «${s.title}»`} onClick={() => void run(() => backend.lists.deleteItem(s.id))}>✕</button>
+                    <button className="btn btn--icon btn--ghost btn--sm" aria-label={t.deleteItem(s.title)} onClick={() => void run(() => backend.lists.deleteItem(s.id))}>✕</button>
                   </li>
                 ))}
               </ul>
             )}
             <form className="mini-form" onSubmit={addSubtask}>
-              <input className="input grow" maxLength={300} placeholder="Agregar subtarea…" aria-label="Nueva subtarea" value={subtask} onChange={(e) => setSubtask(e.target.value)} />
-              <button className="btn btn--soft btn--sm" disabled={!subtask.trim()}>Agregar</button>
+              <input className="input grow" maxLength={300} placeholder={t.addSubtask} aria-label={t.newSubtask} value={subtask} onChange={(e) => setSubtask(e.target.value)} />
+              <button className="btn btn--soft btn--sm" disabled={!subtask.trim()}>{i18n.lists.add}</button>
             </form>
           </section>
         )}
 
         <section className="task-editor__section" aria-labelledby="materials-title">
-          <h4 id="materials-title">🧰 Materiales {materials.length > 0 && <span className="muted">{materials.filter((m) => m.isReady).length}/{materials.length} listos</span>}</h4>
+          <h4 id="materials-title">{t.materials} {materials.length > 0 && <span className="muted">{t.materialsCount(materials.filter((m) => m.isReady).length, materials.length)}</span>}</h4>
           {materials.length > 0 && (
             <ul className="mini-list">
               {materials.map((m) => (
                 <li key={m.id} className={m.isReady ? "is-done" : ""}>
-                  <input type="checkbox" className="check check--sm" checked={m.isReady} aria-label={`Ya tenemos «${m.name}»`}
+                  <input type="checkbox" className="check check--sm" checked={m.isReady} aria-label={t.haveMaterial(m.name)}
                     onChange={() => void run(() => backend.lists.saveMaterial({ id: m.id, itemId: item.id, isReady: !m.isReady }))} />
                   <span className="grow">{m.name}</span>
                   {m.quantity && <span className="badge badge--muted">{m.quantity}</span>}
-                  <button className="btn btn--icon btn--ghost btn--sm" aria-label={`Quitar «${m.name}»`} onClick={() => void run(() => backend.lists.deleteMaterial(m.id))}>✕</button>
+                  <button className="btn btn--icon btn--ghost btn--sm" aria-label={t.removeItem(m.name)} onClick={() => void run(() => backend.lists.deleteMaterial(m.id))}>✕</button>
                 </li>
               ))}
             </ul>
           )}
           <form className="mini-form" onSubmit={addMaterial}>
-            <input className="input grow" maxLength={120} placeholder="Material…" aria-label="Nuevo material" value={material.name} onChange={(e) => setMaterial({ ...material, name: e.target.value })} />
-            <input className="input mini-form__qty" maxLength={40} placeholder="Cantidad" aria-label="Cantidad" value={material.quantity} onChange={(e) => setMaterial({ ...material, quantity: e.target.value })} />
-            <button className="btn btn--soft btn--sm" disabled={!material.name.trim()}>Agregar</button>
+            <input className="input grow" maxLength={120} placeholder={t.material} aria-label={t.newMaterial} value={material.name} onChange={(e) => setMaterial({ ...material, name: e.target.value })} />
+            <input className="input mini-form__qty" maxLength={40} placeholder={t.quantity} aria-label={t.quantity} value={material.quantity} onChange={(e) => setMaterial({ ...material, quantity: e.target.value })} />
+            <button className="btn btn--soft btn--sm" disabled={!material.name.trim()}>{i18n.lists.add}</button>
           </form>
         </section>
 
         <section className="task-editor__section" aria-labelledby="photos-title">
-          <h4 id="photos-title">📷 Fotos {images.length > 0 && <span className="muted">{images.length}/{MAX_TASK_IMAGES}</span>}</h4>
+          <h4 id="photos-title">{t.photos} {images.length > 0 && <span className="muted">{images.length}/{MAX_TASK_IMAGES}</span>}</h4>
           <div className="thumb-grid">
             {images.map((image) => (
               <div key={image.id} className="thumb-grid__item">
-                <button className="thumb-grid__open" onClick={() => setViewing(image.path)} aria-label="Ver foto en grande">
+                <button className="thumb-grid__open" onClick={() => setViewing(image.path)} aria-label={t.viewPhoto}>
                   {urls.get(image.thumbPath) ? <img src={urls.get(image.thumbPath)} alt="" loading="lazy" /> : <span aria-hidden>📷</span>}
                 </button>
-                <button className="thumb-grid__remove" aria-label="Quitar foto" onClick={() => void removeImage(image)}>✕</button>
+                <button className="thumb-grid__remove" aria-label={t.removePhoto} onClick={() => void removeImage(image)}>✕</button>
               </div>
             ))}
-            {Array.from({ length: uploading }, (_, i) => <div key={`up-${i}`} className="thumb-grid__item is-loading" aria-label="Subiendo foto" />)}
+            {Array.from({ length: uploading }, (_, i) => <div key={`up-${i}`} className="thumb-grid__item is-loading" aria-label={t.uploading} />)}
             {images.length + uploading < MAX_TASK_IMAGES && (
               <button className="thumb-grid__add" onClick={() => fileInput.current?.click()}>
-                <span aria-hidden>＋</span> Agregar fotos
+                <span aria-hidden>＋</span> {t.addPhotos}
               </button>
             )}
           </div>
