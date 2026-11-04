@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "@/state/AuthContext";
-import { useSiteContent } from "@/state/SiteContentStore";
+import { useLocalizedContent } from "@/state/SiteContentStore";
 import { EmptyState, PageLoader } from "@/ui/Feedback";
 import { FloatingEffects } from "./effects/FloatingEffects";
 import { Reveal } from "./effects/Reveal";
@@ -11,7 +11,7 @@ import "./styles/site.scss";
 import { useT } from "@/i18n";
 
 export default function SitePage() {
-  const { status, content, photoUrls } = useSiteContent();
+  const { status, content, photoUrls } = useLocalizedContent();
   const { user, policy } = useAuth();
   const t = useT().site;
 

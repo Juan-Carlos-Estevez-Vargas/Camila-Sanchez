@@ -184,6 +184,18 @@ español; `core/errors.ts` reconoce los mensajes conocidos (`errors.server`,
 Los avisos que crean los triggers se guardan en español (traducirlos pediría
 guardar el idioma de cada persona en `profiles`).
 
+**Contenido escrito en el panel.** `site_settings`, `sections`, `milestones` e
+`important_dates` tienen una columna `translations` (jsonb) con la forma
+`{ "en": { … }, "pt": { … } }`, que copia la del original (mismas claves y
+posiciones; los iconos no se traducen). `domain/contentTranslations.ts`
+superpone la traducción del idioma activo sobre el original (`overlay`,
+`localizeContent`) y la limpia al leerla (`normalizeTranslations`). La página,
+la cabecera y el SEO usan `useLocalizedContent()`; los paneles usan
+`useSiteContent()` para editar el original, y `features/admin/ContentLanguage.tsx`
+pinta las pestañas de idioma y un campo por cada texto, con el original a la
+vista. La migración `20261104000200_seed_translations.sql` traduce el
+contenido inicial mientras siga igual al de `seed.sql`.
+
 Los documentos legales en español (`features/legal/documents/*.tsx`) son los
 que valen; `documents/en` y `documents/pt` son traducciones que se cargan por
 idioma y muestran `legal.translationNotice`.

@@ -242,7 +242,8 @@ La app está en **español**, **inglés** y **portugués**, sin librerías extra
 
 - **Arranca en el idioma del dispositivo** (`navigator.languages`): `pt-BR`
   abre en portugués, `en-GB` en inglés y cualquier otro en español.
-- **Se cambia con 🌐** en la cabecera, en el pie o en **Mi cuenta**. La
+- **Se cambia con 🌐** en la cabecera (siempre a la vista, junto al café, el
+  tutorial, los avisos y la foto de la cuenta), en el pie o en **Mi cuenta**. La
   elección se recuerda en el navegador (`app:lang`) y se refleja en
   `<html lang>` y en los metadatos SEO.
 - **Diccionarios tipados** en `src/i18n/messages/<idioma>/`: el español es la
@@ -254,8 +255,14 @@ La app está en **español**, **inglés** y **portugués**, sin librerías extra
   español; los mensajes conocidos se muestran traducidos (`core/errors.ts`).
 - **Legales:** el texto en español es el que vale; las versiones en inglés y
   portugués son traducciones de cortesía y lo dicen arriba.
-- Lo que escribe cada persona (textos de la página, notitas, mensajes) no se
-  traduce.
+- **Contenido de la página traducible:** el título, las secciones, la carta,
+  los hitos y las fechas se escriben en español y, en el panel, cada editor
+  tiene pestañas **Español (original) · English · Português** para escribir
+  su traducción (con un contador `3/5` de lo traducido). Lo que no se traduce
+  se muestra en español. Se guarda en la columna `translations` de cada fila
+  (`src/domain/contentTranslations.ts`).
+- Lo que escribe cada persona en el día a día (notitas, mensajes, listas,
+  pies de foto) no se traduce.
 
 Para agregar un idioma: crea `src/i18n/messages/<código>/` copiando `en/`,
 suma una fila en `src/i18n/locales.ts` y su cargador en `src/i18n/store.ts`.

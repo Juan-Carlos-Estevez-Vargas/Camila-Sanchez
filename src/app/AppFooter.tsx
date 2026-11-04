@@ -51,44 +51,52 @@ export function AppFooter() {
   return (
     <footer className="app-footer" data-tour="footer">
       <div className="container app-footer__inner">
-        <p className="app-footer__signature">
-          {t.madeWith} <span className="app-footer__heart" role="img" aria-label={t.love}>💖</span> {t.by} <strong>{AUTHOR.name}</strong>
-        </p>
-        <p className="app-footer__subtitle">{t.subtitle}</p>
-        {links.length > 0 && (
-          <ul className="app-footer__social" aria-label={t.socialNav(AUTHOR.name.split(" ")[0] ?? AUTHOR.name)}>
-            {links.map((network) => (
-              <li key={network}>
-                <a href={AUTHOR.links[network]} target="_blank" rel="noopener noreferrer me"
-                  aria-label={t.socialLink(NETWORKS[network].label, AUTHOR.name)} title={NETWORKS[network].label}>
-                  {NETWORKS[network].icon}
-                </a>
-              </li>
-            ))}
-          </ul>
-        )}
-        {donation && (
-          <p className="app-footer__donate">
-            <DonateLink variant="footer" />
-            <span className="app-footer__donate-note">{i18n.donate.note}</span>
-          </p>
-        )}
-        <nav aria-label={t.legalNav}>
-          <ul className="app-footer__legal">
-            {LEGAL_DOCUMENTS.map((doc) => (
-              <li key={doc.id}><Link to={legalPath(doc.id)}>{legal.docs[doc.id].short}</Link></li>
-            ))}
-            <li><button type="button" onClick={openCookiePreferences}>{t.cookiePrefs}</button></li>
-          </ul>
-        </nav>
-        <label className="switch app-footer__motion">
-          <input type="checkbox" role="switch" checked={reducedMotion} onChange={(e) => setReducedMotion(e.target.checked)} />
-          <span>{t.reduceMotion}</span>
-        </label>
-        <LanguagePicker />
-        {version === "dev"
-          ? <span className="app-footer__version">{t.devVersion}</span>
-          : <a className="app-footer__version" href={releaseUrl(version)} target="_blank" rel="noopener noreferrer" title={t.versionTitle} aria-label={t.versionLabel(version)}>v{version}</a>}
+        <div className="app-footer__top">
+          <div className="app-footer__author">
+            <p className="app-footer__signature">
+              {t.madeWith} <span className="app-footer__heart" role="img" aria-label={t.love}>💖</span> {t.by} <strong>{AUTHOR.name}</strong>
+            </p>
+            <p className="app-footer__subtitle">{t.subtitle}</p>
+            {links.length > 0 && (
+              <ul className="app-footer__social" aria-label={t.socialNav(AUTHOR.name.split(" ")[0] ?? AUTHOR.name)}>
+                {links.map((network) => (
+                  <li key={network}>
+                    <a href={AUTHOR.links[network]} target="_blank" rel="noopener noreferrer me"
+                      aria-label={t.socialLink(NETWORKS[network].label, AUTHOR.name)} title={NETWORKS[network].label}>
+                      {NETWORKS[network].icon}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+          {donation && (
+            <div className="app-footer__donate">
+              <DonateLink variant="footer" />
+              <span className="app-footer__donate-note">{i18n.donate.note}</span>
+            </div>
+          )}
+        </div>
+        <div className="app-footer__bottom">
+          <nav aria-label={t.legalNav}>
+            <ul className="app-footer__legal">
+              {LEGAL_DOCUMENTS.map((doc) => (
+                <li key={doc.id}><Link to={legalPath(doc.id)}>{legal.docs[doc.id].short}</Link></li>
+              ))}
+              <li><button type="button" onClick={openCookiePreferences}>{t.cookiePrefs}</button></li>
+            </ul>
+          </nav>
+          <div className="app-footer__prefs">
+            <label className="switch app-footer__motion">
+              <input type="checkbox" role="switch" checked={reducedMotion} onChange={(e) => setReducedMotion(e.target.checked)} />
+              <span>{t.reduceMotion}</span>
+            </label>
+            <LanguagePicker />
+            {version === "dev"
+              ? <span className="app-footer__version">{t.devVersion}</span>
+              : <a className="app-footer__version" href={releaseUrl(version)} target="_blank" rel="noopener noreferrer" title={t.versionTitle} aria-label={t.versionLabel(version)}>v{version}</a>}
+          </div>
+        </div>
       </div>
     </footer>
   );

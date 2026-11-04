@@ -5,6 +5,7 @@
 import {
   normalizeAnimation, normalizeEffects, normalizeSectionContent, normalizeTheme, safeMusicUrl,
 } from "@/domain/defaults";
+import { normalizeTranslations } from "@/domain/contentTranslations";
 import { sanitizeColors } from "@/domain/palettes";
 import type {
   AppNotification, AuditEntry, ChatContact, ChatConversation, ChatKind, ChatLastMessage, ChatMessage, ChatParticipant,
@@ -27,6 +28,7 @@ export const toSettings = (r: Row): SiteSettings => ({
   theme: normalizeTheme(r.theme),
   effects: normalizeEffects(r.effects),
   updatedAt: str(r.updated_at),
+  translations: normalizeTranslations(r.translations),
 });
 
 export const fromSettings = (s: Partial<SiteSettings>): Row => {
@@ -38,6 +40,7 @@ export const fromSettings = (s: Partial<SiteSettings>): Row => {
   if (s.musicUrl !== undefined) row.music_url = s.musicUrl;
   if (s.theme !== undefined) row.theme = s.theme;
   if (s.effects !== undefined) row.effects = s.effects;
+  if (s.translations !== undefined) row.translations = s.translations;
   return row;
 };
 
@@ -52,6 +55,7 @@ export const toSection = (r: Row): Section => {
     position: num(r.position),
     isVisible: r.is_visible !== false,
     content: normalizeSectionContent(kind, r.content),
+    translations: normalizeTranslations(r.translations),
   } as Section;
 };
 
@@ -66,6 +70,7 @@ export const fromSection = (
   position: s.position,
   is_visible: s.isVisible,
   content: s.content,
+  translations: s.translations,
 });
 
 export const toPhoto = (r: Row): Photo => ({
@@ -105,6 +110,7 @@ export const toMilestone = (r: Row): Milestone => ({
   icon: str(r.icon, "💖"),
   photoId: strOrNull(r.photo_id),
   position: num(r.position),
+  translations: normalizeTranslations(r.translations),
 });
 
 export const fromMilestone = (m: Partial<Milestone>): Row => ({
@@ -115,6 +121,7 @@ export const fromMilestone = (m: Partial<Milestone>): Row => ({
   icon: m.icon,
   photo_id: m.photoId,
   position: m.position,
+  translations: m.translations,
 });
 
 export const toDate = (r: Row): ImportantDate => ({
@@ -125,6 +132,7 @@ export const toDate = (r: Row): ImportantDate => ({
   icon: str(r.icon, "🎉"),
   message: str(r.message),
   isVisible: r.is_visible !== false,
+  translations: normalizeTranslations(r.translations),
 });
 
 export const fromDate = (d: Partial<ImportantDate>): Row => ({
@@ -135,6 +143,7 @@ export const fromDate = (d: Partial<ImportantDate>): Row => ({
   icon: d.icon,
   message: d.message,
   is_visible: d.isVisible,
+  translations: d.translations,
 });
 
 export const toInterruption = (r: Row): Interruption => ({

@@ -212,6 +212,16 @@ export const admin = {
     captionHint: "Se puede cambiar luego en cada foto",
     skipDuplicates: "Saltar las fotos que ya están en el álbum",
   },
+  translate: {
+    language: "Idioma del contenido",
+    original: "Español (original)",
+    hint: "Escribe la traducción de cada texto. Lo que dejes vacío se muestra en español.",
+    originalLabel: "Original:",
+    progressLabel: (done: number, total: number) => `${done} de ${total} textos traducidos`,
+    nothing: "Aquí no hay textos para traducir.",
+    card: "Tarjeta",
+    surprise: "Sorpresa",
+  },
   themeUi: {
     palettes: "Paletas de colores",
     sample: "Te amo",

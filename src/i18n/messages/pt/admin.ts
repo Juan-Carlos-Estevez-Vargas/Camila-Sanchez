@@ -213,6 +213,16 @@ export const admin: Messages["admin"] = {
     captionHint: "Dá para mudar depois em cada foto",
     skipDuplicates: "Pular as fotos que já estão no álbum",
   },
+  translate: {
+    language: "Idioma do conteúdo",
+    original: "Espanhol (original)",
+    hint: "Escreva a tradução de cada texto. O que ficar vazio aparece em espanhol.",
+    originalLabel: "Original:",
+    progressLabel: (done: number, total: number) => `${done} de ${total} textos traduzidos`,
+    nothing: "Aqui não há textos para traduzir.",
+    card: "Cartão",
+    surprise: "Surpresa",
+  },
   themeUi: {
     palettes: "Paletas de cores",
     sample: "Te amo",

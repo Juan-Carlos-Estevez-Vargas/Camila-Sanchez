@@ -6,7 +6,7 @@ import { PERMISSIONS } from "@/domain/permissions";
 import { GuidedTour } from "@/features/tour/GuidedTour";
 import { useAuth } from "@/state/AuthContext";
 import { useNotifications } from "@/state/NotificationsContext";
-import { useSiteContent } from "@/state/SiteContentStore";
+import { useLocalizedContent } from "@/state/SiteContentStore";
 import { Avatar } from "@/ui/Avatar";
 import { useT } from "@/i18n";
 import { LanguagePicker } from "./LanguagePicker";
@@ -89,10 +89,40 @@ function NotificationBell() {
   );
 }
 
+/** Menú de la cuenta: la foto abre «Mi cuenta» y «Salir». */
+function AccountMenu() {
+  const { profile, signOut } = useAuth();
+  const [open, setOpen] = useState(false);
+  const root = useRef<HTMLDivElement>(null);
+  const trigger = useRef<HTMLButtonElement>(null);
+  const panelId = useId();
+  const close = useRef(() => setOpen(false)).current;
+  useDismiss(open, close, root, trigger);
+  const t = useT().app.header;
+  const name = profile?.displayName ?? "";
+  return (
+    <div className="account-menu" ref={root}>
+      <button ref={trigger} type="button" className="account-menu__trigger" data-tour="nav-cuenta"
+        aria-label={t.accountMenu(name)} aria-expanded={open} aria-controls={panelId} onClick={() => setOpen((o) => !o)}>
+        <Avatar person={profile} size={32} />
+      </button>
+      {open && (
+        <div className="account-menu__panel card" id={panelId}>
+          {name && <p className="account-menu__name">{name}</p>}
+          <Link to="/cuenta" className="account-menu__item" onClick={close}><span aria-hidden>👤</span> {t.account}</Link>
+          <button type="button" className="account-menu__item" onClick={() => { close(); void signOut(); }}>
+            <span aria-hidden>↩</span> {t.signOut}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function AppHeader() {
-  const { user, profile, policy, signOut } = useAuth();
+  const { user, policy } = useAuth();
   const { unreadByKind } = useNotifications();
-  const { content } = useSiteContent();
+  const { content } = useLocalizedContent();
   const [menu, setMenu] = useState(false);
   const burger = useRef<HTMLButtonElement>(null);
   const navRoot = useRef<HTMLDivElement>(null);
@@ -105,13 +135,11 @@ export function AppHeader() {
 
   return (
     <header className="app-header">
-      <div className="container app-header__inner" ref={navRoot}>
-        <Link to="/" className="brand" data-tour="brand" onClick={close}>
+      <div className="app-header__inner" ref={navRoot}>
+        <Link to="/" className="brand" data-tour="brand" onClick={close} title={title}>
           <span className="brand__mark" aria-hidden>♥</span>
           <span className="brand__name">{title}</span>
         </Link>
-        <button ref={burger} className="btn btn--icon btn--ghost app-header__burger" data-tour="menu" aria-label={t.menu}
-          aria-expanded={menu} aria-controls="menu-principal" onClick={() => setMenu((m) => !m)}><span aria-hidden>☰</span></button>
         <nav id="menu-principal" className={`app-nav${menu ? " is-open" : ""}`} aria-label={t.nav}>
           <NavLink to="/" end onClick={close}>{t.home}</NavLink>
           {user && policy.can(PERMISSIONS.notesSend) && (
@@ -131,19 +159,18 @@ export function AppHeader() {
           )}
           {policy.canUseContentPanel && <NavLink to="/panel" data-tour="nav-panel" onClick={close}>{t.panel}</NavLink>}
           {policy.canUseSuperPanel && <NavLink to="/super" data-tour="nav-super" onClick={close}>{t.super}</NavLink>}
-          {user && <NavLink to="/cuenta" data-tour="nav-cuenta" className="nav-account" onClick={close}><Avatar person={profile} size={24} />{t.account}</NavLink>}
-          {user ? (
-            <button className="btn btn--sm btn--ghost" onClick={() => { close(); void signOut(); }}>
-              {t.signOut}{profile ? ` (${profile.displayName})` : ""}
-            </button>
-          ) : (
-            <NavLink to="/entrar" className="btn btn--sm" data-tour="nav-entrar" onClick={close}>{t.signIn}</NavLink>
-          )}
-          <LanguagePicker compact />
         </nav>
-        <DonateLink variant="header" />
-        <GuidedTour />
-        {user && <NotificationBell />}
+        <div className="app-header__actions">
+          <LanguagePicker compact />
+          <DonateLink variant="header" />
+          <GuidedTour />
+          {user && <NotificationBell />}
+          {user
+            ? <AccountMenu />
+            : <NavLink to="/entrar" className="btn btn--sm" data-tour="nav-entrar" onClick={close}>{t.signIn}</NavLink>}
+          <button ref={burger} className="btn btn--icon btn--ghost app-header__burger" data-tour="menu" aria-label={t.menu}
+            aria-expanded={menu} aria-controls="menu-principal" onClick={() => setMenu((m) => !m)}><span aria-hidden>☰</span></button>
+        </div>
       </div>
     </header>
   );

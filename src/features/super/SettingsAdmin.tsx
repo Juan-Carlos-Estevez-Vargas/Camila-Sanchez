@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { isSafeUrl } from "@/core/validation";
+import { TRANSLATABLE, translatableSource } from "@/domain/contentTranslations";
 import type { SiteSettings } from "@/domain/types";
 import { AdminPage } from "@/features/admin/AdminLayout";
 import { useSaver } from "@/features/admin/useSaver";
@@ -8,8 +9,9 @@ import { useContentStore, useSiteContent } from "@/state/SiteContentStore";
 import { PageLoader } from "@/ui/Feedback";
 import { Field, Switch } from "@/ui/Field";
 import { useT } from "@/i18n";
+import { ContentLanguageTabs, TranslationFields, type EditLanguage } from "@/features/admin/ContentLanguage";
 
-type Draft = Pick<SiteSettings, "siteTitle" | "siteSubtitle" | "relationshipStart" | "isPublic" | "musicUrl">;
+type Draft = Pick<SiteSettings, "siteTitle" | "siteSubtitle" | "relationshipStart" | "isPublic" | "musicUrl" | "translations">;
 
 export default function SettingsAdmin() {
   const backend = useBackend();
@@ -17,6 +19,7 @@ export default function SettingsAdmin() {
   const { content } = useSiteContent();
   const { run, busy } = useSaver();
   const [draft, setDraft] = useState<Draft | null>(null);
+  const [lang, setLang] = useState<EditLanguage>("es");
   const i18n = useT();
   const t = i18n.superAdmin.settings;
 
@@ -24,7 +27,7 @@ export default function SettingsAdmin() {
   const s = content.settings;
   const d: Draft = draft ?? {
     siteTitle: s.siteTitle, siteSubtitle: s.siteSubtitle, relationshipStart: s.relationshipStart,
-    isPublic: s.isPublic, musicUrl: s.musicUrl,
+    isPublic: s.isPublic, musicUrl: s.musicUrl, translations: s.translations ?? {},
   };
   const set = (patch: Partial<Draft>) => setDraft({ ...d, ...patch });
   const musicError = d.musicUrl && !(isSafeUrl(d.musicUrl) && d.musicUrl.startsWith("https://")) ? t.httpsOnly : null;
@@ -41,6 +44,11 @@ export default function SettingsAdmin() {
     <AdminPage title={t.title} description={t.description}
       actions={<button className="btn" disabled={!draft || busy || !!musicError || !d.siteTitle.trim()} onClick={save}>{i18n.admin.save}</button>}>
       <div className="card stack">
+        <ContentLanguageTabs value={lang} onChange={setLang} source={translatableSource(d, TRANSLATABLE.settings)} translations={d.translations} />
+        {lang !== "es" ? (
+          <TranslationFields locale={lang} source={translatableSource(d, TRANSLATABLE.settings)} translations={d.translations}
+            onChange={(translations) => set({ translations })} />
+        ) : (<>
         <div className="form-grid">
           <Field label={t.siteTitle}>{(id) => <input id={id} className="input" maxLength={120} value={d.siteTitle} onChange={(e) => set({ siteTitle: e.target.value })} />}</Field>
           <Field label={t.start} hint={t.startHint}>
@@ -51,6 +59,7 @@ export default function SettingsAdmin() {
         <Field label={t.music} hint={t.musicHint} error={musicError}>
           {(id) => <input id={id} className="input" type="url" placeholder="https://…" value={d.musicUrl ?? ""} onChange={(e) => set({ musicUrl: e.target.value || null })} />}
         </Field>
+        </>)}
       </div>
       <div className="card stack">
         <h2 style={{ margin: 0, fontSize: "1.25rem" }}>{t.privacy}</h2>

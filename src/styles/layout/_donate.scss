@@ -39,9 +39,9 @@
 
   &--footer { font-size: 0.82rem; }
 
-  // En el celular la cabecera no tiene espacio: sólo la taza.
+  // En la cabecera va corto («Un café»); en pantallas angostas, sólo la taza.
   &--header {
-    @include below("sm") {
+    @include below("md") {
       width: 34px;
       height: 34px;
       min-height: 0;

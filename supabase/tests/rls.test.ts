@@ -144,6 +144,31 @@ describe("edición de contenido", () => {
     expect(rows).toEqual([{ p: "#aa0000" }]);
   });
 
+  it("la editora traduce los textos de una sección y la traducción debe ser un objeto", async () => {
+    const rows = await as(CAMI, `update sections set translations = '{"en":{"title":"Hello"}}' where kind = 'hero' returning translations->'en'->>'title' as t`);
+    expect(rows).toEqual([{ t: "Hello" }]);
+    await expect(as(CAMI, `update sections set translations = '"hola"' where kind = 'hero'`)).rejects.toThrow(/translations_shape/);
+    await expect(as(CAMI, `update milestones set translations = '[]'`)).rejects.toThrow(/translations_shape/);
+  });
+
+  it("la migración de traducciones traduce el contenido inicial y respeta lo ya traducido", async () => {
+    // En una base que ya tenía el seed (producción), la migración llena lo que
+    // sigue igual al original; la sección que la editora tradujo no se toca.
+    await db.exec(readFileSync(join(ROOT, "migrations", "20261104000200_seed_translations.sql"), "utf8"));
+    const [date] = await as<{ t: string }>(JUAN, "select translations->'pt'->>'title' as t from important_dates where title = 'Navidad juntos'");
+    expect(date?.t).toBe("Natal juntos");
+    const [letter] = await as<{ w: string }>(JUAN, "select translations->'en'->'content'->'wishes'->>1 as w from sections where kind = 'letter'");
+    expect(letter?.w).toBe("✨ May our dreams come true");
+    const [hero] = await as<{ t: string }>(JUAN, "select translations->'en'->>'title' as t from sections where kind = 'hero'");
+    expect(hero?.t).toBe("Hello");
+  });
+
+  it("sólo settings.manage traduce el título de la página", async () => {
+    expect(await as(CAMI, `update site_settings set translations = '{"en":{"siteTitle":"Hi"}}' returning id`)).toEqual([]);
+    const rows = await as(JUAN, `update site_settings set translations = '{"en":{"siteTitle":"Hi"}}' returning translations->'en'->>'siteTitle' as t`);
+    expect(rows).toEqual([{ t: "Hi" }]);
+  });
+
   it("la editora ya no cambia los colores de la página", async () => {
     expect(await as(CAMI, `update site_settings set theme = theme || '{"primary":"#123456"}' returning id`)).toEqual([]);
     const [row] = await as<{ p: string }>(JUAN, "select theme->>'primary' as p from site_settings");

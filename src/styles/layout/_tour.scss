@@ -5,6 +5,12 @@
 .tour-launcher {
   flex: 0 0 auto;
   gap: space(1);
+  width: 36px;
+  height: 36px;
+  min-height: 0;
+  padding: 0;
+  justify-content: center;
+  border-radius: 50%;
 
   &__icon {
     display: inline-grid;
@@ -18,10 +24,9 @@
     font-weight: 700;
   }
 
-  // En móvil sólo el icono, para dejar sitio a la marca y al menú.
-  @include below("sm") {
-    &__label { @include visually-hidden; }
-  }
+  // En la cabecera sólo el icono (el nombre lo dicen el lector de pantalla y
+  // el tooltip): así no empuja al menú en idiomas con palabras largas.
+  &__label { @include visually-hidden; }
 
   // Hasta que se abre por primera vez, late suavemente para que se note.
   &.is-new { animation: tour-pulse 2.4s ease-in-out infinite; }

@@ -1,8 +1,10 @@
 import { useState, type ReactNode } from "react";
+import { TRANSLATABLE, translatableSource } from "@/domain/contentTranslations";
 import { sectionKindMeta } from "@/domain/defaults";
 import { SECTION_ANIMATIONS, type LoveNoteCard, type Section, type SectionAnimation, type SectionContentMap, type SectionKind } from "@/domain/types";
 import { Field } from "@/ui/Field";
 import { msg, useT } from "@/i18n";
+import { ContentLanguageTabs, TranslationFields, type EditLanguage } from "./ContentLanguage";
 
 /** Textos del editor en el idioma actual (el editor se vuelve a pintar al cambiarlo). */
 const tx = () => msg().admin.editor;
@@ -123,6 +125,8 @@ interface Props {
 
 export function SectionEditor({ section, busy, onSave, onCancel }: Props) {
   const [draft, setDraft] = useState<Section>(section);
+  const [lang, setLang] = useState<EditLanguage>("es");
+  const source = translatableSource(draft, TRANSLATABLE.section as readonly (keyof Section & string)[]);
   const ContentEditorFor = CONTENT_EDITORS[draft.kind] as ContentEditor<SectionKind>;
   const meta = sectionKindMeta(draft.kind);
   const i18n = useT();
@@ -131,6 +135,11 @@ export function SectionEditor({ section, busy, onSave, onCancel }: Props) {
   return (
     <form className="stack" onSubmit={(e) => { e.preventDefault(); onSave(draft); }}>
       <span className="badge" style={{ justifySelf: "start" }}>{meta.icon} {meta.label}</span>
+      <ContentLanguageTabs value={lang} onChange={setLang} source={source} translations={draft.translations} />
+      {lang !== "es" ? (
+        <TranslationFields locale={lang} source={source} translations={draft.translations}
+          onChange={(translations) => setDraft({ ...draft, translations })} />
+      ) : (<>
       <div className="form-grid">
         <Field label={a.title}>{(id) => <input id={id} className="input" maxLength={160} value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} />}</Field>
         <Field label={a.editor.subtitle}>{(id) => <input id={id} className="input" maxLength={400} value={draft.subtitle} onChange={(e) => setDraft({ ...draft, subtitle: e.target.value })} />}</Field>
@@ -143,6 +152,7 @@ export function SectionEditor({ section, busy, onSave, onCancel }: Props) {
         </Field>
       </div>
       <ContentEditorFor value={draft.content as never} onChange={(content) => setDraft({ ...draft, content } as Section)} />
+      </>)}
       <div className="modal__footer">
         <button type="button" className="btn btn--ghost" onClick={onCancel}>{i18n.common.cancel}</button>
         <button className="btn" disabled={busy}>{busy ? i18n.common.saving : a.save}</button>

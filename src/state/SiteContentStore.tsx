@@ -9,7 +9,9 @@
 import { createContext, useContext, useEffect, useMemo, useSyncExternalStore, type ReactNode } from "react";
 import { clearPrivateCaches, readCache, writeCache } from "@/data/localCache";
 import type { Backend, RealtimeTable } from "@/data/ports";
+import { localizeContent } from "@/domain/contentTranslations";
 import type { PhotoUrls, SiteContent, Uuid } from "@/domain/types";
+import { useLocale } from "@/i18n";
 import { useBackend } from "./BackendContext";
 import { useAuth } from "./AuthContext";
 
@@ -203,4 +205,15 @@ export function useContentStore(): SiteContentStore {
 export function useSiteContent(): SiteContentState {
   const store = useContentStore();
   return useSyncExternalStore(store.subscribe, store.getSnapshot);
+}
+
+/**
+ * El contenido en el idioma activo, para lo que ve el público (la página, la
+ * cabecera, el SEO). Los paneles usan useSiteContent: editan el original.
+ */
+export function useLocalizedContent(): SiteContentState {
+  const state = useSiteContent();
+  const locale = useLocale();
+  const content = useMemo(() => (state.content ? localizeContent(state.content, locale) : null), [state.content, locale]);
+  return useMemo(() => ({ ...state, content }), [state, content]);
 }

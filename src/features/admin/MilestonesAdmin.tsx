@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { TRANSLATABLE, translatableSource } from "@/domain/contentTranslations";
 import { formatLongDate, toIsoDate } from "@/domain/dates";
 import type { Milestone } from "@/domain/types";
 import { useBackend } from "@/state/BackendContext";
@@ -10,6 +11,7 @@ import { useConfirm } from "@/ui/useConfirm";
 import { AdminPage } from "./AdminLayout";
 import { useSaver } from "./useSaver";
 import { useT } from "@/i18n";
+import { ContentLanguageTabs, TranslationFields, type EditLanguage } from "./ContentLanguage";
 
 type Draft = Omit<Milestone, "id"> & { id?: string };
 
@@ -23,7 +25,12 @@ export default function MilestonesAdmin() {
   const { content, photoUrls } = useSiteContent();
   const { run, busy } = useSaver();
   const [confirm, confirmElement] = useConfirm();
-  const [draft, setDraft] = useState<Draft | null>(null);
+  const [draft, setDraftState] = useState<Draft | null>(null);
+  const [lang, setLang] = useState<EditLanguage>("es");
+  const setDraft = (next: Draft | null) => {
+    if (!next || next.id !== draft?.id) setLang("es");
+    setDraftState(next);
+  };
   const i18n = useT();
   const a = i18n.admin;
   const t = a.milestones;
@@ -68,6 +75,11 @@ export default function MilestonesAdmin() {
         <Modal wide title={draft.id ? t.editTitle : t.newTitle} onClose={() => setDraft(null)}
           footer={<><button className="btn btn--ghost" onClick={() => setDraft(null)}>{i18n.common.cancel}</button><button className="btn" disabled={busy || !draft.title.trim()} onClick={save}>{a.save}</button></>}>
           <div className="stack">
+            <ContentLanguageTabs value={lang} onChange={setLang} source={translatableSource(draft, TRANSLATABLE.milestone)} translations={draft.translations} />
+            {lang !== "es" ? (
+              <TranslationFields locale={lang} source={translatableSource(draft, TRANSLATABLE.milestone)} translations={draft.translations}
+                onChange={(translations) => setDraft({ ...draft, translations })} />
+            ) : (<>
             <div className="form-grid">
               <Field label={a.icon}>{(id) => <input id={id} className="input" maxLength={16} value={draft.icon} onChange={(e) => setDraft({ ...draft, icon: e.target.value })} />}</Field>
               <Field label={a.title}>{(id) => <input id={id} className="input" required maxLength={160} value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} />}</Field>
@@ -88,6 +100,7 @@ export default function MilestonesAdmin() {
                 })}
               </div>
             </div>
+            </>)}
           </div>
         </Modal>
       )}

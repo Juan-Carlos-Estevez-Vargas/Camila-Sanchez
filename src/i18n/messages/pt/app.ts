@@ -37,6 +37,7 @@ export const app: Messages["app"] = {
     panel: "Meu painel",
     super: "Administração",
     account: "Minha conta",
+    accountMenu: (name: string) => `Menu da conta${name ? ` de ${name}` : ""}`,
     signOut: "Sair",
     signIn: "Entrar",
     unread: "não lidas",

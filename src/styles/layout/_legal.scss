@@ -144,16 +144,21 @@
 .app-footer__legal {
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
-  gap: space(1) space(3);
-  margin: space(2) 0 0;
+  gap: space(1) space(4);
+  margin: 0;
   padding: 0;
   list-style: none;
   font-size: 0.85rem;
 
   a,
   button {
-    color: var(--c-link);
+    color: var(--c-muted);
+    text-decoration: none;
+
+    &:hover {
+      color: var(--c-link);
+      text-decoration: underline;
+    }
   }
 
   button {
@@ -161,7 +166,8 @@
     border: 0;
     background: none;
     font: inherit;
-    text-decoration: underline;
     cursor: pointer;
   }
+
+  @include below("md") { justify-content: center; }
 }

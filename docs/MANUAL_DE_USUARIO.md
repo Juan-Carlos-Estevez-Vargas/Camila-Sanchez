@@ -18,10 +18,12 @@ Guía para usar la app día a día. Hay tres tipos de personas:
 
 > **Idioma.** La app se abre en el idioma de tu celular o computador
 > (español, inglés o portugués; si es otro, en español). Para cambiarlo, usa
-> el selector **🌐** de la cabecera (en el celular, dentro del menú ☰), el del
-> pie de página o la tarjeta **Idioma** de **Mi cuenta**. Tu elección se
-> recuerda en ese dispositivo. Lo que escriben las personas (notitas,
-> mensajes, textos de la página) se queda como lo escribieron.
+> el selector **🌐** de la cabecera (siempre a la vista, también en el
+> celular), el del pie de página o la tarjeta **Idioma** de **Mi cuenta**. Tu
+> elección se recuerda en ese dispositivo. Los textos de la página principal
+> se ven traducidos cuando alguien los tradujo en el panel (ver
+> [Traducir la página](#traducir-la-página)); las notitas, los mensajes y las
+> listas se quedan como los escribieron.
 
 ## 1. Entrar
 
@@ -243,6 +245,9 @@ inicio**, entra desde el ícono nuevo y activa los avisos ahí (necesita iOS
 
 ## 7. Mi cuenta
 
+Toca tu foto (o tu inicial) en la esquina de la cabecera: se abre un menú con
+**Mi cuenta** y **Salir**.
+
 Arriba ves tu foto, tu nombre y tu frase. Toca **Editar perfil** para
 cambiarlos:
 
@@ -300,6 +305,16 @@ guardan solos y se ven al instante.
 | 🌟 Hitos | Momentos importantes con fecha, icono y foto opcional |
 | 📅 Fechas importantes | Aniversarios y cumpleaños (se repiten cada año si quieres) |
 | 🎁 Sorpresas | Mensajes que aparecen en una ventanita, banner, confeti o corazones |
+
+### Traducir la página
+
+Cada editor del panel (secciones, hitos, fechas y, en Administración, el
+título de la página) tiene arriba unas pestañas: **Español (original)**,
+**English** y **Português**. En la pestaña de un idioma aparece cada texto en
+español y, debajo, un campo para escribir su traducción. El número al lado de
+cada idioma (por ejemplo `5/7`) dice cuántos textos ya están traducidos. Lo
+que dejes vacío se ve en español. Para agregar o quitar tarjetas, párrafos o
+deseos, hazlo en la pestaña del español.
 
 ### Subir fotos
 
