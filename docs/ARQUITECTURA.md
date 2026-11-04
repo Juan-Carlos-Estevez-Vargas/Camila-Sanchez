@@ -46,7 +46,7 @@ supabase/
   tests/      pruebas de RLS sobre PGlite (Postgres en WebAssembly) con un stub de Supabase
 scripts/      release.mjs (versión SemVer y notas), build-setup-sql.mjs, check-secrets.mjs (secretos en git y en el build) y audit-edge-deps.mjs (dependencias de las Edge Functions)
 docs/         estos manuales
-.github/      workflows CI y Deploy
+.github/      workflows CI, Deploy, CodeQL y Scorecard
 ```
 
 La regla de dependencias va de afuera hacia adentro: `features` usa `state`,
@@ -362,6 +362,11 @@ el secreto la primera vez y los guarda en los secretos de Supabase y en Vault.
 - **Netlify** publica la web sola con cada merge (`netlify.toml`). El build
   trae los tags para que el pie de página muestre la misma versión que el
   release.
+- **CodeQL** (`.github/workflows/codeql.yml`): en cada PR, en cada merge y
+  cada lunes busca fallas de seguridad en el código TypeScript y en los
+  flujos de GitHub Actions.
+- **Scorecard** (`.github/workflows/scorecard.yml`): en cada merge y cada
+  lunes puntúa las prácticas del repo con OpenSSF Scorecard.
 
 ### Versionado
 

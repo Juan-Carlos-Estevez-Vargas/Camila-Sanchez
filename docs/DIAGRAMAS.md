@@ -934,6 +934,8 @@ flowchart TB
   subgraph GitHub
     CI["CI: secretos en git y en dist/,<br/>npm audit, deps de Edge Functions"]
     DB2["Dependabot"]
+    CQ["CodeQL: código y flujos<br/>en cada PR y cada semana"]
+    SC["OpenSSF Scorecard<br/>prácticas del repo"]
   end
 
   CSP --> HTTPS --> AUTH
@@ -946,6 +948,7 @@ flowchart TB
   HTTPS --> ST
   CI -. "antes de publicar" .-> Netlify
   DB2 -. "PRs de versiones" .-> CI
+  CQ -. "avisos en el PR" .-> CI
 ```
 
 ## Integración y despliegue
@@ -954,7 +957,9 @@ flowchart TB
 flowchart LR
   DEV["Commit en una rama"] --> PR["Pull request"]
   PR --> CI["CI<br/>secretos en git · orden de migraciones · npm audit · deps de Edge Functions<br/>typecheck · lint · pruebas · build · secretos en dist/"]
+  PR --> CQ["CodeQL<br/>TypeScript y GitHub Actions"]
   CI -- "verde" --> M["Merge a master"]
+  M --> SC["Scorecard<br/>puntaje del repo"]
   M --> D1["Deploy: pruebas otra vez"]
   D1 --> D2["Migraciones en Supabase"]
   D2 --> D3["Configurar Auth<br/>URLs, registro cerrado, SMTP"]
