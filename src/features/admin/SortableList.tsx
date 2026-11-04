@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { move } from "./reorder";
+import { useT } from "@/i18n";
 
 interface Props<T> {
   items: T[];
@@ -21,6 +22,7 @@ export function SortableList<T>({ items, getId, render, onReorder, disabled, cla
   const list = useRef<HTMLUListElement>(null);
   // Tras mover con ↑ ↓ el foco sigue en el mismo botón del elemento movido.
   const refocus = useRef<{ id: string; dir: "up" | "down" } | null>(null);
+  const t = useT().admin.sortable;
 
   useEffect(() => {
     const pending = refocus.current;
@@ -34,7 +36,7 @@ export function SortableList<T>({ items, getId, render, onReorder, disabled, cla
 
   const moveBy = (index: number, delta: -1 | 1) => {
     refocus.current = { id: getId(items[index]!), dir: delta < 0 ? "up" : "down" };
-    setAnnouncement(`Movido a la posición ${index + delta + 1} de ${items.length}`);
+    setAnnouncement(t.movedTo(index + delta + 1, items.length));
     onReorder(move(items, index, index + delta));
   };
 
@@ -71,9 +73,9 @@ export function SortableList<T>({ items, getId, render, onReorder, disabled, cla
           {!disabled && (
             <div className="sortable__handle">
               <button type="button" className="btn btn--icon btn--ghost btn--sm" data-sort-dir="up" disabled={index === 0}
-                aria-label={`Subir (posición ${index + 1} de ${items.length})`} onClick={() => moveBy(index, -1)}><span aria-hidden>↑</span></button>
+                aria-label={t.up(index + 1, items.length)} onClick={() => moveBy(index, -1)}><span aria-hidden>↑</span></button>
               <button type="button" className="btn btn--icon btn--ghost btn--sm" data-sort-dir="down" disabled={index === items.length - 1}
-                aria-label={`Bajar (posición ${index + 1} de ${items.length})`} onClick={() => moveBy(index, 1)}><span aria-hidden>↓</span></button>
+                aria-label={t.down(index + 1, items.length)} onClick={() => moveBy(index, 1)}><span aria-hidden>↓</span></button>
             </div>
           )}
           <div className="sortable__body">{render(item, index)}</div>
