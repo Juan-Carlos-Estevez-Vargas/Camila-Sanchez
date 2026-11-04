@@ -5,6 +5,7 @@ import { useAuth } from "@/state/AuthContext";
 import { prefersReducedMotion } from "@/ui/motion";
 import { placePopover, spotlightBox, type Box, type PopoverPosition } from "./tourLayout";
 import { tourFor, type TourStep } from "./tourSteps";
+import { useT } from "@/i18n";
 
 /** Recordatorio (sólo en este navegador) de que ya se abrió el tutorial. */
 const SEEN_KEY = "tour:seen";
@@ -52,6 +53,7 @@ export function GuidedTour() {
   const [index, setIndex] = useState(0);
   const [seen, setSeen] = useState(readSeen);
   const launcher = useRef<HTMLButtonElement>(null);
+  const t = useT().tour;
   const current = steps?.[index];
 
   const start = () => {
@@ -84,7 +86,7 @@ export function GuidedTour() {
         onClick={() => (steps ? close() : start())}
       >
         <span aria-hidden className="tour-launcher__icon">?</span>
-        <span className="tour-launcher__label">Tutorial</span>
+        <span className="tour-launcher__label">{t.launcher}</span>
       </button>
       {steps && current && createPortal(
         <TourOverlay steps={steps} step={current} index={index} onIndex={setIndex} onClose={close} />,
@@ -105,6 +107,7 @@ function TourOverlay({ steps, step, index, onIndex, onClose }: {
   const titleId = useId();
   const bodyId = useId();
   const card = useRef<HTMLDivElement>(null);
+  const t = useT().tour;
   const next = useRef<HTMLButtonElement>(null);
   const [spot, setSpot] = useState<Box | null>(null);
   const [position, setPosition] = useState<PopoverPosition | null>(null);
@@ -199,8 +202,8 @@ function TourOverlay({ steps, step, index, onIndex, onClose }: {
         style={position ? { top: position.top, left: position.left } : { opacity: 0 }}
       >
         <div className="tour__head">
-          <span className="tour__progress" aria-live="polite">{index + 1} de {steps.length}</span>
-          <button type="button" className="btn btn--icon btn--ghost btn--sm tour__close" aria-label="Cerrar tutorial" onClick={onClose}>✕</button>
+          <span className="tour__progress" aria-live="polite">{t.progress(index + 1, steps.length)}</span>
+          <button type="button" className="btn btn--icon btn--ghost btn--sm tour__close" aria-label={t.closeTutorial} onClick={onClose}>✕</button>
         </div>
         <h2 id={titleId} className="tour__title">{step.title}</h2>
         <p id={bodyId} className="tour__body">
@@ -211,11 +214,11 @@ function TourOverlay({ steps, step, index, onIndex, onClose }: {
           {steps.map((s, i) => <span key={s.id} className={i === index ? "is-active" : ""} />)}
         </div>
         <div className="tour__actions">
-          <button type="button" className="btn btn--sm btn--ghost" onClick={onClose}>Cerrar</button>
+          <button type="button" className="btn btn--sm btn--ghost" onClick={onClose}>{t.close}</button>
           <span className="grow" />
-          {index > 0 && <button type="button" className="btn btn--sm btn--soft" onClick={() => go(index - 1)}>Anterior</button>}
+          {index > 0 && <button type="button" className="btn btn--sm btn--soft" onClick={() => go(index - 1)}>{t.previous}</button>}
           <button ref={next} type="button" className="btn btn--sm" onClick={() => go(index + 1)}>
-            {isLast ? "Terminar" : "Siguiente"}
+            {isLast ? t.finish : t.next}
           </button>
         </div>
       </div>
