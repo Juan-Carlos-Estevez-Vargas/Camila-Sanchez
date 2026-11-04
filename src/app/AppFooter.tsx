@@ -39,6 +39,7 @@ const NETWORKS: Record<SocialNetwork, { label: string; icon: ReactElement }> = {
 export function AppFooter() {
   const links = (Object.keys(NETWORKS) as SocialNetwork[]).filter((network) => AUTHOR.links[network]);
   const version = config.appVersion;
+  const donation = config.donation;
   const reducedMotion = useReducedMotion();
 
   return (
@@ -59,6 +60,15 @@ export function AppFooter() {
               </li>
             ))}
           </ul>
+        )}
+        {donation && (
+          <p className="app-footer__donate">
+            <a href={donation.url} target="_blank" rel="noopener noreferrer"
+              aria-label={`Invítame un café: donación voluntaria en ${donation.platform} (se abre en otra pestaña)`}>
+              <span aria-hidden="true">☕</span> Invítame un café
+            </a>
+            <span className="app-footer__donate-note">Voluntario. La app es y seguirá siendo gratis.</span>
+          </p>
         )}
         <nav aria-label="Legal y privacidad">
           <ul className="app-footer__legal">

@@ -65,8 +65,9 @@ export function Privacy() {
         </tbody>
       </table>
       <p>
-        Los enlaces a GitHub, LinkedIn o Instagram del pie de página sólo te llevan a esos sitios si los abres; la app no
-        carga nada de ellos. Si la página tiene música de fondo, el archivo se pide a su servidor sólo cuando pulsas ♪.
+        Los enlaces a GitHub, LinkedIn o Instagram y el botón de donación («Invítame un café») del pie de página sólo te
+        llevan a esos sitios si los abres; la app no carga nada de ellos. Si donas, esa plataforma trata tus datos con su
+        propia política. Si la página tiene música de fondo, el archivo se pide a su servidor sólo cuando pulsas ♪.
       </p>
 
       <h2>5. Dónde se guardan</h2>
