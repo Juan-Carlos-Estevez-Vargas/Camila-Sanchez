@@ -53,7 +53,7 @@ export const tour = {
     "nav-panel": { title: "Mi panel", body: "Aquí cambias las fotos, los textos, los hitos, las fechas y las sorpresas." },
     "nav-super": { title: "Administración", body: "Usuarios, invitaciones, permisos, apariencia y auditoría de todo el sitio." },
     "bell": { title: "Notificaciones", body: "La campanita cuenta lo que no has leído. Tócala para ver cada aviso e ir directo a él." },
-    "nav-cuenta": { title: "Mi cuenta", body: "Tu perfil y foto, tus colores, los avisos, tu contraseña y las sesiones abiertas." },
+    "nav-cuenta": { title: "Mi cuenta", body: "Toca tu foto para abrir tu cuenta o salir. Tu perfil y foto, tus colores, los avisos, tu contraseña y las sesiones abiertas." },
     "launcher": { title: "Siempre a mano", body: "Este botón vive en todas las páginas. Tócalo cuando quieras repetir el recorrido: cada página tiene sus propios pasos." },
     "language": { title: "Idioma", body: "Elige en qué idioma ves la página. La primera vez se usa el de tu dispositivo, y tu elección se recuerda." },
     "account-language": { title: "Idioma", body: "Cambia el idioma de la app. Se guarda en este dispositivo." },

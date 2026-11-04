@@ -54,7 +54,7 @@ export const tour: Messages["tour"] = {
     "nav-panel": { title: "My panel", body: "Here you change the photos, texts, milestones, dates and surprises." },
     "nav-super": { title: "Administration", body: "Users, invitations, permissions, appearance and audit log for the whole site." },
     "bell": { title: "Notifications", body: "The bell counts what you haven't read. Tap it to see each notification and go straight to it." },
-    "nav-cuenta": { title: "My account", body: "Your profile and photo, your colors, notifications, your password and open sessions." },
+    "nav-cuenta": { title: "My account", body: "Tap your photo to open your account or sign out. Your profile and photo, your colors, notifications, your password and open sessions." },
     "launcher": { title: "Always at hand", body: "This button lives on every page. Tap it whenever you want to repeat the tour: each page has its own steps." },
     "language": { title: "Language", body: "Choose the language you see the page in. The first time your device's language is used, and your choice is remembered." },
     "account-language": { title: "Language", body: "Change the app's language. It's saved on this device." },

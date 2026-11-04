@@ -83,6 +83,7 @@ export function GuidedTour() {
         data-tour="tour-launcher"
         aria-haspopup="dialog"
         aria-expanded={steps !== null}
+        title={t.launcher}
         onClick={() => (steps ? close() : start())}
       >
         <span aria-hidden className="tour-launcher__icon">?</span>

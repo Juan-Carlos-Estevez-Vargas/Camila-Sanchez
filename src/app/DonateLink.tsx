@@ -15,7 +15,7 @@ export function DonateLink({ variant }: { variant: "header" | "footer" }) {
       aria-label={t.label(donation.platform)}
       title={t.title}>
       <span className="donate-link__icon" aria-hidden="true">☕</span>
-      <span className="donate-link__text">{t.text}</span>
+      <span className="donate-link__text">{variant === "header" ? t.short : t.text}</span>
     </a>
   );
 }

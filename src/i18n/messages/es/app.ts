@@ -36,6 +36,7 @@ export const app = {
     panel: "Mi panel",
     super: "Administración",
     account: "Mi cuenta",
+    accountMenu: (name: string) => `Menú de la cuenta${name ? ` de ${name}` : ""}`,
     signOut: "Salir",
     signIn: "Entrar",
     unread: "sin leer",

@@ -54,7 +54,7 @@ export const tour: Messages["tour"] = {
     "nav-panel": { title: "Meu painel", body: "Aqui você muda as fotos, os textos, os marcos, as datas e as surpresas." },
     "nav-super": { title: "Administração", body: "Usuários, convites, permissões, aparência e auditoria de todo o site." },
     "bell": { title: "Notificações", body: "O sininho conta o que você não leu. Toque para ver cada aviso e ir direto a ele." },
-    "nav-cuenta": { title: "Minha conta", body: "Seu perfil e foto, suas cores, os avisos, sua senha e as sessões abertas." },
+    "nav-cuenta": { title: "Minha conta", body: "Toque na sua foto para abrir sua conta ou sair. Seu perfil e foto, suas cores, os avisos, sua senha e as sessões abertas." },
     "launcher": { title: "Sempre à mão", body: "Este botão fica em todas as páginas. Toque quando quiser repetir o tour: cada página tem seus próprios passos." },
     "language": { title: "Idioma", body: "Escolha em que idioma você vê a página. Na primeira vez é usado o do seu dispositivo, e sua escolha fica lembrada." },
     "account-language": { title: "Idioma", body: "Mude o idioma do app. Fica salvo neste dispositivo." },

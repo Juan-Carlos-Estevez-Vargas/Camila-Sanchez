@@ -8,12 +8,56 @@
   border-top: 1px solid var(--c-border);
   background: tint(var(--c-surface), 70%);
   color: var(--c-muted);
-  text-align: center;
 
   &__inner {
     display: grid;
-    justify-items: center;
-    gap: space(2);
+    gap: space(5);
+  }
+
+  // Arriba: la firma y las redes a un lado, el café al otro.
+  &__top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: space(5);
+
+    @include below("md") {
+      flex-direction: column;
+      text-align: center;
+    }
+  }
+
+  &__author {
+    display: grid;
+    gap: space(1);
+
+    @include below("md") { justify-items: center; }
+  }
+
+  // Abajo, separado por una línea: legales a un lado, preferencias al otro.
+  &__bottom {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: space(3) space(5);
+    padding-top: space(4);
+    border-top: 1px solid var(--c-border);
+
+    @include below("md") {
+      flex-direction: column;
+      text-align: center;
+    }
+  }
+
+  &__prefs {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: space(2) space(4);
+    font-size: 0.85rem;
   }
 
   &__signature {
@@ -29,10 +73,7 @@
     @include reduced-motion { animation: none; }
   }
 
-  &__motion {
-    margin-top: space(2);
-    font-size: 0.85rem;
-  }
+  &__motion { font-size: 0.85rem; }
 
   &__subtitle {
     margin: 0;
@@ -42,7 +83,7 @@
   &__social {
     display: flex;
     gap: space(2);
-    margin: space(2) 0 0;
+    margin: space(1) 0 0;
     padding: 0;
     list-style: none;
 
@@ -70,17 +111,24 @@
     }
   }
 
+  // Tarjeta del café: destaca sin competir con la firma.
   &__donate {
     display: grid;
     justify-items: center;
-    gap: space(1);
-    margin: space(2) 0 0;
+    gap: space(2);
+    padding: space(4) space(5);
+    border: 1px solid var(--c-border);
+    border-radius: var(--radius);
+    background: var(--c-surface);
+    text-align: center;
   }
 
-  &__donate-note { font-size: 0.75rem; }
+  &__donate-note {
+    max-width: 26ch;
+    font-size: 0.78rem;
+  }
 
   &__version {
-    margin-top: space(1);
     padding: 2px space(2);
     border-radius: 999px;
     border: 1px solid var(--c-border);
