@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from "react";
+import { useT } from "@/i18n";
 
 /** Música de fondo opcional: nunca suena sola, sólo si la persona la activa. */
 export function MusicToggle({ url }: { url: string }) {
   const audio = useRef<HTMLAudioElement | null>(null);
   const [playing, setPlaying] = useState(false);
+  const t = useT().site;
 
   useEffect(() => () => audio.current?.pause(), []);
 
@@ -23,7 +25,7 @@ export function MusicToggle({ url }: { url: string }) {
   };
 
   return (
-    <button className="music-toggle btn btn--icon" data-tour="music" onClick={toggle} aria-pressed={playing} aria-label="Música de fondo" title={playing ? "Pausar música" : "Poner música"}>
+    <button className="music-toggle btn btn--icon" data-tour="music" onClick={toggle} aria-pressed={playing} aria-label={t.music} title={playing ? t.pauseMusic : t.playMusic}>
       <span aria-hidden>{playing ? "❚❚" : "♪"}</span>
     </button>
   );

@@ -3,10 +3,12 @@ import { Modal } from "@/ui/Modal";
 import { burst } from "../effects/FloatingEffects";
 import { SectionHeading } from "./SectionHeading";
 import type { SectionProps } from "./types";
+import { useT } from "@/i18n";
 
 export function Letter({ section }: SectionProps<"letter">) {
   const { greeting, paragraphs, wishes, signature, surprise } = section.content;
   const [open, setOpen] = useState(false);
+  const t = useT().site;
   return (
     <div className="container">
       <SectionHeading title={section.title} subtitle={section.subtitle} />
@@ -28,7 +30,7 @@ export function Letter({ section }: SectionProps<"letter">) {
         )}
       </article>
       {open && surprise && (
-        <Modal title={surprise.title || "¡Sorpresa!"} onClose={() => setOpen(false)}>
+        <Modal title={surprise.title || t.surprise} onClose={() => setOpen(false)}>
           <p className="surprise-text">{surprise.text}</p>
         </Modal>
       )}
