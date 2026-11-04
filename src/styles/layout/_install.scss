@@ -1,0 +1,186 @@
+@use "../abstracts" as *;
+
+// /app: instalar la app en el celular.
+.install {
+  display: grid;
+  gap: space(5);
+  max-width: $narrow-width;
+  padding-block: space(6) space(7);
+
+  h2 { margin: 0; font-size: 1.15rem; }
+
+  &__hero {
+    display: grid;
+    justify-items: center;
+    gap: space(3);
+    text-align: center;
+
+    h1 { margin: 0; }
+  }
+
+  &__icon {
+    border-radius: 22%;
+    box-shadow: var(--shadow-lg, 0 12px 40px rgb(0 0 0 / 0.18));
+  }
+
+  &__lead {
+    margin: 0;
+    max-width: 52ch;
+    color: var(--c-muted);
+  }
+
+  &__done {
+    display: grid;
+    gap: space(1);
+  }
+
+  &__benefits {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: space(3);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    li {
+      display: grid;
+      gap: space(1);
+      align-content: start;
+      font-size: 0.92rem;
+
+      @include below("sm") { padding: space(3); font-size: 0.85rem; }
+    }
+  }
+
+  &__benefit-icon { font-size: 1.6rem; }
+
+  // Las tres opciones caben en un celular de 320px sin desplazarse.
+  &__steps .tabs {
+    width: 100%;
+
+    .tab {
+      flex: 1 1 0;
+      @include below("sm") { padding-inline: 0.5rem; font-size: 0.85rem; }
+    }
+  }
+
+  &__mine {
+    font-weight: 400;
+    @include below("sm") { display: none; }
+  }
+
+  &__list {
+    display: grid;
+    gap: space(3);
+    margin: 0 0 space(4);
+    padding-left: 1.4rem;
+
+    li::marker { color: var(--c-primary); font-weight: 700; }
+  }
+}
+
+.install-qr {
+  display: flex;
+  align-items: center;
+  gap: space(4);
+
+  @include below("sm") { flex-direction: column; text-align: center; }
+
+  &__code {
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    width: 160px;
+    height: 160px;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #fff;
+  }
+
+  p { margin: space(1) 0 0; }
+}
+
+// Aviso "Instala la app" (sólo celular).
+.install-banner {
+  position: fixed;
+  inset: auto space(3) calc(#{space(3)} + env(safe-area-inset-bottom)) space(3);
+  z-index: z("consent");
+  display: flex;
+  align-items: center;
+  gap: space(3);
+  max-width: 520px;
+  margin-inline: auto;
+  padding: space(3);
+  @include surface;
+  box-shadow: var(--shadow-lg, 0 12px 40px rgb(0 0 0 / 0.18));
+  animation: slide-up 0.4s $ease;
+
+  @include reduced-motion { animation: none; }
+
+  img { flex: 0 0 auto; border-radius: 10px; }
+
+  &__text {
+    flex: 1 1 auto;
+    min-width: 0;
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+
+  &__close {
+    flex: 0 0 auto;
+    width: 36px;
+    height: 36px;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--c-muted);
+    font-size: 1.4rem;
+    line-height: 1;
+    cursor: pointer;
+
+    &:hover { background: var(--c-surface-2); }
+    &:focus-visible { @include focus-ring; }
+  }
+}
+
+// Versión nueva y sin conexión: arriba, bajo la cabecera.
+.app-status {
+  position: fixed;
+  top: calc(#{$header-height} + #{space(2)} + env(safe-area-inset-top));
+  left: 50%;
+  z-index: z("toast");
+  display: grid;
+  gap: space(2);
+  width: min(100% - 2rem, 520px);
+  transform: translateX(-50%);
+  pointer-events: none;
+
+  &__pill {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: space(3);
+    margin: 0;
+    padding: space(2) space(2) space(2) space(4);
+    border-radius: var(--radius-pill);
+    background: var(--c-text);
+    color: var(--c-bg);
+    font-size: 0.88rem;
+    box-shadow: var(--shadow-lg, 0 12px 40px rgb(0 0 0 / 0.18));
+    pointer-events: auto;
+
+    &--offline {
+      padding: space(2) space(4);
+      border-radius: var(--radius);
+      background: var(--c-surface-2);
+      color: var(--c-text);
+    }
+  }
+}
+
+// Abierta desde el ícono: se siente app (sin rebote ni resaltado al tocar).
+@media (display-mode: standalone) {
+  html, body { overscroll-behavior-y: none; }
+  body { -webkit-tap-highlight-color: transparent; }
+  .app-footer__app-link { display: none; }
+}

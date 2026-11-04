@@ -4,6 +4,8 @@ import { AUTHOR, releaseUrl, type SocialNetwork } from "@/core/author";
 import { config } from "@/core/config";
 import { DonateLink } from "./DonateLink";
 import { LEGAL_DOCUMENTS, legalPath } from "@/domain/legal";
+import { INSTALL_PATH } from "@/core/seo";
+import { useInstallState } from "@/services/pwa/install";
 import { openCookiePreferences } from "@/services/consent/cookieConsent";
 import { setReducedMotion, useReducedMotion } from "@/ui/motion";
 import { useT } from "@/i18n";
@@ -47,6 +49,7 @@ export function AppFooter() {
   const i18n = useT();
   const t = i18n.app.footer;
   const legal = i18n.legal;
+  const { installed } = useInstallState();
 
   return (
     <footer className="app-footer" data-tour="footer">
@@ -84,6 +87,7 @@ export function AppFooter() {
                 <li key={doc.id}><Link to={legalPath(doc.id)}>{legal.docs[doc.id].short}</Link></li>
               ))}
               <li><button type="button" onClick={openCookiePreferences}>{t.cookiePrefs}</button></li>
+              {!installed && <li className="app-footer__app-link"><Link to={INSTALL_PATH}>📲 {i18n.install.footerLink}</Link></li>}
             </ul>
           </nav>
           <div className="app-footer__prefs">

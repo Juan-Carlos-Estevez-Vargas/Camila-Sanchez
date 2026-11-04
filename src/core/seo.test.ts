@@ -63,6 +63,14 @@ describe("resolveSeo", () => {
     expect(resolveSeo({ pathname: "/nada", settings: settings(), siteUrl: SITE, indexingEnabled: true }).robots).toBe("noindex, nofollow");
   });
 
+  it("la página para descargar la app tiene título propio y sigue a la portada", () => {
+    const meta = resolveSeo({ pathname: "/app", settings: settings(), siteUrl: SITE, indexingEnabled: true });
+    expect(meta.title).toBe("Descarga la app · Para el amor de mi vida");
+    expect(meta.canonical).toBe(`${SITE}/app`);
+    expect(meta.robots).toContain("index, follow");
+    expect(resolveSeo({ pathname: "/app", settings: settings({ isPublic: false }), siteUrl: SITE, indexingEnabled: true }).robots).toBe("noindex, nofollow");
+  });
+
   it("/panelito no se confunde con /panel", () => {
     expect(resolveSeo({ pathname: "/panelito", settings: settings(), siteUrl: SITE, indexingEnabled: true }).title).toMatch(/^Página no encontrada/);
   });

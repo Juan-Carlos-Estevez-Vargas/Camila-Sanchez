@@ -5,6 +5,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath, URL } from "node:url";
 import { resolveAppVersion } from "./scripts/release.mjs";
+import { buildAssetLinks, precacheList, stampServiceWorker } from "./scripts/pwa.mjs";
 import { assertPublicEnv } from "./scripts/check-secrets.mjs";
 import { withCaptchaCsp, withCaptchaHeaders } from "./src/core/captchaCsp.ts";
 import { buildRobotsTxt, buildSitemapXml, normalizeSiteUrl, OG_IMAGE_PATH } from "./src/core/seo.ts";
@@ -83,6 +84,30 @@ const seoPlugin = (siteUrl: string, indexing: boolean): Plugin => ({
 });
 
 /**
+ * App de celular: completa sw.js con los archivos del build (para abrir sin
+ * conexión una vez instalada) y, si hay datos de la app de Play Store,
+ * publica /.well-known/assetlinks.json (docs/APP_CELULAR.md).
+ */
+const pwaPlugin = (): Plugin => {
+  let outDir = "dist";
+  return {
+    name: "pwa-files",
+    apply: "build",
+    configResolved(resolved) {
+      outDir = resolved.build.outDir;
+    },
+    generateBundle() {
+      const links = buildAssetLinks(process.env.ANDROID_PACKAGE_NAME, process.env.ANDROID_CERT_SHA256);
+      if (links) this.emitFile({ type: "asset", fileName: ".well-known/assetlinks.json", source: links });
+    },
+    writeBundle(_options, bundle) {
+      const file = join(outDir, "sw.js");
+      writeFileSync(file, stampServiceWorker(readFileSync(file, "utf8"), precacheList(Object.keys(bundle))));
+    },
+  };
+};
+
+/**
  * Arranque rápido: el navegador abre la conexión con Supabase y descarga el
  * código del backend y de la página principal en paralelo con el JS de
  * entrada, en vez de esperar a que éste los pida (cascada de peticiones).
@@ -127,7 +152,7 @@ export default defineConfig(({ mode }) => {
   const siteUrl = normalizeSiteUrl(env.VITE_SITE_URL);
   const indexing = env.VITE_SEO_INDEX?.trim() !== "false";
   return {
-    plugins: [react(), cspPlugin(Boolean(env.VITE_TURNSTILE_SITE_KEY?.trim())), seoPlugin(siteUrl, indexing), startupPreloadPlugin(env.VITE_SUPABASE_URL?.trim() ?? "")],
+    plugins: [react(), cspPlugin(Boolean(env.VITE_TURNSTILE_SITE_KEY?.trim())), seoPlugin(siteUrl, indexing), startupPreloadPlugin(env.VITE_SUPABASE_URL?.trim() ?? ""), pwaPlugin()],
     resolve: {
       alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) },
     },

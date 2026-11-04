@@ -38,6 +38,7 @@
 - [Tecnologías](#tecnologías)
 - [Inicio rápido](#inicio-rápido)
 - [Scripts](#scripts)
+- [App de celular](#app-de-celular)
 - [Arquitectura](#arquitectura)
 - [Seguridad y privacidad](#seguridad-y-privacidad)
 - [Idiomas](#idiomas)
@@ -81,7 +82,7 @@ Funciona en dos modos:
 
 <p align="center">
   <img src="docs/capturas/movil-chat.png" alt="Conversación a pantalla completa en un celular" width="240"><br>
-  <sub>Diseño adaptable: la misma app en el celular, instalable desde el navegador.</sub>
+  <sub>Diseño adaptable: la misma app en el celular, instalable con su ícono (ver <a href="#app-de-celular">App de celular</a>).</sub>
 </p>
 
 ## Funcionalidades
@@ -94,9 +95,10 @@ Funciona en dos modos:
 | Listas compartidas con subtareas, materiales, fotos, fechas y responsables, en vivo | `/listas` | `lists.use` |
 | Perfil: nombre, foto o icono, frase y cumpleaños | `/cuenta/perfil` | Cualquier cuenta |
 | Mis colores: cada persona elige su paleta sin cambiársela a nadie | `/cuenta/colores` | Cualquier cuenta |
-| Mi cuenta: avisos en el dispositivo, contraseña y sesiones | `/cuenta` | Cualquier cuenta |
+| Mi cuenta: app en el celular, avisos en el dispositivo, contraseña y sesiones | `/cuenta` | Cualquier cuenta |
 | Panel de contenido: fotos, textos y animaciones, hitos, fechas y sorpresas (cada sorpresa se prepara para una persona: sólo ella la ve, nunca quien la creó) | `/panel` | Editora y super admin |
 | Super admin: usuarios, invitaciones por enlace o QR, roles y permisos, apariencia, secciones, ajustes y auditoría | `/super` | Super admin |
+| App de celular instalable (Android, iPhone y computador): ícono, pantalla completa, atajos, sin conexión y aviso de versión nueva | `/app` | Pública |
 | Avisos push en el celular: chat, notitas, sorpresas y listas | — | Quien los active |
 | Tutorial guiado según la página y los permisos de cada cuenta | Todas | Todos |
 | Idiomas: español, inglés y portugués. La app arranca en el idioma del dispositivo y se cambia con 🌐 en la cabecera, el pie o **Mi cuenta** | Todas | Todos |
@@ -119,6 +121,7 @@ que fallen.
 | Estilos | SCSS con módulos de Sass (`@use`/`@forward`), BEM y CSS Modules |
 | Build y pruebas | Vite 8, Vitest, ESLint |
 | Backend | Supabase: Postgres con RLS, Auth (PKCE), Storage privado, Realtime y Edge Functions en Deno |
+| App de celular | PWA: manifiesto, service worker con precarga y actualización, `beforeinstallprompt`; Trusted Web Activity opcional para Google Play |
 | Avisos | Web Push (VAPID), service worker, `pg_net` y Supabase Vault |
 | Calidad | Pruebas de RLS sobre PGlite, `npm audit`, Dependabot, CodeQL, OpenSSF Scorecard, acciones fijadas por SHA |
 | Publicación | Netlify (web) y GitHub Actions (migraciones, funciones y releases) |
@@ -158,6 +161,30 @@ Para conectarla a un proyecto de Supabase, copia `.env.example` a
 | `npm run security` | Busca secretos en el repo y su historial, y revisa las dependencias de la app y de las Edge Functions |
 | `npm run db:setup-sql` | Regenera `supabase/setup.sql` a partir de las migraciones |
 | `npm run release:preview` | Muestra la versión y las notas del próximo release |
+
+## App de celular
+
+La app se instala en el celular como cualquier otra, sin tiendas y gratis:
+**Descargar la app** (`/app`, enlazada en el pie, en **Mi cuenta** y en un
+aviso del celular) detecta el dispositivo y muestra el botón **Instalar la
+app** (Android, Chrome y Edge) o los pasos de **Compartir → Agregar a inicio**
+(iPhone). Desde el computador, un QR la abre en el celular.
+
+<p align="center">
+  <img src="docs/capturas/app-iphone.png" alt="Página Descarga la app en un iPhone, con los pasos Compartir y Agregar a inicio" width="240">
+  <img src="docs/capturas/app-aviso.png" alt="Aviso «Instala la app en tu celular» abajo en la página principal" width="240">
+</p>
+
+| Instalada | Cómo |
+| --- | --- |
+| Ícono, pantalla completa y atajos a Chat, Cajita y Listas | `manifest.webmanifest` |
+| Abre sin conexión | El service worker precarga todo el JS/CSS del build (lista y versión las escribe el build en `sw.js`) |
+| «✨ Hay una versión nueva — Actualizar» | El service worker nuevo espera hasta que la persona lo pide |
+| Avisos con la app cerrada (también en iPhone) | Web Push |
+| Google Play (opcional) | Trusted Web Activity con PWABuilder + `/.well-known/assetlinks.json` generado por el build |
+
+Todo el detalle, cómo probarlo y cómo publicarla en Google Play:
+[docs/APP_CELULAR.md](docs/APP_CELULAR.md).
 
 ## Arquitectura
 
@@ -326,6 +353,7 @@ Netlify) está paso a paso en [docs/DESPLIEGUE.md](docs/DESPLIEGUE.md).
 | [Manual de usuario](docs/MANUAL_DE_USUARIO.md) | Quien usa la app: visitantes, Camila y Juan |
 | [Manual de arquitectura](docs/ARQUITECTURA.md) | Quien mantiene o extiende el código |
 | [Diagramas](docs/DIAGRAMAS.md) | Flujos, secuencias, despliegue, modelo de datos, permisos, la app de chat y lo legal (Mermaid) |
+| [App de celular](docs/APP_CELULAR.md) | Cómo se instala, cómo funciona sin conexión y cómo publicarla en Google Play |
 | [Despliegue y operación](docs/DESPLIEGUE.md) | Quien pone la app en producción o la administra |
 | [Seguridad OWASP](docs/SEGURIDAD_OWASP.md) | Cómo se cubre cada riesgo del OWASP Top 10 y del API Security Top 10 |
 | [Accesibilidad y SEO](docs/ACCESIBILIDAD.md) | Cómo se cumple WCAG 2.2 AA y qué se hace para los buscadores |

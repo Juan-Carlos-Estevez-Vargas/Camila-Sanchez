@@ -1,0 +1,70 @@
+import type { Messages } from "@/i18n";
+
+export const install: Messages["install"] = {
+  pageTitle: "Baixe o app",
+  seoDescription: "Instale Nosso cantinho no celular ou no computador: ícone na tela inicial, tela cheia, avisos e sem conexão.",
+  heroTitle: "Leve a gente no celular 📲",
+  heroText: "Instale o app e ele ganha um ícone na tela inicial, abre em tela cheia como qualquer app, avisa quando alguém escreve e abre mesmo sem internet.",
+  installButton: "Instalar o app",
+  installing: "Abrindo…",
+  accepted: "Pronto! O app foi instalado 💗",
+  installed: "✅ O app já está neste dispositivo.",
+  installedHint: "Abra pelo ícone 💗 da tela inicial ou dos seus apps.",
+  benefitsTitle: "O que você ganha",
+  benefits: [
+    { icon: "💗", title: "Ícone próprio", text: "Junto com seus outros apps, sem procurar o link." },
+    { icon: "📱", title: "Tela cheia", text: "Sem barra do navegador: parece e funciona como um app." },
+    { icon: "🔔", title: "Avisos no celular", text: "Do chat, bilhetinhos, surpresas e listas, mesmo fechado." },
+    { icon: "✈️", title: "Sem conexão", text: "Abre e mostra o que você viu por último, mesmo sem internet." },
+  ],
+  stepsTitle: "Como instalar",
+  platformsLabel: "Escolha seu dispositivo",
+  yourDevice: "seu dispositivo",
+  platforms: { android: "Android", ios: "iPhone", desktop: "Computador" },
+  steps: {
+    androidPrompt: ["Toque em «Instalar o app» aqui em cima.", "Confirme com «Instalar».", "Pronto: aparece junto com seus outros apps."],
+    android: [
+      "Abra esta página no Chrome (ou Samsung Internet).",
+      "Toque no menu ⋮ no canto superior direito.",
+      "Escolha «Instalar app» ou «Adicionar à tela inicial» e confirme.",
+    ],
+    iosSafari: [
+      "Toque no botão Compartilhar (o quadrado com a seta ⬆️) na barra de baixo.",
+      "Role para baixo e escolha «Adicionar à Tela de Início».",
+      "Toque em «Adicionar». Abra o app pelo novo ícone 💗 e, em Minha conta, ative os avisos.",
+    ],
+    iosOther: [
+      "Toque no botão Compartilhar (⬆️) ao lado da barra de endereço, no canto superior direito.",
+      "Escolha «Adicionar à Tela de Início» (se não aparecer, abra esta página no Safari).",
+      "Toque em «Adicionar». Abra o app pelo novo ícone 💗 e, em Minha conta, ative os avisos.",
+    ],
+    desktop: [
+      "No Chrome ou Edge, clique no ícone de instalar (uma tela com uma seta) no fim da barra de endereço, ou no menu ⋮ → «Instalar».",
+      "No Safari do Mac: menu Arquivo → «Adicionar ao Dock».",
+      "Abre em uma janela própria e fica no menu Iniciar ou no Dock.",
+    ],
+  },
+  qrTitle: "Está no computador?",
+  qrText: "Escaneie este código com a câmera do celular para abrir a página lá e instalar.",
+  qrAlt: "Código QR com o link para instalar o app",
+  storesTitle: "E na Play Store ou App Store?",
+  storesText: "Não precisa: instala direto daqui, de graça, quase sem ocupar espaço e sempre na última versão. Fotos e mensagens continuam privadas: só quem tem conta vê.",
+  banner: {
+    text: "📲 Instale o app no seu celular",
+    install: "Instalar",
+    how: "Como",
+    close: "Fechar aviso de instalar o app",
+  },
+  account: {
+    title: "App no celular 📲",
+    hint: "Instale para ter ícone próprio, tela cheia e avisos.",
+    open: "Como instalar",
+    installedHint: "Você está usando o app instalado. 💗",
+  },
+  footerLink: "Baixar o app",
+  update: {
+    text: "✨ Há uma nova versão do app.",
+    action: "Atualizar",
+  },
+  offline: "Sem conexão: você vê o que foi salvo por último. O que fizer será enviado quando a internet voltar.",
+};

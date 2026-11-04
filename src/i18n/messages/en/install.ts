@@ -1,0 +1,70 @@
+import type { Messages } from "@/i18n";
+
+export const install: Messages["install"] = {
+  pageTitle: "Get the app",
+  seoDescription: "Install Our little corner on your phone or computer: home screen icon, full screen, notifications and offline.",
+  heroTitle: "Carry us in your phone 📲",
+  heroText: "Install the app and it gets its own icon on your home screen, opens full screen like any other app, lets you know when someone writes and opens even without internet.",
+  installButton: "Install the app",
+  installing: "Opening…",
+  accepted: "Done! The app is installed 💗",
+  installed: "✅ The app is already on this device.",
+  installedHint: "Open it from the 💗 icon on your home screen or in your apps.",
+  benefitsTitle: "What you get",
+  benefits: [
+    { icon: "💗", title: "Its own icon", text: "Next to your other apps, no need to look for the link." },
+    { icon: "📱", title: "Full screen", text: "No browser bar: it looks and feels like an app." },
+    { icon: "🔔", title: "Phone notifications", text: "From the chat, notes, surprises and lists, even when it's closed." },
+    { icon: "✈️", title: "Works offline", text: "Opens and shows what you last saw, even without internet." },
+  ],
+  stepsTitle: "How to install it",
+  platformsLabel: "Choose your device",
+  yourDevice: "your device",
+  platforms: { android: "Android", ios: "iPhone", desktop: "Computer" },
+  steps: {
+    androidPrompt: ["Tap “Install the app” above.", "Confirm with “Install”.", "Done: it shows up with your other apps."],
+    android: [
+      "Open this page in Chrome (or Samsung Internet).",
+      "Tap the ⋮ menu at the top right.",
+      "Choose “Install app” or “Add to Home screen” and confirm.",
+    ],
+    iosSafari: [
+      "Tap the Share button (the square with the ⬆️ arrow) in the bottom bar.",
+      "Scroll down and choose “Add to Home Screen”.",
+      "Tap “Add”. Open the app from the new 💗 icon and turn on notifications in My account.",
+    ],
+    iosOther: [
+      "Tap the Share button (⬆️) next to the address bar, at the top right.",
+      "Choose “Add to Home Screen” (if it's not there, open this page in Safari).",
+      "Tap “Add”. Open the app from the new 💗 icon and turn on notifications in My account.",
+    ],
+    desktop: [
+      "In Chrome or Edge, click the install icon (a screen with an arrow) at the end of the address bar, or the ⋮ menu → “Install”.",
+      "In Safari on Mac: File menu → “Add to Dock”.",
+      "It opens in its own window and stays in the Start menu or the Dock.",
+    ],
+  },
+  qrTitle: "On a computer?",
+  qrText: "Scan this code with your phone's camera to open the page there and install it.",
+  qrAlt: "QR code with the link to install the app",
+  storesTitle: "What about Play Store or App Store?",
+  storesText: "No need: it installs straight from here, for free, takes almost no space and is always up to date. Photos and messages stay private: only people with an account can see them.",
+  banner: {
+    text: "📲 Install the app on your phone",
+    install: "Install",
+    how: "How",
+    close: "Close install app notice",
+  },
+  account: {
+    title: "Phone app 📲",
+    hint: "Install it to get its own icon, full screen and notifications.",
+    open: "How to install it",
+    installedHint: "You're using the installed app. 💗",
+  },
+  footerLink: "Get the app",
+  update: {
+    text: "✨ There's a new version of the app.",
+    action: "Update",
+  },
+  offline: "Offline: you're seeing what was last saved. Anything you do will be sent when you're back online.",
+};

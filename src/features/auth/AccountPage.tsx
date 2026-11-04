@@ -6,6 +6,7 @@ import { roleLabel } from "@/domain/permissions";
 import { LanguagePicker } from "@/app/LanguagePicker";
 import { useSaver } from "@/features/admin/useSaver";
 import { PrivacyCard } from "@/features/legal/PrivacyCard";
+import { InstallAccountCard } from "@/features/install/InstallAccountCard";
 import { DeviceNotificationsCard } from "@/features/messages/EnableNotifications";
 import { useAuth } from "@/state/AuthContext";
 import { useBackend } from "@/state/BackendContext";
@@ -84,6 +85,7 @@ export default function AccountPage() {
         <LanguagePicker />
       </section>
 
+      <InstallAccountCard />
       <DeviceNotificationsCard />
 
       <form className="card stack" style={{ marginTop: 16 }} onSubmit={changePassword} noValidate data-tour="account-password">

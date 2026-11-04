@@ -12,17 +12,8 @@ export function notificationPermission(): NotificationPermission | "unsupported"
   return notificationsSupported() ? Notification.permission : "unsupported";
 }
 
-/** iPhone o iPad (los iPad nuevos se presentan como Mac con pantalla táctil). */
-export function isIos(): boolean {
-  if (typeof navigator === "undefined") return false;
-  return /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-}
-
-/** ¿Se abrió como app instalada (desde el ícono de la pantalla de inicio)? */
-export function isStandalone(): boolean {
-  if (typeof window === "undefined") return false;
-  return window.matchMedia?.("(display-mode: standalone)").matches || (navigator as Navigator & { standalone?: boolean }).standalone === true;
-}
+export { isIos, isStandalone } from "@/services/pwa/platform";
+import { isIos, isStandalone } from "@/services/pwa/platform";
 
 /** En iPhone los avisos sólo funcionan con la app agregada a la pantalla de inicio. */
 export const needsHomeScreenInstall = () => isIos() && !isStandalone();

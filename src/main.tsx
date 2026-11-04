@@ -4,6 +4,8 @@ import { App } from "@/app/App";
 import { createBackend } from "@/data/backend";
 import { pruneOldCaches } from "@/data/localCache";
 import { initI18n } from "@/i18n";
+import { listenForInstallPrompt } from "@/services/pwa/install";
+import { registerServiceWorker } from "@/services/pwa/serviceWorker";
 import { BackendProvider } from "@/state/BackendContext";
 import "@/styles/main.scss";
 
@@ -21,12 +23,10 @@ async function bootstrap() {
   );
 }
 
+// El aviso "se puede instalar" llega muy pronto: se escucha antes de pintar.
+listenForInstallPrompt();
 void bootstrap();
 pruneOldCaches();
 
 // El service worker sólo en producción (en desarrollo estorba al hot reload).
-if (import.meta.env.PROD && "serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/sw.js").catch((error) => console.warn("[sw]", error));
-  });
-}
+if (import.meta.env.PROD) registerServiceWorker();

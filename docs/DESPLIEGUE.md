@@ -69,6 +69,7 @@ celular.
    | `VITE_SITE_URL` | el mismo dominio que `SITE_URL` |
    | `VITE_SEO_INDEX` | `true` (o `false` si no quieres aparecer en Google) |
    | `VITE_DONATION_URL` | opcional: tu enlace de Ko-fi, Buy Me a Coffee, GitHub Sponsors o PayPal (`https://…`). Muestra «Invítame un café» en el pie; vacía, no hay botón |
+   | `ANDROID_PACKAGE_NAME` y `ANDROID_CERT_SHA256` | opcionales, sólo si publicas la app en Google Play: publican `/.well-known/assetlinks.json` (ver [APP_CELULAR.md](APP_CELULAR.md#publicarla-en-google-play-opcional)) |
 
 3. *Deploys → Trigger deploy → Deploy site*. El repositorio ya trae
    `netlify.toml` (compila con `npm run build` y publica `dist/`) y la rama de
@@ -76,7 +77,8 @@ celular.
    (todo se guarda sólo en el navegador de quien la abre).
 
 Listo: cualquiera abre la página, y tú y Camila entran por `/entrar` con su
-correo y contraseña. Tú ves *Administración* (`/super`) y ella *Mi panel*
+correo y contraseña. Para tenerla como app en el celular, abran `/app` y
+sigan los pasos (ver [APP_CELULAR.md](APP_CELULAR.md)). Tú ves *Administración* (`/super`) y ella *Mi panel*
 (`/panel`).
 
 ## Versiones y releases

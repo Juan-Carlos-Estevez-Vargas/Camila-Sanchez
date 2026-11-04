@@ -87,9 +87,14 @@ Supabase. Eso permite probar las reglas del negocio sin navegador.
 `ThemedShell` calcula el tema (el de la página con los colores de la persona
 encima), monta `ThemeController`, `SeoController` y `PresenceHeartbeat` y
 dibuja la cabecera, las rutas y el pie. En producción `main.tsx` registra el
-service worker (`public/sw.js`): caché sin conexión y avisos push.
+service worker (`public/sw.js`): caché sin conexión, avisos push y aviso de
+versión nueva (`src/services/pwa/serviceWorker.ts`). Antes de pintar React
+escucha `beforeinstallprompt` (`src/services/pwa/install.ts`) para ofrecer
+«Instalar la app». Todo lo de la app de celular está en
+[APP_CELULAR.md](APP_CELULAR.md).
 
-- Rutas públicas: `/`, `/entrar`, `/invitacion`, `/recuperar`.
+- Rutas públicas: `/`, `/entrar`, `/invitacion`, `/recuperar`, `/legal` y
+  `/app` (descargar la app).
 - Rutas privadas (`src/app/routes.tsx`): `/mensajes`, `/chat`, `/listas`,
   `/listas/:id`, `/cuenta`, `/cuenta/perfil`, `/cuenta/colores`, `/panel/*` y `/super/*` (`/panel/colores`, de antes,
   redirige a `/cuenta/colores`). Cada una se envuelve en `RequirePermission`, que

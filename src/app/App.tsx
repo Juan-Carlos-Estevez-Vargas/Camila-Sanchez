@@ -14,6 +14,9 @@ import { AppFooter } from "./AppFooter";
 import { AppHeader } from "./AppHeader";
 import { ConsentGate } from "@/features/legal/ConsentGate";
 import { CookieBanner } from "@/features/legal/CookieBanner";
+import { AppStatus } from "@/features/install/AppStatus";
+import { InstallBanner } from "@/features/install/InstallBanner";
+import { INSTALL_PATH } from "@/core/seo";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { RouteAnnouncer, SkipLink } from "./RouteAnnouncer";
 import { appRoutes } from "./routes";
@@ -24,6 +27,7 @@ const LoginPage = lazy(() => import("@/features/auth/LoginPage"));
 const InvitePage = lazy(() => import("@/features/auth/InvitePage"));
 const RecoverPage = lazy(() => import("@/features/auth/RecoverPage"));
 const LegalPage = lazy(() => import("@/features/legal/LegalPage"));
+const InstallPage = lazy(() => import("@/features/install/InstallPage"));
 
 function NotFound() {
   const t = useT().app;
@@ -65,6 +69,7 @@ function ThemedShell() {
             <Route path="/recuperar" element={<RecoverPage />} />
             <Route path="/legal" element={<LegalPage />} />
             <Route path="/legal/:doc" element={<LegalPage />} />
+            <Route path={INSTALL_PATH} element={<InstallPage />} />
             {appRoutes}
             <Route path="*" element={<NotFound />} />
           </Routes>
@@ -73,6 +78,8 @@ function ThemedShell() {
       <Footer />
       <ConsentGate />
       <CookieBanner />
+      <InstallBanner />
+      <AppStatus />
     </>
   );
 }
