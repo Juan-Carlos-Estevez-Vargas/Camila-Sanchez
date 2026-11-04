@@ -110,6 +110,9 @@ export function assertPublicEnv(env) {
   }
 }
 
+/** Las pruebas de este script llevan claves falsas a propósito. */
+const OWN_FIXTURES = new Set(["scripts/check-secrets.test.ts"]);
+
 const BINARY = /\.(png|jpe?g|gif|webp|avif|ico|woff2?|ttf|otf|mp3|mp4|webm|pdf|zip|gz|wasm)$/i;
 
 function listDir(dir) {
@@ -148,7 +151,7 @@ function scanHistory(root) {
   for (const line of git(["log", "--all", "-p", "--no-color", "--no-ext-diff", "--format=commit %H"]).split("\n")) {
     if (line.startsWith("commit ")) commit = line.slice(7, 14);
     else if (line.startsWith("+++ b/")) file = line.slice(6);
-    else if (line.startsWith("+") && !line.startsWith("+++") && !BINARY.test(file)) {
+    else if (line.startsWith("+") && !line.startsWith("+++") && !BINARY.test(file) && !OWN_FIXTURES.has(file)) {
       for (const hit of findSecrets(line.slice(1))) report.push(`historial ${commit} ${file}: ${hit.kind}`);
     }
   }
