@@ -4,7 +4,7 @@ import { formatRelative } from "@/domain/dates";
 import {
   buildInviteUrl, INVITABLE_ROLES, INVITE_EXPIRY_OPTIONS, invitationStatus, type InvitationStatus,
 } from "@/domain/invitations";
-import { ROLE_LABELS } from "@/domain/permissions";
+import { roleLabel } from "@/domain/permissions";
 import type { InvitableRole, Invitation } from "@/domain/types";
 import { useSaver } from "@/features/admin/useSaver";
 import { useBackend } from "@/state/BackendContext";
@@ -15,13 +15,13 @@ import { useAsync } from "@/ui/useAsync";
 import { useConfirm } from "@/ui/useConfirm";
 import { InviteQr } from "./InviteQr";
 import styles from "./Invitations.module.scss";
+import { useT } from "@/i18n";
 
-const STATUS_BADGE: Record<InvitationStatus, { label: string; tone: string }> = {
-  pending: { label: "Pendiente", tone: "badge--warning" },
-  used: { label: "Usada", tone: "badge--success" },
-  expired: { label: "Vencida", tone: "badge--muted" },
+const STATUS_TONE: Record<InvitationStatus, string> = {
+  pending: "badge--warning",
+  used: "badge--success",
+  expired: "badge--muted",
 };
-
 const siteOrigin = () => config.siteUrl || window.location.origin;
 
 function NewInvitationModal({ onClose, onCreated }: { onClose(): void; onCreated(): void }) {
@@ -32,9 +32,12 @@ function NewInvitationModal({ onClose, onCreated }: { onClose(): void; onCreated
   const [role, setRole] = useState<InvitableRole>("editor");
   const [hours, setHours] = useState<number>(INVITE_EXPIRY_OPTIONS[0].hours);
   const [url, setUrl] = useState<string | null>(null);
+  const i18n = useT();
+  const l = i18n.superAdmin.links;
+  const t = i18n.superAdmin.invitations;
 
   const create = async () => {
-    const created = await run(() => backend.invitations.create({ role, note, expiresInHours: hours }), "Enlace listo 💌");
+    const created = await run(() => backend.invitations.create({ role, note, expiresInHours: hours }), l.inviteReady);
     if (!created) return;
     setUrl(buildInviteUrl(siteOrigin(), created.token));
     onCreated();
@@ -44,59 +47,58 @@ function NewInvitationModal({ onClose, onCreated }: { onClose(): void; onCreated
     if (!url) return;
     try {
       await navigator.clipboard.writeText(url);
-      toast.success("Enlace copiado");
+      toast.success(l.copied);
     } catch {
-      toast.show({ title: "No pude copiarlo", body: "Selecciona el enlace y cópialo a mano.", tone: "error" });
+      toast.show({ title: l.cantCopy, body: l.cantCopyBody, tone: "error" });
     }
   };
 
   const share = async () => {
     if (!url) return;
-    await navigator.share({ title: "Tu invitación 💖", text: "Crea tu cuenta con este enlace:", url }).catch(() => undefined);
+    await navigator.share({ title: t.shareTitle, text: t.shareText, url }).catch(() => undefined);
   };
 
-  const expiryLabel = INVITE_EXPIRY_OPTIONS.find((o) => o.hours === hours)?.label ?? "";
+  const expiryLabel = l.expiry(hours);
 
   return (
-    <Modal title={url ? "Comparte la invitación" : "Invitar con enlace o QR"} onClose={onClose}
+    <Modal title={url ? t.titleShare : t.title} onClose={onClose}
       footer={url
-        ? <button className="btn" onClick={onClose}>Listo</button>
-        : <><button className="btn btn--ghost" onClick={onClose}>Cancelar</button><button className="btn" disabled={busy} onClick={create}>Crear enlace</button></>}>
+        ? <button className="btn" onClick={onClose}>{l.done}</button>
+        : <><button className="btn btn--ghost" onClick={onClose}>{i18n.common.cancel}</button><button className="btn" disabled={busy} onClick={create}>{l.create}</button></>}>
       {url ? (
         <div className={styles.result}>
           <p className="muted" style={{ margin: 0 }}>
-            Que lo escanee con la cámara del celular o ábrele el enlace. Elegirá su nombre, correo y contraseña,
-            y entrará como <strong>{ROLE_LABELS[role]}</strong>. Sirve <strong>una sola vez</strong> y vence en {expiryLabel}.
+            {t.readyBefore} <strong>{roleLabel(role)}</strong>{t.readyMiddle} <strong>{t.once}</strong> {t.readyAfter(expiryLabel)}
           </p>
-          <InviteQr url={url} fileName="invitacion.png" />
-          <Field label="Enlace" hint="Este enlace no se vuelve a mostrar: compártelo ahora.">
+          <InviteQr url={url} fileName={t.fileName} alt={l.inviteQrAlt} />
+          <Field label={l.link} hint={t.linkHint}>
             {(id) => <input id={id} className={`input ${styles.link}`} readOnly value={url} onFocus={(e) => e.currentTarget.select()} />}
           </Field>
           <div className={styles.actions}>
-            <button className="btn btn--sm" onClick={copy}>Copiar enlace</button>
-            {typeof navigator.share === "function" && <button className="btn btn--sm btn--soft" onClick={share}>Compartir…</button>}
+            <button className="btn btn--sm" onClick={copy}>{l.copy}</button>
+            {typeof navigator.share === "function" && <button className="btn btn--sm btn--soft" onClick={share}>{l.share}</button>}
           </div>
         </div>
       ) : (
         <div className="stack">
-          <Field label="¿Para quién es?" hint="Sólo para que tú la reconozcas en la lista">
-            {(id) => <input id={id} className="input" maxLength={80} placeholder="Para Camila" value={note} onChange={(e) => setNote(e.target.value)} />}
+          <Field label={t.forWhom} hint={t.forWhomHint}>
+            {(id) => <input id={id} className="input" maxLength={80} placeholder={t.forWhomPlaceholder} value={note} onChange={(e) => setNote(e.target.value)} />}
           </Field>
-          <Field label="Entrará como">
+          <Field label={t.joinAs}>
             {(id) => (
               <select id={id} className="select" value={role} onChange={(e) => setRole(e.target.value as InvitableRole)}>
-                {INVITABLE_ROLES.map((r) => <option key={r} value={r}>{ROLE_LABELS[r]}</option>)}
+                {INVITABLE_ROLES.map((r) => <option key={r} value={r}>{roleLabel(r)}</option>)}
               </select>
             )}
           </Field>
-          <Field label="El enlace vence en">
+          <Field label={t.expiresIn}>
             {(id) => (
               <select id={id} className="select" value={hours} onChange={(e) => setHours(Number(e.target.value))}>
-                {INVITE_EXPIRY_OPTIONS.map((o) => <option key={o.hours} value={o.hours}>{o.label}</option>)}
+                {INVITE_EXPIRY_OPTIONS.map((o) => <option key={o.hours} value={o.hours}>{l.expiry(o.hours)}</option>)}
               </select>
             )}
           </Field>
-          <p className="muted" style={{ margin: 0 }}>Por seguridad, un enlace nunca puede crear otro super administrador.</p>
+          <p className="muted" style={{ margin: 0 }}>{t.noSuper}</p>
         </div>
       )}
     </Modal>
@@ -105,22 +107,22 @@ function NewInvitationModal({ onClose, onCreated }: { onClose(): void; onCreated
 
 function InvitationRow({ invitation, onRevoke }: { invitation: Invitation; onRevoke(): void }) {
   const status = invitationStatus(invitation);
-  const badge = STATUS_BADGE[status];
+  const t = useT().superAdmin.invitations;
   return (
     <li className={styles.item}>
       <div className={styles.itemText}>
-        <strong>{invitation.note || "Invitación"}</strong>
+        <strong>{invitation.note || t.fallback}</strong>
         <span className="muted">
-          {ROLE_LABELS[invitation.role]} · {status === "used" && invitation.usedAt
-            ? `usada ${formatRelative(invitation.usedAt)}`
-            : `${status === "expired" ? "venció" : "vence"} ${formatRelative(invitation.expiresAt)}`}
+          {roleLabel(invitation.role)} · {status === "used" && invitation.usedAt
+            ? t.usedAgo(formatRelative(invitation.usedAt))
+            : (status === "expired" ? t.expiredAgo : t.expires)(formatRelative(invitation.expiresAt))}
         </span>
       </div>
       <div className="row">
-        <span className={`badge ${badge.tone}`}>{badge.label}</span>
+        <span className={`badge ${STATUS_TONE[status]}`}>{t.status[status]}</span>
         {status !== "used" && (
-          <button className="btn btn--sm btn--ghost" aria-label={`Revocar ${invitation.note || "invitación"}`} onClick={onRevoke}>
-            {status === "pending" ? "Revocar" : "Quitar"}
+          <button className="btn btn--sm btn--ghost" aria-label={t.revokeNamed(invitation.note || t.fallback)} onClick={onRevoke}>
+            {status === "pending" ? t.revoke : t.remove}
           </button>
         )}
       </div>
@@ -135,13 +137,15 @@ export function InvitationsCard({ onChange }: { onChange(): void }) {
   const [confirm, confirmElement] = useConfirm();
   const [creating, setCreating] = useState(false);
   const { data: invitations, reload } = useAsync(() => backend.invitations.list(), [backend]);
+  const i18n = useT();
+  const t = i18n.superAdmin.invitations;
 
   const revoke = async (invitation: Invitation) => {
     const pending = invitationStatus(invitation) === "pending";
     if (pending && !(await confirm({
-      title: "¿Revocar esta invitación?", body: "El enlace y el QR dejarán de funcionar.", confirmLabel: "Revocar", danger: true,
+      title: t.revokeTitle, body: t.revokeBody, confirmLabel: t.revoke, danger: true,
     }))) return;
-    await run(() => backend.invitations.revoke(invitation.id), pending ? "Invitación revocada" : undefined);
+    await run(() => backend.invitations.revoke(invitation.id), pending ? t.revoked : undefined);
     await reload();
   };
 
@@ -149,10 +153,10 @@ export function InvitationsCard({ onChange }: { onChange(): void }) {
     <section className="card stack" aria-labelledby="invitaciones-titulo">
       <div className="row-between">
         <div>
-          <h2 id="invitaciones-titulo" style={{ margin: 0, fontSize: "1.1rem" }}>Invitar con enlace o QR</h2>
-          <p className="muted" style={{ margin: 0 }}>La persona crea su cuenta sola: no necesitas saber su correo.</p>
+          <h2 id="invitaciones-titulo" style={{ margin: 0, fontSize: "1.1rem" }}>{t.title}</h2>
+          <p className="muted" style={{ margin: 0 }}>{t.cardHint}</p>
         </div>
-        <button className="btn" onClick={() => setCreating(true)}>Crear enlace</button>
+        <button className="btn" onClick={() => setCreating(true)}>{i18n.superAdmin.links.create}</button>
       </div>
       {invitations && invitations.length > 0 && (
         <ul className={styles.list}>

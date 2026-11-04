@@ -1,4 +1,4 @@
-import { ROLE_LABELS } from "@/domain/permissions";
+import { roleLabel } from "@/domain/permissions";
 import type { Role } from "@/domain/types";
 import { AdminPage } from "@/features/admin/AdminLayout";
 import { useSaver } from "@/features/admin/useSaver";
@@ -6,6 +6,7 @@ import { useAuth } from "@/state/AuthContext";
 import { useBackend } from "@/state/BackendContext";
 import { PageLoader } from "@/ui/Feedback";
 import { useAsync } from "@/ui/useAsync";
+import { useT } from "@/i18n";
 
 const EDITABLE_ROLES: Role[] = ["editor", "viewer"];
 
@@ -14,6 +15,7 @@ export default function RolesAdmin() {
   const backend = useBackend();
   const { refresh } = useAuth();
   const { run } = useSaver();
+  const t = useT().superAdmin.roles;
   const { data, loading, reload } = useAsync(
     () => Promise.all([backend.users.listPermissions(), backend.users.listRolePermissions()]),
     [backend],
@@ -24,33 +26,36 @@ export default function RolesAdmin() {
   const has = (role: Role, key: string) => grants.some((g) => g.role === role && g.permission === key);
 
   return (
-    <AdminPage title="Roles y permisos" description="Decide qué puede hacer cada rol. Los cambios aplican al instante y la base de datos los hace cumplir.">
+    <AdminPage title={t.title} description={t.description}>
       <div className="table-wrap">
         <table className="table">
           <thead>
             <tr>
-              <th>Permiso</th>
-              <th className="center">{ROLE_LABELS.super_admin}</th>
-              {EDITABLE_ROLES.map((r) => <th key={r} className="center">{ROLE_LABELS[r]}</th>)}
+              <th>{t.permission}</th>
+              <th className="center">{roleLabel("super_admin")}</th>
+              {EDITABLE_ROLES.map((r) => <th key={r} className="center">{roleLabel(r)}</th>)}
             </tr>
           </thead>
           <tbody>
-            {permissions.map((p) => (
+            {permissions.map((p) => {
+              const description = t.permissions[p.key] ?? p.description;
+              return (
               <tr key={p.key}>
-                <td><strong>{p.description}</strong><div className="muted" style={{ fontSize: "0.78rem" }}><code>{p.key}</code></div></td>
-                <td className="center" title="Siempre tiene todos los permisos">✅</td>
+                <td><strong>{description}</strong><div className="muted" style={{ fontSize: "0.78rem" }}><code>{p.key}</code></div></td>
+                <td className="center" title={t.always}>✅</td>
                 {EDITABLE_ROLES.map((role) => (
                   <td key={role} className="center">
-                    <input type="checkbox" checked={has(role, p.key)} aria-label={`${p.description} para ${ROLE_LABELS[role]}`}
+                    <input type="checkbox" checked={has(role, p.key)} aria-label={t.forRole(description, roleLabel(role))}
                       onChange={async (e) => {
-                        await run(() => backend.users.setRolePermission(role, p.key, e.target.checked), "Permiso actualizado");
+                        await run(() => backend.users.setRolePermission(role, p.key, e.target.checked), t.updated);
                         await reload();
                         await refresh();
                       }} />
                   </td>
                 ))}
               </tr>
-            ))}
+              );
+            })}
           </tbody>
         </table>
       </div>

@@ -10,15 +10,11 @@ import { useAsync } from "@/ui/useAsync";
 import { useConfirm } from "@/ui/useConfirm";
 import { AdminPage } from "./AdminLayout";
 import { useSaver } from "./useSaver";
+import { dateFormat, msg, useT } from "@/i18n";
 
 type Draft = Omit<Interruption, "id" | "createdBy"> & { id?: string };
 
-const STYLE_LABELS: Record<InterruptionStyle, string> = {
-  modal: "💌 Ventana con mensaje",
-  banner: "📣 Franja arriba de la página",
-  confetti: "🎉 Confeti + mensaje",
-  hearts: "💖 Lluvia de corazones + mensaje",
-};
+const styleLabel = (style: InterruptionStyle) => msg().admin.surprises.styles[style];
 
 /** datetime-local trabaja en hora local sin zona: convertimos ida y vuelta. */
 const toLocalInput = (iso: string | null) => {
@@ -30,10 +26,11 @@ const fromLocalInput = (value: string) => (value ? new Date(value).toISOString()
 
 function status(i: Interruption): { label: string; tone: string } {
   const now = Date.now();
-  if (!i.isActive) return { label: "pausada", tone: "badge--muted" };
-  if (Date.parse(i.startsAt) > now) return { label: "programada", tone: "" };
-  if (i.endsAt && Date.parse(i.endsAt) <= now) return { label: "terminada", tone: "badge--muted" };
-  return { label: "activa", tone: "badge--success" };
+  const t = msg().admin.surprises.status;
+  if (!i.isActive) return { label: t.paused, tone: "badge--muted" };
+  if (Date.parse(i.startsAt) > now) return { label: t.scheduled, tone: "" };
+  if (i.endsAt && Date.parse(i.endsAt) <= now) return { label: t.ended, tone: "badge--muted" };
+  return { label: t.active, tone: "badge--success" };
 }
 
 export default function InterruptionsAdmin() {
@@ -43,11 +40,15 @@ export default function InterruptionsAdmin() {
   const [confirm, confirmElement] = useConfirm();
   const [draft, setDraft] = useState<Draft | null>(null);
   const { user } = useAuth();
+  const i18n = useT();
+  const a = i18n.admin;
+  const t = a.surprises;
+  const when = dateFormat({ dateStyle: "short", timeStyle: "short" });
   const { data, loading, reload } = useAsync(() => backend.content.listInterruptions("all"), [backend]);
   const { data: profiles } = useAsync(() => backend.users.listProfiles(), [backend]);
   // Una sorpresa siempre es para otra persona: nunca para uno mismo.
   const people = useMemo(() => (profiles ?? []).filter((p) => p.id !== user?.id && p.isActive), [profiles, user?.id]);
-  const nameOf = (id: string | null) => (id ? profiles?.find((p) => p.id === id)?.displayName ?? "alguien" : "todos");
+  const nameOf = (id: string | null) => (id ? profiles?.find((p) => p.id === id)?.displayName ?? i18n.common.someone : t.everyone);
   const newDraft = (): Draft => ({
     title: "", body: "", style: "hearts", startsAt: new Date().toISOString(), endsAt: null, isActive: true, showOnce: true,
     recipientId: people.length === 1 ? people[0]!.id : null,
@@ -60,7 +61,7 @@ export default function InterruptionsAdmin() {
 
   const save = async () => {
     if (!draft?.title.trim() || !draft.recipientId) return;
-    const ok = await run(() => backend.content.saveInterruption(draft), "Sorpresa guardada 🎁");
+    const ok = await run(() => backend.content.saveInterruption(draft), t.saved);
     if (ok) {
       setDraft(null);
       refresh();
@@ -69,27 +70,27 @@ export default function InterruptionsAdmin() {
 
   return (
     <AdminPage
-      title="Sorpresas (interrupciones)"
-      description="Mensajes que le aparecen solos a la persona que elijas cuando abre la página: un “feliz mesiversario”, un “te extraño”… A ti no te salen, y aquí sólo ves las que tú preparaste."
-      actions={<button className="btn" disabled={!people.length} onClick={() => setDraft(newDraft())}>+ Nueva sorpresa</button>}
+      title={t.title}
+      description={t.description}
+      actions={<button className="btn" disabled={!people.length} onClick={() => setDraft(newDraft())}>{t.add}</button>}
     >
-      {loading && !data ? <PageLoader /> : !data?.length ? <EmptyState icon="🎁" title="Aún no has preparado sorpresas">{people.length ? null : "Para preparar una sorpresa debe existir otra cuenta activa."}</EmptyState> : (
+      {loading && !data ? <PageLoader /> : !data?.length ? <EmptyState icon="🎁" title={t.empty}>{people.length ? null : t.needsAnother}</EmptyState> : (
         <div className="list">
           {data.map((i) => {
             const s = status(i);
             return (
               <div key={i.id} className="list__item card">
-                <span className="list__icon" aria-hidden>{STYLE_LABELS[i.style].split(" ")[0]}</span>
+                <span className="list__icon" aria-hidden>{styleLabel(i.style).split(" ")[0]}</span>
                 <span className="grow">
                   <strong>{i.title}</strong> <span className={`badge ${s.tone}`}>{s.label}</span>
                   <span className="muted list__sub">
-                    Para {nameOf(i.recipientId)} · Desde {new Date(i.startsAt).toLocaleString("es-CO")}{i.endsAt ? ` hasta ${new Date(i.endsAt).toLocaleString("es-CO")}` : ""}{i.showOnce ? " · se muestra una vez" : " · siempre"}
+                    {t.summary(nameOf(i.recipientId), when.format(new Date(i.startsAt)), i.endsAt ? when.format(new Date(i.endsAt)) : null, i.showOnce)}
                   </span>
                 </span>
-                <button className="btn btn--sm btn--ghost" onClick={() => setDraft(i)}>Editar</button>
-                <button className="btn btn--sm btn--ghost" aria-label={`Borrar ${i.title}`} onClick={async () => {
-                  if (await confirm({ title: `¿Borrar "${i.title}"?`, confirmLabel: "Borrar", danger: true })) {
-                    await run(() => backend.content.deleteInterruption(i.id), "Sorpresa borrada");
+                <button className="btn btn--sm btn--ghost" onClick={() => setDraft(i)}>{a.edit}</button>
+                <button className="btn btn--sm btn--ghost" aria-label={a.deleteNamed(i.title)} onClick={async () => {
+                  if (await confirm({ title: a.deleteTitle(i.title), confirmLabel: a.delete, danger: true })) {
+                    await run(() => backend.content.deleteInterruption(i.id), t.deleted);
                     refresh();
                   }
                 }}>🗑</button>
@@ -99,32 +100,32 @@ export default function InterruptionsAdmin() {
         </div>
       )}
       {draft && (
-        <Modal title={draft.id ? "Editar sorpresa" : "Nueva sorpresa"} onClose={() => setDraft(null)}
-          footer={<><button className="btn btn--ghost" onClick={() => setDraft(null)}>Cancelar</button><button className="btn" disabled={busy || !draft.title.trim() || !draft.recipientId} onClick={save}>Guardar</button></>}>
+        <Modal title={draft.id ? t.editTitle : t.newTitle} onClose={() => setDraft(null)}
+          footer={<><button className="btn btn--ghost" onClick={() => setDraft(null)}>{i18n.common.cancel}</button><button className="btn" disabled={busy || !draft.title.trim() || !draft.recipientId} onClick={save}>{a.save}</button></>}>
           <div className="stack">
-            <Field label="¿Para quién es?" hint="Sólo esa persona la verá al abrir la página; a ti no te sale.">
+            <Field label={t.forWhom} hint={t.forWhomHint}>
               {(id) => (
                 <select id={id} className="select" required value={draft.recipientId ?? ""} onChange={(e) => setDraft({ ...draft, recipientId: e.target.value || null })}>
-                  <option value="" disabled>Elige a alguien…</option>
+                  <option value="" disabled>{t.choose}</option>
                   {people.map((p) => <option key={p.id} value={p.id}>{p.displayName}</option>)}
                 </select>
               )}
             </Field>
-            <Field label="Título">{(id) => <input id={id} className="input" maxLength={160} value={draft.title} placeholder="¡Feliz mesiversario, mi amor!" onChange={(e) => setDraft({ ...draft, title: e.target.value })} />}</Field>
-            <Field label="Mensaje">{(id) => <textarea id={id} className="textarea" maxLength={2000} value={draft.body} onChange={(e) => setDraft({ ...draft, body: e.target.value })} />}</Field>
-            <Field label="Estilo">
+            <Field label={a.title}>{(id) => <input id={id} className="input" maxLength={160} value={draft.title} placeholder={t.titlePlaceholder} onChange={(e) => setDraft({ ...draft, title: e.target.value })} />}</Field>
+            <Field label={a.message}>{(id) => <textarea id={id} className="textarea" maxLength={2000} value={draft.body} onChange={(e) => setDraft({ ...draft, body: e.target.value })} />}</Field>
+            <Field label={t.style}>
               {(id) => (
                 <select id={id} className="select" value={draft.style} onChange={(e) => setDraft({ ...draft, style: e.target.value as InterruptionStyle })}>
-                  {INTERRUPTION_STYLES.map((s) => <option key={s} value={s}>{STYLE_LABELS[s]}</option>)}
+                  {INTERRUPTION_STYLES.map((s) => <option key={s} value={s}>{styleLabel(s)}</option>)}
                 </select>
               )}
             </Field>
             <div className="form-grid">
-              <Field label="Desde">{(id) => <input id={id} type="datetime-local" className="input" value={toLocalInput(draft.startsAt)} onChange={(e) => setDraft({ ...draft, startsAt: fromLocalInput(e.target.value) ?? new Date().toISOString() })} />}</Field>
-              <Field label="Hasta (opcional)">{(id) => <input id={id} type="datetime-local" className="input" value={toLocalInput(draft.endsAt)} onChange={(e) => setDraft({ ...draft, endsAt: fromLocalInput(e.target.value) })} />}</Field>
+              <Field label={t.from}>{(id) => <input id={id} type="datetime-local" className="input" value={toLocalInput(draft.startsAt)} onChange={(e) => setDraft({ ...draft, startsAt: fromLocalInput(e.target.value) ?? new Date().toISOString() })} />}</Field>
+              <Field label={t.until}>{(id) => <input id={id} type="datetime-local" className="input" value={toLocalInput(draft.endsAt)} onChange={(e) => setDraft({ ...draft, endsAt: fromLocalInput(e.target.value) })} />}</Field>
             </div>
-            <Switch label="Mostrar sólo una vez" checked={draft.showOnce} onChange={(showOnce) => setDraft({ ...draft, showOnce })} />
-            <Switch label="Activa" checked={draft.isActive} onChange={(isActive) => setDraft({ ...draft, isActive })} />
+            <Switch label={t.once} checked={draft.showOnce} onChange={(showOnce) => setDraft({ ...draft, showOnce })} />
+            <Switch label={t.active} checked={draft.isActive} onChange={(isActive) => setDraft({ ...draft, isActive })} />
           </div>
         </Modal>
       )}
