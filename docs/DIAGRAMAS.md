@@ -1339,8 +1339,8 @@ app nunca toca datos de pago.
 flowchart TD
   ENV["VITE_DONATION_URL<br/>(variable de Netlify)"] --> P{"parseDonationUrl<br/>¿https y sin credenciales?"}
   P -- "no o vacía" --> X["Pie sin botón"]
-  P -- "sí" --> H["Cabecera: píldora amarilla «☕ Invítame un café»<br/>(en el celular, sólo ☕)"]
-  P -- "sí" --> B["Pie: botón amarillo grande<br/>Voluntario. La app es y seguirá siendo gratis."]
+  P -- "sí" --> H["Cabecera: píldora compacta «☕ Invítame un café»<br/>color principal de la paleta (en el celular, sólo ☕)"]
+  P -- "sí" --> B["Pie: la misma píldora, color de la paleta<br/>Voluntario. La app es y seguirá siendo gratis."]
   H -- "la persona lo pulsa" --> T
   B -- "la persona lo pulsa" --> T["Pestaña nueva en Ko-fi, Buy Me a Coffee,<br/>GitHub Sponsors, PayPal…<br/>(rel=noopener noreferrer)"]
   T --> PAY["La plataforma cobra con sus propias condiciones"]
