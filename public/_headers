@@ -48,3 +48,15 @@
 # Igual que en vercel.json.
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
+
+# App de celular: el service worker y el manifiesto se revisan en cada visita
+# (así una versión nueva llega enseguida). assetlinks.json lo lee Google para
+# la app de Play Store (docs/APP_CELULAR.md). Igual que en vercel.json.
+/sw.js
+  Cache-Control: no-cache
+/manifest.webmanifest
+  Content-Type: application/manifest+json
+  Cache-Control: no-cache
+/.well-known/assetlinks.json
+  Content-Type: application/json
+  Access-Control-Allow-Origin: *

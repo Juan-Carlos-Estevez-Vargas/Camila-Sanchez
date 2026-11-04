@@ -1,6 +1,11 @@
-/* Service worker: caché para que cargue rápido (y sin conexión) y
- * notificaciones push cuando la app está cerrada. */
-const VERSION = "v4";
+/* Service worker: hace que la app se pueda instalar en el celular, que
+ * cargue rápido y abra sin conexión, y que lleguen notificaciones push con
+ * la app cerrada. */
+/* El build (vite.config.ts → pwaPlugin) reemplaza VERSION por una huella de
+ * los archivos publicados y PRECACHE por la lista de JS/CSS del build: así,
+ * al instalar la app, queda todo descargado para abrir sin internet. */
+const VERSION = "v5-dev";
+const PRECACHE = [];
 const STATIC_CACHE = `static-${VERSION}`;
 const PAGES_CACHE = `pages-${VERSION}`;
 /* Fotos de Supabase Storage. No depende de VERSION: un despliegue nuevo no
@@ -15,9 +20,22 @@ function internalLink(link) {
   return link;
 }
 
+const SHELL = ["/", "/manifest.webmanifest", "/icons/heart.svg", "/icons/icon-192.png"];
+
 self.addEventListener("install", (event) => {
-  event.waitUntil(caches.open(PAGES_CACHE).then((cache) => cache.addAll(["/", "/manifest.webmanifest", "/icons/heart.svg"])));
-  self.skipWaiting();
+  event.waitUntil((async () => {
+    await caches.open(PAGES_CACHE).then((cache) => cache.addAll(SHELL));
+    // Un archivo que falle no debe impedir la instalación: se pide al usarlo.
+    const statics = await caches.open(STATIC_CACHE);
+    await Promise.all(PRECACHE.map((path) => statics.add(path).catch(() => undefined)));
+    // La primera vez toma el control enseguida; una versión nueva espera a
+    // que la persona toque "Actualizar" (src/services/pwa/serviceWorker.ts).
+    if (!self.registration.active) await self.skipWaiting();
+  })());
+});
+
+self.addEventListener("message", (event) => {
+  if (event.data && event.data.type === "SKIP_WAITING") self.skipWaiting();
 });
 
 self.addEventListener("activate", (event) => {
@@ -83,7 +101,10 @@ self.addEventListener("fetch", (event) => {
   // Archivos con hash: inmutables → primero caché.
   if (url.pathname.startsWith("/assets/") || url.pathname.startsWith("/icons/")) {
     event.respondWith(
-      caches.match(request).then((hit) => hit || fetch(request).then((res) => {
+      // ignoreVary: el navegador pide los módulos con cabecera Origin y el
+      // precache los guardó sin ella; si el servidor responde con
+      // "Vary: Origin", sin esto nunca coincidirían y no abriría sin conexión.
+      caches.match(request, { ignoreVary: true }).then((hit) => hit || fetch(request).then((res) => {
         if (res.ok) {
           const copy = res.clone();
           caches.open(STATIC_CACHE).then((c) => c.put(request, copy));
@@ -103,7 +124,8 @@ self.addEventListener("fetch", (event) => {
           caches.open(PAGES_CACHE).then((c) => c.put("/", copy));
           return res;
         })
-        .catch(() => caches.match("/")),
+        // Sin conexión: la app guardada (es una SPA, la ruta la resuelve React).
+        .catch(() => caches.match("/", { cacheName: PAGES_CACHE, ignoreVary: true })),
     );
   }
 });

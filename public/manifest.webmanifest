@@ -1,7 +1,7 @@
 {
   "name": "Nuestro rincón",
   "short_name": "Nosotros",
-  "description": "Nuestros recuerdos, fechas especiales, notitas y chat.",
+  "description": "Nuestros recuerdos, fechas especiales, notitas, chat y listas compartidas, en una app para el celular.",
   "lang": "es-CO",
   "dir": "ltr",
   "id": "/",
@@ -9,12 +9,27 @@
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "any",
   "background_color": "#fff8f6",
   "theme_color": "#b0305a",
+  "prefer_related_applications": false,
+  "launch_handler": { "client_mode": ["navigate-existing", "auto"] },
   "icons": [
-    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
     { "src": "/icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
-    { "src": "/icons/heart.svg", "sizes": "any", "type": "image/svg+xml" }
+    { "src": "/icons/heart.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ],
+  "shortcuts": [
+    { "name": "Chat", "short_name": "Chat", "description": "Abrir el chat", "url": "/chat", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }] },
+    { "name": "Cajita de mensajes", "short_name": "Cajita", "description": "Leer y escribir notitas", "url": "/mensajes", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }] },
+    { "name": "Listas", "short_name": "Listas", "description": "Listas compartidas", "url": "/listas", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }] }
+  ],
+  "screenshots": [
+    { "src": "/screenshots/movil-inicio.png", "sizes": "780x1688", "type": "image/png", "form_factor": "narrow", "label": "Nuestra página: recuerdos y fechas especiales" },
+    { "src": "/screenshots/movil-chat.png", "sizes": "780x1688", "type": "image/png", "form_factor": "narrow", "label": "Chat en tiempo real" },
+    { "src": "/screenshots/movil-listas.png", "sizes": "780x1688", "type": "image/png", "form_factor": "narrow", "label": "Listas compartidas" },
+    { "src": "/screenshots/escritorio-inicio.png", "sizes": "1280x800", "type": "image/png", "form_factor": "wide", "label": "Nuestro rincón en el computador" }
   ]
 }
