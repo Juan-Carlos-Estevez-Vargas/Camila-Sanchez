@@ -22,6 +22,7 @@ página que Google entiende mejor.
 | 2.4.2 / 2.4.3 Títulos y orden del foco | Cada ruta tiene su título; al navegar, el foco va al `h1` y el lector anuncia la página nueva | `SeoController.tsx`, `RouteAnnouncer.tsx` |
 | 2.4.7 / 2.4.11 Foco visible y no tapado | Anillo sólido con contraste garantizado; la cabecera fija nunca tapa lo enfocado (`scroll-padding-top`) | `_reset.scss`, `_mixins.scss` |
 | 2.5.8 Tamaño del objetivo | Botones de al menos 34 px (iconos de 40 px) | `_button.scss` |
+| 3.1.1 / 3.1.2 Idioma de la página | `<html lang>` cambia con el idioma elegido (es-CO, en-US, pt-BR); los legales traducidos avisan que el texto válido es el español | `i18n/store.ts`, `LegalPage.tsx` |
 | 3.3.1 / 3.3.2 Errores y etiquetas | Cada campo tiene etiqueta; ayudas y errores se leen con el campo (`aria-describedby`, `aria-invalid`) | `ui/Field.tsx` |
 | 4.1.2 Nombre, función, valor | Menú, campana, música y pestañas con `aria-expanded`, `aria-pressed`, `aria-selected`; sin controles anidados | `AppHeader.tsx`, `BulkUploadPanel.tsx` |
 | 4.1.3 Mensajes de estado | Errores con `role="alert"`, avisos con `role="status"`, chat como `role="log"`, contadores sin leer dichos en palabras | `ToastContext.tsx`, `ChatPage.tsx` |

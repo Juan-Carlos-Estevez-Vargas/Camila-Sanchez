@@ -39,6 +39,7 @@
 - [Scripts](#scripts)
 - [Arquitectura](#arquitectura)
 - [Seguridad y privacidad](#seguridad-y-privacidad)
+- [Idiomas](#idiomas)
 - [Accesibilidad y SEO](#accesibilidad-y-seo)
 - [Legal y privacidad](#legal-y-privacidad)
 - [Despliegue y versiones](#despliegue-y-versiones)
@@ -96,6 +97,7 @@ Funciona en dos modos:
 | Super admin: usuarios, invitaciones por enlace o QR, roles y permisos, apariencia, secciones, ajustes y auditoría | `/super` | Super admin |
 | Avisos push en el celular: chat, notitas, sorpresas y listas | — | Quien los active |
 | Tutorial guiado según la página y los permisos de cada cuenta | Todas | Todos |
+| Idiomas: español, inglés y portugués. La app arranca en el idioma del dispositivo y se cambia con 🌐 en la cabecera, el pie o **Mi cuenta** | Todas | Todos |
 | Legal: privacidad, términos, cookies, cobros y licencias; aviso de cookies y aceptación de términos | `/legal` | Pública |
 | Botón opcional «Invítame un café», destacado en la cabecera y en el pie (donación voluntaria por un enlace externo) | Cabecera y pie | Todos, si `VITE_DONATION_URL` tiene valor |
 
@@ -167,6 +169,7 @@ src/
   state/      contextos: backend, auth, contenido, tema, notificaciones
   ui/         componentes reutilizables
   features/   site · auth · admin · super · messages · chat · lists · tour
+  i18n/       idiomas: diccionarios tipados (es, en, pt), detección y selector
   styles/     sistema de diseño en SCSS
 supabase/
   migrations/ esquema, RLS, triggers de auditoría y avisos, buckets privados
@@ -230,6 +233,31 @@ Cobertura punto por punto del OWASP Top 10, del API Security Top 10 y de la
 (API keys, secretos, RLS, cifrado, cookies, contraseñas, bots, archivos,
 HTTPS…) en [docs/SEGURIDAD_OWASP.md](docs/SEGURIDAD_OWASP.md). Para reportar una
 vulnerabilidad, sigue la [política de seguridad](SECURITY.md).
+
+## Idiomas
+
+La app está en **español**, **inglés** y **portugués**, sin librerías extra:
+
+- **Arranca en el idioma del dispositivo** (`navigator.languages`): `pt-BR`
+  abre en portugués, `en-GB` en inglés y cualquier otro en español.
+- **Se cambia con 🌐** en la cabecera, en el pie o en **Mi cuenta**. La
+  elección se recuerda en el navegador (`app:lang`) y se refleja en
+  `<html lang>` y en los metadatos SEO.
+- **Diccionarios tipados** en `src/i18n/messages/<idioma>/`: el español es la
+  fuente y define el tipo, así que TypeScript (y una prueba) exigen que cada
+  traducción tenga las mismas claves. El español va en el paquete principal;
+  inglés y portugués se descargan sólo si alguien los usa.
+- **Fechas y números** con `Intl` en el idioma activo.
+- **Errores del servidor:** la base de datos y las Edge Functions responden en
+  español; los mensajes conocidos se muestran traducidos (`core/errors.ts`).
+- **Legales:** el texto en español es el que vale; las versiones en inglés y
+  portugués son traducciones de cortesía y lo dicen arriba.
+- Lo que escribe cada persona (textos de la página, notitas, mensajes) no se
+  traduce.
+
+Para agregar un idioma: crea `src/i18n/messages/<código>/` copiando `en/`,
+suma una fila en `src/i18n/locales.ts` y su cargador en `src/i18n/store.ts`.
+Más detalle en el [manual de arquitectura](docs/ARQUITECTURA.md#idiomas).
 
 ## Accesibilidad y SEO
 

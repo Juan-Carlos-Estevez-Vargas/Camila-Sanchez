@@ -21,6 +21,7 @@ directamente al abrir este archivo. La explicación de cada pieza está en
 - [Perfil de cada persona](#perfil-de-cada-persona)
 - [Listas compartidas](#listas-compartidas)
 - [Tutorial guiado](#tutorial-guiado)
+- [Idiomas](#idiomas)
 - [Capas de seguridad](#capas-de-seguridad)
 - [Integración y despliegue](#integración-y-despliegue)
 - [Modelo de datos](#modelo-de-datos)
@@ -898,6 +899,49 @@ flowchart LR
   O -- "sí" --> SKIP["Se omite"]
   O -- "no" --> F["Primer destino visible<br/>data-tour o ☰ en móvil"]
   F --> L["tourLayout<br/>resaltado + posición de la tarjeta"]
+```
+
+## Idiomas
+
+Cómo elige la app el idioma al abrir y qué pasa al cambiarlo.
+
+```mermaid
+flowchart TD
+  A["Abrir la app (main.tsx)"] --> B{"¿Hay idioma guardado?<br/>localStorage app:lang"}
+  B -- "sí" --> L["Ese idioma"]
+  B -- "no" --> C["navigator.languages<br/>matchLocale()"]
+  C -- "pt-*" --> PT["pt"]
+  C -- "en-*" --> EN["en"]
+  C -- "otro" --> ES["es (base)"]
+  PT --> D["Descarga el diccionario<br/>(chunk aparte)"]
+  EN --> D
+  L --> D
+  ES --> R["Pinta la app"]
+  D --> R
+  R --> H["&lt;html lang&gt;, títulos SEO,<br/>fechas con Intl"]
+```
+
+```mermaid
+sequenceDiagram
+  actor P as Persona
+  participant S as Selector 🌐
+  participant I as i18n/store
+  participant LS as localStorage
+  participant C as Componentes (useT)
+  P->>S: Elige «English»
+  S->>I: setLocale("en")
+  I->>I: import("./messages/en") si no estaba
+  I->>LS: guarda app:lang = en
+  I->>C: avisa a los suscriptores
+  C-->>P: Toda la app en inglés, sin recargar
+```
+
+```mermaid
+flowchart LR
+  DB["Postgres / modo demo<br/>(mensajes en español)"] --> E["core/errors.ts<br/>fromServer() · toUserMessage()"]
+  EF["Edge Functions<br/>(mensajes en español)"] --> E
+  E -- "conocido" --> T["errors.backend / errors.server<br/>del idioma activo"]
+  E -- "desconocido" --> G["Texto tal cual o<br/>«Algo salió mal»"]
 ```
 
 ## Capas de seguridad
