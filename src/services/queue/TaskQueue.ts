@@ -4,6 +4,8 @@
  * fotos no saturan la red ni la memoria del teléfono, y un corte de red
  * momentáneo no hace fallar la subida.
  */
+import { msg } from "@/i18n";
+
 export type TaskStatus = "queued" | "running" | "done" | "error" | "cancelled";
 
 export interface TaskSnapshot<R> {
@@ -77,7 +79,7 @@ export class TaskQueue<R = unknown> {
   add(label: string, run: TaskFn<R>): Promise<R> {
     return new Promise<R>((resolve, reject) => {
       this.entries.push({
-        snapshot: { id: `t${++this.seq}`, label, status: "queued", attempts: 0, progress: 0, stage: "En espera" },
+        snapshot: { id: `t${++this.seq}`, label, status: "queued", attempts: 0, progress: 0, stage: msg().ui.queue.waiting },
         run, controller: new AbortController(), resolve, reject,
       });
       this.emit();
@@ -167,7 +169,7 @@ export class TaskQueue<R = unknown> {
         } catch (error) {
           if (controller.signal.aborted) throw error;
           if (snapshot.attempts > this.retries || !this.shouldRetry(error)) throw error;
-          snapshot.stage = `Reintentando (${snapshot.attempts}/${this.retries})`;
+          snapshot.stage = msg().ui.queue.retrying(snapshot.attempts, this.retries);
           this.emit();
           await this.sleep(this.baseDelayMs * 2 ** (snapshot.attempts - 1), controller.signal);
         }
@@ -183,11 +185,11 @@ export class TaskQueue<R = unknown> {
   private finish(entry: Entry<R>, status: TaskStatus, error?: unknown, result?: R): void {
     entry.snapshot.status = status;
     if (status === "done") {
-      entry.snapshot.stage = "Listo";
+      entry.snapshot.stage = msg().ui.queue.done;
       entry.resolve(result as R);
     } else {
       entry.snapshot.error = error;
-      entry.snapshot.stage = status === "cancelled" ? "Cancelado" : "Error";
+      entry.snapshot.stage = status === "cancelled" ? msg().ui.queue.cancelled : msg().ui.queue.error;
       entry.reject(error);
     }
     this.emit();

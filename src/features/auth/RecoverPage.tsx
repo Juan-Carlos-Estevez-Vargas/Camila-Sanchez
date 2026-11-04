@@ -9,6 +9,7 @@ import { useBackend } from "@/state/BackendContext";
 import { useToast } from "@/state/ToastContext";
 import { EmptyState, PageLoader } from "@/ui/Feedback";
 import { Field } from "@/ui/Field";
+import { useT } from "@/i18n";
 
 type Phase = "verifying" | "ready" | "invalid" | "expired";
 
@@ -45,6 +46,8 @@ export default function RecoverPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const verified = useRef(false);
+  const i18n = useT();
+  const t = i18n.auth.recover;
 
   useEffect(() => {
     if (link.kind !== "token" || verified.current) return;
@@ -65,9 +68,9 @@ export default function RecoverPage() {
   if (phase === "invalid" || phase === "expired") {
     return (
       <main id="contenido-principal" className="gate">
-        <EmptyState icon="🔑" title={phase === "expired" ? "Este enlace ya venció" : "Este enlace ya no es válido"}>
-          <p className="muted">Los enlaces para recuperar la contraseña sirven una sola vez y duran poco. Pide uno nuevo.</p>
-          <Link className="btn" to="/entrar?modo=recuperar">Pedir otro enlace</Link>
+        <EmptyState icon="🔑" title={phase === "expired" ? t.expired : t.invalid}>
+          <p className="muted">{t.explain}</p>
+          <Link className="btn" to="/entrar?modo=recuperar">{t.askAgain}</Link>
         </EmptyState>
       </main>
     );
@@ -78,11 +81,11 @@ export default function RecoverPage() {
     setError(null);
     const problem = passwordProblem(form.password, [user?.email]);
     if (problem) return setError(problem);
-    if (form.password !== form.confirm) return setError("Las contraseñas no coinciden.");
+    if (form.password !== form.confirm) return setError(i18n.auth.mismatch);
     setBusy(true);
     try {
       await backend.auth.updatePassword(form.password, { signOutOthers: true });
-      toast.success("Contraseña nueva guardada 🔐");
+      toast.success(t.saved);
       navigate("/", { replace: true });
     } catch (err) {
       setError(toUserMessage(err));
@@ -94,20 +97,20 @@ export default function RecoverPage() {
     <main id="contenido-principal" className="gate">
       <form className="gate__card card stack" onSubmit={submit} noValidate>
         <div className="gate__heart" aria-hidden>🔑</div>
-        <h1 style={{ fontSize: "2rem" }}>Crea tu contraseña nueva</h1>
+        <h1 style={{ fontSize: "2rem" }}>{t.title}</h1>
         {user?.email && (
-          <p className="muted" style={{ margin: 0, textAlign: "center" }}>Para la cuenta <strong>{user.email}</strong></p>
+          <p className="muted" style={{ margin: 0, textAlign: "center" }}>{t.forAccount} <strong>{user.email}</strong></p>
         )}
         <input type="email" autoComplete="username" value={user?.email ?? ""} readOnly hidden />
-        <Field label="Contraseña nueva" hint={`Mínimo ${MIN_PASSWORD_LENGTH} caracteres`}>
+        <Field label={i18n.auth.newPassword} hint={i18n.auth.minChars(MIN_PASSWORD_LENGTH)}>
           {(id) => <input id={id} className="input" type="password" autoComplete="new-password" minLength={MIN_PASSWORD_LENGTH} required autoFocus value={form.password} onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))} />}
         </Field>
-        <Field label="Repite la contraseña">
+        <Field label={i18n.auth.repeatPassword}>
           {(id) => <input id={id} className="input" type="password" autoComplete="new-password" required value={form.confirm} onChange={(e) => setForm((f) => ({ ...f, confirm: e.target.value }))} />}
         </Field>
-        <p className="field__hint" style={{ margin: 0 }}>Al guardarla se cerrará tu sesión en los demás dispositivos.</p>
+        <p className="field__hint" style={{ margin: 0 }}>{t.signOutOthers}</p>
         {error && <p className="field__error" role="alert">{error}</p>}
-        <button className="btn btn--block" disabled={busy}>{busy ? "Guardando…" : "Guardar y entrar"}</button>
+        <button className="btn btn--block" disabled={busy}>{busy ? i18n.common.saving : t.submit}</button>
       </form>
     </main>
   );

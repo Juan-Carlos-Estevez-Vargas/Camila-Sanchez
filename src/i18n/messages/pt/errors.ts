@@ -1,0 +1,31 @@
+import type { Messages } from "@/i18n";
+
+export const errors: Messages["errors"] = {
+  badCredentials: "E-mail ou senha incorretos.",
+  emailNotConfirmed: "Confirme seu e-mail antes de entrar.",
+  forbidden: "Você não tem permissão para fazer isso.",
+  network: "Parece que não há conexão. Tente de novo.",
+  tooLarge: "A imagem é pesada demais.",
+  rateLimitEmail: "Espere alguns minutos antes de pedir outro e-mail.",
+  samePassword: "A nova senha deve ser diferente da anterior.",
+  weakPassword: "Essa senha é muito fraca: use pelo menos 10 caracteres.",
+  tooFast: "Você está indo rápido demais 😅 Espere um pouquinho e tente de novo.",
+  lastSuperAdmin: "Deve restar pelo menos um super administrador ativo.",
+  generic: "Algo deu errado. Tente de novo em um momento.",
+  server: {
+    invalidLink: "Este link não é mais válido. Peça um novo.",
+    invalidEmail: "Escreva um e-mail válido.",
+    nameRequired: "Escreva seu nome.",
+    emailTaken: "Já existe uma conta com esse e-mail.",
+    cantCreate: "Não consegui criar a conta. Tente de novo.",
+    unexpected: "Erro inesperado. Tente de novo.",
+    invalidSession: "Sessão inválida",
+    invalidEmailOrName: "E-mail ou nome inválidos",
+    missingUser: "Falta o usuário",
+    cantDeleteSelf: "Você não pode excluir sua própria conta",
+    cantDeactivateSelf: "Você não pode desativar sua própria conta",
+    userNotFound: "Esse usuário não existe",
+    captcha: "Não consegui verificar que você não é um robô. Recarregue a página e tente de novo.",
+    tooMany: "Você está indo rápido demais: espere alguns minutos e tente de novo.",
+  },
+};

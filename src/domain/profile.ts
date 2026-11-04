@@ -1,6 +1,7 @@
 /** Reglas del perfil de cada persona: iniciales, icono y cumpleaños. */
 import { daysUntil, parseIsoDate } from "./dates";
 import type { IsoDate } from "./types";
+import { dateFormat, msg } from "@/i18n";
 
 export const AVATAR_EMOJIS = [
   "💖", "🌸", "🌻", "🌙", "⭐", "🦋", "🐱", "🐶", "🐻", "🐰", "🦊", "🐼",
@@ -14,7 +15,6 @@ export function initialOf(name: string): string {
   return [...name.trim()][0]?.toUpperCase() ?? "?";
 }
 
-const birthdayFormatter = new Intl.DateTimeFormat("es-CO", { day: "numeric", month: "long" });
 
 export interface BirthdayInfo {
   /** «15 de marzo» (sin el año). */
@@ -32,13 +32,14 @@ export function birthdayInfo(birthday: IsoDate, now: Date = new Date()): Birthda
   };
   let next = on(now.getFullYear());
   if (daysUntil(next, now) < 0) next = on(now.getFullYear() + 1);
-  return { label: birthdayFormatter.format(born), daysLeft: daysUntil(next, now) };
+  return { label: dateFormat({ day: "numeric", month: "long" }).format(born), daysLeft: daysUntil(next, now) };
 }
 
 /** «¡Hoy es su cumpleaños! 🎂», «Mañana cumple años», «En 12 días» o nada si falta mucho. */
 export function birthdayCountdown(info: BirthdayInfo): string | null {
-  if (info.daysLeft === 0) return "¡Hoy es su cumpleaños! 🎂";
-  if (info.daysLeft === 1) return "Mañana cumple años 🎈";
-  if (info.daysLeft <= 30) return `Cumple en ${info.daysLeft} días`;
+  const t = msg().auth.profile;
+  if (info.daysLeft === 0) return t.today;
+  if (info.daysLeft === 1) return t.tomorrow;
+  if (info.daysLeft <= 30) return t.inDays(info.daysLeft);
   return null;
 }

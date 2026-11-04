@@ -4,6 +4,7 @@
  * entra sin cuenta), las tipografías, los bordes, el modo oscuro y los
  * efectos son cosa del super administrador.
  */
+import { msg } from "@/i18n";
 import type { ThemeTokens } from "./types";
 
 export const PALETTE_KEYS = ["primary", "primaryContrast", "accent", "background", "surface", "text", "muted"] as const;
@@ -75,6 +76,15 @@ export const PALETTES: readonly Palette[] = [
     colors: { primary: "#e05a84", primaryContrast: "#1c0d15", accent: "#f0c674", background: "#16121c", surface: "#211b29", text: "#f4eaf0", muted: "#b3a2ad" },
   },
 ];
+
+/** Nombre de la paleta en el idioma activo. */
+export function paletteName(palette: Palette): string {
+  return msg().theme.palettes[palette.id]?.name ?? palette.name;
+}
+
+export function paletteDescription(palette: Palette): string {
+  return msg().theme.palettes[palette.id]?.description ?? palette.description;
+}
 
 export function pickPalette(theme: ThemeTokens): PaletteColors {
   return Object.fromEntries(PALETTE_KEYS.map((k) => [k, theme[k]])) as PaletteColors;

@@ -1,5 +1,5 @@
 import { FunctionsHttpError } from "@supabase/supabase-js";
-import { AppError } from "@/core/errors";
+import { AppError, fromServer } from "@/core/errors";
 import type {
   AuthGateway, Backend, ContentRepository, InvitationRepository, LegalRepository, ListsRepository, MessagingRepository, PhotoRepository,
   PushRepository, RealtimeChange, RealtimeGateway, RealtimeTable, UserRepository,
@@ -549,11 +549,11 @@ async function invokeFunction<T>(name: string, body: Record<string, unknown>): P
   if (error) {
     if (error instanceof FunctionsHttpError) {
       const payload = (await (error.context as Response).json().catch(() => null)) as { error?: string } | null;
-      if (payload?.error) throw new AppError(payload.error, { cause: error });
+      if (payload?.error) throw new AppError(fromServer(payload.error), { cause: error });
     }
     throw new Error(error.message, { cause: error });
   }
-  if (data?.error) throw new AppError(data.error);
+  if (data?.error) throw new AppError(fromServer(data.error));
   return data as T;
 }
 
