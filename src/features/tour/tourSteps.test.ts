@@ -18,8 +18,8 @@ describe("recorrido del tutorial", () => {
   });
 
   it("a quien visita sin cuenta le enseña la página y cómo entrar", () => {
-    expect(ids("/", null)).toEqual(["welcome", "site", "music", "nav-entrar", "launcher"]);
-    expect(ids("/entrar", null)).toEqual(["welcome", "login-form", "login-modes", "launcher"]);
+    expect(ids("/", null)).toEqual(["welcome", "site", "music", "nav-entrar", "language", "launcher"]);
+    expect(ids("/entrar", null)).toEqual(["welcome", "login-form", "login-modes", "language", "launcher"]);
   });
 
   it("muestra sólo las partes del menú que la cuenta puede usar", () => {
