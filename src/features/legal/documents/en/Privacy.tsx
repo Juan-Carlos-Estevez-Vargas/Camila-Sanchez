@@ -65,8 +65,9 @@ export function Privacy() {
         </tbody>
       </table>
       <p>
-        The GitHub, LinkedIn or Instagram links in the footer only take you to those sites if you open them; the app
-        loads nothing from them. If the page has background music, the file is requested from its server only when you press ♪.
+        The GitHub, LinkedIn or Instagram links and the donation button ("Buy me a coffee") in the footer only take you to
+        those sites if you open them; the app loads nothing from them. If you donate, that platform handles your data under
+        its own policy. If the page has background music, the file is requested from its server only when you press ♪.
       </p>
 
       <h2>5. Where it is stored</h2>
