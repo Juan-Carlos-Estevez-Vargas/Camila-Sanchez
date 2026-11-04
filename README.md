@@ -257,8 +257,8 @@ Más en [docs/ACCESIBILIDAD.md](docs/ACCESIBILIDAD.md).
   cuenta, diálogo único para cuentas existentes o cuando cambia
   `LEGAL_VERSION`, y registro inmutable en `legal_consents`.
 - **Donación voluntaria, sin publicidad:** con `VITE_DONATION_URL` la cabecera y el pie
-  muestran «☕ Invítame un café» (píldora amarilla en la cabecera y botón
-  grande en el pie), un enlace normal a Ko-fi, Buy Me a Coffee,
+  muestran «☕ Invítame un café» (píldora compacta con el color principal de la
+  paleta de cada persona, en la cabecera y en el pie), un enlace normal a Ko-fi, Buy Me a Coffee,
   GitHub Sponsors o PayPal. No carga scripts ni cookies, no toca la CSP y
   no desbloquea nada. Vacía, no aparece.
 - Auditoría de SDKs y de patrones oscuros, inventario de datos, texto

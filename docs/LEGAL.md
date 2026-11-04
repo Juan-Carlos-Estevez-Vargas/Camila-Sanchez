@@ -176,7 +176,7 @@ enlace de donación voluntaria:
 - Sólo se aceptan URLs `https` sin credenciales (`src/core/donation.ts`, con
   pruebas). Si la variable está vacía o es inválida, el botón no aparece.
 - Está etiquetado como voluntario y no desbloquea nada. Se ve en la cabecera
-  (píldora amarilla; en el celular sólo ☕, con nombre accesible completo) y
+  (píldora compacta con el color principal de la paleta; en el celular sólo ☕, con nombre accesible completo) y
   en el pie con la nota «Voluntario». No aparece dentro del chat, los
   recuerdos ni las sorpresas, y no se mueve ni parpadea.
 - `/legal/reembolsos` y la política de privacidad explican que el pago lo
