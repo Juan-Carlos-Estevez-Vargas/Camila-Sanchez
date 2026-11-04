@@ -4,14 +4,15 @@
  */
 import { stickerById } from "./stickers";
 import type { ChatConversation, ChatKind, ChatMessage, ChatParticipant, ChatPresence, ChatReaction, Uuid } from "./types";
+import { dateFormat, msg } from "@/i18n";
 
 /** Cada cuánto avisa la app de que la persona sigue conectada. */
 export const PRESENCE_HEARTBEAT_MS = 30_000;
 /** Margen para seguir mostrando «en línea» (dos latidos y un poco). */
 export const ONLINE_WINDOW_MS = 75_000;
 
-const time = new Intl.DateTimeFormat("es-CO", { hour: "numeric", minute: "2-digit" });
-const day = new Intl.DateTimeFormat("es-CO", { day: "numeric", month: "long" });
+const time = () => dateFormat({ hour: "numeric", minute: "2-digit" });
+const day = () => dateFormat({ day: "numeric", month: "long" });
 
 function startOfDay(date: Date): number {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
@@ -28,13 +29,14 @@ export function isOnline(lastSeenAt: string, now: Date = new Date()): boolean {
  */
 export function lastSeenLabel(lastSeenAt: string, now: Date = new Date()): string {
   const seen = new Date(lastSeenAt);
-  if (isOnline(lastSeenAt, now)) return "en línea";
+  const t = msg().chat;
+  if (isOnline(lastSeenAt, now)) return t.online;
   const minutes = Math.max(1, Math.round((now.getTime() - seen.getTime()) / 60_000));
-  if (minutes < 60) return `últ. vez hace ${minutes} min`;
+  if (minutes < 60) return t.lastSeen.minutes(minutes);
   const days = Math.round((startOfDay(now) - startOfDay(seen)) / 86_400_000);
-  if (days <= 0) return `últ. vez hoy a las ${time.format(seen)}`;
-  if (days === 1) return `últ. vez ayer a las ${time.format(seen)}`;
-  return `últ. vez el ${day.format(seen)}`;
+  if (days <= 0) return t.lastSeen.today(time().format(seen));
+  if (days === 1) return t.lastSeen.yesterday(time().format(seen));
+  return t.lastSeen.on(day().format(seen));
 }
 
 export type Receipt = "sending" | "failed" | "sent" | "delivered" | "read";
@@ -72,14 +74,15 @@ export function quoteSnippet(body: string, max = 90): string {
 
 /** Texto corto de cualquier mensaje: para citas y avisos. */
 export function messagePreview(message: { kind?: ChatKind; body: string; sticker?: string | null; deleted?: boolean; deletedAt?: string | null }, max = 90): string {
-  if (message.deleted || message.deletedAt) return DELETED_LABEL;
+  const t = msg().chat;
+  if (message.deleted || message.deletedAt) return t.deleted;
   if (message.kind === "sticker") {
     const sticker = stickerById(message.sticker);
-    return `${sticker.emoji} Sticker «${sticker.text}»`;
+    return t.stickerPreview(sticker.emoji, sticker.text);
   }
   if (message.kind === "image") {
     const caption = quoteSnippet(message.body, Math.max(max - 9, 10));
-    return caption ? `📷 Foto: ${caption}` : "📷 Foto";
+    return caption ? t.photoWithCaption(caption) : t.photoPreview;
   }
   return quoteSnippet(message.body, max);
 }
@@ -89,8 +92,10 @@ export function upsertPresence(list: readonly ChatPresence[], next: ChatPresence
   return [...list.filter((p) => p.userId !== next.userId), next];
 }
 
-/** Texto que queda en lugar de un mensaje borrado para todos. */
-export const DELETED_LABEL = "🚫 Se eliminó este mensaje";
+/** Texto que queda en lugar de un mensaje borrado para todos (en el idioma activo). */
+export function deletedLabel(): string {
+  return msg().chat.deleted;
+}
 
 /** Reacciones disponibles (las mismas que acepta la base de datos). */
 export const REACTIONS = ["❤️", "😂", "😮", "😢", "🙏", "👍", "🔥", "🥰"] as const;
@@ -158,17 +163,16 @@ export function matchesSearch(text: string, query: string): boolean {
   return q === "" || normalizeSearch(text).includes(q);
 }
 
-const weekday = new Intl.DateTimeFormat("es-CO", { weekday: "long" });
-const shortDate = new Intl.DateTimeFormat("es-CO", { day: "numeric", month: "numeric", year: "2-digit" });
+
 
 /** Hora de la bandeja: «3:15 p. m.», «ayer», «lunes» o «12/10/26». */
 export function inboxTime(iso: string, now: Date = new Date()): string {
   const date = new Date(iso);
   const days = Math.round((startOfDay(now) - startOfDay(date)) / 86_400_000);
-  if (days <= 0) return time.format(date);
-  if (days === 1) return "ayer";
-  if (days < 7) return weekday.format(date);
-  return shortDate.format(date);
+  if (days <= 0) return time().format(date);
+  if (days === 1) return msg().chat.yesterday;
+  if (days < 7) return dateFormat({ weekday: "long" }).format(date);
+  return dateFormat({ day: "numeric", month: "numeric", year: "2-digit" }).format(date);
 }
 
 /**
