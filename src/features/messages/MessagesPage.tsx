@@ -14,22 +14,18 @@ import { useConfirm } from "@/ui/useConfirm";
 import { burst } from "@/features/site/effects/FloatingEffects";
 import { EnableNotifications } from "./EnableNotifications";
 import "./styles/messages.scss";
+import { msg, useT } from "@/i18n";
 
-export const NOTE_KIND_META: Record<NoteKind, { icon: string; label: string; placeholder: string }> = {
-  love: { icon: "💌", label: "Te amo", placeholder: "Hoy te quiero decir que…" },
-  apology: { icon: "🥺", label: "Perdón", placeholder: "Quiero pedirte perdón por…" },
-  note: { icon: "✉️", label: "Notita", placeholder: "Solo pasaba a decirte…" },
-  surprise: { icon: "🎁", label: "Sorpresa", placeholder: "Tengo algo para ti…" },
-  reminder: { icon: "⏰", label: "Recordatorio", placeholder: "No olvides que…" },
-};
+const NOTE_KIND_ICONS: Record<NoteKind, string> = { love: "💌", apology: "🥺", note: "✉️", surprise: "🎁", reminder: "⏰" };
+
+/** Icono, nombre y texto de ayuda de cada tipo de notita, en el idioma activo. */
+function noteKindMeta(kind: NoteKind): { icon: string; label: string; placeholder: string } {
+  return { icon: NOTE_KIND_ICONS[kind], ...msg().notes.kinds[kind] };
+}
 
 type Tab = "inbox" | "sent" | "write";
 
-const TABS: { id: Tab; label: string }[] = [
-  { id: "inbox", label: "Recibidas" },
-  { id: "sent", label: "Enviadas" },
-  { id: "write", label: "✍️ Escribir" },
-];
+const TAB_IDS: Tab[] = ["inbox", "sent", "write"];
 
 function Compose({ people, onSent }: { people: Profile[]; onSent(): void }) {
   const backend = useBackend();
@@ -39,6 +35,7 @@ function Compose({ people, onSent }: { people: Profile[]; onSent(): void }) {
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [busy, setBusy] = useState(false);
+  const t = useT().notes;
 
   const send = async (e: FormEvent) => {
     e.preventDefault();
@@ -46,8 +43,8 @@ function Compose({ people, onSent }: { people: Profile[]; onSent(): void }) {
     setBusy(true);
     try {
       await backend.messaging.sendNote({ recipientId, kind, title: title.trim(), body: body.trim() });
-      burst([NOTE_KIND_META[kind].icon, "💖", "✨"], 24);
-      toast.success("Notita enviada 💌", "Le llegará un aviso al instante.");
+      burst([noteKindMeta(kind).icon, "💖", "✨"], 24);
+      toast.success(t.sent, t.sentBody);
       setTitle("");
       setBody("");
       onSent();
@@ -58,20 +55,20 @@ function Compose({ people, onSent }: { people: Profile[]; onSent(): void }) {
     }
   };
 
-  if (!people.length) return <EmptyState icon="🫂" title="Aún no hay a quién escribirle">El administrador debe crear otra cuenta.</EmptyState>;
+  if (!people.length) return <EmptyState icon="🫂" title={t.noPeople}>{t.noPeopleHint}</EmptyState>;
 
   return (
     <form className="card stack" onSubmit={send}>
-      <div className="kind-picker" role="radiogroup" aria-label="Tipo de notita" onKeyDown={onRovingKeyDown}>
+      <div className="kind-picker" role="radiogroup" aria-label={t.kindGroup} onKeyDown={onRovingKeyDown}>
         {NOTE_KINDS.map((k) => (
           <button key={k} type="button" role="radio" aria-checked={kind === k} tabIndex={rovingTabIndex(kind === k)} className={`kind-chip${kind === k ? " is-active" : ""}`} onClick={() => setKind(k)}>
-            <span aria-hidden>{NOTE_KIND_META[k].icon}</span> {NOTE_KIND_META[k].label}
+            <span aria-hidden>{noteKindMeta(k).icon}</span> {noteKindMeta(k).label}
           </button>
         ))}
       </div>
       <div className="form-grid">
         {people.length > 1 && (
-          <Field label="Para">
+          <Field label={t.to}>
             {(id) => (
               <select id={id} className="select" value={recipientId} onChange={(e) => setRecipientId(e.target.value)}>
                 {people.map((p) => <option key={p.id} value={p.id}>{p.displayName}</option>)}
@@ -79,31 +76,32 @@ function Compose({ people, onSent }: { people: Profile[]; onSent(): void }) {
             )}
           </Field>
         )}
-        <Field label="Título (opcional)">{(id) => <input id={id} className="input" maxLength={160} value={title} onChange={(e) => setTitle(e.target.value)} />}</Field>
+        <Field label={t.titleOptional}>{(id) => <input id={id} className="input" maxLength={160} value={title} onChange={(e) => setTitle(e.target.value)} />}</Field>
       </div>
-      <Field label={people.length === 1 ? `Para ${people[0]!.displayName}` : "Mensaje"} hint={`${body.length}/4000`}>
-        {(id) => <textarea id={id} className="textarea" rows={6} maxLength={4000} required placeholder={NOTE_KIND_META[kind].placeholder} value={body} onChange={(e) => setBody(e.target.value)} />}
+      <Field label={people.length === 1 ? t.toPerson(people[0]!.displayName) : t.message} hint={`${body.length}/4000`}>
+        {(id) => <textarea id={id} className="textarea" rows={6} maxLength={4000} required placeholder={noteKindMeta(kind).placeholder} value={body} onChange={(e) => setBody(e.target.value)} />}
       </Field>
-      <button className="btn" disabled={busy || !body.trim()}>{busy ? "Enviando…" : `Enviar ${NOTE_KIND_META[kind].icon}`}</button>
+      <button className="btn" disabled={busy || !body.trim()}>{busy ? t.sending : t.send(noteKindMeta(kind).icon)}</button>
     </form>
   );
 }
 
 function Envelope({ note, from, mine, onOpen, onDelete }: { note: Note; from: string; mine: boolean; onOpen(): void; onDelete(): void }) {
-  const meta = NOTE_KIND_META[note.kind];
+  const meta = noteKindMeta(note.kind);
   const unread = !mine && !note.readAt;
+  const t = useT().notes;
   return (
     <article className={`envelope card card--interactive${unread ? " is-unread" : ""}`}>
-      <button className="envelope__open" onClick={onOpen} aria-label={`${unread ? "Nueva notita" : "Abrir notita"} ${mine ? `para ${from}` : `de ${from}`}: ${note.title || meta.label}`}>
+      <button className="envelope__open" onClick={onOpen} aria-label={t.openLabel(unread, mine, from, note.title || meta.label)}>
         <span className="envelope__icon" aria-hidden>{unread ? "💌" : meta.icon}</span>
         <span className="envelope__text">
           <strong>{note.title || meta.label}</strong>
-          <span className="muted envelope__meta">{mine ? `Para ${from}` : `De ${from}`} · {formatRelative(note.createdAt)}{mine && note.readAt ? " · leída ✓" : ""}</span>
+          <span className="muted envelope__meta">{mine ? t.toWho(from) : t.fromWho(from)} · {formatRelative(note.createdAt)}{mine && note.readAt ? t.read : ""}</span>
           {!unread && <span className="envelope__preview">{note.body}</span>}
         </span>
-        {unread && <span className="badge">Nueva</span>}
+        {unread && <span className="badge">{t.newBadge}</span>}
       </button>
-      <button className="btn btn--icon btn--ghost btn--sm envelope__delete" aria-label={`Borrar notita: ${note.title || meta.label}`} onClick={onDelete}><span aria-hidden>🗑</span></button>
+      <button className="btn btn--icon btn--ghost btn--sm envelope__delete" aria-label={t.deleteLabel(note.title || meta.label)} onClick={onDelete}><span aria-hidden>🗑</span></button>
     </article>
   );
 }
@@ -121,7 +119,9 @@ export default function MessagesPage() {
     [backend],
   );
   const [notes = [], profiles = []] = data ?? [];
-  const nameOf = (id: string) => profiles.find((p) => p.id === id)?.displayName ?? "Alguien";
+  const i18n = useT();
+  const t = i18n.notes;
+  const nameOf = (id: string) => profiles.find((p) => p.id === id)?.displayName ?? i18n.common.someone;
   const people = useMemo(() => profiles.filter((p) => p.id !== user?.id && p.isActive), [profiles, user?.id]);
   const inbox = notes.filter((n) => n.recipientId === user?.id);
   const sent = notes.filter((n) => n.senderId === user?.id);
@@ -134,14 +134,14 @@ export default function MessagesPage() {
   const openNote = async (note: Note) => {
     setOpen(note);
     if (note.recipientId === user?.id && !note.readAt) {
-      burst([NOTE_KIND_META[note.kind].icon, "💖"], 20);
+      burst([noteKindMeta(note.kind).icon, "💖"], 20);
       await backend.messaging.markNoteRead(note.id).catch(() => undefined);
       void reload();
     }
   };
 
   const remove = async (note: Note) => {
-    if (!(await confirm({ title: "¿Borrar esta notita?", body: "Se borra para los dos.", confirmLabel: "Borrar", danger: true }))) return;
+    if (!(await confirm({ title: t.confirmDelete, body: t.confirmDeleteBody, confirmLabel: t.deleteButton, danger: true }))) return;
     try {
       await backend.messaging.deleteNote(note.id);
       await reload();
@@ -155,16 +155,16 @@ export default function MessagesPage() {
   return (
     <main id="contenido-principal" className="container messages">
       <header className="messages__header">
-        <h1>Cajita de mensajes</h1>
-        <p className="muted">Notitas, perdones, “te amo” y sorpresas. Les llega un aviso al instante.</p>
+        <h1>{t.title}</h1>
+        <p className="muted">{t.intro}</p>
       </header>
       <EnableNotifications />
-      <div className="tabs" role="tablist" aria-label="Notitas" data-tour="notes-tabs" onKeyDown={onRovingKeyDown}>
-        {TABS.map(({ id, label }) => (
+      <div className="tabs" role="tablist" aria-label={t.tablist} data-tour="notes-tabs" onKeyDown={onRovingKeyDown}>
+        {TAB_IDS.map((id) => ({ id, label: t.tabs[id] })).map(({ id, label }) => (
           <button key={id} id={`notas-tab-${id}`} role="tab" className="tab" aria-selected={tab === id} aria-controls="notas-panel"
             tabIndex={rovingTabIndex(tab === id)} onClick={() => setTab(id)}>
             {label}
-            {id === "inbox" && unread > 0 && <><span className="counter-dot" aria-hidden>{unread}</span><span className="visually-hidden">({unread} sin leer)</span></>}
+            {id === "inbox" && unread > 0 && <><span className="counter-dot" aria-hidden>{unread}</span><span className="visually-hidden">{t.unread(unread)}</span></>}
           </button>
         ))}
       </div>
@@ -172,8 +172,8 @@ export default function MessagesPage() {
       {loading && !data ? <PageLoader /> : tab === "write" ? (
         <Compose people={people} onSent={() => { void reload(); setTab("sent"); }} />
       ) : list.length === 0 ? (
-        <EmptyState icon={tab === "inbox" ? "📭" : "📮"} title={tab === "inbox" ? "Tu cajita está vacía por ahora" : "Aún no has enviado notitas"}>
-          <button className="btn btn--soft" onClick={() => setTab("write")}>Escribir una</button>
+        <EmptyState icon={tab === "inbox" ? "📭" : "📮"} title={tab === "inbox" ? t.emptyInbox : t.emptySent}>
+          <button className="btn btn--soft" onClick={() => setTab("write")}>{t.writeOne}</button>
         </EmptyState>
       ) : (
         <div className="envelopes">
@@ -185,7 +185,7 @@ export default function MessagesPage() {
       )}
       </div>
       {open && (
-        <Modal title={<>{NOTE_KIND_META[open.kind].icon} {open.title || NOTE_KIND_META[open.kind].label}</>} onClose={() => setOpen(null)}>
+        <Modal title={<>{noteKindMeta(open.kind).icon} {open.title || noteKindMeta(open.kind).label}</>} onClose={() => setOpen(null)}>
           <div className="letter-paper">
             {open.body.split("\n").map((line, i) => <p key={i}>{line}</p>)}
             <p className="letter-paper__from">— {nameOf(open.senderId)}, {formatRelative(open.createdAt)}</p>
