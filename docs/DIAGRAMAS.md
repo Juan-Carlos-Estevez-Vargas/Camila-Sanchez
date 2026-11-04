@@ -944,6 +944,19 @@ flowchart LR
   E -- "desconocido" --> G["Texto tal cual o<br/>«Algo salió mal»"]
 ```
 
+El contenido que se escribe en el panel: el original en español y, en cada
+fila, sus traducciones.
+
+```mermaid
+flowchart LR
+  ED["Editor del panel<br/>pestañas Español · English · Português"] -- "original" --> COL["Columnas de la fila<br/>title, subtitle, content…"]
+  ED -- "traducción" --> TR["translations (jsonb)<br/>{ en: {…}, pt: {…} }"]
+  COL --> LZ["localizeContent()<br/>superpone la traducción<br/>del idioma activo"]
+  TR --> LZ
+  LZ --> PG["Página, cabecera y SEO<br/>(useLocalizedContent)"]
+  LZ -. "texto sin traducir" .-> ES["Se muestra en español"]
+```
+
 ## Capas de seguridad
 
 Qué frena a cada amenaza de la
