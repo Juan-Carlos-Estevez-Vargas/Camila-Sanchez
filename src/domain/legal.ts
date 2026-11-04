@@ -16,7 +16,7 @@
 export const LEGAL_VERSION = "2026-11-03";
 
 /** Fecha que se muestra como «última actualización» en cada documento. */
-export const LEGAL_UPDATED_ON = "2026-11-03";
+export const LEGAL_UPDATED_ON = "2026-11-04";
 
 /** Quién es el responsable del tratamiento de los datos (Ley 1581, art. 3). */
 export const DATA_CONTROLLER = {
