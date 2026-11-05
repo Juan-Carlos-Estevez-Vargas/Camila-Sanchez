@@ -118,3 +118,34 @@
   white-space: pre-wrap;
   word-break: break-word;
 }
+
+// Filtros de Auditoría: mes, sección, acción, persona y orden.
+.audit-filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  align-items: end;
+  gap: space(3);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+
+  &__clear { justify-self: start; min-height: $control-height; }
+}
+
+// Encabezado "Cuándo" que cambia el orden al tocarlo.
+.audit-sort {
+  display: inline-flex;
+  align-items: center;
+  gap: space(1);
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  color: inherit;
+  cursor: pointer;
+
+  &:hover { color: var(--c-text); }
+}

@@ -6,6 +6,7 @@
  *   - data/demo:     todo en el navegador, para probar sin backend.
  * La fábrica de data/backend.ts elige uno al arrancar (patrón Strategy).
  */
+import type { AuditFilters } from "@/domain/audit";
 import type {
   AppNotification, AuditEntry, ChatContact, ChatConversation, ChatMessage, ChatParticipant, ChatPerson, ChatPresence, ImportantDate, Interruption, Invitation, InvitableRole,
   Milestone, Note, NoteKind, PermissionDefinition, Photo, PhotoUrls, Profile, Role, RolePermission,
@@ -250,7 +251,21 @@ export interface UserRepository {
   deleteUser(id: Uuid): Promise<void>;
   /** Token para un enlace de recuperación de contraseña, sin enviar correo. */
   createRecoveryLink(id: Uuid): Promise<string>;
-  listAudit(options: { page: number; pageSize: number; table?: string }): Promise<AuditEntry[]>;
+  /** Una página del registro con los filtros aplicados y el total que cumple esos filtros. */
+  listAudit(query: AuditQuery): Promise<AuditPage>;
+}
+
+export interface AuditQuery extends AuditFilters {
+  page: number;
+  pageSize: number;
+  /** Por fecha: "desc" (más recientes primero, por defecto) o "asc". */
+  order?: "asc" | "desc";
+}
+
+export interface AuditPage {
+  entries: AuditEntry[];
+  /** Cuántos registros cumplen los filtros, para calcular las páginas. */
+  total: number;
 }
 
 export interface CreatedInvitation {
