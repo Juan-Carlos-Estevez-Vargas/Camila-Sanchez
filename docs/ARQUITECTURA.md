@@ -109,7 +109,7 @@ escucha `beforeinstallprompt` (`src/services/pwa/install.ts`) para ofrecer
 | --- | --- |
 | `BackendContext` | La instancia del adaptador elegido |
 | `AuthContext` | Usuario, perfil (con sus colores), `AccessPolicy` y acciones de sesión; al cerrar sesión da de baja el push del dispositivo |
-| `SiteContentStore` | Ajustes, secciones, fotos, hitos, fechas y sorpresas, más las URLs firmadas |
+| `SiteContentStore` | Ajustes, secciones, fotos, hitos, fechas y sorpresas, más las URLs firmadas (pinta primero las guardadas en el dispositivo y luego las frescas) y el orden de las fotos, que cambia al instante y se guarda en cola (`reorderPhotos`) |
 | `NotificationsContext` | Avisos, contador sin leer por tipo, notificaciones del sistema y renovación de la suscripción push del dispositivo |
 | `ThemeController` | Aplica el tema como custom properties en `:root`: el de la página con los colores de la persona encima (`personalTheme`) |
 | `ToastContext` | Mensajes emergentes |

@@ -26,7 +26,7 @@ function fakeBackend(siteTitle: string, fail = false): Backend {
       listDates: () => settle([]),
       listInterruptions: () => settle([]),
     },
-    photos: { list: () => settle([]), resolveUrls: () => Promise.resolve(new Map()) },
+    photos: { list: () => settle([]), resolveUrls: () => Promise.resolve(new Map()), cachedUrls: () => new Map() },
   } as unknown as Backend;
 }
 
@@ -69,5 +69,72 @@ describe("caché del contenido del sitio", () => {
     const store = new SiteContentStore(fakeBackend("x"));
     store.hydrate();
     expect(store.getSnapshot().status).toBe("loading");
+  });
+
+  it("pinta las fotos con las URLs guardadas sin esperar a que se firmen", async () => {
+    const photo = { id: "f1", storagePath: "2026-01/f1.webp", thumbPath: "2026-01/f1.thumb.webp", externalUrl: null };
+    const cachedUrl = { full: "vieja-full", thumb: "vieja-thumb" };
+    let sign: (urls: Map<string, { full: string; thumb: string }>) => void = () => undefined;
+    const backend = {
+      content: {
+        getSettings: () => Promise.resolve({ siteTitle: "x" }),
+        listSections: () => Promise.resolve([]),
+        listMilestones: () => Promise.resolve([]),
+        listDates: () => Promise.resolve([]),
+        listInterruptions: () => Promise.resolve([]),
+      },
+      photos: {
+        list: () => Promise.resolve([photo]),
+        cachedUrls: () => new Map([["f1", cachedUrl]]),
+        resolveUrls: () => new Promise((resolve) => (sign = resolve)),
+      },
+    } as unknown as Backend;
+    const store = new SiteContentStore(backend);
+    const loading = store.load("ana");
+    await vi.waitFor(() => expect(store.getSnapshot().photoUrls.get("f1")).toEqual(cachedUrl));
+    sign(new Map([["f1", { full: "nueva-full", thumb: "nueva-thumb" }]]));
+    await loading;
+    expect(store.getSnapshot().photoUrls.get("f1")?.thumb).toBe("nueva-thumb");
+  });
+
+  it("ordenar fotos se ve al instante y los clics seguidos no hacen saltar la lista", async () => {
+    const photo = (id: string, position: number) => ({ id, position, takenOn: "2026-01-01", storagePath: null, thumbPath: null, externalUrl: `/${id}.jpg` });
+    let server = [photo("a", 0), photo("b", 1), photo("c", 2)];
+    const saves: Array<() => void> = [];
+    const lists = vi.fn(() => Promise.resolve(server.map((p) => ({ ...p }))));
+    const backend = {
+      content: {
+        getSettings: () => Promise.resolve({ siteTitle: "x" }),
+        listSections: () => Promise.resolve([]),
+        listMilestones: () => Promise.resolve([]),
+        listDates: () => Promise.resolve([]),
+        listInterruptions: () => Promise.resolve([]),
+        reorder: (_table: string, ids: string[]) => new Promise<void>((resolve) => saves.push(() => {
+          server = server.map((p) => ({ ...p, position: ids.indexOf(p.id) }));
+          resolve();
+        })),
+      },
+      photos: { list: lists, cachedUrls: () => new Map(), resolveUrls: () => Promise.resolve(new Map()) },
+    } as unknown as Backend;
+    const store = new SiteContentStore(backend);
+    await store.load("ana");
+    const order = () => [...store.getSnapshot().content!.photos].sort((x, y) => x.position - y.position).map((p) => p.id).join("");
+
+    const first = store.reorderPhotos(["b", "a", "c"]);
+    expect(order()).toBe("bac");
+    const second = store.reorderPhotos(["b", "c", "a"]);
+    expect(order()).toBe("bca");
+    // Llega un aviso en tiempo real a mitad: no debe volver al orden viejo.
+    store.refresh("photos");
+    await vi.waitFor(() => expect(saves.length).toBe(1));
+    saves.shift()!();
+    await first;
+    await new Promise((r) => setTimeout(r, 300));
+    expect(order()).toBe("bca");
+    await vi.waitFor(() => expect(saves.length).toBe(1));
+    saves.shift()!();
+    await second;
+    await vi.waitFor(() => expect(lists).toHaveBeenCalledTimes(2));
+    expect(order()).toBe("bca");
   });
 });

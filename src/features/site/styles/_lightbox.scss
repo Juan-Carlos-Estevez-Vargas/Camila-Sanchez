@@ -46,6 +46,18 @@ $glass: rgba(255, 255, 255, 0.12);
       object-fit: contain;
       border-radius: var(--radius-sm);
       box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+      transition: filter 0.3s $ease;
+
+      // Con las medidas guardadas, la miniatura ocupa ya el tamaño final de
+      // la foto grande y el cambio no mueve nada.
+      &.has-size {
+        width: min(100%, 1100px, var(--w), calc((100dvh - 260px) * var(--ratio)));
+        height: auto;
+        aspect-ratio: var(--ratio);
+      }
+
+      // Miniatura mientras llega la foto grande.
+      &.is-preview { filter: blur(6px); }
     }
 
     figcaption {

@@ -69,7 +69,18 @@ async function trimMedia(cache) {
   await Promise.all(keys.slice(0, Math.max(0, keys.length - MEDIA_MAX_ENTRIES)).map((k) => cache.delete(k)));
 }
 
-async function cachedMedia(request, url) {
+/* Recortar lee la lista entera de la caché: con una galería que pide 30
+ * fotos a la vez se hace una sola vez al terminar la ráfaga, no 30. */
+let trimTimer = null;
+function scheduleTrim() {
+  if (trimTimer) clearTimeout(trimTimer);
+  trimTimer = setTimeout(() => {
+    trimTimer = null;
+    void caches.open(MEDIA_CACHE).then(trimMedia).catch(() => undefined);
+  }, 3000);
+}
+
+async function cachedMedia(event, url) {
   const key = mediaKey(url);
   const cache = await caches.open(MEDIA_CACHE);
   const hit = await cache.match(key);
@@ -80,11 +91,12 @@ async function cachedMedia(request, url) {
     // puede saber si salió bien antes de guardarla.
     res = await fetch(url.href, { mode: "cors", credentials: "omit" });
   } catch {
-    return fetch(request);
+    return fetch(event.request);
   }
   if (res.ok) {
-    await cache.put(key, res.clone());
-    void trimMedia(cache);
+    // La foto se entrega mientras va llegando; guardarla no la hace esperar
+    // (antes se esperaba a tenerla entera y escrita en disco para mostrarla).
+    event.waitUntil(cache.put(key, res.clone()).then(scheduleTrim).catch(() => undefined));
   }
   return res;
 }
@@ -94,7 +106,7 @@ self.addEventListener("fetch", (event) => {
   if (request.method !== "GET") return;
   const url = new URL(request.url);
   if (request.destination === "image" && url.hostname.endsWith(".supabase.co") && SIGNED_MEDIA.test(url.pathname)) {
-    event.respondWith(cachedMedia(request, url));
+    event.respondWith(cachedMedia(event, url));
     return;
   }
   // Ningún otro dato de Supabase se cachea (privado y con sesión).

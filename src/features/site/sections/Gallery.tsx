@@ -15,6 +15,13 @@ const MONTH_EFFECTS: Partial<Record<number, string[]>> = {
   11: ["❄️", "🎄", "✨"],
 };
 
+const preloaded = new Set<string>();
+function preload(url: string | undefined) {
+  if (!url || preloaded.has(url)) return;
+  preloaded.add(url);
+  new Image().src = url;
+}
+
 export function Gallery({ section, content, photoUrls }: SectionProps<"gallery">) {
   const years = useMemo(() => groupPhotosByYearMonth(content.photos), [content.photos]);
   const [yearIndex, setYearIndex] = useState(0);
@@ -53,6 +60,9 @@ export function Gallery({ section, content, photoUrls }: SectionProps<"gallery">
               className={`month${empty ? " is-empty" : ""}`}
               disabled={empty}
               onClick={() => setOpenMonth(m.month)}
+              // Al acercar el ratón o el dedo ya se pide la primera foto grande.
+              onPointerEnter={() => preload(cover?.full)}
+              onFocus={() => preload(cover?.full)}
               aria-label={t.monthLabel(monthName(m.month), m.photos.length)}
             >
               {cover && <img className="month__cover" src={cover.thumb} alt="" loading="lazy" decoding="async" />}

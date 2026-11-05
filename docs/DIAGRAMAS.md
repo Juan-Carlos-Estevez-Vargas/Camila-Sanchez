@@ -12,6 +12,7 @@ directamente al abrir este archivo. La explicación de cada pieza está en
 - [Recuperación de contraseña](#recuperación-de-contraseña)
 - [Subida de fotos](#subida-de-fotos)
   - [Orden de las fotos en un mes](#orden-de-las-fotos-en-un-mes)
+  - [Carga rápida de las fotos](#carga-rápida-de-las-fotos)
 - [Notitas, chat y notificaciones](#notitas-chat-y-notificaciones)
 - [App de chat](#app-de-chat)
 - [Chat: respuestas, conexión y vistos](#chat-respuestas-conexión-y-vistos)
@@ -235,16 +236,65 @@ La fecha sólo decide en qué mes cae la foto. Dentro del mes manda el orden que
 se elige en **Mi panel → Fotos** con ↑ ↓ o arrastrando; si dos fotos tienen la
 misma posición, va primero la del día anterior.
 
+El nuevo orden se pinta enseguida desde el store (`reorderPhotos`). Si se
+toca ↑ ↓ varias veces seguidas, los guardados van uno detrás de otro y la
+lista no se recarga del servidor hasta que termina el último: así una
+respuesta vieja nunca devuelve la foto a su sitio por un momento.
+
 ```mermaid
 flowchart TD
-  A["↑ / ↓ o arrastrar<br/>en Mi panel → Fotos"] --> B["move(): nuevo orden del mes<br/>(se ve al instante)"]
-  B --> C["rpc reorder_items('photos', ids)<br/>position = 0, 1, 2…"]
-  C --> D["Refrescar fotos"]
+  A["↑ / ↓ o arrastrar<br/>en Mi panel → Fotos"] --> B["store.reorderPhotos(ids):<br/>position nueva en pantalla al instante"]
+  B --> C["En cola: rpc reorder_items('photos', ids)<br/>position = 0, 1, 2… (uno tras otro)"]
+  C --> W{"¿Quedan guardados<br/>en la cola?"}
+  W -- "sí (otro clic)" --> C
+  W -- "no" --> D["Refrescar fotos<br/>(los avisos en vivo de en medio se ignoran)"]
   D --> E["groupPhotosByYearMonth"]
   E --> F["1. año-mes de taken_on"]
   F --> G["2. position (el orden elegido)"]
   G --> H["3. día de taken_on (desempate)"]
   H --> I["Panel y galería muestran<br/>el mismo orden"]
+```
+
+### Carga rápida de las fotos
+
+Las fotos viven en un bucket privado y se piden con URLs firmadas que cambian
+cada hora. Para que no haya que esperar a la red:
+
+- El service worker guarda cada foto **por ruta** (sin el token). La foto se
+  entrega mientras llega y se guarda en segundo plano; el recorte a 600 fotos
+  se hace una sola vez al final de cada ráfaga.
+- Al abrir la app se pintan las fotos con las URLs que ya están en el
+  dispositivo, aunque estén vencidas (se guardan 14 días): el service worker
+  las sirve de su caché. Mientras, se firman las nuevas en una sola petición
+  (sin repetirla si el arranque y la recarga la piden a la vez).
+- En el visor se ve al instante la miniatura (desenfocada y del tamaño final)
+  y se cambia por la foto grande cuando termina de bajar. La anterior y la
+  siguiente se precargan, y la primera de cada mes se pide al pasar el ratón
+  o el dedo por la tarjeta del mes.
+
+```mermaid
+sequenceDiagram
+  participant G as Galería / Mi panel
+  participant S as SiteContentStore
+  participant B as Backend (Supabase)
+  participant SW as Service worker
+  participant ST as Storage (bucket photos)
+  G->>S: abrir la app
+  S->>B: cachedUrls(fotos)
+  B-->>S: URLs guardadas (también vencidas, si hay service worker)
+  S-->>G: pinta miniaturas ya
+  G->>SW: GET miniatura (URL vieja)
+  SW-->>G: sale del dispositivo (clave = ruta sin token)
+  S->>B: resolveUrls(fotos)
+  B->>ST: createSignedUrls (una petición, sólo las vencidas)
+  ST-->>B: URLs nuevas (1 h)
+  B-->>S: URLs frescas
+  S-->>G: cambia el src (el service worker la sigue sirviendo del dispositivo)
+  G->>SW: abrir el visor: miniatura al instante
+  SW->>ST: foto grande (si no está guardada)
+  ST-->>SW: foto (se entrega mientras llega)
+  SW-->>G: foto grande reemplaza la miniatura
+  SW-)SW: guardar en segundo plano y recortar a 600
 ```
 
 ## Notitas, chat y notificaciones
