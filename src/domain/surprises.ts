@@ -16,3 +16,12 @@ export function isSurpriseFor(i: Interruption, userId: Uuid | null | undefined):
   const recipient = i.recipientId ?? null;
   return recipient === null || recipient === userId;
 }
+
+/**
+ * ¿Ya le llegó a `userId`? Ya empezó y sigue activa, o ya la vio (aunque
+ * después la apagaran). No importa si ya venció: lo recibido se queda en la
+ * Cajita → Recibidas. La base aplica la misma regla con RLS.
+ */
+export function isSurpriseReceived(i: Interruption, userId: Uuid | null | undefined, seen: readonly Uuid[] = [], now = Date.now()): boolean {
+  return isSurpriseFor(i, userId) && Date.parse(i.startsAt) <= now && (i.isActive || seen.includes(i.id));
+}

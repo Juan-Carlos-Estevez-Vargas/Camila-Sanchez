@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { formatRelative } from "@/domain/dates";
-import { NOTE_KINDS, type Note, type NoteKind, type Profile } from "@/domain/types";
+import { NOTE_KINDS, type Interruption, type Note, type NoteKind, type Profile, type Uuid } from "@/domain/types";
 import { useAuth } from "@/state/AuthContext";
 import { useBackend } from "@/state/BackendContext";
 import { useNotifications } from "@/state/NotificationsContext";
@@ -24,6 +24,27 @@ function noteKindMeta(kind: NoteKind): { icon: string; label: string; placeholde
 }
 
 type Tab = "inbox" | "sent" | "write";
+
+/** Lo que sale en la cajita: una notita o una sorpresa recibida. */
+type Letter = Note & { surprise?: boolean };
+
+/**
+ * Una sorpresa recibida se pinta como un sobre más (🎁). Cuenta como leída
+ * cuando ya se vio, aquí o al salir en la página.
+ */
+function surpriseAsLetter(i: Interruption, me: Uuid, seen: ReadonlySet<Uuid>): Letter {
+  return {
+    id: i.id,
+    senderId: i.createdBy ?? "",
+    recipientId: me,
+    kind: "surprise",
+    title: i.title,
+    body: i.body,
+    readAt: seen.has(i.id) ? i.startsAt : null,
+    createdAt: i.startsAt,
+    surprise: true,
+  };
+}
 
 const TAB_IDS: Tab[] = ["inbox", "sent", "write"];
 
@@ -86,7 +107,7 @@ function Compose({ people, onSent }: { people: Profile[]; onSent(): void }) {
   );
 }
 
-function Envelope({ note, from, mine, onOpen, onDelete }: { note: Note; from: string; mine: boolean; onOpen(): void; onDelete(): void }) {
+function Envelope({ note, from, mine, onOpen, onDelete }: { note: Letter; from: string; mine: boolean; onOpen(): void; onDelete?(): void }) {
   const meta = noteKindMeta(note.kind);
   const unread = !mine && !note.readAt;
   const t = useT().notes;
@@ -101,7 +122,7 @@ function Envelope({ note, from, mine, onOpen, onDelete }: { note: Note; from: st
         </span>
         {unread && <span className="badge">{t.newBadge}</span>}
       </button>
-      <button className="btn btn--icon btn--ghost btn--sm envelope__delete" aria-label={t.deleteLabel(note.title || meta.label)} onClick={onDelete}><span aria-hidden>🗑</span></button>
+      {onDelete && <button className="btn btn--icon btn--ghost btn--sm envelope__delete" aria-label={t.deleteLabel(note.title || meta.label)} onClick={onDelete}><span aria-hidden>🗑</span></button>}
     </article>
   );
 }
@@ -113,34 +134,47 @@ export default function MessagesPage() {
   const toast = useToast();
   const [confirm, confirmElement] = useConfirm();
   const [tab, setTab] = useState<Tab>("inbox");
-  const [open, setOpen] = useState<Note | null>(null);
-  const { data, loading, reload } = useAsync(
-    () => Promise.all([backend.messaging.listNotes(), backend.users.listProfiles()]),
+  const [open, setOpen] = useState<Letter | null>(null);
+  const { data, error, loading, reload } = useAsync(
+    () => Promise.all([
+      backend.messaging.listNotes(),
+      // Sin los nombres o sin las sorpresas la cajita igual se muestra.
+      backend.users.listProfiles().catch(() => [] as Profile[]),
+      backend.content.listInterruptions("received").catch(() => [] as Interruption[]),
+      backend.content.listSeenInterruptions().catch(() => [] as Uuid[]),
+    ]),
     [backend],
   );
-  const [notes = [], profiles = []] = data ?? [];
+  const [notes = [], profiles = [], surprises = [], seenIds = []] = data ?? [];
   const i18n = useT();
   const t = i18n.notes;
   const nameOf = (id: string) => profiles.find((p) => p.id === id)?.displayName ?? i18n.common.someone;
   const people = useMemo(() => profiles.filter((p) => p.id !== user?.id && p.isActive), [profiles, user?.id]);
-  const inbox = notes.filter((n) => n.recipientId === user?.id);
+  const inbox = useMemo<Letter[]>(() => {
+    if (!user) return [];
+    const seen = new Set(seenIds);
+    return [...notes.filter((n) => n.recipientId === user.id), ...surprises.map((i) => surpriseAsLetter(i, user.id, seen))]
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  }, [notes, surprises, seenIds, user]);
   const sent = notes.filter((n) => n.senderId === user?.id);
   const unread = inbox.filter((n) => !n.readAt).length;
 
-  useEffect(() => backend.realtime.subscribe(["notes"], () => void reload()), [backend, reload]);
+  useEffect(() => backend.realtime.subscribe(["notes", "interruptions"], () => void reload()), [backend, reload]);
   // Estando aquí, los avisos de notitas se dan por vistos.
   useEffect(() => void markAllRead("note"), [markAllRead]);
 
-  const openNote = async (note: Note) => {
+  const openNote = async (note: Letter) => {
     setOpen(note);
     if (note.recipientId === user?.id && !note.readAt) {
       burst([noteKindMeta(note.kind).icon, "💖"], 20);
-      await backend.messaging.markNoteRead(note.id).catch(() => undefined);
+      // Una sorpresa vista aquí ya no vuelve a salir al abrir la página.
+      await (note.surprise ? backend.content.markInterruptionSeen(note.id) : backend.messaging.markNoteRead(note.id))
+        .catch(() => undefined);
       void reload();
     }
   };
 
-  const remove = async (note: Note) => {
+  const remove = async (note: Letter) => {
     if (!(await confirm({ title: t.confirmDelete, body: t.confirmDeleteBody, confirmLabel: t.deleteButton, danger: true }))) return;
     try {
       await backend.messaging.deleteNote(note.id);
@@ -150,7 +184,7 @@ export default function MessagesPage() {
     }
   };
 
-  const list = tab === "inbox" ? inbox : sent;
+  const list: Letter[] = tab === "inbox" ? inbox : sent;
 
   return (
     <main id="contenido-principal" className="container messages">
@@ -169,7 +203,12 @@ export default function MessagesPage() {
         ))}
       </div>
       <div id="notas-panel" role="tabpanel" aria-labelledby={`notas-tab-${tab}`}>
-      {loading && !data ? <PageLoader /> : tab === "write" ? (
+      {loading && !data ? <PageLoader /> : !data && error && tab !== "write" ? (
+        // Si no se pudo cargar, se dice: una cajita "vacía" haría creer que se perdió todo.
+        <EmptyState icon="🥀" title={t.loadError}>
+          <button className="btn btn--soft" onClick={() => void reload()}>{t.retry}</button>
+        </EmptyState>
+      ) : tab === "write" ? (
         <Compose people={people} onSent={() => { void reload(); setTab("sent"); }} />
       ) : list.length === 0 ? (
         <EmptyState icon={tab === "inbox" ? "📭" : "📮"} title={tab === "inbox" ? t.emptyInbox : t.emptySent}>
@@ -179,7 +218,7 @@ export default function MessagesPage() {
         <div className="envelopes">
           {list.map((n) => (
             <Envelope key={n.id} note={n} mine={tab === "sent"} from={nameOf(tab === "sent" ? n.recipientId : n.senderId)}
-              onOpen={() => void openNote(n)} onDelete={() => void remove(n)} />
+              onOpen={() => void openNote(n)} onDelete={n.surprise ? undefined : () => void remove(n)} />
           ))}
         </div>
       )}

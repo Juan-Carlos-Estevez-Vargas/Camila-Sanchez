@@ -152,6 +152,11 @@ const content: ContentRepository = {
       return (await unwrap<Row[]>(query)).map(map.toInterruption);
     }
     const now = new Date().toISOString();
+    if (scope === "received") {
+      // Cajita: RLS ya deja sólo las que empezaron y siguen activas o ya vi.
+      query = query.lte("starts_at", now);
+      return (await unwrap<Row[]>(query)).map(map.toInterruption).filter((i) => isSurpriseFor(i, me));
+    }
     query = query.eq("is_active", true).lte("starts_at", now).or(`ends_at.is.null,ends_at.gt.${now}`);
     return (await unwrap<Row[]>(query)).map(map.toInterruption).filter((i) => isSurpriseFor(i, me));
   },
