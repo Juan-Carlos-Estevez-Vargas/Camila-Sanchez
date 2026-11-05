@@ -126,8 +126,15 @@ export interface YearGroup {
 /** Agrupa fotos por año y mes, ordenadas por fecha y posición. */
 export function groupPhotosByYearMonth(photos: Photo[]): YearGroup[] {
   const byYear = new Map<number, MonthGroup[]>();
+  // Dentro de un mes manda el orden que se eligió con ↑ ↓ o arrastrando
+  // (position); la fecha solo decide el mes y desempata. Antes se ordenaba
+  // primero por día, así que una foto no podía pasar delante de otra de un
+  // día anterior del mismo mes: se "devolvía" a su sitio al guardar.
   const sorted = [...photos].sort(
-    (a, b) => a.takenOn.localeCompare(b.takenOn) || a.position - b.position,
+    (a, b) =>
+      a.takenOn.slice(0, 7).localeCompare(b.takenOn.slice(0, 7)) ||
+      a.position - b.position ||
+      a.takenOn.localeCompare(b.takenOn),
   );
   for (const photo of sorted) {
     const date = parseIsoDate(photo.takenOn);

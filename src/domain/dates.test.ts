@@ -63,4 +63,18 @@ describe("groupPhotosByYearMonth", () => {
     expect(groups[1]!.months).toHaveLength(12);
     expect(groups[1]!.total).toBe(2);
   });
+
+  it("dentro del mes manda la posición elegida, aunque la foto sea de otro día", () => {
+    const groups = groupPhotosByYearMonth([
+      photo("a", "2026-10-17", 1), photo("b", "2026-10-17", 2), photo("c", "2026-10-23", 0),
+      photo("d", "2026-09-30", 5),
+    ]);
+    expect(groups[0]!.months[9]!.photos.map((p) => p.id)).toEqual(["c", "a", "b"]);
+    expect(groups[0]!.months[8]!.photos.map((p) => p.id)).toEqual(["d"]);
+  });
+
+  it("con la misma posición ordena por día", () => {
+    const groups = groupPhotosByYearMonth([photo("x", "2026-10-23"), photo("y", "2026-10-17")]);
+    expect(groups[0]!.months[9]!.photos.map((p) => p.id)).toEqual(["y", "x"]);
+  });
 });
