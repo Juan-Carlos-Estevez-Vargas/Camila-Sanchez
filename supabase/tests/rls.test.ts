@@ -411,7 +411,7 @@ describe("avisos en el celular", () => {
   it("una sorpresa activa avisa sólo a quien va dirigida; una programada no", async () => {
     await as(CAMI, `insert into interruptions (title, recipient_id) values ('Mira la página 🎁', '${JUAN}')`);
     expect(await as(JUAN, "select title, body, link from notifications where kind = 'system' and body = 'Mira la página 🎁'"))
-      .toEqual([{ title: "Camila te dejó una sorpresa 🎁", body: "Mira la página 🎁", link: "/" }]);
+      .toEqual([{ title: "Camila te dejó una sorpresa 🎁", body: "Mira la página 🎁", link: "/mensajes" }]);
     expect(await as(CAMI, "select count(*)::int as n from notifications where body = 'Mira la página 🎁'")).toEqual([{ n: 0 }]);
     expect(await as(GUEST, "select count(*)::int as n from notifications where body = 'Mira la página 🎁'")).toEqual([{ n: 0 }]);
     await as(CAMI, `insert into interruptions (title, starts_at, recipient_id) values ('Para mañana', now() + interval '1 day', '${JUAN}')`);
@@ -672,9 +672,27 @@ describe("sorpresas: sólo para la persona elegida", () => {
     await expect(as(JUAN, `update interruptions set recipient_id = '${JUAN}' where id = '${surprise}'`)).rejects.toThrow();
   });
 
-  it("si ya no está activa, la destinataria deja de verla", async () => {
+  it("si la apagan antes de que la vea, la destinataria deja de verla", async () => {
     await as(JUAN, `update interruptions set is_active = false where id = '${surprise}'`);
     expect(await as(CAMI, `select count(*)::int as n from interruptions where id = '${surprise}'`)).toEqual([{ n: 0 }]);
+    await as(JUAN, `update interruptions set is_active = true where id = '${surprise}'`);
+  });
+
+  it("lo recibido se queda en la cajita: vencida o ya vista y apagada", async () => {
+    const [row] = await as<{ id: string }>(JUAN,
+      `insert into interruptions (title, starts_at, ends_at, recipient_id)
+       values ('Ya pasó 🎁', now() - interval '2 days', now() - interval '1 day', '${CAMI}') returning id`);
+    const visible = async (id: string) =>
+      (await as<{ n: number }>(CAMI, `select count(*)::int as n from interruptions where id = '${id}'`))[0]!.n;
+    expect(await visible(row!.id)).toBe(1);
+    // La ve, y después quien la creó la apaga: se le queda igual.
+    await as(CAMI, `insert into interruption_views (interruption_id) values ('${surprise}')`);
+    await as(JUAN, `update interruptions set is_active = false where id = '${surprise}'`);
+    expect(await visible(surprise)).toBe(1);
+    // Las que aún no empiezan siguen ocultas.
+    const [later] = await as<{ id: string }>(JUAN,
+      `insert into interruptions (title, starts_at, recipient_id) values ('Mañana', now() + interval '1 day', '${CAMI}') returning id`);
+    expect(await visible(later!.id)).toBe(0);
   });
 });
 

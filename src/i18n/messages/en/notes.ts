@@ -37,6 +37,8 @@ export const notes: Messages["notes"] = {
   emptyInbox: "Your box is empty for now",
   emptySent: "You haven't sent any notes yet",
   writeOne: "Write one",
+  loadError: "I couldn't open your mailbox",
+  retry: "Try again",
   push: {
     iphoneBefore: "📲 To get notifications on iPhone, tap",
     share: "Share",

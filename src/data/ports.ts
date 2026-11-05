@@ -52,8 +52,13 @@ export interface ContentRepository {
   saveDate(date: Omit<ImportantDate, "id"> & { id?: Uuid }): Promise<ImportantDate>;
   deleteDate(id: Uuid): Promise<void>;
 
-  /** Activas ahora (página pública) o todas (panel). */
-  listInterruptions(scope: "active" | "all"): Promise<Interruption[]>;
+  /**
+   * "active": las que me tocan ahora (salen al abrir la página).
+   * "received": todas las que ya me llegaron, aunque ya las viera o vencieran
+   * (Cajita → Recibidas).
+   * "all": las que yo preparé (panel).
+   */
+  listInterruptions(scope: "active" | "received" | "all"): Promise<Interruption[]>;
   saveInterruption(item: Omit<Interruption, "id" | "createdBy"> & { id?: Uuid }): Promise<Interruption>;
   deleteInterruption(id: Uuid): Promise<void>;
   markInterruptionSeen(id: Uuid): Promise<void>;

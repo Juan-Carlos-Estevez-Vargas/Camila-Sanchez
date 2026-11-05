@@ -13,7 +13,7 @@ import { del as idbDel, get as idbGet, set as idbSet } from "idb-keyval";
 import { AccessPolicy, DEFAULT_ROLE_PERMISSIONS, PERMISSIONS, type Permission } from "@/domain/permissions";
 import { MAX_TASK_IMAGES, nextDueOf, progressOf } from "@/domain/lists";
 import { sanitizeColors } from "@/domain/palettes";
-import { isSurpriseFor, isSurpriseLive } from "@/domain/surprises";
+import { isSurpriseFor, isSurpriseLive, isSurpriseReceived } from "@/domain/surprises";
 import { AppError } from "@/core/errors";
 import {
   expiryFromNow, generateInviteToken, hashInviteToken, invitationStatus, isInviteToken, MIN_PASSWORD_LENGTH,
@@ -755,9 +755,12 @@ export const demoBackend: Backend = {
         return clone(all.filter((i) => i.createdBy === me.id));
       }
       const user = sessionUser();
-      return canViewSite() && user
-        ? clone(all.filter((i) => isSurpriseLive(i) && isSurpriseFor(i, user.id)))
-        : [];
+      if (!canViewSite() || !user) return [];
+      if (scope === "received") {
+        const seen = database().state.interruptionViews[user.id] ?? [];
+        return clone(all.filter((i) => isSurpriseReceived(i, user.id, seen)));
+      }
+      return clone(all.filter((i) => isSurpriseLive(i) && isSurpriseFor(i, user.id)));
     },
     async saveInterruption(i) {
       const author = require(PERMISSIONS.interruptionsManage);
@@ -770,7 +773,7 @@ export const demoBackend: Backend = {
       if (!recipient || recipient.id === author.id) throw new AppError("Elige para quién es la sorpresa (otra persona).");
       const saved = upsertIn<Interruption>("interruptions", { ...i, createdBy: author.id });
       if (!i.id && isSurpriseLive(saved) && policyOf(recipient).can(PERMISSIONS.siteView)) {
-        notify(recipient.id, "system", `${author.displayName} te dejó una sorpresa 🎁`, saved.title, "/");
+        notify(recipient.id, "system", `${author.displayName} te dejó una sorpresa 🎁`, saved.title, "/mensajes");
       }
       return saved;
     },

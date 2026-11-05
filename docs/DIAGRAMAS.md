@@ -643,6 +643,8 @@ sequenceDiagram
   DB-->>C: la sorpresa (recipient_id = Camila)
   C->>C: ventana / confeti / corazones
   C->>DB: insert interruption_views (si es de una sola vez)
+  C->>DB: abre la Cajita: select interruptions recibidas
+  DB-->>C: la sorpresa sigue ahí, aunque ya la vio o venció
 ```
 
 Quién puede ver una sorpresa:
@@ -659,6 +661,27 @@ flowchart TD
   V -- "no" --> N
   V -- "sí" --> OK["Le sale la sorpresa 🎁"]
 ```
+
+### Sorpresas recibidas en la Cajita
+
+Lo que ya le llegó a la destinataria no desaparece: después de verla en la
+página (o si nunca la abrió a tiempo y la sorpresa venció), queda guardada en
+**Cajita → Recibidas** como un sobre 🎁 más, junto a las notitas. El aviso
+de la campana lleva ahí. No tiene botón de borrar: la sorpresa es de quien la
+creó.
+
+```mermaid
+flowchart TD
+  R["Sorpresa para Camila"] --> E{"¿Ya empezó?<br/>(starts_at ≤ ahora)"}
+  E -- "no" --> H["Oculta: todavía es sorpresa"]
+  E -- "sí" --> A{"¿Sigue activa?"}
+  A -- "sí" --> OK["En Cajita → Recibidas 🎁<br/>(aunque ya venció o ya la vio)"]
+  A -- "no, la apagaron" --> V{"¿Ya la había visto?<br/>(interruption_views)"}
+  V -- "sí" --> OK
+  V -- "no" --> H2["No le aparece"]
+  OK --> O["Al abrirla se marca vista:<br/>ya no vuelve a salir en la página"]
+```
+
 
 ## Colores por persona
 

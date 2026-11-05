@@ -489,3 +489,4 @@ prueba comprueba que `supabase/setup.sql` esté al día).
 | `…1103000100_chat_app` | App de chat: contactos, solicitudes, bloqueos, conversaciones privadas, vistos y «escribiendo…» por chat, edición, borrado, reacciones y búsqueda |
 | `…1103000500_surprise_recipient` | Cada sorpresa es para una persona (`recipient_id`): sólo ella la ve y recibe el aviso, nunca quien la creó; en el panel cada quien gestiona sólo las suyas |
 | `…1103000800_security_review` | Revisión de seguridad: `created_by`/`created_at` inmutables en fotos y sorpresas, reacciones que no se mueven de mensaje, límite de sorpresas y contador `edge_rate_limits` para las Edge Functions |
+| `…1105000100_received_surprises` | Las sorpresas recibidas se quedan: la destinataria lee las que ya empezaron si siguen activas o ya las vio (aunque vencieran), para la Cajita → Recibidas; el aviso lleva a `/mensajes` |

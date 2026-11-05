@@ -90,7 +90,7 @@ Funciona en dos modos:
 | Área | Ruta | Acceso |
 | --- | --- | --- |
 | Página principal: portada, tiempo juntos, cuentas regresivas, notas, hitos, galería por año/mes, carta y frases | `/` | Pública o con `site.view` |
-| Cajita de mensajes: notitas que se abren como una carta | `/mensajes` | `notes.send` |
+| Cajita de mensajes: notitas que se abren como una carta y las sorpresas recibidas, guardadas | `/mensajes` | `notes.send` |
 | App de chat a pantalla completa: buscar personas, solicitudes de contacto, chats privados, fotos, stickers, responder, reacciones (en el celular, manteniendo pulsado el mensaje), editar y borrar, «escribiendo…», en línea, vistos (✓ ✓✓), buscar mensajes, fijar, silenciar, archivar y bloquear | `/chat` | `chat.use` |
 | Listas compartidas con subtareas, materiales, fotos, fechas y responsables, en vivo | `/listas` | `lists.use` |
 | Perfil: nombre, foto o icono, frase y cumpleaños | `/cuenta/perfil` | Cualquier cuenta |
@@ -240,7 +240,8 @@ La seguridad vive en la base de datos, no en el navegador.
   `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`, COOP y CORP.
 - Sorpresas privadas: cada una tiene destinataria (`recipient_id`) y RLS hace
   que sólo esa persona la vea y reciba el aviso; quien la creó la gestiona en
-  su panel, pero nunca le sale en la página.
+  su panel, pero nunca le sale en la página. Lo recibido se queda guardado en
+  la Cajita → Recibidas, aunque ya se haya visto o vencido.
 - Nadie reescribe desde el navegador quién creó una fila ni cuándo (fotos,
   sorpresas, reacciones, tareas, notitas, avisos).
 - Límites de velocidad en la base (chat, notitas, sorpresas, listas,

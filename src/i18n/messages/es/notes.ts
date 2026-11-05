@@ -36,6 +36,8 @@ export const notes = {
   emptyInbox: "Tu cajita está vacía por ahora",
   emptySent: "Aún no has enviado notitas",
   writeOne: "Escribir una",
+  loadError: "No pude abrir tu cajita",
+  retry: "Reintentar",
   push: {
     iphoneBefore: "📲 Para recibir avisos en el iPhone, toca",
     share: "Compartir",

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isSurpriseFor, isSurpriseLive } from "./surprises";
+import { isSurpriseFor, isSurpriseLive, isSurpriseReceived } from "./surprises";
 import type { Interruption } from "./types";
 
 const base: Interruption = {
@@ -29,5 +29,18 @@ describe("sorpresas", () => {
     expect(isSurpriseLive({ ...base, isActive: false }, now)).toBe(false);
     expect(isSurpriseLive({ ...base, startsAt: "2026-07-01T00:00:00Z" }, now)).toBe(false);
     expect(isSurpriseLive({ ...base, endsAt: "2026-05-01T00:00:00Z" }, now)).toBe(false);
+  });
+
+  it("lo recibido se queda guardado aunque venza o ya se haya visto", () => {
+    const now = Date.parse("2026-06-01T00:00:00Z");
+    const expired = { ...base, endsAt: "2026-05-01T00:00:00Z" };
+    expect(isSurpriseReceived(expired, "cami", [], now)).toBe(true);
+    expect(isSurpriseReceived(base, "cami", ["s1"], now)).toBe(true);
+    // Apagada: sólo se queda si ya la vio.
+    expect(isSurpriseReceived({ ...base, isActive: false }, "cami", [], now)).toBe(false);
+    expect(isSurpriseReceived({ ...base, isActive: false }, "cami", ["s1"], now)).toBe(true);
+    // Lo que aún no empieza, ni a quien la creó.
+    expect(isSurpriseReceived({ ...base, startsAt: "2026-07-01T00:00:00Z" }, "cami", [], now)).toBe(false);
+    expect(isSurpriseReceived(base, "juan", [], now)).toBe(false);
   });
 });
