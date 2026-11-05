@@ -80,14 +80,12 @@ export default function PhotosAdmin() {
   const [month, setMonth] = useState<number | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkDate, setBulkDate] = useState("");
-  const [order, setOrder] = useState<Photo[] | null>(null);
   const a = useT().admin;
   const t = a.photos;
 
   const year = years[Math.min(yearIdx, Math.max(0, years.length - 1))];
   const activeMonth = month ?? year?.months.findLast((m) => m.photos.length)?.month ?? 0;
   const monthPhotos = year?.months[activeMonth]?.photos ?? [];
-  const list = order ?? monthPhotos;
   const refresh = () => store.refresh("photos");
 
   const toggle = (id: string, value: boolean) =>
@@ -125,7 +123,7 @@ export default function PhotosAdmin() {
             <div className="tabs" role="tablist" aria-label={t.year} onKeyDown={onRovingKeyDown}>
               {years.map((y, i) => (
                 <button key={y.year} role="tab" className="tab" aria-selected={i === yearIdx} tabIndex={rovingTabIndex(i === yearIdx)}
-                  onClick={() => { setYearIdx(i); setMonth(null); setOrder(null); }}>{y.year}</button>
+                  onClick={() => { setYearIdx(i); setMonth(null); }}>{y.year}</button>
               ))}
             </div>
             {selected.size > 0 && (
@@ -141,7 +139,7 @@ export default function PhotosAdmin() {
             {year?.months.map((m) => (
               <button key={m.month} className={`month-pill${m.month === activeMonth ? " is-active" : ""}`} aria-pressed={m.month === activeMonth}
                 aria-label={t.monthCount(monthName(m.month), m.photos.length)}
-                onClick={() => { setMonth(m.month); setOrder(null); }} disabled={!m.photos.length}>
+                onClick={() => setMonth(m.month)} disabled={!m.photos.length}>
                 {monthName(m.month)} <span>{m.photos.length}</span>
               </button>
             ))}
@@ -149,14 +147,9 @@ export default function PhotosAdmin() {
           <p className="muted" style={{ margin: 0 }}>{t.reorderHint}</p>
           <SortableList
             className="photo-grid"
-            items={list}
+            items={monthPhotos}
             getId={(p) => p.id}
-            onReorder={async (items) => {
-              setOrder(items);
-              await run(() => backend.content.reorder("photos", items.map((p) => p.id)));
-              refresh();
-              setTimeout(() => setOrder(null), 600);
-            }}
+            onReorder={(items) => void run(() => store.reorderPhotos(items.map((p) => p.id)))}
             render={(photo) => (
               <PhotoCard
                 key={`${photo.id}-${photo.caption}-${photo.takenOn}`}

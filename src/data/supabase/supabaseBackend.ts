@@ -11,7 +11,7 @@ import { nextDueOf, progressOf } from "@/domain/lists";
 import { sanitizeColors } from "@/domain/palettes";
 import { isSurpriseFor } from "@/domain/surprises";
 import { RECOVERY_PATH } from "@/domain/recovery";
-import type { InvitableRole, PhotoUrls, SessionUser, Uuid } from "@/domain/types";
+import type { InvitableRole, Photo, PhotoUrls, SessionUser, Uuid } from "@/domain/types";
 import { getSupabase, unwrap, type Row } from "./client";
 import * as map from "./mappers";
 
@@ -27,19 +27,51 @@ const SIGNED_URL_CACHE_MS = 50 * 60 * 1000;
  * Las URLs firmadas se guardan también en el navegador: al volver a abrir la
  * app las fotos se piden con la misma URL, el navegador las sirve de su caché
  * y no hace falta esperar a Supabase para firmarlas otra vez.
+ *
+ * Las vencidas se conservan unos días más: el service worker guarda las fotos
+ * por ruta (sin el token), así que con una URL vieja la foto igual sale del
+ * dispositivo al instante mientras se firman las nuevas (ver `cachedUrls`).
  */
 type SignedEntry = { url: string; expires: number };
 const SIGNED_URLS_KEY = "signed-urls";
+const STALE_SIGNED_KEEP_MS = 14 * 24 * 60 * 60 * 1000;
+const keepSigned = (entry: SignedEntry, now: number) => entry.expires + STALE_SIGNED_KEEP_MS > now;
 const signedUrlCache = new Map<string, SignedEntry>(
-  Object.entries(readCache<Record<string, SignedEntry>>(SIGNED_URLS_KEY) ?? {}).filter(([, e]) => e.expires > Date.now()),
+  Object.entries(readCache<Record<string, SignedEntry>>(SIGNED_URLS_KEY) ?? {}).filter(([, e]) => keepSigned(e, Date.now())),
 );
 
 function rememberSigned(entries: Array<[string, SignedEntry]>) {
   for (const [key, entry] of entries) signedUrlCache.set(key, entry);
   const now = Date.now();
-  for (const [key, entry] of signedUrlCache) if (entry.expires <= now) signedUrlCache.delete(key);
+  for (const [key, entry] of signedUrlCache) if (!keepSigned(entry, now)) signedUrlCache.delete(key);
   writeCache(SIGNED_URLS_KEY, Object.fromEntries(signedUrlCache));
 }
+
+/** Sólo con el service worker al mando una URL vencida sirve (sale de su caché). */
+const mediaServedOffline = () => typeof navigator !== "undefined" && !!navigator.serviceWorker?.controller;
+
+/** URLs de las fotos con lo que ya hay firmado; `stale` acepta las vencidas. */
+function photoUrlsFromCache(list: Photo[], stale: boolean): Map<Uuid, PhotoUrls> {
+  const now = Date.now();
+  const usable = (path: string | null) => {
+    const entry = path ? signedUrlCache.get(path) : undefined;
+    return entry && (stale || entry.expires > now) ? entry.url : undefined;
+  };
+  const result = new Map<Uuid, PhotoUrls>();
+  for (const p of list) {
+    if (p.externalUrl) {
+      result.set(p.id, { full: p.externalUrl, thumb: p.externalUrl });
+    } else if (p.storagePath) {
+      const full = usable(p.storagePath);
+      const thumb = usable(p.thumbPath) || full;
+      if (full && thumb) result.set(p.id, { full, thumb });
+    }
+  }
+  return result;
+}
+
+/** Firmas en curso: el arranque y la recarga piden las mismas a la vez. */
+const signingPhotos = new Map<string, Promise<void>>();
 
 const sb = () => getSupabase();
 
@@ -202,31 +234,32 @@ const photos: PhotoRepository = {
     return { storagePath, thumbPath };
   },
   async resolveUrls(list) {
-    const result = new Map<Uuid, PhotoUrls>();
     const now = Date.now();
     const missing = new Set<string>();
+    const waiting = new Set<Promise<void>>();
     for (const p of list) {
       for (const path of [p.storagePath, p.thumbPath]) {
-        if (path && !((signedUrlCache.get(path)?.expires ?? 0) > now)) missing.add(path);
+        if (!path || (signedUrlCache.get(path)?.expires ?? 0) > now) continue;
+        const inFlight = signingPhotos.get(path);
+        if (inFlight) waiting.add(inFlight);
+        else missing.add(path);
       }
     }
     if (missing.size) {
-      const signed = await unwrap<Array<{ path: string | null; signedUrl: string }>>(
-        sb().storage.from(PHOTO_BUCKET).createSignedUrls([...missing], SIGNED_URL_TTL_S),
-      );
-      rememberSigned(signed.filter((s) => s.path && s.signedUrl).map((s) => [s.path!, { url: s.signedUrl, expires: now + SIGNED_URL_CACHE_MS }]));
+      const paths = [...missing];
+      const request = (async () => {
+        const signed = await unwrap<Array<{ path: string | null; signedUrl: string }>>(
+          sb().storage.from(PHOTO_BUCKET).createSignedUrls(paths, SIGNED_URL_TTL_S),
+        );
+        rememberSigned(signed.filter((s) => s.path && s.signedUrl).map((s) => [s.path!, { url: s.signedUrl, expires: now + SIGNED_URL_CACHE_MS }]));
+      })().finally(() => paths.forEach((path) => signingPhotos.delete(path)));
+      paths.forEach((path) => signingPhotos.set(path, request));
+      waiting.add(request);
     }
-    for (const p of list) {
-      if (p.externalUrl) {
-        result.set(p.id, { full: p.externalUrl, thumb: p.externalUrl });
-      } else if (p.storagePath) {
-        const full = signedUrlCache.get(p.storagePath)?.url;
-        const thumb = (p.thumbPath && signedUrlCache.get(p.thumbPath)?.url) || full;
-        if (full && thumb) result.set(p.id, { full, thumb });
-      }
-    }
-    return result;
+    await Promise.all(waiting);
+    return photoUrlsFromCache(list, false);
   },
+  cachedUrls: (list) => photoUrlsFromCache(list, mediaServedOffline()),
 };
 
 async function currentUserId(): Promise<Uuid> {

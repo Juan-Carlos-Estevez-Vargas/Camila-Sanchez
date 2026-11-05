@@ -80,6 +80,12 @@ export interface PhotoRepository {
   upload(full: Blob, thumb: Blob, extension: string): Promise<UploadedImage>;
   /** URLs listas para <img>, resueltas en lote (una petición). */
   resolveUrls(photos: Photo[]): Promise<Map<Uuid, PhotoUrls>>;
+  /**
+   * URLs que ya están en el dispositivo, sin esperar a la red (pueden estar
+   * vencidas si el service worker tiene la foto guardada). Sirven para pintar
+   * enseguida mientras `resolveUrls` trae las frescas.
+   */
+  cachedUrls(photos: Photo[]): Map<Uuid, PhotoUrls>;
 }
 
 export interface MessagingRepository {

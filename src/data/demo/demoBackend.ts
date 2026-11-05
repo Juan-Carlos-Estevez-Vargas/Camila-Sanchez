@@ -852,6 +852,15 @@ export const demoBackend: Backend = {
       }));
       return result;
     },
+    cachedUrls(photos) {
+      const result = new Map<Uuid, PhotoUrls>();
+      for (const p of photos) {
+        if (p.externalUrl) result.set(p.id, { full: p.externalUrl, thumb: p.externalUrl });
+        const full = p.storagePath ? objectUrls.get(p.storagePath) : undefined;
+        if (full) result.set(p.id, { full, thumb: (p.thumbPath && objectUrls.get(p.thumbPath)) || full });
+      }
+      return result;
+    },
   },
 
   messaging: {

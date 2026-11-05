@@ -124,8 +124,46 @@ export class SiteContentStore {
 
   private async resolvePhotoUrls(generation: number) {
     const photos = this.state.content?.photos ?? [];
+    // Primero lo que ya está en el dispositivo (las fotos salen al instante
+    // del service worker); luego las URLs frescas, sin dejar huecos.
+    const cached = this.backend.photos.cachedUrls(photos);
+    const missing = photos.some((p) => !this.state.photoUrls.has(p.id) && cached.has(p.id));
+    if (missing) this.set({ photoUrls: new Map([...cached, ...this.state.photoUrls]) });
     const urls = await this.backend.photos.resolveUrls(photos);
     if (generation === this.generation) this.set({ photoUrls: urls });
+  }
+
+  /** Cambios de orden de fotos que aún se están guardando. */
+  private savingOrder = 0;
+  private orderChain: Promise<unknown> = Promise.resolve();
+
+  /**
+   * Cambia el orden de unas fotos (las de un mes) al instante en pantalla y
+   * lo guarda detrás. Los clics seguidos se guardan uno tras otro y mientras
+   * tanto no se recarga la lista del servidor: así una respuesta vieja no
+   * devuelve la foto a su sitio un momento (el "lag" al tocar ↑ ↓ rápido).
+   */
+  async reorderPhotos(orderedIds: Uuid[]): Promise<void> {
+    const content = this.state.content;
+    if (!content) return;
+    const position = new Map(orderedIds.map((id, i) => [id, i]));
+    const photos = content.photos.map((p) => (position.has(p.id) ? { ...p, position: position.get(p.id)! } : p));
+    this.set({ content: { ...content, photos } });
+    this.savingOrder++;
+    const save = this.orderChain.then(() => this.backend.content.reorder("photos", orderedIds));
+    this.orderChain = save.catch(() => undefined);
+    try {
+      await save;
+    } catch (error) {
+      // Lo que dice el servidor vuelve a mandar si no se pudo guardar.
+      this.refresh("photos");
+      throw error;
+    } finally {
+      if (--this.savingOrder === 0) {
+        this.save();
+        this.refresh("photos");
+      }
+    }
   }
 
   /** Pide recargar una colección; se agrupan en una sola ronda. */
@@ -136,9 +174,11 @@ export class SiteContentStore {
   }
 
   private async flush() {
-    const keys = [...this.pending];
-    this.pending.clear();
     this.timer = null;
+    // Con un orden de fotos guardándose, la lista se recarga al terminar.
+    const keys = [...this.pending].filter((k) => !(k === "photos" && this.savingOrder > 0));
+    this.pending.clear();
+    if (!keys.length) return;
     if (!this.state.content) return this.load();
     const generation = this.generation;
     const l = this.loaders();

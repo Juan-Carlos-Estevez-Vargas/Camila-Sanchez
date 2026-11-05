@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import { formatLongDate } from "@/domain/dates";
 import type { Photo, PhotoUrls, Uuid } from "@/domain/types";
@@ -42,18 +42,33 @@ export function Lightbox({ title, photos, urls, startIndex = 0, effect, onClose 
     };
   }, [effect, go, onClose]);
 
-  // Precarga la anterior y la siguiente para que el cambio sea instantáneo.
+  // La foto grande se descarga aparte; mientras llega se ve la miniatura (que
+  // ya está en el dispositivo) en su lugar, en vez de un recuadro vacío.
+  // También precarga la anterior y la siguiente para que el cambio sea instantáneo.
+  const [loaded, setLoaded] = useState<ReadonlySet<string>>(() => new Set());
+  const requested = useRef(new Set<string>());
   useEffect(() => {
-    for (const offset of [1, -1]) {
+    for (const offset of [0, 1, -1]) {
       const p = photos[(index + offset + count) % count];
-      const url = p && urls.get(p.id)?.full;
-      if (url) new Image().src = url;
+      const full = p && urls.get(p.id)?.full;
+      if (!full || requested.current.has(full)) continue;
+      requested.current.add(full);
+      const img = new Image();
+      img.decoding = "async";
+      img.onload = () => setLoaded((s) => new Set(s).add(full));
+      img.onerror = () => requested.current.delete(full);
+      img.src = full;
     }
   }, [index, photos, urls, count]);
 
   const photo = photos[index];
   if (!photo) return null;
   const url = urls.get(photo.id);
+  const src = url && (loaded.has(url.full) ? url.full : url.thumb);
+  const size = photo.width && photo.height
+    ? ({ "--w": `${photo.width}px`, "--ratio": photo.width / photo.height } as CSSProperties)
+    : undefined;
+  const classes = [size ? "has-size" : "", url && src !== url.full ? "is-preview" : ""].filter(Boolean).join(" ") || undefined;
 
   return createPortal(
     <div
@@ -82,7 +97,9 @@ export function Lightbox({ title, photos, urls, startIndex = 0, effect, onClose 
       <div className="lightbox__stage">
         {count > 1 && <button className="lightbox__nav is-prev" onClick={() => go(-1)} aria-label={t.prev}><span aria-hidden>‹</span></button>}
         <figure className="lightbox__figure" key={photo.id}>
-          {url ? <img src={url.full} alt={photo.caption || t.fallbackAlt} decoding="async" /> : <div className="skeleton lightbox__placeholder" />}
+          {src ? (
+            <img src={src} style={size} className={classes} alt={photo.caption || t.fallbackAlt} decoding="async" />
+          ) : <div className="skeleton lightbox__placeholder" />}
           <figcaption>
             {photo.caption && <p>{photo.caption}</p>}
             <time dateTime={photo.takenOn}>{formatLongDate(photo.takenOn)}</time>
