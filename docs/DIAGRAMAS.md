@@ -29,6 +29,7 @@ directamente al abrir este archivo. La explicación de cada pieza está en
 - [Integración y despliegue](#integración-y-despliegue)
 - [Modelo de datos](#modelo-de-datos)
 - [Roles y permisos](#roles-y-permisos)
+- [Auditoría: filtros y páginas](#auditoría-filtros-y-páginas)
 - [Legal y privacidad](#legal-y-privacidad)
 
 ## Arquitectura general
@@ -1471,6 +1472,35 @@ flowchart LR
 Estos son los permisos por defecto (migración `core_schema`). Juan los cambia
 en **Administración → Roles y permisos** y la base de datos los aplica al
 instante.
+
+## Auditoría: filtros y páginas
+
+**Administración → Auditoría** abre siempre en el mes actual. Los filtros
+(mes o todo el historial, sección, acción, persona y orden) se mandan a la base
+de datos, que devuelve sólo la página pedida y cuántos registros cumplen los
+filtros. Con ese total se arma la paginación: primera, anterior, números,
+siguiente, última, "Página X de Y" y cuántos por página.
+
+```mermaid
+flowchart TD
+  OPEN["Abrir Auditoría"] --> DEF["Filtros por defecto:<br/>este mes · todas las secciones ·<br/>todas las acciones · todas las personas ·<br/>más recientes primero · página 1 · 25 por página"]
+  DEF --> Q
+  F["Cambiar mes, sección,<br/>acción, persona u orden"] --> P1["Volver a la página 1"] --> Q
+  SZ["Cambiar 'Por página'<br/>(10, 25, 50, 100)"] --> P1
+  NAV["« ‹ 1 … 4 5 6 … 20 › »"] --> Q
+  Q["listAudit(page, pageSize, order,<br/>table, action, actorId, from, to)"]
+  Q --> SB["Supabase: select con count exact<br/>eq / is null / gte / lt + order + range"]
+  Q --> DEMO["Demo: matchesAudit en memoria"]
+  SB & DEMO --> R["{ entries, total }"]
+  R --> T["Tabla de la página"]
+  R --> PG["Página X de Y = ceil(total / pageSize)<br/>1–25 de N"]
+  PG -- "la página ya no existe<br/>(filtros con menos resultados)" --> LAST["Ir a la última que sí existe"]
+```
+
+El mes es un rango en hora local: desde el día 1 a las 00:00 (incluido) hasta
+el día 1 del mes siguiente (excluido). "Sistema" en **Persona** busca los
+cambios sin cuenta detrás (`actor_id` vacío). La lectura sigue protegida por la
+política RLS de `audit_log` (permiso `audit.view`).
 
 ## Legal y privacidad
 

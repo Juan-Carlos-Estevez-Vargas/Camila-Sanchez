@@ -14,6 +14,7 @@ import { AccessPolicy, DEFAULT_ROLE_PERMISSIONS, PERMISSIONS, type Permission } 
 import { MAX_TASK_IMAGES, nextDueOf, progressOf } from "@/domain/lists";
 import { sanitizeColors } from "@/domain/palettes";
 import { isSurpriseFor, isSurpriseLive, isSurpriseReceived } from "@/domain/surprises";
+import { matchesAudit } from "@/domain/audit";
 import { AppError } from "@/core/errors";
 import {
   expiryFromNow, generateInviteToken, hashInviteToken, invitationStatus, isInviteToken, MIN_PASSWORD_LENGTH,
@@ -1056,10 +1057,12 @@ export const demoBackend: Backend = {
       database().commit({ table: "site_settings", type: "UPDATE", record: null });
       return tokenHash;
     },
-    async listAudit({ page, pageSize, table }) {
+    async listAudit({ page, pageSize, order = "desc", ...filters }) {
       require(PERMISSIONS.auditView);
-      const rows = database().state.audit.filter((a) => !table || a.tableName === table);
-      return clone(rows.slice(page * pageSize, (page + 1) * pageSize));
+      // state.audit ya está de la más nueva a la más vieja.
+      const rows = database().state.audit.filter((a) => matchesAudit(a, filters));
+      if (order === "asc") rows.reverse();
+      return { entries: clone(rows.slice(page * pageSize, (page + 1) * pageSize)), total: rows.length };
     },
   },
 

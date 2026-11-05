@@ -677,11 +677,19 @@ const users: UserRepository = {
     const { tokenHash } = await invokeFunction<{ tokenHash: string }>("admin-users", { action: "recovery_link", userId: id });
     return tokenHash;
   },
-  async listAudit({ page, pageSize, table }) {
-    let query = sb().from("audit_log").select("*").order("created_at", { ascending: false })
+  async listAudit({ page, pageSize, table, actorId, action, from, to, order = "desc" }) {
+    let query = sb().from("audit_log").select("*", { count: "exact" })
+      .order("created_at", { ascending: order === "asc" })
+      .order("id", { ascending: order === "asc" })
       .range(page * pageSize, page * pageSize + pageSize - 1);
     if (table) query = query.eq("table_name", table);
-    return (await unwrap<Row[]>(query)).map(map.toAudit);
+    if (action) query = query.eq("action", action);
+    if (actorId) query = actorId === "system" ? query.is("actor_id", null) : query.eq("actor_id", actorId);
+    if (from) query = query.gte("created_at", from);
+    if (to) query = query.lt("created_at", to);
+    const { data, error, count } = await query;
+    if (error) throw new Error(error.message, { cause: error });
+    return { entries: (data as Row[]).map(map.toAudit), total: count ?? 0 };
   },
 };
 

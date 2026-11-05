@@ -36,7 +36,7 @@ src/
   data/       puertos (ports.ts) y adaptadores: supabase/ y demo/
   services/   cola de tareas, pipeline de imágenes (Web Workers), notificaciones, <head>, CAPTCHA (Turnstile)
   state/      contextos de React: backend, auth, contenido, tema, notificaciones, toasts
-  ui/         componentes reutilizables: modal, campos, feedback, avatar, cargador romántico
+  ui/         componentes reutilizables: modal, campos, feedback, avatar, paginación, cargador romántico
   features/   funcionalidades: site, auth, admin (panel), super, messages, chat, lists, tour
   i18n/       idiomas: store.ts (estado sin React), index.ts (hooks), locales.ts y messages/<idioma>/
   styles/     sistema de diseño SCSS: abstracts, base, components, layout
@@ -308,7 +308,10 @@ Las tablas viven en `public` y se crean con las migraciones de
   sólo cada persona cambia sus colores, foto, icono, frase y cumpleaños. La foto debe estar en `avatars/<su id>/`
   (`profiles_avatar_own_folder`).
 - `audit_row`: registra en `audit_log` cada INSERT, UPDATE o DELETE de las
-  tablas auditadas. Los mensajes privados no se registran.
+  tablas auditadas. Los mensajes privados no se registran. La pantalla de
+  Auditoría pide una página a la vez con sus filtros (mes, sección, acción,
+  persona y orden) y el total con `count: "exact"`; las reglas de meses y
+  páginas viven en `domain/audit.ts` y `domain/pagination.ts`.
 - Publicación `supabase_realtime`: avisa al navegador de los cambios.
 
 ### Edge Functions

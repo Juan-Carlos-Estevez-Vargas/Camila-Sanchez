@@ -97,7 +97,7 @@ Funciona en dos modos:
 | Mis colores: cada persona elige su paleta sin cambiársela a nadie | `/cuenta/colores` | Cualquier cuenta |
 | Mi cuenta: app en el celular, avisos en el dispositivo, contraseña y sesiones | `/cuenta` | Cualquier cuenta |
 | Panel de contenido: fotos, textos y animaciones, hitos, fechas y sorpresas (cada sorpresa se prepara para una persona: sólo ella la ve, nunca quien la creó) | `/panel` | Editora y super admin |
-| Super admin: usuarios, invitaciones por enlace o QR, roles y permisos, apariencia, secciones, ajustes y auditoría | `/super` | Super admin |
+| Super admin: usuarios, invitaciones por enlace o QR, roles y permisos, apariencia, secciones, ajustes y auditoría (abre en el mes actual; filtros por mes o todo el historial, sección, acción y persona, orden y paginación con primera, última, números y tamaño de página) | `/super` | Super admin |
 | App de celular instalable (Android, iPhone y computador): ícono, pantalla completa, atajos, sin conexión y aviso de versión nueva | `/app` | Pública |
 | Avisos push en el celular: chat, notitas, sorpresas y listas | — | Quien los active |
 | Tutorial guiado según la página y los permisos de cada cuenta | Todas | Todos |

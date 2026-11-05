@@ -20,4 +20,15 @@ export const common: Messages["common"] = {
   closeToast: (title) => `Close notice: ${title}`,
   somethingNew: "You have something new",
   errorBoundary: "Something broke in this part",
+  pagination: {
+    label: "Pagination",
+    first: "First page",
+    previous: "Previous page",
+    next: "Next page",
+    last: "Last page",
+    goTo: (n) => `Go to page ${n}`,
+    pageOf: (n, total) => `Page ${n} of ${total}`,
+    perPage: "Per page",
+    range: (from, to, total) => total === 0 ? "No results" : `${from}–${to} of ${total}`,
+  },
 };
