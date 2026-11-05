@@ -113,6 +113,9 @@ carpetas completas (hasta 1000 fotos por tanda), ubica cada foto en el mes en
 que se tomó, salta duplicados con una huella SHA-256 y permite reintentar las
 que fallen.
 
+Dentro de cada mes las fotos siguen el orden que se elige en el panel (↑ ↓ o
+arrastrando), aunque sean de días distintos; la fecha sólo decide el mes.
+
 ## Tecnologías
 
 | Capa | Tecnología |

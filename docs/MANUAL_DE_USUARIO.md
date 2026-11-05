@@ -354,8 +354,10 @@ deseos, hazlo en la pestaña del español.
    omitieron y un botón para **reintentar las que fallaron**.
 
 Cada foto se optimiza antes de subir (más liviana y sin datos de ubicación) y
-cae sola en el mes en que se tomó. Para cambiar el orden, arrástralas o usa
-↑ ↓. Para borrar varias, márcalas y toca **Borrar**.
+cae sola en el mes en que se tomó. Para cambiar el orden dentro del mes,
+arrástralas o usa ↑ ↓: puedes poner primero una foto de un día posterior y el
+orden se queda así en el panel y en la galería. Para borrar varias, márcalas y
+toca **Borrar**.
 
 ### Programar una sorpresa
 

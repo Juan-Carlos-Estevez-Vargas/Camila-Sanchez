@@ -11,6 +11,7 @@ directamente al abrir este archivo. La explicación de cada pieza está en
 - [Invitación por enlace o QR](#invitación-por-enlace-o-qr)
 - [Recuperación de contraseña](#recuperación-de-contraseña)
 - [Subida de fotos](#subida-de-fotos)
+  - [Orden de las fotos en un mes](#orden-de-las-fotos-en-un-mes)
 - [Notitas, chat y notificaciones](#notitas-chat-y-notificaciones)
 - [App de chat](#app-de-chat)
 - [Chat: respuestas, conexión y vistos](#chat-respuestas-conexión-y-vistos)
@@ -226,6 +227,24 @@ flowchart TD
   R --> T["Trigger de auditoría"]
   R --> RT["Realtime refresca la galería"]
   Q -- "falla tras reintentos" --> F["Resumen: reintentar las que fallaron"]
+```
+
+### Orden de las fotos en un mes
+
+La fecha sólo decide en qué mes cae la foto. Dentro del mes manda el orden que
+se elige en **Mi panel → Fotos** con ↑ ↓ o arrastrando; si dos fotos tienen la
+misma posición, va primero la del día anterior.
+
+```mermaid
+flowchart TD
+  A["↑ / ↓ o arrastrar<br/>en Mi panel → Fotos"] --> B["move(): nuevo orden del mes<br/>(se ve al instante)"]
+  B --> C["rpc reorder_items('photos', ids)<br/>position = 0, 1, 2…"]
+  C --> D["Refrescar fotos"]
+  D --> E["groupPhotosByYearMonth"]
+  E --> F["1. año-mes de taken_on"]
+  F --> G["2. position (el orden elegido)"]
+  G --> H["3. día de taken_on (desempate)"]
+  H --> I["Panel y galería muestran<br/>el mismo orden"]
 ```
 
 ## Notitas, chat y notificaciones
