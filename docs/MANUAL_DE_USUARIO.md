@@ -75,14 +75,17 @@ Si hay música, el botón ♪ abajo a la izquierda la pone o la pausa. A veces
 aparece una **sorpresa** en una ventanita: es un mensaje que Camila o Juan
 te dejaron programado a ti. Cada sorpresa le sale sólo a la persona para quien
 se preparó, nunca a quien la creó. Si tienes los avisos activados, también te
-llega al celular cuando la publican.
+llega al celular cuando la publican. Después de verla queda guardada en
+**Cajita → Recibidas**, por si la quieres volver a leer.
 
 ## 3. Cajita de mensajes
 
 Notitas que se guardan para siempre. Entra desde **Cajita** en la cabecera.
 
 - **Recibidas:** las notitas nuevas tienen la etiqueta *Nueva*. Toca una para
-  abrirla como carta.
+  abrirla como carta. Aquí también se quedan guardadas las **sorpresas 🎁**
+  que te prepararon, aunque ya te hayan salido en la página o ya se haya
+  acabado su tiempo; el aviso de «te dejó una sorpresa» te trae aquí.
 - **Enviadas:** lo que tú escribiste; dice *leída ✓* cuando la otra persona la
   abrió.
 - **✍️ Escribir:** elige el tipo (💌 Te amo, 🥺 Perdón, ✉️ Notita,
