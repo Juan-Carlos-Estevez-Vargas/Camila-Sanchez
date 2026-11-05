@@ -383,7 +383,20 @@ te preparen a ti siguen siendo sorpresa.
 | 🎨 Apariencia | Colores de la página (los que ve quien entra sin cuenta y quien no eligió los suyos), tipografías, bordes, modo oscuro y efectos animados |
 | 🧩 Secciones | Agregar, ordenar, ocultar o quitar secciones de la página |
 | ⚙️ Ajustes del sitio | Título, fecha en que empezó todo, música y si la página es pública |
-| 📜 Auditoría | Quién cambió qué y cuándo |
+| 📜 Auditoría | Quién cambió qué y cuándo, filtrado por mes, sección, acción y persona |
+
+### Revisar la auditoría
+
+1. **Administración → Auditoría** abre con los cambios de **este mes**.
+2. En **Mes** elige otro mes (hasta dos años atrás) o **Todo el historial**.
+3. Afina con **Sección**, **Acción** (creó, cambió o borró) y **Persona**
+   (**Sistema** son cambios que no hizo ninguna cuenta). **Orden** pone primero
+   los más recientes o los más antiguos; también se cambia tocando **Cuándo**.
+4. Abajo ves cuántos hay ("26–50 de 312") y en qué página estás
+   ("Página 2 de 13"). Usa **«** y **»** para ir a la primera y la última,
+   **‹ ›** para moverte de a una o toca un número. **Por página** muestra 10,
+   25, 50 o 100.
+5. **Quitar filtros** vuelve a este mes y a todo lo demás por defecto.
 
 ### Invitar a alguien
 
