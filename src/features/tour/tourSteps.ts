@@ -189,6 +189,36 @@ function pageSteps(ctx: TourContext): TourStep[] {
       },
     ];
   }
+  if (pathname === "/dedicatorias" || pathname === "/dedicatorias/playlist") {
+    return [
+      {
+        id: "dedications-new",
+        target: [tourTarget("dedications-new")],
+        ...text("dedications-new"),
+      },
+      {
+        id: "dedications-tabs",
+        target: [tourTarget("dedications-tabs")],
+        ...text("dedications-tabs"),
+      },
+      ...(pathname === "/dedicatorias/playlist" ? [{
+        id: "dedication-play",
+        target: [tourTarget("dedication-play")],
+        optional: true,
+        ...text("dedication-play"),
+      }] : []),
+    ];
+  }
+  if (areaOf(pathname) === "dedicatorias") {
+    return [
+      {
+        id: "dedication-play",
+        target: [tourTarget("dedication-play")],
+        optional: true,
+        ...text("dedication-play"),
+      },
+    ];
+  }
   if (areaOf(pathname) === "listas") {
     return [
       {
@@ -301,6 +331,9 @@ function navSteps(ctx: TourContext): TourStep[] {
   }
   if (policy.can(PERMISSIONS.listsUse) && here !== "listas") {
     steps.push({ id: "nav-listas", target: navTarget("nav-listas"), fallbackNote: MENU_NOTE(), ...text("nav-listas") });
+  }
+  if (policy.can(PERMISSIONS.dedicationsUse) && here !== "dedicatorias") {
+    steps.push({ id: "nav-dedicatorias", target: navTarget("nav-dedicatorias"), fallbackNote: MENU_NOTE(), ...text("nav-dedicatorias") });
   }
   if (policy.canUseContentPanel && here !== "panel") {
     steps.push({ id: "nav-panel", target: navTarget("nav-panel"), fallbackNote: MENU_NOTE(), ...text("nav-panel") });

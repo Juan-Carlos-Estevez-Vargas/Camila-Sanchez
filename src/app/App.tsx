@@ -16,6 +16,7 @@ import { ConsentGate } from "@/features/legal/ConsentGate";
 import { CookieBanner } from "@/features/legal/CookieBanner";
 import { AppStatus } from "@/features/install/AppStatus";
 import { InstallBanner } from "@/features/install/InstallBanner";
+import { PlayerProvider } from "@/features/player/PlayerContext";
 import { INSTALL_PATH } from "@/core/seo";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { RouteAnnouncer, SkipLink } from "./RouteAnnouncer";
@@ -91,7 +92,10 @@ export function App() {
         <AuthProvider>
           <SiteContentProvider>
             <NotificationsProvider>
-              <ThemedShell />
+              {/* Arriba de las rutas: la playlist sigue sonando al cambiar de página. */}
+              <PlayerProvider>
+                <ThemedShell />
+              </PlayerProvider>
             </NotificationsProvider>
           </SiteContentProvider>
         </AuthProvider>

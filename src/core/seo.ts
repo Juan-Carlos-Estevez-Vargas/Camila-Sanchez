@@ -17,7 +17,7 @@ export const DESCRIPTION_MAX = 160;
 export const INSTALL_PATH = "/app";
 
 /** Rutas que nunca deben aparecer en buscadores. */
-export const PRIVATE_PREFIXES = ["/entrar", "/invitacion", "/recuperar", "/cuenta", "/panel", "/super", "/mensajes", "/chat", "/listas"] as const;
+export const PRIVATE_PREFIXES = ["/entrar", "/invitacion", "/recuperar", "/cuenta", "/panel", "/super", "/mensajes", "/chat", "/listas", "/dedicatorias"] as const;
 
 const PAGE_TITLES: Record<string, string> = {
   "/entrar": "Entrar",
@@ -27,6 +27,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/mensajes": "Cajita de mensajes",
   "/chat": "Chat",
   "/listas": "Listas",
+  "/dedicatorias": "Dedicatorias",
   "/panel": "Mi panel",
   "/super": "Administración",
 };

@@ -57,6 +57,14 @@ describe("recorrido del tutorial", () => {
     expect(ids("/", "viewer")).toContain("nav-listas");
   });
 
+  it("enseña las dedicatorias y la playlist", () => {
+    expect(ids("/dedicatorias", "viewer")).toEqual(expect.arrayContaining(["dedications-new", "dedications-tabs"]));
+    expect(ids("/dedicatorias", "viewer")).not.toContain("nav-dedicatorias");
+    expect(ids("/dedicatorias/playlist", "viewer")).toContain("dedication-play");
+    expect(ids("/dedicatorias/abc", "viewer")).toContain("dedication-play");
+    expect(ids("/", "viewer")).toContain("nav-dedicatorias");
+  });
+
   it("en móvil, los enlaces del menú caen en el botón ☰", () => {
     const step = tourFor({ pathname: "/", loggedIn: true, policy: policyFor("viewer") }).find((s) => s.id === "nav-chat");
     expect(step?.target).toEqual([tourTarget("nav-chat"), tourTarget("menu")]);
@@ -64,7 +72,7 @@ describe("recorrido del tutorial", () => {
   });
 
   it("todos los pasos tienen un id único y texto", () => {
-    for (const path of ["/", "/entrar", "/mensajes", "/chat", "/cuenta", "/cuenta/perfil", "/panel", "/super/auditoria", "/invitacion", "/recuperar", "/listas", "/listas/abc"]) {
+    for (const path of ["/", "/entrar", "/mensajes", "/chat", "/cuenta", "/cuenta/perfil", "/panel", "/super/auditoria", "/invitacion", "/recuperar", "/listas", "/listas/abc", "/dedicatorias", "/dedicatorias/playlist", "/dedicatorias/abc"]) {
       const steps = tourFor({ pathname: path, loggedIn: true, policy: policyFor("super_admin") });
       expect(new Set(steps.map((s) => s.id)).size).toBe(steps.length);
       for (const s of steps) expect(s.title && s.body).toBeTruthy();

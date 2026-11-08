@@ -1,9 +1,10 @@
 # Cabeceras de seguridad (las mismas que en vercel.json; una prueba lo vigila).
 # La CSP sólo deja cargar código del propio sitio y hablar con Supabase: aunque
 # alguien lograra inyectar HTML, el navegador no ejecutaría scripts ajenos ni
-# podría mandar la sesión a otro servidor.
+# podría mandar la sesión a otro servidor. Sólo se incrustan los reproductores
+# de la playlist: YouTube sin cookies (youtube-nocookie.com) y Spotify.
 /*
-  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; style-src-attr 'unsafe-inline'; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://*.supabase.co; media-src 'self' blob: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; worker-src 'self' blob:; manifest-src 'self'; frame-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'; upgrade-insecure-requests
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; style-src-attr 'unsafe-inline'; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://*.supabase.co; media-src 'self' blob: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; worker-src 'self' blob:; manifest-src 'self'; frame-src https://www.youtube-nocookie.com https://open.spotify.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'; upgrade-insecure-requests
   Strict-Transport-Security: max-age=31536000; includeSubDomains
   Cross-Origin-Opener-Policy: same-origin
   X-Content-Type-Options: nosniff
@@ -27,6 +28,10 @@
 /listas
   X-Robots-Tag: noindex, nofollow
 /listas/*
+  X-Robots-Tag: noindex, nofollow
+/dedicatorias
+  X-Robots-Tag: noindex, nofollow
+/dedicatorias/*
   X-Robots-Tag: noindex, nofollow
 /invitacion
   X-Robots-Tag: noindex, nofollow

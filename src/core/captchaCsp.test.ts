@@ -26,7 +26,7 @@ describe("CSP con CAPTCHA", () => {
     const original = readFileSync(join(__dirname, "..", "..", "public", "_headers"), "utf8");
     const changed = withCaptchaHeaders(original);
     expect(changed).toContain(`script-src 'self' ${TURNSTILE_ORIGIN}`);
-    expect(changed).toContain(`frame-src ${TURNSTILE_ORIGIN}`);
+    expect(changed).toContain(`frame-src https://www.youtube-nocookie.com https://open.spotify.com ${TURNSTILE_ORIGIN}`);
     expect(changed.split("\n").length).toBe(original.split("\n").length);
     expect(changed.replace(/^.*Content-Security-Policy.*$/m, "")).toBe(original.replace(/^.*Content-Security-Policy.*$/m, ""));
   });

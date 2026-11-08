@@ -5,6 +5,7 @@ import { auth } from "./auth";
 import { chat } from "./chat";
 import { common } from "./common";
 import { dates } from "./dates";
+import { dedications } from "./dedications";
 import { donate } from "./donate";
 import { errors } from "./errors";
 import { install } from "./install";
@@ -17,4 +18,4 @@ import { theme } from "./theme";
 import { tour } from "./tour";
 import { ui } from "./ui";
 
-export default { admin, app, auth, chat, common, dates, donate, errors, install, legal, lists, notes, site, superAdmin, theme, tour, ui };
+export default { admin, app, auth, chat, common, dates, dedications, donate, errors, install, legal, lists, notes, site, superAdmin, theme, tour, ui };

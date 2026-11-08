@@ -40,6 +40,7 @@ export const superAdmin: Messages["superAdmin"] = {
       "notes.send": "Enviar bilhetinhos para a caixinha de mensagens",
       "chat.use": "Usar o chat",
       "lists.use": "Criar listas de tarefas e compartilhá-las",
+      "dedications.use": "Escrever dedicatórias com fotos e músicas e ouvir a playlist",
       "sections.manage": "Criar, ordenar e ocultar seções",
       "theme.manage": "Mudar cores, fontes, efeitos e animações",
       "settings.manage": "Configuração geral do site",

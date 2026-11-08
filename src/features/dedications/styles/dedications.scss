@@ -1,0 +1,400 @@
+@use "abstracts" as *;
+
+// Dedicatorias: listado, la carta de cada una, el formulario y la playlist.
+.dedications {
+  padding-block: space(6) space(7);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: space(4);
+  max-width: 920px;
+
+  .tab[aria-current="page"] {
+    background: var(--c-surface);
+    color: var(--c-text);
+    box-shadow: var(--shadow-sm);
+    text-decoration: none;
+  }
+
+  a.tab { text-decoration: none; }
+}
+
+.dedications__header {
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: space(3);
+
+  h1 { font-size: clamp(1.8rem, 5vw, 2.6rem); margin-bottom: space(1); }
+  p { margin: 0; }
+}
+
+// --- listado -------------------------------------------------------------------
+
+.dedication-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: space(4);
+}
+
+.dedication-card {
+  display: grid;
+  padding: 0;
+  overflow: hidden;
+  position: relative;
+
+  &__link {
+    display: grid;
+    color: inherit;
+    text-decoration: none;
+    border-radius: inherit;
+
+    &:hover .dedication-card__title { color: var(--c-primary-strong); }
+  }
+
+  &__cover {
+    aspect-ratio: 16 / 9;
+    display: grid;
+    place-items: center;
+    font-size: 3rem;
+    background: linear-gradient(135deg, var(--c-primary-soft), tint(var(--c-accent), 70%));
+
+    img { width: 100%; height: 100%; object-fit: cover; }
+  }
+
+  &__body {
+    display: grid;
+    gap: space(1);
+    padding: space(3) space(4) space(4);
+    min-width: 0;
+  }
+
+  &__title { font-size: 1.1rem; @include truncate; }
+  &__meta { font-size: 0.85rem; @include truncate; }
+
+  &__excerpt {
+    font-size: 0.9rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    overflow-wrap: anywhere;
+  }
+
+  &__play {
+    position: absolute;
+    top: space(2);
+    right: space(2);
+    box-shadow: var(--shadow-sm);
+  }
+}
+
+// --- una dedicatoria -------------------------------------------------------------
+
+.dedication-page {
+  max-width: 760px;
+
+  &__back { width: fit-content; }
+  &__heading { font-size: 1.25rem; margin: 0; }
+}
+
+.dedication-letter {
+  padding: space(6) space(5);
+  display: grid;
+  gap: space(4);
+  background:
+    radial-gradient(circle at top right, var(--c-primary-soft), transparent 55%),
+    var(--c-surface);
+
+  @include below("sm") { padding: space(5) space(4); }
+
+  &__header {
+    text-align: center;
+    display: grid;
+    gap: space(1);
+
+    h1 { font-size: clamp(1.7rem, 6vw, 2.4rem); margin: 0; overflow-wrap: anywhere; }
+    p { margin: 0; }
+  }
+
+  &__emoji { font-size: 3rem; line-height: 1; }
+
+  &__message {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    font-size: 1.05rem;
+    line-height: 1.7;
+  }
+
+  &__owner {
+    justify-content: center;
+    flex-wrap: wrap;
+
+    .btn--danger-text { color: var(--c-danger); }
+  }
+
+  &__hint { text-align: center; margin: 0; font-size: 0.9rem; }
+}
+
+// Fotos de la dedicatoria (y las del formulario).
+.ded-photos,
+.ded-thumbs {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: space(2);
+
+  &.is-single { grid-template-columns: minmax(0, 420px); }
+
+  &__item {
+    position: relative;
+    aspect-ratio: 1;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    background: var(--c-surface-2);
+
+    > img { width: 100%; height: 100%; object-fit: cover; }
+    &.is-loading { animation: ded-pulse 1.2s ease-in-out infinite; }
+  }
+
+  &__open {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    padding: 0;
+    background: none;
+    cursor: zoom-in;
+    display: grid;
+    place-items: center;
+
+    img { width: 100%; height: 100%; object-fit: cover; }
+  }
+
+  &__remove {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 28px;
+    height: 28px;
+    border: 0;
+    border-radius: 50%;
+    background: rgb(0 0 0 / 55%);
+    color: #fff;
+    cursor: pointer;
+    font-size: 0.75rem;
+  }
+
+  &__add {
+    aspect-ratio: 1;
+    border: 2px dashed var(--c-border-strong);
+    border-radius: var(--radius-sm);
+    background: none;
+    color: var(--c-muted);
+    cursor: pointer;
+    font-size: 0.85rem;
+
+    &:hover { border-color: var(--c-primary); color: var(--c-primary); }
+  }
+}
+
+.ded-thumbs { grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); }
+
+.dedication-photo-viewer {
+  display: grid;
+  place-items: center;
+
+  img { max-width: 100%; max-height: 75vh; border-radius: var(--radius-sm); }
+}
+
+// --- canciones ------------------------------------------------------------------
+
+.song-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: space(2);
+
+  &__item {
+    display: flex;
+    align-items: center;
+    gap: space(3);
+    padding: space(2) space(3);
+    @include surface(var(--radius-sm));
+
+    &.is-playing {
+      border-color: var(--c-primary);
+      background: var(--c-primary-soft);
+    }
+  }
+
+  &__number {
+    width: 1.8rem;
+    flex: none;
+    text-align: center;
+    color: var(--c-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__main {
+    flex: 1;
+    min-width: 0;
+    display: grid;
+    gap: 2px;
+  }
+
+  &__from {
+    font-size: 0.8rem;
+    @include truncate;
+  }
+
+  &__edit { flex: none; gap: 0; }
+}
+
+.song-label {
+  display: flex;
+  gap: space(2);
+  min-width: 0;
+  align-items: baseline;
+
+  &__icon { flex: none; }
+
+  &__text {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  &__note {
+    display: block;
+    font-size: 0.85rem;
+    font-style: italic;
+  }
+}
+
+.song-adder {
+  display: grid;
+  gap: space(3);
+
+  &__link {
+    display: flex;
+    gap: space(2);
+    align-items: center;
+
+    .input { flex: 1; min-width: 0; }
+  }
+
+  &__detected:empty { display: none; }
+
+  &__row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: space(3);
+
+    @include below("sm") { grid-template-columns: minmax(0, 1fr); }
+  }
+
+  &__actions { flex-wrap: wrap; gap: space(2); }
+
+  &__hint { margin: 0; font-size: 0.8rem; }
+
+  &__file {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: space(2);
+    padding: space(2) space(3);
+    @include surface(var(--radius-sm));
+    overflow-wrap: anywhere;
+  }
+}
+
+.dedication-form {
+  &__heading { font-size: 1.05rem; margin: 0; }
+}
+
+.ded-emoji {
+  display: flex;
+  flex-wrap: wrap;
+  gap: space(2);
+
+  &__option {
+    @include chip;
+    width: 42px;
+    height: 42px;
+    font-size: 1.3rem;
+    display: grid;
+    place-items: center;
+
+    &.is-active { @include chip-active; }
+  }
+}
+
+// --- playlist -------------------------------------------------------------------
+
+.playlist {
+  &__head { align-items: flex-end; flex-wrap: wrap; gap: space(3); }
+  &__title { margin: 0; font-size: 1.4rem; }
+  &__head p { margin: 0; }
+  &__actions { flex-wrap: wrap; gap: space(2); }
+
+  &__order {
+    gap: space(2);
+    flex-wrap: wrap;
+
+    .field__label { margin: 0; }
+    .input { width: auto; max-width: 100%; }
+  }
+
+  &__export {
+    h3 { margin: 0; font-size: 1.1rem; }
+    p { margin: space(1) 0 0; font-size: 0.85rem; }
+  }
+
+  &__export-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: space(4);
+  }
+}
+
+// --- importar -------------------------------------------------------------------
+
+.import-songs {
+  p { margin: 0; }
+
+  &__text { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.85rem; }
+
+  &__help {
+    font-size: 0.9rem;
+
+    summary { cursor: pointer; color: var(--c-link); }
+    p { margin-top: space(1); color: var(--c-muted); }
+  }
+
+  &__status:empty { display: none; }
+
+  &__list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: space(2);
+    max-height: 260px;
+    overflow-y: auto;
+
+    li {
+      display: flex;
+      align-items: center;
+      gap: space(2);
+    }
+
+    .input { flex: 1; min-width: 0; min-height: 36px; padding-block: 0.35rem; }
+  }
+
+  &__artist { font-size: 0.85rem; flex: none; max-width: 35%; @include truncate; }
+
+  &__target {
+    border: 0;
+    padding: 0;
+    margin: 0;
+  }
+}
+
+@keyframes ded-pulse { 50% { opacity: 0.5; } }

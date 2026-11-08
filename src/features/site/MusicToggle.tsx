@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useT } from "@/i18n";
+import { claimAudio, onAudioClaimed } from "@/services/audio/audioFocus";
 
 /** Música de fondo opcional: nunca suena sola, sólo si la persona la activa. */
 export function MusicToggle({ url }: { url: string }) {
@@ -8,6 +9,11 @@ export function MusicToggle({ url }: { url: string }) {
   const t = useT().site;
 
   useEffect(() => () => audio.current?.pause(), []);
+  // Si empieza a sonar la playlist, la música de fondo se pausa.
+  useEffect(() => onAudioClaimed("background", () => {
+    audio.current?.pause();
+    setPlaying(false);
+  }), []);
 
   const toggle = async () => {
     audio.current ??= Object.assign(new Audio(url), { loop: true, volume: 0.5 });
@@ -17,6 +23,7 @@ export function MusicToggle({ url }: { url: string }) {
     } else {
       try {
         await audio.current.play();
+        claimAudio("background");
         setPlaying(true);
       } catch {
         setPlaying(false);

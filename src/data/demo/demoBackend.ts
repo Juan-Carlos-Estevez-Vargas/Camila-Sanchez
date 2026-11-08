@@ -27,6 +27,7 @@ import type {
 } from "@/domain/types";
 import type { Backend, ListsRepository, RealtimeChange, RealtimeTable } from "@/data/ports";
 import { createDemoChat, seedDemoChat, upgradeDemoChat, type DemoChatState } from "./demoChat";
+import { createDemoDedications, dropDemoMedia, type DemoDedicationsState } from "./demoDedications";
 import { SEED_DATES, SEED_MILESTONES, SEED_PHOTOS, SEED_SECTIONS, SEED_SETTINGS } from "./seed";
 import { SEED_TRANSLATIONS } from "./seedTranslations";
 
@@ -58,7 +59,7 @@ interface DemoRecovery {
   expiresAt: string;
 }
 
-interface DemoState extends Omit<DemoChatState, "users" | "notifications"> {
+interface DemoState extends Omit<DemoChatState, "users" | "notifications">, DemoDedicationsState {
   settings: SiteSettings;
   sections: Section[];
   photos: Photo[];
@@ -88,6 +89,7 @@ const PERMISSION_DESCRIPTIONS: Record<Permission, string> = {
   "notes.send": "Enviar notitas a la cajita de mensajes",
   "chat.use": "Usar el chat",
   "lists.use": "Crear listas de cosas por hacer y compartirlas",
+  "dedications.use": "Escribir dedicatorias con fotos y canciones y escuchar la playlist",
   "sections.manage": "Crear, ordenar y ocultar secciones",
   "theme.manage": "Cambiar colores, tipografías, efectos y animaciones",
   "settings.manage": "Configuración general del sitio",
@@ -129,6 +131,9 @@ function baseState(): DemoState {
     todoItems: [],
     todoMaterials: [],
     todoImages: [],
+    dedications: [],
+    dedicationPhotos: [],
+    dedicationSongs: [],
     users: DEMO_ACCOUNTS.map((a) => ({
       id: uuid(), email: a.email, password: a.password, displayName: a.displayName,
       role: a.role, isActive: true, avatarUrl: null, createdAt: created, themeColors: null,
@@ -189,9 +194,18 @@ class DemoDatabase {
     const raw = safeStorage(() => localStorage.getItem(STORAGE_KEY), null);
     if (raw) {
       try {
-        const state = { ...baseState(), ...(JSON.parse(raw) as DemoState) };
+        const stored = JSON.parse(raw) as DemoState;
+        const state = { ...baseState(), ...stored };
         // Datos de antes de la app de chat: la sala pasa a ser una conversación.
         upgradeDemoChat(state);
+        // Datos de antes de las dedicatorias: el permiso nuevo, como en la migración 022.
+        if (!Array.isArray(stored.dedications)) {
+          for (const role of ["editor", "viewer"] as const) {
+            if (!state.rolePermissions.some((rp) => rp.role === role && rp.permission === PERMISSIONS.dedicationsUse)) {
+              state.rolePermissions.push({ role, permission: PERMISSIONS.dedicationsUse });
+            }
+          }
+        }
         return state;
       } catch {
         /* estado corrupto: se reinicia */
@@ -643,6 +657,20 @@ const demoChat = createDemoChat({
   imageUrls: localImageUrls,
 });
 
+const demoDedications = createDemoDedications({
+  state: () => database().state,
+  commit: (change) => database().commit(change),
+  me: () => require(PERMISSIONS.dedicationsUse),
+  canUse: (userId) => {
+    const user = database().state.users.find((u) => u.id === userId);
+    return Boolean(user?.isActive) && policyOf(user ?? null).can(PERMISSIONS.dedicationsUse);
+  },
+  people: () => database().state.users.filter((u) => u.isActive).map((u) => u.id),
+  notify,
+  mediaUrls: localImageUrls,
+  forgetMedia: (paths) => dropDemoMedia(paths, objectUrls),
+});
+
 export const demoBackend: Backend = {
   mode: "demo",
 
@@ -925,6 +953,7 @@ export const demoBackend: Backend = {
   },
 
   lists: demoLists,
+  dedications: demoDedications,
 
   users: {
     async getProfile(id) {

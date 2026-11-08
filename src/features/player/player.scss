@@ -1,0 +1,183 @@
+@use "abstracts" as *;
+
+// Reproductor flotante de la playlist (abajo a la derecha; en el celular,
+// abajo a lo ancho). Achicado sólo queda la barra.
+:root[data-player="open"] { --player-space: 360px; }
+:root[data-player="min"] { --player-space: 84px; }
+
+:root[data-player] {
+  body { padding-bottom: var(--player-space); }
+
+  .music-toggle { bottom: calc(var(--player-space) + #{space(2)} + env(safe-area-inset-bottom)); }
+
+  @include above("md") {
+    body { padding-bottom: 0; }
+    .music-toggle { bottom: calc(#{space(4)} + env(safe-area-inset-bottom)); }
+  }
+}
+
+.mini-player {
+  position: fixed;
+  z-index: z("player");
+  right: space(4);
+  bottom: calc(#{space(4)} + env(safe-area-inset-bottom));
+  width: min(380px, calc(100vw - #{space(4)} * 2));
+  padding: space(3);
+  display: grid;
+  gap: space(2);
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--c-border);
+  animation: slide-up 0.3s $ease;
+
+  @include below("md") {
+    left: space(2);
+    right: space(2);
+    bottom: calc(#{space(2)} + env(safe-area-inset-bottom));
+    width: auto;
+  }
+
+  &.is-chat {
+    top: calc(#{$header-height} + #{space(2)});
+    bottom: auto;
+    width: min(320px, calc(100vw - #{space(4)}));
+    padding: space(2);
+
+    @include below("md") {
+      left: auto;
+      right: space(2);
+    }
+  }
+
+  // Nombre arriba y botones abajo cuando no caben juntos (casi siempre).
+  &__bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: space(1) space(2);
+    min-width: 0;
+  }
+
+  &__emoji { font-size: 1.6rem; line-height: 1; flex: none; }
+
+  &__info {
+    display: grid;
+    min-width: 0;
+    flex: 1 1 180px;
+  }
+
+  &__title { @include truncate; }
+
+  &__meta {
+    font-size: 0.8rem;
+    @include truncate;
+
+    a { color: inherit; }
+  }
+
+  &__controls {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 2px;
+    flex: 0 1 auto;
+    margin-left: auto;
+
+    .btn--icon {
+      width: 34px;
+      height: 34px;
+      min-height: 34px;
+      font-size: 0.95rem;
+    }
+
+    .is-active { background: var(--c-primary-soft); }
+  }
+
+  // Achicado: la barra sola (el reproductor sigue montado para que suene).
+  &.is-min &__stage {
+    height: 0;
+    overflow: hidden;
+    margin: 0;
+  }
+
+  &__stage {
+    display: grid;
+    gap: space(2);
+    min-height: 0;
+  }
+
+  &__video {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    background: #000;
+
+    iframe {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+    }
+  }
+
+  &__spotify {
+    width: 100%;
+    height: 152px;
+    border: 0;
+    border-radius: 12px;
+
+    &.is-compact { height: 80px; }
+  }
+
+  &__audio { width: 100%; }
+
+  &__note {
+    margin: 0;
+    font-size: 0.8rem;
+  }
+
+  &__link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: space(2);
+
+    p { margin: 0; font-size: 0.9rem; }
+  }
+
+  &__footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.8rem;
+  }
+
+  &__queue {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    max-height: 200px;
+    overflow-y: auto;
+    border-top: 1px solid var(--c-border);
+
+    button {
+      width: 100%;
+      text-align: left;
+      background: none;
+      border: 0;
+      padding: space(2);
+      border-radius: var(--radius-sm);
+      color: inherit;
+      font: inherit;
+      font-size: 0.9rem;
+      cursor: pointer;
+      @include truncate;
+
+      &:hover { background: var(--c-surface-2); }
+      &.is-current { background: var(--c-primary-soft); font-weight: 600; }
+    }
+  }
+
+  @include reduced-motion { animation: none; }
+}

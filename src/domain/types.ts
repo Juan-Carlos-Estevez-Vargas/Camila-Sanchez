@@ -321,7 +321,7 @@ export interface ChatPresence {
   lastReadAt: IsoDateTime | null;
 }
 
-export type NotificationKind = "note" | "chat" | "system" | "list";
+export type NotificationKind = "note" | "chat" | "system" | "list" | "dedication";
 
 export interface AppNotification {
   id: Uuid;
@@ -400,6 +400,66 @@ export interface TodoListDetail {
   items: TodoItem[];
   materials: TodoMaterial[];
   images: TodoImage[];
+}
+
+/**
+ * Dedicatoria: un mensaje con fotos y canciones de una persona para otra
+ * (o para todas, si recipientId es null).
+ */
+export interface Dedication {
+  id: Uuid;
+  authorId: Uuid;
+  /** Para quién es; null = para todas las personas que usan dedicatorias. */
+  recipientId: Uuid | null;
+  title: string;
+  message: string;
+  emoji: string;
+  /** El día que se recuerda (por defecto, el de hoy). */
+  dedicatedOn: IsoDate;
+  createdAt: IsoDateTime;
+  updatedAt: IsoDateTime;
+}
+
+/** Foto de una dedicatoria, en la carpeta privada de la dedicatoria. */
+export interface DedicationPhoto {
+  id: Uuid;
+  dedicationId: Uuid;
+  path: string;
+  thumbPath: string;
+  width: number | null;
+  height: number | null;
+  position: number;
+  createdAt: IsoDateTime;
+}
+
+/**
+ * De dónde suena una canción: YouTube o Spotify (se reproducen incrustados),
+ * un archivo de audio subido a la app, o cualquier otro enlace (se abre aparte).
+ */
+export const SONG_SOURCES = ["youtube", "spotify", "audio", "link"] as const;
+export type SongSource = (typeof SONG_SOURCES)[number];
+
+export interface DedicationSong {
+  id: Uuid;
+  dedicationId: Uuid;
+  title: string;
+  artist: string;
+  /** Por qué esta canción (opcional). */
+  note: string;
+  source: SongSource;
+  /** Enlace https (YouTube, Spotify u otro); null en los archivos subidos. */
+  url: string | null;
+  /** Ruta del archivo en el almacenamiento privado (sólo source = "audio"). */
+  audioPath: string | null;
+  position: number;
+  createdAt: IsoDateTime;
+}
+
+/** Dedicatoria con sus fotos y canciones ya ordenadas. */
+export interface DedicationWithMedia {
+  dedication: Dedication;
+  photos: DedicationPhoto[];
+  songs: DedicationSong[];
 }
 
 export interface AuditEntry {

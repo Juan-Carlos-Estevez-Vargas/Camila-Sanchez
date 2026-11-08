@@ -18,6 +18,8 @@ const MessagesPage = lazy(() => import("@/features/messages/MessagesPage"));
 const ChatApp = lazy(() => import("@/features/chat/ChatApp"));
 const ListsPage = lazy(() => import("@/features/lists/ListsPage"));
 const ListPage = lazy(() => import("@/features/lists/ListPage"));
+const DedicationsPage = lazy(() => import("@/features/dedications/DedicationsPage"));
+const DedicationPage = lazy(() => import("@/features/dedications/DedicationPage"));
 const AccountPage = lazy(() => import("@/features/auth/AccountPage"));
 const ProfilePage = lazy(() => import("@/features/auth/ProfilePage"));
 const MyColorsPage = lazy(() => import("@/features/auth/MyColorsPage"));
@@ -39,6 +41,9 @@ export const appRoutes = (
     <Route path="/chat/*" element={<RequirePermission check={(p) => p.can(PERMISSIONS.chatUse)}><ChatApp /></RequirePermission>} />
     <Route path="/listas" element={<RequirePermission check={(p) => p.can(PERMISSIONS.listsUse)}><ListsPage /></RequirePermission>} />
     <Route path="/listas/:id" element={<RequirePermission check={(p) => p.can(PERMISSIONS.listsUse)}><ListPage /></RequirePermission>} />
+    <Route path="/dedicatorias" element={<RequirePermission check={(p) => p.can(PERMISSIONS.dedicationsUse)}><DedicationsPage /></RequirePermission>} />
+    <Route path="/dedicatorias/playlist" element={<RequirePermission check={(p) => p.can(PERMISSIONS.dedicationsUse)}><DedicationsPage tab="playlist" /></RequirePermission>} />
+    <Route path="/dedicatorias/:id" element={<RequirePermission check={(p) => p.can(PERMISSIONS.dedicationsUse)}><DedicationPage /></RequirePermission>} />
     <Route path="/panel" element={<RequirePermission check={(p) => p.canUseContentPanel}><PanelLayout /></RequirePermission>}>
       <Route index element={<PanelHome />} />
       <Route path="fotos" element={<RequirePermission check={(p) => p.can(PERMISSIONS.photosManage)}><PhotosAdmin /></RequirePermission>} />
