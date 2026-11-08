@@ -87,6 +87,16 @@ export async function uploadPhotos(backend: Backend, processor: ImageProcessor, 
   return failed;
 }
 
+/**
+ * URL local (blob:) para ver una foto antes de subirla. Se copia a un Blob
+ * nuevo con un tipo de imagen fijo, así el navegador sólo puede mostrarla como
+ * imagen (nunca como HTML ni como script).
+ */
+function previewUrl(file: File): string {
+  const type = /^image\/[a-z0-9.+-]+$/i.test(file.type) && file.type !== "image/svg+xml" ? file.type : "image/jpeg";
+  return URL.createObjectURL(new Blob([file], { type }));
+}
+
 export function NewDedicationModal({ people, onClose }: { people: Profile[]; onClose(): void }) {
   const backend = useBackend();
   const toast = useToast();
@@ -100,7 +110,7 @@ export function NewDedicationModal({ people, onClose }: { people: Profile[]; onC
   const fileInput = useRef<HTMLInputElement>(null);
   const processor = useMemo(() => new ImageProcessor(DEDICATION_IMAGE_OPTIONS), []);
   useEffect(() => () => processor.dispose(), [processor]);
-  const previews = useMemo(() => photos.map((f) => URL.createObjectURL(f)), [photos]);
+  const previews = useMemo(() => photos.map(previewUrl), [photos]);
   useEffect(() => () => previews.forEach((u) => URL.revokeObjectURL(u)), [previews]);
   const busy = progress !== null;
 
