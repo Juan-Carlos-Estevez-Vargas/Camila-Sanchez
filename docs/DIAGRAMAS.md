@@ -23,6 +23,7 @@ directamente al abrir este archivo. La explicación de cada pieza está en
 - [Colores por persona](#colores-por-persona)
 - [Perfil de cada persona](#perfil-de-cada-persona)
 - [Listas compartidas](#listas-compartidas)
+- [Dedicatorias y playlist](#dedicatorias-y-playlist)
 - [Tutorial guiado](#tutorial-guiado)
 - [Idiomas](#idiomas)
 - [Capas de seguridad](#capas-de-seguridad)
@@ -44,7 +45,7 @@ flowchart LR
   subgraph Supabase
     AUTH["Auth<br/>PKCE + rotación de tokens"]
     DB[("Postgres<br/>RLS + triggers")]
-    ST[("Storage<br/>buckets privados<br/>photos · chat-media · list-media · avatars")]
+    ST[("Storage<br/>buckets privados<br/>photos · chat-media · list-media · avatars · dedication-media")]
     RT["Realtime"]
     VA[("Vault<br/>URL y secreto de send-push")]
     subgraph Edge["Edge Functions"]
@@ -78,7 +79,7 @@ flowchart LR
 
 ```mermaid
 flowchart TB
-  F["features/<br/>site · auth · admin · super · messages · chat · lists · tour"]
+  F["features/<br/>site · auth · admin · super · messages · chat · lists · dedications · player · tour"]
   UI["ui/<br/>modal, campos, feedback, cargador, avatar"]
   S["state/<br/>contextos: auth, contenido, tema, avisos"]
   SV["services/<br/>cola, imágenes, notificaciones"]
@@ -1041,6 +1042,98 @@ flowchart TD
   F -- "no" --> FX["No puede (RLS)"]
 ```
 
+## Dedicatorias y playlist
+
+Diagramas de la sección **Dedicatorias**: cartas con fotos y canciones, y la
+playlist que se arma con todas las canciones.
+
+### Escribir una dedicatoria
+
+```mermaid
+sequenceDiagram
+  actor J as Juan
+  participant App as SPA
+  participant W as Workers de imagen
+  participant DB as Postgres
+  participant ST as Storage (dedication-media)
+  actor C as Camila
+
+  J->>App: Dedicatorias → + Nueva dedicatoria
+  J->>App: Mensaje, emoji, «para» Camila (o «Para todos»),<br/>fotos y canciones (enlaces o audios)
+  App->>DB: insert dedications
+  Note over DB: guard_dedication pone author_id = Juan<br/>y revisa que Camila tenga dedications.use
+  DB-->>C: aviso «Juan te dedicó algo 🎶»<br/>(campana y celular, enlace /dedicatorias/:id)
+  App->>W: optimiza cada foto (WebP + miniatura)
+  App->>ST: sube a dedication-media/<id>/<uuid>.webp
+  App->>DB: insert dedication_photos (máx. 12)
+  App->>ST: sube el audio a dedication-media/<id>/<uuid>.mp3
+  App->>DB: insert dedication_songs (máx. 50,<br/>source youtube · spotify · audio · link)
+  C->>App: Abre el aviso
+  App->>DB: select dedication + fotos + canciones (RLS: can_see_dedication)
+  App->>ST: URLs firmadas de fotos y audios
+  App-->>C: la carta, las fotos y ▶ Escuchar todas
+```
+
+### Quién ve qué
+
+```mermaid
+flowchart TD
+  P["Persona con sesión"] --> U{"¿Tiene dedications.use?"}
+  U -- "no" --> N["No ve la sección"]
+  U -- "sí" --> V{"¿La escribió, es para ella<br/>o es «Para todos»?"}
+  V -- "sí" --> SEE["La ve con sus fotos y canciones<br/>(can_see_dedication en tablas y bucket)"]
+  V -- "no" --> HIDE["No la ve"]
+  SEE --> A{"¿La escribió?"}
+  A -- "sí" --> EDIT["Edita texto, fotos y canciones,<br/>cambia el orden y la borra"]
+  A -- "no" --> LISTEN["Sólo la lee y la escucha"]
+```
+
+### El reproductor
+
+```mermaid
+flowchart LR
+  PLAY["▶ en una dedicatoria<br/>o en la playlist"] --> CTX["PlayerContext<br/>cola, orden, mezcla"]
+  CTX --> FOCUS["claimAudio('playlist')<br/>pausa la música de fondo"]
+  CTX --> MP["MiniPlayer<br/>(abajo, sigue al navegar)"]
+  MP --> T{"¿De dónde es?"}
+  T -- "youtube" --> YT["iframe youtube-nocookie<br/>enablejsapi + postMessage"]
+  T -- "spotify" --> SP["iframe open.spotify.com/embed"]
+  T -- "audio" --> AU["&lt;audio&gt; con URL firmada"]
+  T -- "link" --> LK["Botón «Abrir enlace»"]
+  YT -- "onStateChange = 0 (terminó)" --> NEXT["Siguiente"]
+  AU -- "ended" --> NEXT
+  SP -. "no avisa al terminar:<br/>se usa ⏭" .-> NEXT
+  NEXT --> CTX
+  MP --> MS["Media Session:<br/>título y botones en<br/>la pantalla bloqueada"]
+```
+
+### Importar y exportar
+
+```mermaid
+flowchart LR
+  subgraph Entrar["Importar"]
+    PASTE["Enlaces pegados<br/>(uno por línea,<br/>«Artista - Título»)"]
+    FILE[".m3u / .m3u8<br/>(#EXTINF)"]
+  end
+  PASTE & FILE --> PARSE["parsePlaylistText:<br/>sólo https, sin repetidos,<br/>limpia ?si= y rastreo"]
+  PARSE --> REVIEW["Vista previa con<br/>títulos editables"]
+  REVIEW --> TARGET{"¿A dónde?"}
+  TARGET --> NEWD["Nueva dedicatoria"]
+  TARGET --> MINE["Una dedicatoria mía"]
+  NEWD & MINE --> SONGS[("dedication_songs")]
+  SONGS --> PL["Playlist: todas las que veo,<br/>de la más antigua a la más nueva<br/>o al revés"]
+  subgraph Salir["Exportar"]
+    M3U["⬇️ .m3u8<br/>(VLC, Winamp, Kodi,<br/>TuneMyMusic, Soundiiz)"]
+    YTQ["Cola de YouTube<br/>watch_videos (máx. 50)"]
+    SPL["Enlaces de Spotify<br/>(Ctrl+V en una playlist)"]
+    TXT["Lista en texto"]
+  end
+  PL --> M3U & YTQ & SPL & TXT
+```
+
+Los audios subidos se quedan en la app: el `.m3u8` los nombra en un
+comentario, pero no los incluye porque sus enlaces firmados vencen.
+
 ## Tutorial guiado
 
 ```mermaid
@@ -1228,6 +1321,18 @@ erDiagram
   AUTH_USERS ||--o{ TODO_LIST_MEMBERS : "es miembro"
   TODO_LISTS ||--o{ TODO_ITEMS : "tiene"
   TODO_ITEMS |o--o{ TODO_ITEMS : "subtarea de"
+  AUTH_USERS ||--o{ DEDICATIONS : "escribe"
+  AUTH_USERS |o--o{ DEDICATIONS : "es para (o nadie = todos)"
+  DEDICATIONS ||--o{ DEDICATION_PHOTOS : "fotos"
+  DEDICATIONS ||--o{ DEDICATION_SONGS : "canciones"
+  DEDICATION_SONGS {
+    uuid id PK
+    uuid dedication_id FK
+    text source "youtube · spotify · audio · link"
+    text url "https, o null si es audio"
+    text audio_path "dedication-media/<id>/..."
+    int position
+  }
   TODO_ITEMS ||--o{ TODO_MATERIALS : "necesita"
   TODO_ITEMS ||--o{ TODO_ITEM_IMAGES : "fotos"
 
@@ -1454,18 +1559,21 @@ flowchart LR
     E6["notes.send"]
     E7["chat.use"]
     E8["lists.use"]
+    E9["dedications.use"]
   end
   subgraph viewer["viewer (invitado)"]
     V1["site.view"]
     V2["notes.send"]
     V3["chat.use"]
     V4["lists.use"]
+    V5["dedications.use"]
   end
   ALL --> SUPER["/super: usuarios, permisos,<br/>apariencia, secciones, ajustes, auditoría"]
   E2 & E3 & E4 & E5 --> PANEL["/panel"]
   E6 & V2 --> MSG["/mensajes"]
   E7 & V3 --> CHAT["/chat"]
   E8 & V4 --> LISTAS["/listas<br/>(dentro, sólo las listas<br/>donde es miembro)"]
+  E9 & V5 --> DED["/dedicatorias<br/>(las suyas, las que le<br/>dedicaron y las «para todos»)"]
   ANY["cualquier cuenta"] --> CUENTA["/cuenta, /cuenta/perfil y /cuenta/colores<br/>perfil, avisos, colores, contraseña"]
 ```
 
