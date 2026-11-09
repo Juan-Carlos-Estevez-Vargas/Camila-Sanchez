@@ -96,7 +96,7 @@ escucha `beforeinstallprompt` (`src/services/pwa/install.ts`) para ofrecer
 - Rutas públicas: `/`, `/entrar`, `/invitacion`, `/recuperar`, `/legal` y
   `/app` (descargar la app).
 - Rutas privadas (`src/app/routes.tsx`): `/mensajes`, `/chat`, `/listas`,
-  `/listas/:id`, `/cuenta`, `/cuenta/perfil`, `/cuenta/colores`, `/panel/*` y `/super/*` (`/panel/colores`, de antes,
+  `/listas/:id`, `/cuenta/*` (perfil, colores, idioma, avisos, seguridad y privacidad dentro de `AccountLayout`, que reutiliza el menú lateral de los paneles; `/cuenta` abre `/cuenta/perfil`), `/panel/*` y `/super/*` (`/panel/colores`, de antes,
   redirige a `/cuenta/colores`). Cada una se envuelve en `RequirePermission`, que
   manda a `/entrar?next=…` si no hay sesión y muestra un aviso si falta el
   permiso.

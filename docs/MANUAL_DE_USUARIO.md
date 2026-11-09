@@ -341,8 +341,10 @@ el aviso de instalar con la ✕, no vuelve a salir en unas semanas.
 Toca tu foto (o tu inicial) en la esquina de la cabecera: se abre un menú con
 **Mi cuenta** y **Salir**.
 
-Arriba ves tu foto, tu nombre y tu frase. Toca **Editar perfil** para
-cambiarlos:
+A la izquierda está el menú de tu cuenta (en el celular, una fila de
+pestañas arriba que se desliza de lado): **Mi perfil**, **Mis colores**,
+**Idioma**, **App y avisos**, **Seguridad** y **Privacidad**. Toca una opción y
+se abre en el centro. Al entrar se abre **Mi perfil**:
 
 - **Tu foto:** **📷 Subir foto** y elige una imagen del celular o del
   computador. Se recorta en círculo y se ve en la cabecera, en el chat, en las
@@ -357,7 +359,7 @@ En el **chat**, toca la foto o el nombre de la otra persona para ver su
 perfil: su foto en grande, su frase y cuántos días faltan para su cumpleaños.
 Sólo cada persona puede cambiar su propio perfil.
 
-- **Mis colores:** toca **Cambiar colores** y elige una paleta (Rosa vino,
+- **Mis colores:** elige una paleta (Rosa vino,
   Rosa suave, Durazno, Lavanda, Menta, Cielo o Medianoche), o ajústala a tu
   gusto con **Personalizar**, y luego **Guardar mis colores**. Sólo cambia lo
   que ves tú: cada persona tiene los suyos y quien entra sin cuenta siempre ve
@@ -365,12 +367,12 @@ Sólo cada persona puede cambiar su propio perfil.
   los tuyos.
 - **Idioma:** elige español, English o Português. Se guarda en este
   dispositivo.
-- **App en el celular:** instálala con su ícono (ver
+- **App y avisos → App en el celular:** instálala con su ícono (ver
   [La app en tu celular](#la-app-en-tu-celular-)).
-- **Avisos en este dispositivo:** actívalos y prueba que lleguen (ver la
+- **App y avisos → Avisos en este dispositivo:** actívalos y prueba que lleguen (ver la
   sección 6).
-- **Cambiar contraseña:** al menos 10 caracteres, escrita dos veces.
-- **Verificación en dos pasos 🛡️ (opcional):** además de la contraseña, al
+- **Seguridad → Cambiar contraseña:** al menos 10 caracteres, escrita dos veces.
+- **Seguridad → Verificación en dos pasos 🛡️ (opcional):** además de la contraseña, al
   entrar se pide un código de 6 dígitos de una app de autenticación (Google
   Authenticator, Microsoft Authenticator, 1Password…). Así, aunque alguien
   descubra tu contraseña, no puede entrar.
@@ -384,10 +386,10 @@ Sólo cada persona puede cambiar su propio perfil.
   abras la página. Para quitarla toca **Desactivar** y escribe un código de la
   app. Si perdiste el celular o borraste la app, pídele a Juan que te la quite
   (ver sección 11).
-- **Cerrar sesión aquí:** sólo en este dispositivo.
-- **Cerrar en todos los dispositivos:** úsalo si perdiste el celular o entraste
+- **Seguridad → Cerrar sesión aquí:** sólo en este dispositivo.
+- **Seguridad → Cerrar en todos los dispositivos:** úsalo si perdiste el celular o entraste
   en un equipo ajeno.
-- **Privacidad y tus datos 🔒:** cuándo aceptaste los términos y cómo pedir
+- **Privacidad:** cuándo aceptaste los términos y cómo pedir
   una copia de tus datos, corregirlos o borrar tu cuenta (gratis, sin
   preguntas).
 
