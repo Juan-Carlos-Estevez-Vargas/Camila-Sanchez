@@ -72,7 +72,7 @@ describe("recorrido del tutorial", () => {
   });
 
   it("todos los pasos tienen un id único y texto", () => {
-    for (const path of ["/", "/entrar", "/mensajes", "/chat", "/cuenta", "/cuenta/perfil", "/panel", "/super/auditoria", "/invitacion", "/recuperar", "/listas", "/listas/abc", "/dedicatorias", "/dedicatorias/playlist", "/dedicatorias/abc"]) {
+    for (const path of ["/", "/entrar", "/mensajes", "/chat", "/cuenta", "/cuenta/perfil", "/cuenta/colores", "/cuenta/idioma", "/cuenta/avisos", "/cuenta/seguridad", "/cuenta/privacidad", "/panel", "/super/auditoria", "/invitacion", "/recuperar", "/listas", "/listas/abc", "/dedicatorias", "/dedicatorias/playlist", "/dedicatorias/abc"]) {
       const steps = tourFor({ pathname: path, loggedIn: true, policy: policyFor("super_admin") });
       expect(new Set(steps.map((s) => s.id)).size).toBe(steps.length);
       for (const s of steps) expect(s.title && s.body).toBeTruthy();
@@ -81,6 +81,12 @@ describe("recorrido del tutorial", () => {
 
   it("en Mi perfil explica la foto, el icono y los datos", () => {
     expect(ids("/cuenta/perfil", "viewer")).toEqual(expect.arrayContaining(["profile-photo", "profile-icon", "profile-details"]));
-    expect(ids("/cuenta", "viewer")).toContain("account-profile");
+    expect(ids("/cuenta/perfil", "viewer")).toContain("account-nav");
+  });
+
+  it("en Mi cuenta enseña el menú y la opción abierta", () => {
+    expect(ids("/cuenta/seguridad", "viewer")).toEqual(expect.arrayContaining(["account-nav", "account-password", "account-two-step", "account-sessions"]));
+    expect(ids("/cuenta/idioma/", "viewer")).toEqual(expect.arrayContaining(["account-nav", "account-language"]));
+    expect(ids("/cuenta/seguridad", "viewer")).not.toContain("profile-photo");
   });
 });

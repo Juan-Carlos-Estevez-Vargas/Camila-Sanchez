@@ -45,8 +45,6 @@ export const tour: Messages["tour"] = {
     "profile-icon": { title: "Ou um ícone", body: "Se não quiser foto, escolha um ícone. Sem foto nem ícone aparece a inicial do seu nome." },
     "profile-details": { title: "Sobre você", body: "Seu nome, uma frase ou status e seu aniversário. Do aniversário os outros veem o dia e o mês, não o ano." },
     "my-colors": { title: "Suas cores", body: "Toque numa paleta para testar e salve. Só muda o que você vê: os outros continuam com as deles, e quem entra sem conta vê as da página." },
-    "account-profile": { title: "Seu perfil", body: "Mude seu nome, sua foto ou ícone, uma frase e seu aniversário." },
-    "account-colors": { title: "Suas cores", body: "Escolha com quais cores você vê o app. Só muda para você." },
     "account-push": { title: "Avisos no celular", body: "Ative em cada dispositivo para que as mensagens, os bilhetinhos e as surpresas cheguem mesmo com o app fechado. No iPhone, primeiro adicione o app à tela de início." },
     "account-password": { title: "Sua senha", body: "Troque quando quiser. Precisa ter pelo menos 10 caracteres." },
     "account-two-step": { title: "Verificação em duas etapas", body: "Opcional: ative-a e, ao entrar, também pediremos o código de um app autenticador do celular." },
@@ -62,6 +60,7 @@ export const tour: Messages["tour"] = {
     "nav-cuenta": { title: "Minha conta", body: "Toque na sua foto para abrir sua conta ou sair. Seu perfil e foto, suas cores, os avisos, sua senha e as sessões abertas." },
     "launcher": { title: "Sempre à mão", body: "Este botão fica em todas as páginas. Toque quando quiser repetir o tour: cada página tem seus próprios passos." },
     "language": { title: "Idioma", body: "Escolha em que idioma você vê a página. Na primeira vez é usado o do seu dispositivo, e sua escolha fica lembrada." },
+    "account-nav": { title: "Sua conta", body: "Escolha uma opção do menu (perfil, cores, idioma, avisos, segurança ou privacidade) e ela abre aqui ao lado." },
     "account-language": { title: "Idioma", body: "Mude o idioma do app. Fica salvo neste dispositivo." },
   },
   pages: {

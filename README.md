@@ -98,9 +98,9 @@ Funciona en dos modos:
 | App de chat a pantalla completa: buscar personas, solicitudes de contacto, chats privados, fotos, stickers, responder, reacciones (en el celular, manteniendo pulsado el mensaje), editar y borrar, «escribiendo…», en línea, vistos (✓ ✓✓), buscar mensajes, fijar, silenciar, archivar y bloquear | `/chat` | `chat.use` |
 | Listas compartidas con subtareas, materiales, fotos, fechas y responsables, en vivo | `/listas` | `lists.use` |
 | Dedicatorias para alguien o para todos: un mensaje, fotos y canciones. Todas las canciones forman una playlist que suena dentro de la app, se exporta (`.m3u8`, cola de YouTube, enlaces de Spotify o texto) y se le importan canciones pegando enlaces o abriendo un `.m3u` | `/dedicatorias` y `/dedicatorias/playlist` | `dedications.use` |
-| Perfil: nombre, foto o icono, frase y cumpleaños | `/cuenta/perfil` | Cualquier cuenta |
-| Mis colores: cada persona elige su paleta sin cambiársela a nadie | `/cuenta/colores` | Cualquier cuenta |
-| Mi cuenta: app en el celular, avisos en el dispositivo, contraseña, verificación en dos pasos (opcional) y sesiones | `/cuenta` | Cualquier cuenta |
+| Perfil: nombre, foto o icono, frase y cumpleaños (dentro de Mi cuenta) | `/cuenta/perfil` | Cualquier cuenta |
+| Mis colores: cada persona elige su paleta sin cambiársela a nadie (dentro de Mi cuenta) | `/cuenta/colores` | Cualquier cuenta |
+| Mi cuenta: menú a la izquierda (en el celular, pestañas arriba) con Mi perfil, Mis colores, Idioma, App y avisos, Seguridad (contraseña, verificación en dos pasos opcional y sesiones) y Privacidad; la opción elegida se abre en el centro | `/cuenta/*` | Cualquier cuenta |
 | Panel de contenido: fotos, textos y animaciones, hitos, fechas y sorpresas (cada sorpresa se prepara para una persona: sólo ella la ve, nunca quien la creó) | `/panel` | Editora y super admin |
 | Super admin: usuarios, invitaciones por enlace o QR, roles y permisos, apariencia, secciones, ajustes y auditoría (abre en el mes actual; filtros por mes o todo el historial, sección, acción y persona, orden y paginación con primera, última, números y tamaño de página) | `/super` | Super admin |
 | App de celular instalable (Android, iPhone y computador): ícono, pantalla completa, atajos, sin conexión y aviso de versión nueva | `/app` | Pública |

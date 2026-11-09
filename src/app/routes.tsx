@@ -20,7 +20,11 @@ const ListsPage = lazy(() => import("@/features/lists/ListsPage"));
 const ListPage = lazy(() => import("@/features/lists/ListPage"));
 const DedicationsPage = lazy(() => import("@/features/dedications/DedicationsPage"));
 const DedicationPage = lazy(() => import("@/features/dedications/DedicationPage"));
-const AccountPage = lazy(() => import("@/features/auth/AccountPage"));
+const AccountLayout = lazy(() => import("@/features/auth/AccountPage"));
+const AccountLanguage = lazy(() => import("@/features/auth/AccountPage").then((m) => ({ default: m.AccountLanguage })));
+const AccountDevice = lazy(() => import("@/features/auth/AccountPage").then((m) => ({ default: m.AccountDevice })));
+const AccountSecurity = lazy(() => import("@/features/auth/AccountPage").then((m) => ({ default: m.AccountSecurity })));
+const AccountPrivacy = lazy(() => import("@/features/auth/AccountPage").then((m) => ({ default: m.AccountPrivacy })));
 const ProfilePage = lazy(() => import("@/features/auth/ProfilePage"));
 const MyColorsPage = lazy(() => import("@/features/auth/MyColorsPage"));
 const SuperLayout = lazy(() => import("@/features/super/SuperLayout"));
@@ -35,9 +39,16 @@ const AuditAdmin = lazy(() => import("@/features/super/AuditAdmin"));
 export const appRoutes = (
   <>
     <Route path="/mensajes" element={<RequirePermission check={(p) => p.can(PERMISSIONS.notesSend)}><MessagesPage /></RequirePermission>} />
-    <Route path="/cuenta" element={<RequirePermission check={() => true}><AccountPage /></RequirePermission>} />
-    <Route path="/cuenta/perfil" element={<RequirePermission check={() => true}><ProfilePage /></RequirePermission>} />
-    <Route path="/cuenta/colores" element={<RequirePermission check={() => true}><MyColorsPage /></RequirePermission>} />
+    {/* Mi cuenta: menú a la izquierda y la opción elegida en el centro. */}
+    <Route path="/cuenta" element={<RequirePermission check={() => true}><AccountLayout /></RequirePermission>}>
+      <Route index element={<Navigate to="/cuenta/perfil" replace />} />
+      <Route path="perfil" element={<ProfilePage />} />
+      <Route path="colores" element={<MyColorsPage />} />
+      <Route path="idioma" element={<AccountLanguage />} />
+      <Route path="avisos" element={<AccountDevice />} />
+      <Route path="seguridad" element={<AccountSecurity />} />
+      <Route path="privacidad" element={<AccountPrivacy />} />
+    </Route>
     <Route path="/chat/*" element={<RequirePermission check={(p) => p.can(PERMISSIONS.chatUse)}><ChatApp /></RequirePermission>} />
     <Route path="/listas" element={<RequirePermission check={(p) => p.can(PERMISSIONS.listsUse)}><ListsPage /></RequirePermission>} />
     <Route path="/listas/:id" element={<RequirePermission check={(p) => p.can(PERMISSIONS.listsUse)}><ListPage /></RequirePermission>} />

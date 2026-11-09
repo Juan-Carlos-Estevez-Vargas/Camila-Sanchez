@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
 import { contrastRatio } from "@/core/validation";
 import { DEFAULT_THEME } from "@/domain/defaults";
 import { applyPalette, matchPalette, paletteName, personalTheme, pickPalette, type PaletteKey } from "@/domain/palettes";
@@ -44,11 +43,10 @@ export default function MyColorsPage() {
   };
 
   return (
-    <main className="container stack" id="contenido-principal" style={{ maxWidth: 900, paddingBlock: "32px 64px" }}>
+    <section className="stack">
       <div className="row-between">
         <div>
-          <p className="muted" style={{ margin: 0 }}><Link to="/cuenta">{i18n.auth.profile.back}</Link></p>
-          <h1 style={{ margin: "4px 0" }}>{t.title}</h1>
+          <h1 className="admin-page__title" style={{ margin: "4px 0" }}>{t.title}</h1>
           <p className="muted" style={{ margin: 0 }}>{t.intro}</p>
         </div>
         <div className="row">
@@ -98,6 +96,6 @@ export default function MyColorsPage() {
         </div>
         <ThemePreview theme={theme} />
       </div>
-    </main>
+    </section>
   );
 }

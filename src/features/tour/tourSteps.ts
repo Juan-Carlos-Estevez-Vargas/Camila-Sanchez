@@ -59,6 +59,19 @@ function adminSteps(pathname: string, menuBody: string): TourStep[] {
   ];
 }
 
+/** Pasos de cada opción de Mi cuenta (/cuenta abre «Mi perfil»). */
+function accountSteps(path: string) {
+  const steps: Record<string, string[]> = {
+    "/cuenta": ["profile-photo", "profile-icon", "profile-details"],
+    "/cuenta/perfil": ["profile-photo", "profile-icon", "profile-details"],
+    "/cuenta/colores": ["my-colors"],
+    "/cuenta/idioma": ["account-language"],
+    "/cuenta/avisos": ["account-push"],
+    "/cuenta/seguridad": ["account-password", "account-two-step", "account-sessions"],
+  };
+  return steps[path] ?? [];
+}
+
 /** Pasos propios de la página en la que está la persona. */
 function pageSteps(ctx: TourContext): TourStep[] {
   const { pathname } = ctx;
@@ -239,71 +252,11 @@ function pageSteps(ctx: TourContext): TourStep[] {
       },
     ];
   }
-  if (pathname === "/cuenta/perfil") {
+  if (areaOf(pathname) === "cuenta") {
+    // Mi cuenta: primero el menú de la izquierda, después la opción abierta.
     return [
-      {
-        id: "profile-photo",
-        target: [tourTarget("profile-photo")],
-        ...text("profile-photo"),
-      },
-      {
-        id: "profile-icon",
-        target: [tourTarget("profile-icon")],
-        ...text("profile-icon"),
-      },
-      {
-        id: "profile-details",
-        target: [tourTarget("profile-details")],
-        ...text("profile-details"),
-      },
-    ];
-  }
-  if (pathname === "/cuenta/colores") {
-    return [
-      {
-        id: "my-colors",
-        target: [tourTarget("my-colors")],
-        ...text("my-colors"),
-      },
-    ];
-  }
-  if (pathname === "/cuenta") {
-    return [
-      {
-        id: "account-profile",
-        target: [tourTarget("account-profile")],
-        ...text("account-profile"),
-      },
-      {
-        id: "account-colors",
-        target: [tourTarget("account-colors")],
-        ...text("account-colors"),
-      },
-      {
-        id: "account-language",
-        target: [tourTarget("account-language")],
-        ...text("account-language"),
-      },
-      {
-        id: "account-push",
-        target: [tourTarget("account-push")],
-        ...text("account-push"),
-      },
-      {
-        id: "account-password",
-        target: [tourTarget("account-password")],
-        ...text("account-password"),
-      },
-      {
-        id: "account-two-step",
-        target: [tourTarget("account-two-step")],
-        ...text("account-two-step"),
-      },
-      {
-        id: "account-sessions",
-        target: [tourTarget("account-sessions")],
-        ...text("account-sessions"),
-      },
+      { id: "account-nav", target: [tourTarget("account-nav")], ...text("account-nav") },
+      ...accountSteps(pathname.replace(/\/+$/, "")).map((id) => ({ id, target: [tourTarget(id)], ...text(id) })),
     ];
   }
   if (areaOf(pathname) === "panel") {

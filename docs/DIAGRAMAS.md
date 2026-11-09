@@ -7,6 +7,7 @@ directamente al abrir este archivo. La explicación de cada pieza está en
 - [Arquitectura general](#arquitectura-general)
 - [Capas del frontend](#capas-del-frontend)
 - [Navegación y permisos](#navegación-y-permisos)
+  - [Mi cuenta](#mi-cuenta)
 - [Inicio de sesión](#inicio-de-sesión)
   - [Verificación en dos pasos](#verificación-en-dos-pasos)
 - [Invitación por enlace o QR](#invitación-por-enlace-o-qr)
@@ -113,6 +114,28 @@ flowchart TD
   F --> G["Cada consulta pasa por RLS<br/>has_permission() en Postgres"]
   G -- "permitido" --> OK["Datos"]
   G -- "denegado" --> X["Error 403 / sin filas"]
+```
+
+### Mi cuenta
+
+Las opciones van en un menú a la izquierda y la elegida se abre en el centro;
+en el celular el menú pasa a una fila de pestañas arriba (la abierta se centra
+sola). Cada opción tiene su dirección, así funcionan «atrás» y los enlaces.
+
+```mermaid
+flowchart LR
+  H["👤 Cabecera → Mi cuenta<br/>/cuenta"] --> R["/cuenta/perfil"]
+  subgraph L["AccountLayout (menú + centro)"]
+    direction TB
+    M["Menú: foto, nombre, correo y rol"]
+    M --> P["👤 Mi perfil<br/>/cuenta/perfil"]
+    M --> C["🎨 Mis colores<br/>/cuenta/colores"]
+    M --> I["🌐 Idioma<br/>/cuenta/idioma"]
+    M --> A["🔔 App y avisos<br/>/cuenta/avisos<br/>instalar · avisos del dispositivo"]
+    M --> S["🔐 Seguridad<br/>/cuenta/seguridad<br/>contraseña · dos pasos · sesiones"]
+    M --> V["🔒 Privacidad<br/>/cuenta/privacidad"]
+  end
+  R --> P
 ```
 
 ## Inicio de sesión

@@ -45,8 +45,6 @@ export const tour: Messages["tour"] = {
     "profile-icon": { title: "Or an icon", body: "If you don't want a photo, pick an icon. Without a photo or icon, the initial of your name is shown." },
     "profile-details": { title: "About you", body: "Your name, a phrase or status and your birthday. Others see the day and month of your birthday, not the year." },
     "my-colors": { title: "Your colors", body: "Tap a palette to try it and save it. It only changes what you see: others keep theirs, and visitors without an account see the page's colors." },
-    "account-profile": { title: "Your profile", body: "Change your name, your photo or icon, a phrase and your birthday." },
-    "account-colors": { title: "Your colors", body: "Choose the colors you see the app in. It only changes for you." },
     "account-push": { title: "Phone notifications", body: "Turn them on on each device so messages, notes and surprises reach you even when the app is closed. On iPhone, add the app to your home screen first." },
     "account-password": { title: "Your password", body: "Change it whenever you like. It must have at least 10 characters." },
     "account-two-step": { title: "Two-step verification", body: "Optional: turn it on and we'll also ask for a code from an authenticator app on your phone when you sign in." },
@@ -62,6 +60,7 @@ export const tour: Messages["tour"] = {
     "nav-cuenta": { title: "My account", body: "Tap your photo to open your account or sign out. Your profile and photo, your colors, notifications, your password and open sessions." },
     "launcher": { title: "Always at hand", body: "This button lives on every page. Tap it whenever you want to repeat the tour: each page has its own steps." },
     "language": { title: "Language", body: "Choose the language you see the page in. The first time your device's language is used, and your choice is remembered." },
+    "account-nav": { title: "Your account", body: "Pick an option from the menu (profile, colors, language, notifications, security or privacy) and it opens right here." },
     "account-language": { title: "Language", body: "Change the app's language. It's saved on this device." },
   },
   pages: {
