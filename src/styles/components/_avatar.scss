@@ -57,10 +57,8 @@
 // --- Mi perfil -----------------------------------------------------------------
 
 .profile-page {
-  padding-block: space(6) space(7);
   max-width: 720px;
 
-  &__back { font-size: 0.9rem; }
   h1 { margin: space(1) 0; }
 
   &__photo {
@@ -98,24 +96,25 @@
   }
 }
 
-.account-profile {
+// Mi cuenta: la foto, el nombre y el correo arriba del menú lateral.
+.account-side {
   display: flex;
   align-items: center;
   gap: space(3);
+  padding: 0 space(2);
 
   &__text {
-    flex: 1;
     min-width: 0;
     display: grid;
     gap: 2px;
+    justify-items: start;
 
-    strong { font-size: 1.15rem; @include truncate; }
-    .muted { @include truncate; }
-  }
-
-  @include below(sm) {
-    flex-wrap: wrap;
-
-    .btn { flex-basis: 100%; }
+    strong { font-size: 1.1rem; @include truncate; max-width: 100%; }
+    .muted { font-size: 0.85rem; @include truncate; max-width: 100%; }
   }
 }
+
+// Las tarjetas de cada opción traen su propio margen de arriba (de cuando
+// iban todas en una sola página); aquí las separa el `gap`.
+.account-cards > .card { margin-top: 0 !important; }
+

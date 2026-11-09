@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from "react";
-import { Link } from "react-router-dom";
 import { AVATAR_EMOJIS, MAX_BIO_LENGTH } from "@/domain/profile";
 import { useSaver } from "@/features/admin/useSaver";
 import { ImageProcessor } from "@/services/images/ImageProcessor";
@@ -37,7 +36,7 @@ export default function ProfilePage() {
     setForm({ displayName: profile.displayName, bio: profile.bio, birthday: profile.birthday ?? "" });
   }, [profile]);
 
-  if (!profile) return <main className="container" id="contenido-principal"><PageLoader /></main>;
+  if (!profile) return <PageLoader />;
 
   const preview = { ...profile, displayName: form.displayName || profile.displayName };
   const changed = form.displayName.trim() !== profile.displayName || form.bio.trim() !== profile.bio || (form.birthday || null) !== profile.birthday;
@@ -82,10 +81,9 @@ export default function ProfilePage() {
   };
 
   return (
-    <main className="container stack profile-page" id="contenido-principal">
+    <section className="stack profile-page">
       <div>
-        <Link to="/cuenta" className="profile-page__back">{t.back}</Link>
-        <h1>{t.title}</h1>
+        <h1 className="admin-page__title">{t.title}</h1>
         <p className="muted">{t.intro}</p>
       </div>
 
@@ -134,6 +132,6 @@ export default function ProfilePage() {
         </Field>
         <button className="btn" style={{ justifySelf: "start" }} disabled={busy || !changed || !form.displayName.trim()}>{t.save}</button>
       </form>
-    </main>
+    </section>
   );
 }
