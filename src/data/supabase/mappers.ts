@@ -25,6 +25,7 @@ export const toSettings = (r: Row): SiteSettings => ({
   siteTitle: str(r.site_title),
   siteSubtitle: str(r.site_subtitle),
   relationshipStart: strOrNull(r.relationship_start),
+  relationshipEnd: strOrNull(r.relationship_end),
   isPublic: r.is_public === true,
   musicUrl: safeMusicUrl(r.music_url),
   theme: normalizeTheme(r.theme),
@@ -38,6 +39,7 @@ export const fromSettings = (s: Partial<SiteSettings>): Row => {
   if (s.siteTitle !== undefined) row.site_title = s.siteTitle;
   if (s.siteSubtitle !== undefined) row.site_subtitle = s.siteSubtitle;
   if (s.relationshipStart !== undefined) row.relationship_start = s.relationshipStart;
+  if (s.relationshipEnd !== undefined) row.relationship_end = s.relationshipEnd;
   if (s.isPublic !== undefined) row.is_public = s.isPublic;
   if (s.musicUrl !== undefined) row.music_url = s.musicUrl;
   if (s.theme !== undefined) row.theme = s.theme;

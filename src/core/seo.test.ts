@@ -8,6 +8,7 @@ const settings = (patch: Partial<SiteSettings> = {}): SiteSettings => ({
   siteTitle: "Para el amor de mi vida",
   siteSubtitle: "Cada día contigo es mi recuerdo favorito.",
   relationshipStart: "2025-05-31",
+  relationshipEnd: null,
   isPublic: true,
   musicUrl: null,
   theme: {} as SiteSettings["theme"],

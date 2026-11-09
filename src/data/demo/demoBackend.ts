@@ -207,6 +207,8 @@ class DemoDatabase {
         const state = { ...baseState(), ...stored };
         // Datos de antes de la app de chat: la sala pasa a ser una conversación.
         upgradeDemoChat(state);
+        // Datos de antes de la fecha de fin (migración 026).
+        state.settings = { ...state.settings, relationshipEnd: state.settings.relationshipEnd ?? null };
         // Datos de antes de las dedicatorias: el permiso nuevo, como en la migración 022.
         if (!Array.isArray(stored.dedications)) {
           for (const role of ["editor", "viewer"] as const) {

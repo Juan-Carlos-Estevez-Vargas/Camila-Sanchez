@@ -41,6 +41,7 @@ export const special: Messages["special"] = {
     pick: "Escolher…",
     noBirthday: "Coloque a data do aniversário dela para que nesse dia a página fique em festa.",
     noStart: "Falta a data em que tudo começou (Ajustes do site).",
+    ended: "Não é mais comemorado: o relacionamento terminou (Ajustes do site).",
     toggle: (name) => `Ativar ${name}`,
     preview: "Ver como fica",
     today: "É hoje!",

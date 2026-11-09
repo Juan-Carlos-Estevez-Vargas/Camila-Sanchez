@@ -11,7 +11,9 @@ import styles from "./SpecialDaysCard.module.scss";
 
 interface Props {
   value: SpecialDaysConfig;
+  /** Inicio para el aniversario; null si falta o si la relación terminó (`ended`). */
   relationshipStart: string | null;
+  ended?: boolean;
   profiles: Profile[];
   onChange(next: SpecialDaysConfig): void;
 }
@@ -23,7 +25,7 @@ const dayMonth = (iso: string) => dateFormat({ day: "numeric", month: "long" }).
  * (a mano o tomado de su cuenta), qué fechas cambian el tema y un enlace
  * para ver cada tema ya mismo en la página.
  */
-export function SpecialDaysCard({ value, relationshipStart, profiles, onChange }: Props) {
+export function SpecialDaysCard({ value, relationshipStart, ended = false, profiles, onChange }: Props) {
   const t = useT().special;
   const today = specialDayOn(value, relationshipStart);
   const withBirthday = profiles.filter((p) => p.birthday);
@@ -70,7 +72,7 @@ export function SpecialDaysCard({ value, relationshipStart, profiles, onChange }
         {SPECIAL_DAY_IDS.map((id) => {
           const date = when(id);
           const style = SPECIAL_DAY_STYLES[id];
-          const missing = !date ? (id === "birthday" ? t.admin.noBirthday : t.admin.noStart) : null;
+          const missing = !date ? (id === "birthday" ? t.admin.noBirthday : ended ? t.admin.ended : t.admin.noStart) : null;
           return (
             <li key={id} className={styles.item}
               style={{ background: style.colors.background, color: style.colors.text, borderColor: style.colors.primary }}>

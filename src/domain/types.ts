@@ -68,6 +68,8 @@ export interface SiteSettings {
   siteTitle: string;
   siteSubtitle: string;
   relationshipStart: IsoDate | null;
+  /** Día en que terminó la relación: el contador se queda quieto ahí (ver relationship.ts). */
+  relationshipEnd: IsoDate | null;
   isPublic: boolean;
   musicUrl: string | null;
   theme: ThemeTokens;

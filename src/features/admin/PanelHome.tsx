@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { buildCountdowns, countdownLabel } from "@/domain/dates";
+import { countdownDates } from "@/domain/relationship";
 import { PERMISSIONS } from "@/domain/permissions";
 import { useAuth } from "@/state/AuthContext";
 import { useNotifications } from "@/state/NotificationsContext";
@@ -12,7 +13,7 @@ export default function PanelHome() {
   const { profile, policy } = useAuth();
   const { unreadByKind } = useNotifications();
   const t = useT().admin.home;
-  const next = buildCountdowns(content?.dates ?? []).slice(0, 3);
+  const next = buildCountdowns(content ? countdownDates(content.dates, content.settings) : []).slice(0, 3);
   const stats = [
     { label: t.photos, value: content?.photos.length ?? 0, to: "/panel/fotos", icon: "📸", show: policy.can(PERMISSIONS.photosManage) },
     { label: t.milestones, value: content?.milestones.length ?? 0, to: "/panel/hitos", icon: "🌟", show: policy.can(PERMISSIONS.contentEdit) },

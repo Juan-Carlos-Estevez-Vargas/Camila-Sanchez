@@ -9,6 +9,7 @@ export const SEED_SETTINGS: SiteSettings = {
   siteTitle: "Para el amor de mi vida 💖",
   siteSubtitle: "Esta página es un reflejo de lo mucho que te amo. Cada detalle está hecho para ti.",
   relationshipStart: "2025-05-31",
+  relationshipEnd: null,
   isPublic: true,
   musicUrl: null,
   theme: DEFAULT_THEME,

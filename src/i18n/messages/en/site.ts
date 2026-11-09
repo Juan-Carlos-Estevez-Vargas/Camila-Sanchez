@@ -13,6 +13,7 @@ export const site: Messages["site"] = {
   pauseMusic: "Pause music",
   playMusic: "Play music",
   together: (date: string) => `Together since ${date}`,
+  togetherUntil: (from: string, to: string) => `From ${from} to ${to}`,
   seeMore: "See more",
   surprise: "Surprise!",
   countdown: {
@@ -24,6 +25,8 @@ export const site: Messages["site"] = {
   counter: {
     units: ["days", "hours", "minutes", "seconds"],
     months: (n: number) => `${n} ${n === 1 ? "month" : "months"} of choosing each other every day.`,
+    monthsEnded: (n: number) => `${n} ${n === 1 ? "month" : "months"} I keep with affection.`,
+    ended: (from: string, to: string) => `The time we shared, from ${from} to ${to}.`,
   },
   gallery: {
     years: "Years",
