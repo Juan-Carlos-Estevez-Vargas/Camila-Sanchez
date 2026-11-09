@@ -83,6 +83,15 @@ se preparó, nunca a quien la creó. Si tienes los avisos activados, también te
 llega al celular cuando la publican. Después de verla queda guardada en
 **Cajita → Recibidas**, por si la quieres volver a leer.
 
+### Fechas especiales 🎉
+
+En tu cumpleaños, nuestro aniversario, San Valentín, Amor y Amistad,
+Halloween, Navidad y Año Nuevo la página entera se viste de fiesta todo el día:
+cambian los colores, los emojis que flotan, aparece un saludo grande en la
+portada y una franja de fiesta arriba en las demás páginas. Al día siguiente
+vuelve sola a como estaba. Mientras dura, se ve igual para todos, aunque hayas
+elegido tus propios colores.
+
 ## 3. Cajita de mensajes
 
 Notitas que se guardan para siempre. Entra desde **Cajita** en la cabecera.
@@ -469,10 +478,25 @@ te preparen a ti siguen siendo sorpresa.
 | 🧭 Resumen | Cifras del sitio |
 | 👥 Usuarios | Crear cuentas, invitar, cambiar roles, desactivar, borrar y enlaces de recuperación |
 | 🔐 Roles y permisos | Qué puede hacer cada rol |
-| 🎨 Apariencia | Colores de la página (los que ve quien entra sin cuenta y quien no eligió los suyos), tipografías, bordes, modo oscuro y efectos animados |
+| 🎨 Apariencia | Colores de la página (los que ve quien entra sin cuenta y quien no eligió los suyos), tipografías, bordes, modo oscuro, efectos animados y **fechas especiales** |
 | 🧩 Secciones | Agregar, ordenar, ocultar o quitar secciones de la página |
 | ⚙️ Ajustes del sitio | Título, fecha en que empezó todo, música y si la página es pública |
 | 📜 Auditoría | Quién cambió qué y cuándo, filtrado por mes, sección, acción y persona |
+
+### Preparar las fechas especiales
+
+En **🎨 Apariencia → Fechas especiales**:
+
+1. Escribe el nombre de la cumpleañera y la fecha de su cumpleaños (o elígela
+   en *O tómala de una cuenta* si ya la puso en su perfil).
+2. Deja marcadas las fechas que quieras; desmarca las que no. El interruptor
+   de arriba las apaga todas.
+3. Toca **Ver cómo se ve** en cualquiera para ver ese tema ya mismo en la
+   página (sólo en tu pestaña). Arriba sale *Quitar vista previa* para volver.
+4. Pulsa **Guardar cambios**.
+
+El aniversario usa la fecha de **⚙️ Ajustes del sitio → Fecha en que empezó
+todo**.
 
 ### Revisar la auditoría
 

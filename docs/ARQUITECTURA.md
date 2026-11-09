@@ -151,6 +151,30 @@ la cabecera, Mi cuenta, el chat y las listas. `ProfileCard` muestra el perfil
 de otra persona desde el chat. `domain/profile.ts` calcula la fecha del
 cumpleaños (día y mes) y los días que faltan.
 
+### Fechas especiales
+
+- `domain/specialDays.ts` (puro y probado): las siete fechas en orden de
+  prioridad (`SPECIAL_DAY_IDS`), su paleta, emojis y lluvia
+  (`SPECIAL_DAY_STYLES`), `specialDayOn()` para saber qué toca hoy,
+  `friendshipDay()` (tercer sábado de septiembre) y `specialTheme()`, que pone
+  los colores del día encima del tema de la página. La configuración
+  (`enabled`, `birthday`, `birthdayName`, `off`) viaja en
+  `site_settings.effects.specialDays` y la limpia `normalizeSpecialDays()`
+  desde `normalizeEffects()`; por eso la protege el mismo trigger
+  `guard_site_settings` (`theme.manage`) y no hizo falta migración.
+- `state/SpecialDayContext.tsx` calcula la fecha de hoy con la hora local,
+  vuelve a mirar a la medianoche, lee la vista previa (`?tema=<id>`, guardada
+  en `sessionStorage`; `?tema=normal` la quita) y marca
+  `<html data-special="…">`.
+- `app/App.tsx` usa `specialTheme()` en lugar de los colores personales ese
+  día; `app/SpecialDayRibbon.tsx` pone la franja bajo la cabecera,
+  `sections/Hero.tsx` el saludo grande y `SitePage.tsx` los emojis del día y la
+  lluvia de bienvenida (una vez por día y pestaña, nada con «Reducir
+  animaciones»). Los detalles por fecha están en `styles/layout/_special.scss`.
+- `features/admin/theme/SpecialDaysCard.tsx` es la tarjeta de **Apariencia**:
+  cumpleaños (a mano o desde el perfil de una cuenta), interruptores y
+  «Ver cómo se ve». Los textos están en `i18n/messages/*/special.ts`.
+
 ### Tutorial guiado
 
 `features/tour` tiene tres piezas:

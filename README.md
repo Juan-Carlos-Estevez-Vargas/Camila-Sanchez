@@ -81,6 +81,8 @@ Funciona en dos modos:
 | <img src="docs/capturas/chat-solicitudes.png" alt="Pestaña Solicitudes con una solicitud recibida para aceptar o rechazar" width="420"> | <img src="docs/capturas/movil-bandeja.png" alt="Bandeja de chats en un celular" width="240"> |
 | **Una dedicatoria** | **La playlist** |
 | <img src="docs/capturas/dedicatoria.png" alt="Dedicatoria «Para mi persona favorita» con el mensaje, tres fotos y cuatro canciones" width="420"> | <img src="docs/capturas/playlist.png" alt="Playlist con todas las canciones de las dedicatorias, botones para reproducir, mezclar e importar" width="420"> |
+| **Su cumpleaños: toda la página de fiesta** | **Halloween** |
+| <img src="docs/capturas/fecha-cumpleanos.png" alt="Portada con el tema de cumpleaños: colores crema y fucsia, globos flotando y el saludo «¡Feliz cumpleaños, Camila!»" width="420"> | <img src="docs/capturas/fecha-halloween.png" alt="Portada con el tema de Halloween: fondo oscuro, naranja, calabazas y fantasmas flotando y el saludo «¡Feliz Halloween!»" width="420"> |
 | **Novedades al actualizar** | **Y el tutorial de lo nuevo** |
 | <img src="docs/capturas/novedades.png" alt="Ventana Novedades con la dedicatoria nueva y el botón Ver cómo funciona" width="420"> | <img src="docs/capturas/novedades-tutorial.png" alt="El tutorial de las dedicatorias empieza con la presentación de la novedad" width="420"> |
 
@@ -105,6 +107,7 @@ Funciona en dos modos:
 | Super admin: usuarios, invitaciones por enlace o QR, roles y permisos, apariencia, secciones, ajustes y auditoría (abre en el mes actual; filtros por mes o todo el historial, sección, acción y persona, orden y paginación con primera, última, números y tamaño de página) | `/super` | Super admin |
 | App de celular instalable (Android, iPhone y computador): ícono, pantalla completa, atajos, sin conexión y aviso de versión nueva | `/app` | Pública |
 | Avisos push en el celular: chat, notitas, sorpresas y listas | — | Quien los active |
+| Fechas especiales: en su cumpleaños, el aniversario, San Valentín, Amor y Amistad, Halloween, Navidad y Año Nuevo toda la app cambia de tema el día completo (colores, emojis, saludo y franja de fiesta). Se configuran y se previsualizan en **Super → Apariencia** | Todas | Todos (configura `theme.manage`) |
 | Tutorial guiado según la página y los permisos de cada cuenta | Todas | Todos |
 | Novedades de cada versión: al actualizar se ve qué cambió y, si hay una función nueva, «Ver cómo funciona» lleva a su página con el tutorial. También en **✨ Novedades** del pie | Todas | Cualquier cuenta |
 | Idiomas: español, inglés y portugués. La app arranca en el idioma del dispositivo y se cambia con 🌐 en la cabecera, el pie o **Mi cuenta** | Todas | Todos |
@@ -124,6 +127,21 @@ otra app: `.m3u8` (VLC, Winamp, Kodi, o TuneMyMusic/Soundiiz para pasarla a otro
 una playlist de Spotify, o la lista en texto. Para traer canciones: pegar
 enlaces (uno por línea, con «Artista - Título» si se quiere) o abrir un
 `.m3u`/`.m3u8` ([diagramas](docs/DIAGRAMAS.md#dedicatorias-y-playlist)).
+
+**Fechas especiales.** Ese día, de medianoche a medianoche en la hora del
+teléfono de quien mira, toda la app se viste de fiesta para todos: colores
+propios de la fecha (también por encima de los colores que cada persona eligió),
+emojis de fondo del día, una lluvia de bienvenida, el saludo grande en la
+portada («¡Feliz cumpleaños, Camila!») y una franja bajo la cabecera en las
+demás páginas. Las fechas son 🎂 su cumpleaños, 💍 el aniversario (con la fecha
+en que empezó todo), 💘 San Valentín, 💛 Amor y Amistad (tercer sábado de
+septiembre), 🎃 Halloween, 🎄 Navidad (24 y 25) y 🎆 Año Nuevo (31 y 1); si
+coinciden dos, gana el cumpleaños. En **Super → Apariencia → Fechas especiales**
+se escribe su nombre y su fecha de cumpleaños (o se toma del perfil de su
+cuenta), se apaga cualquier fecha o todas, y **Ver cómo se ve** muestra cada
+tema ya mismo en esa pestaña (`/?tema=halloween`, se quita con *Quitar vista
+previa*). Se guarda dentro de `site_settings.effects`, así que no necesita
+migración ([diagramas](docs/DIAGRAMAS.md#temas-de-fechas-especiales)).
 
 **Verificación en dos pasos (opcional).** Cada persona decide si la usa: en
 **Mi cuenta** pulsa *Activar*, escanea el QR con una app de autenticación
