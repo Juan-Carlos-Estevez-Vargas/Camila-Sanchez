@@ -1139,6 +1139,28 @@ flowchart LR
   MP --> MS["Media Session:<br/>título y botones en<br/>la pantalla bloqueada"]
 ```
 
+### Quién la vio
+
+Al abrir una dedicatoria que no escribió, cada persona queda anotada (la
+primera y la última vez). Sólo quien la escribió ve la lista.
+
+```mermaid
+sequenceDiagram
+  actor C as Camila
+  participant App as SPA
+  participant DB as Postgres
+  actor J as Juan (la escribió)
+
+  C->>App: abre /dedicatorias/:id
+  App->>DB: rpc mark_dedication_seen(id)
+  DB->>DB: ¿can_see_dedication? ¿no es la autora?
+  DB->>DB: upsert dedication_views<br/>(first_seen_at, last_seen_at)
+  DB-->>J: Realtime: cambio en dedication_views
+  J->>App: abre su dedicatoria o la lista
+  App->>DB: select dedication_views<br/>(RLS: sólo la autora ve todas)
+  App-->>J: 👀 Quién la vio: Camila, hace 3 min<br/>Todavía no: Valentina
+```
+
 ### Importar y exportar
 
 ```mermaid
@@ -1399,6 +1421,14 @@ erDiagram
   AUTH_USERS |o--o{ DEDICATIONS : "es para (o nadie = todos)"
   DEDICATIONS ||--o{ DEDICATION_PHOTOS : "fotos"
   DEDICATIONS ||--o{ DEDICATION_SONGS : "canciones"
+  DEDICATIONS ||--o{ DEDICATION_VIEWS : "la vieron"
+  AUTH_USERS ||--o{ DEDICATION_VIEWS : "vio"
+  DEDICATION_VIEWS {
+    uuid dedication_id PK
+    uuid user_id PK
+    timestamptz first_seen_at
+    timestamptz last_seen_at
+  }
   DEDICATION_SONGS {
     uuid id PK
     uuid dedication_id FK

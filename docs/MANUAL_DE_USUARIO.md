@@ -257,6 +257,12 @@ suma o quita fotos y canciones, y cambia el orden con ↑ ↓. Con 🔄 en una
 foto la cambias por otra sin moverla de lugar. **Pegar varias**
 agrega muchas canciones de una vez. **Borrar** la quita para todos.
 
+**Quién la vio.** En una dedicatoria tuya, debajo del mensaje aparece **👀 Quién
+la vio**: cada persona que ya la abrió y cuándo, y quién todavía no. En la lista,
+tus tarjetas muestran **👀 Vista** (o **🙈 Sin ver**) y, si es para todos,
+cuántas personas la vieron (por ejemplo **👀 1/2**). Sólo tú, que la escribiste,
+lo ves.
+
 **La playlist.** La pestaña **Playlist** junta las canciones de todas las
 dedicatorias que ves, de la más antigua a la más nueva (o al revés). Desde
 ahí:

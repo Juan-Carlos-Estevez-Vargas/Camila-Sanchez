@@ -424,6 +424,13 @@ Las cabeceras están en `public/_headers` (Netlify) y `vercel.json`; una prueba
   `DedicationPage` (`/dedicatorias/:id`) la carta, con modo edición para
   quien la escribió. `SongAdder` agrega una canción por enlace o archivo e
   `ImportSongsModal` muchas a la vez.
+- **Quién la vio**: al abrir una dedicatoria, `dedications.markSeen` llama a
+  `mark_dedication_seen`, que anota a la persona en `dedication_views`
+  (primera y última vez; quien la escribió no cuenta). La política de lectura
+  deja ver todas las filas sólo a la autora; cada persona ve la suya.
+  `SeenBy` (en `parts.tsx`) muestra quién la vio y quién falta, y las
+  tarjetas de las mías llevan «👀 Vista» o «👀 2/3»
+  (`dedicationReaders` en `domain/dedications.ts`).
 - Las reglas puras están en `src/domain/songs.ts` (reconocer enlaces de
   YouTube y Spotify, URL del reproductor, armar la playlist, exportar a M3U,
   cola de YouTube, enlaces de Spotify, leer un `.m3u` o enlaces pegados) y
@@ -549,3 +556,4 @@ prueba comprueba que `supabase/setup.sql` esté al día).
 | `…1105000100_received_surprises` | Las sorpresas recibidas se quedan: la destinataria lee las que ya empezaron si siguen activas o ya las vio (aunque vencieran), para la Cajita → Recibidas; el aviso lleva a `/mensajes` |
 | `…1108000100_dedications` | Dedicatorias con fotos y canciones (YouTube, Spotify, audio o enlace), permiso `dedications.use`, avisos, límites, bucket `dedication-media` y `reorder_dedication_songs` |
 | `…1109000100_dedication_photo_replace` | Quien escribió la dedicatoria puede cambiar el archivo de una foto (`path`, `thumb_path`, medidas); un trigger exige que siga en la carpeta de su dedicatoria |
+| `…1109000200_dedication_views` | Quién vio cada dedicatoria: tabla `dedication_views`, función `mark_dedication_seen` y lectura sólo para la autora (y cada persona su fila) |

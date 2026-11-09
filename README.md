@@ -112,7 +112,8 @@ Funciona en dos modos:
 | Botón opcional «Invítame un café», destacado en la cabecera y en el pie (donación voluntaria por un enlace externo) | Cabecera y pie | Todos, si `VITE_DONATION_URL` tiene valor |
 
 **Dedicatorias y playlist.** Cada dedicatoria es una carta con emoji,
-mensaje, hasta 12 fotos y hasta 50 canciones. Una canción puede ser un enlace
+mensaje, hasta 12 fotos y hasta 50 canciones. Quien la escribe ve quién ya la
+abrió y cuándo (y quién todavía no). Una canción puede ser un enlace
 de YouTube o Spotify, cualquier enlace `https` o un audio subido (MP3, M4A,
 OGG, WAV, FLAC…, hasta 20 MB). El reproductor queda abajo y sigue sonando al
 cambiar de página; pasa sola a la siguiente en YouTube y en los audios
