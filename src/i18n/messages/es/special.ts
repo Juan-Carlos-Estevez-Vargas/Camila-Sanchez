@@ -1,0 +1,59 @@
+/** Fechas especiales: saludos del día y la tarjeta de Apariencia (ver domain/specialDays.ts). */
+interface Greeting {
+  name: string;
+  years: number | null;
+}
+
+export const special = {
+  names: {
+    birthday: "Su cumpleaños",
+    anniversary: "Nuestro aniversario",
+    valentine: "San Valentín",
+    friendship: "Amor y Amistad",
+    halloween: "Halloween",
+    christmas: "Navidad",
+    newYear: "Año Nuevo",
+  },
+  greetings: {
+    birthday: ({ name }: Greeting) => (name ? `¡Feliz cumpleaños, ${name}!` : "¡Feliz cumpleaños!"),
+    anniversary: ({ years }: Greeting) =>
+      years ? `¡Feliz aniversario! ${years} ${years === 1 ? "año" : "años"} juntos` : "¡Feliz aniversario!",
+    valentine: () => "¡Feliz San Valentín!",
+    friendship: () => "¡Feliz día del Amor y la Amistad!",
+    halloween: () => "¡Feliz Halloween!",
+    christmas: () => "¡Feliz Navidad!",
+    newYear: () => "¡Feliz Año Nuevo!",
+  },
+  taglines: {
+    birthday: "Hoy toda la página es para ti. Que este año te traiga todo lo bonito que mereces.",
+    anniversary: "Un año más eligiéndonos cada día.",
+    valentine: "Hoy y siempre, tú eres mi persona favorita.",
+    friendship: "Por la mejor compañera de aventuras que podía tener.",
+    halloween: "¿Dulce o truco? Yo te elijo a ti, que eres lo más dulce.",
+    christmas: "Mi mejor regalo eres tú.",
+    newYear: "Otro año entero para quererte más.",
+  },
+  preview: (name: string) => `Vista previa: ${name}`,
+  removePreview: "Quitar vista previa",
+  admin: {
+    title: "Fechas especiales",
+    hint: "Ese día, de medianoche a medianoche, toda la página cambia de colores, emojis de fondo y saludo para todos, también por encima de los colores de cada persona.",
+    enabled: "Cambiar el tema en fechas especiales",
+    birthdayName: "Nombre de la cumpleañera",
+    birthday: "Fecha de su cumpleaños",
+    fromAccount: "O tómala de una cuenta",
+    pick: "Elegir…",
+    noBirthday: "Pon la fecha de su cumpleaños para que ese día la página se vista de fiesta.",
+    noStart: "Falta la fecha en que empezó todo (Ajustes del sitio).",
+    toggle: (name: string) => `Activar ${name}`,
+    preview: "Ver cómo se ve",
+    today: "¡Es hoy!",
+    when: {
+      valentine: "14 de febrero",
+      friendship: "Tercer sábado de septiembre",
+      halloween: "31 de octubre",
+      christmas: "24 y 25 de diciembre",
+      newYear: "31 de diciembre y 1 de enero",
+    },
+  },
+};

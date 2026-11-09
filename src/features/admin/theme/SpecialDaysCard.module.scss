@@ -1,0 +1,58 @@
+@use "abstracts" as *;
+
+.list {
+  display: grid;
+  gap: space(2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  display: flex;
+  flex-wrap: wrap;
+  gap: space(3);
+  align-items: center;
+  padding: space(3);
+  border: 2px solid;
+  border-radius: var(--radius-sm);
+}
+
+.icon {
+  font-size: 1.8rem;
+  line-height: 1;
+}
+
+.text {
+  display: grid;
+  flex: 1 1 12rem;
+  min-width: 0;
+}
+
+.when {
+  font-size: 0.9rem;
+  opacity: 0.85;
+}
+
+.actions {
+  display: flex;
+  gap: space(3);
+  align-items: center;
+  margin-left: auto;
+}
+
+.preview {
+  padding: 0.4rem 0.9rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.toggle input {
+  width: 1.4rem;
+  height: 1.4rem;
+  accent-color: currentColor;
+  cursor: pointer;
+}

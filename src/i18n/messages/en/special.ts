@@ -1,0 +1,55 @@
+import type { Messages } from "@/i18n";
+
+export const special: Messages["special"] = {
+  names: {
+    birthday: "Her birthday",
+    anniversary: "Our anniversary",
+    valentine: "Valentine's Day",
+    friendship: "Love and Friendship Day",
+    halloween: "Halloween",
+    christmas: "Christmas",
+    newYear: "New Year",
+  },
+  greetings: {
+    birthday: ({ name }) => (name ? `Happy birthday, ${name}!` : "Happy birthday!"),
+    anniversary: ({ years }) =>
+      years ? `Happy anniversary! ${years} ${years === 1 ? "year" : "years"} together` : "Happy anniversary!",
+    valentine: () => "Happy Valentine's Day!",
+    friendship: () => "Happy Love and Friendship Day!",
+    halloween: () => "Happy Halloween!",
+    christmas: () => "Merry Christmas!",
+    newYear: () => "Happy New Year!",
+  },
+  taglines: {
+    birthday: "Today the whole page is for you. May this year bring you every beautiful thing you deserve.",
+    anniversary: "One more year of choosing each other every day.",
+    valentine: "Today and always, you are my favorite person.",
+    friendship: "For the best adventure partner I could ever have.",
+    halloween: "Trick or treat? I pick you, the sweetest treat.",
+    christmas: "You are my best gift.",
+    newYear: "A whole new year to love you more.",
+  },
+  preview: (name) => `Preview: ${name}`,
+  removePreview: "Remove preview",
+  admin: {
+    title: "Special dates",
+    hint: "On that day, from midnight to midnight, the whole page changes its colors, background emojis and greeting for everyone, even over each person's own colors.",
+    enabled: "Change the theme on special dates",
+    birthdayName: "Birthday girl's name",
+    birthday: "Her birthday",
+    fromAccount: "Or take it from an account",
+    pick: "Choose…",
+    noBirthday: "Set her birthday so the page dresses up for the party that day.",
+    noStart: "The date it all began is missing (Site settings).",
+    toggle: (name) => `Turn on ${name}`,
+    preview: "See how it looks",
+    today: "It's today!",
+    when: {
+      valentine: "February 14",
+      friendship: "Third Saturday of September",
+      halloween: "October 31",
+      christmas: "December 24 and 25",
+      newYear: "December 31 and January 1",
+    },
+  },
+};

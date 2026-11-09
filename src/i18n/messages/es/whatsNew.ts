@@ -10,6 +10,17 @@ export const whatsNew = {
   showHistory: "Ver todas las novedades",
   footerLink: "✨ Novedades",
   releases: {
+    "2026-11-10": {
+      news: {
+        specialDays: {
+          title: "La página se viste de fiesta",
+          body: "En su cumpleaños, nuestro aniversario, San Valentín, Amor y Amistad, Halloween, Navidad y Año Nuevo toda la página cambia de colores, emojis y saludo durante el día completo.",
+        },
+      },
+      changes: [
+        "Quien administra la apariencia elige su fecha de cumpleaños, apaga las fechas que no quiera y puede ver cada tema antes de que llegue el día.",
+      ],
+    },
     "2026-11-09": {
       news: {
         photoReplace: {

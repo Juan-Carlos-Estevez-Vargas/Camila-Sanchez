@@ -3,6 +3,7 @@
  * camelCase y con tipos estrictos; los repositorios hacen la traducción.
  */
 import type { ContentTranslations } from "./contentTranslations";
+import type { SpecialDaysConfig } from "./specialDays";
 
 export type Uuid = string;
 /** Fecha de calendario sin hora, formato YYYY-MM-DD. */
@@ -59,6 +60,8 @@ export interface EffectsConfig {
   floating: { enabled: boolean; emojis: string[]; density: number };
   cursorHearts: boolean;
   reduceOnMobile: boolean;
+  /** Temas que se ponen solos en fechas especiales (ver specialDays.ts). */
+  specialDays: SpecialDaysConfig;
 }
 
 export interface SiteSettings {

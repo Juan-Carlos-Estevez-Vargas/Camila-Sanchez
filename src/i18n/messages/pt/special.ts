@@ -1,0 +1,55 @@
+import type { Messages } from "@/i18n";
+
+export const special: Messages["special"] = {
+  names: {
+    birthday: "O aniversário dela",
+    anniversary: "Nosso aniversário de namoro",
+    valentine: "Dia de São Valentim",
+    friendship: "Dia do Amor e da Amizade",
+    halloween: "Halloween",
+    christmas: "Natal",
+    newYear: "Ano Novo",
+  },
+  greetings: {
+    birthday: ({ name }) => (name ? `Feliz aniversário, ${name}!` : "Feliz aniversário!"),
+    anniversary: ({ years }) =>
+      years ? `Feliz aniversário de namoro! ${years} ${years === 1 ? "ano" : "anos"} juntos` : "Feliz aniversário de namoro!",
+    valentine: () => "Feliz Dia de São Valentim!",
+    friendship: () => "Feliz Dia do Amor e da Amizade!",
+    halloween: () => "Feliz Halloween!",
+    christmas: () => "Feliz Natal!",
+    newYear: () => "Feliz Ano Novo!",
+  },
+  taglines: {
+    birthday: "Hoje a página inteira é para você. Que este ano te traga tudo de bonito que você merece.",
+    anniversary: "Mais um ano escolhendo um ao outro todos os dias.",
+    valentine: "Hoje e sempre, você é a minha pessoa favorita.",
+    friendship: "Pela melhor companheira de aventuras que eu poderia ter.",
+    halloween: "Gostosuras ou travessuras? Eu escolho você, a mais doce.",
+    christmas: "Meu melhor presente é você.",
+    newYear: "Mais um ano inteiro para te amar ainda mais.",
+  },
+  preview: (name) => `Prévia: ${name}`,
+  removePreview: "Tirar a prévia",
+  admin: {
+    title: "Datas especiais",
+    hint: "Nesse dia, de meia-noite a meia-noite, a página inteira muda as cores, os emojis do fundo e a saudação para todos, inclusive por cima das cores de cada pessoa.",
+    enabled: "Mudar o tema em datas especiais",
+    birthdayName: "Nome da aniversariante",
+    birthday: "Data do aniversário dela",
+    fromAccount: "Ou pegue de uma conta",
+    pick: "Escolher…",
+    noBirthday: "Coloque a data do aniversário dela para que nesse dia a página fique em festa.",
+    noStart: "Falta a data em que tudo começou (Ajustes do site).",
+    toggle: (name) => `Ativar ${name}`,
+    preview: "Ver como fica",
+    today: "É hoje!",
+    when: {
+      valentine: "14 de fevereiro",
+      friendship: "Terceiro sábado de setembro",
+      halloween: "31 de outubro",
+      christmas: "24 e 25 de dezembro",
+      newYear: "31 de dezembro e 1º de janeiro",
+    },
+  },
+};

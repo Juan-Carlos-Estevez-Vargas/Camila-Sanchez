@@ -7,11 +7,14 @@ import { NotificationsProvider } from "@/state/NotificationsContext";
 import { PresenceHeartbeat } from "@/state/PresenceHeartbeat";
 import { SeoController } from "@/state/SeoController";
 import { SiteContentProvider, useSiteContent } from "@/state/SiteContentStore";
+import { SpecialDayProvider, useSpecialDay } from "@/state/SpecialDayContext";
+import { specialTheme } from "@/domain/specialDays";
 import { ThemeController } from "@/state/ThemeController";
 import { ToastProvider } from "@/state/ToastContext";
 import { EmptyState, PageLoader } from "@/ui/Feedback";
 import { AppFooter } from "./AppFooter";
 import { AppHeader } from "./AppHeader";
+import { SpecialDayRibbon } from "./SpecialDayRibbon";
 import { ConsentGate } from "@/features/legal/ConsentGate";
 import { CookieBanner } from "@/features/legal/CookieBanner";
 import { AppStatus } from "@/features/install/AppStatus";
@@ -52,9 +55,15 @@ function Footer() {
 function ThemedShell() {
   const { content } = useSiteContent();
   const { profile, twoStepPending } = useAuth();
+  const { day } = useSpecialDay();
   // Quien entra sin cuenta ve los colores de la página; cada persona, los suyos.
+  // En una fecha especial (cumpleaños, Halloween, Navidad...) manda el tema de
+  // ese día para todos, encima de los colores de cada uno.
   const siteTheme = content?.settings.theme ?? DEFAULT_THEME;
-  const theme = useMemo(() => personalTheme(siteTheme, profile?.themeColors), [siteTheme, profile?.themeColors]);
+  const theme = useMemo(
+    () => (day ? specialTheme(siteTheme, day) : personalTheme(siteTheme, profile?.themeColors)),
+    [siteTheme, profile?.themeColors, day],
+  );
   return (
     <>
       <ThemeController theme={theme} />
@@ -63,6 +72,7 @@ function ThemedShell() {
       <SkipLink />
       <RouteAnnouncer />
       <AppHeader />
+      <SpecialDayRibbon />
       <ErrorBoundary>
         <Suspense fallback={<PageLoader />}>
           {/* Falta el código de la verificación en dos pasos: nada más hasta escribirlo. */}
@@ -99,7 +109,10 @@ export function App() {
             <NotificationsProvider>
               {/* Arriba de las rutas: la playlist sigue sonando al cambiar de página. */}
               <PlayerProvider>
-                <ThemedShell />
+                {/* La fecha especial de hoy cambia el tema de toda la app. */}
+                <SpecialDayProvider>
+                  <ThemedShell />
+                </SpecialDayProvider>
               </PlayerProvider>
             </NotificationsProvider>
           </SiteContentProvider>

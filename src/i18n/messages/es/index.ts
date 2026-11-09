@@ -13,10 +13,11 @@ import { legal } from "./legal";
 import { lists } from "./lists";
 import { notes } from "./notes";
 import { site } from "./site";
+import { special } from "./special";
 import { superAdmin } from "./superAdmin";
 import { theme } from "./theme";
 import { tour } from "./tour";
 import { ui } from "./ui";
 import { whatsNew } from "./whatsNew";
 
-export default { admin, app, auth, chat, common, dates, dedications, donate, errors, install, legal, lists, notes, site, superAdmin, theme, tour, ui, whatsNew };
+export default { admin, app, auth, chat, common, dates, dedications, donate, errors, install, legal, lists, notes, site, special, superAdmin, theme, tour, ui, whatsNew };
