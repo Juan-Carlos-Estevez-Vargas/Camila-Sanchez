@@ -58,6 +58,39 @@
     &:hover { transform: translateY(-2px); }
   }
 
+  // Saludo de las fechas especiales (domain/specialDays.ts).
+  &__special {
+    display: grid;
+    justify-items: center;
+    gap: space(1);
+    padding: space(4) space(5);
+    border-radius: var(--radius);
+    background: tint(var(--c-surface), 88%);
+    border: 2px solid tint(var(--c-accent), 60%);
+    box-shadow: var(--shadow-lg);
+    animation: special-pop 0.7s $ease both;
+  }
+
+  &__special-icon {
+    font-size: clamp(2.6rem, 9vw, 4rem);
+    line-height: 1;
+    animation: float-soft 2.8s ease-in-out infinite;
+  }
+
+  &__special-title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: clamp(1.5rem, 5vw, 2.3rem);
+    font-weight: 600;
+    color: var(--c-primary);
+  }
+
+  &__special-text {
+    max-width: 44ch;
+    margin: 0;
+    color: var(--c-muted);
+  }
+
   &__scroll {
     margin-top: space(6);
     width: 44px;
@@ -71,3 +104,11 @@
     animation: float-soft 2.5s ease-in-out infinite;
   }
 }
+
+@keyframes special-pop {
+  from { opacity: 0; transform: scale(0.85); }
+  to { opacity: 1; transform: none; }
+}
+
+:root[data-motion="reduce"] .hero__special,
+:root[data-motion="reduce"] .hero__special-icon { animation: none; }

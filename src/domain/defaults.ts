@@ -6,6 +6,7 @@ import {
   type SectionContentMap, type SectionKind, type ThemeTokens,
 } from "./types";
 import { WINE_PALETTE } from "./palettes";
+import { DEFAULT_SPECIAL_DAYS, normalizeSpecialDays } from "./specialDays";
 import { msg } from "@/i18n/store";
 
 /** Tema de fábrica: los colores suaves de la versión 1, siempre en modo claro. */
@@ -21,6 +22,7 @@ export const DEFAULT_EFFECTS: EffectsConfig = {
   floating: { enabled: true, emojis: ["❤️", "💖", "🌸", "🌷", "✨"], density: 14 },
   cursorHearts: false,
   reduceOnMobile: true,
+  specialDays: DEFAULT_SPECIAL_DAYS,
 };
 
 export const FONT_OPTIONS = {
@@ -63,6 +65,7 @@ export function normalizeEffects(raw: unknown): EffectsConfig {
     },
     cursorHearts: e.cursorHearts === true,
     reduceOnMobile: e.reduceOnMobile !== false,
+    specialDays: normalizeSpecialDays(e.specialDays),
   };
 }
 

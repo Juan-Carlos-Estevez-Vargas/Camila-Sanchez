@@ -12,6 +12,8 @@ import { Field, Switch } from "@/ui/Field";
 import { ColorInput } from "@/features/admin/theme/ColorInput";
 import { PalettePicker } from "@/features/admin/theme/PalettePicker";
 import { ThemePreview } from "@/features/admin/theme/ThemePreview";
+import { SpecialDaysCard } from "@/features/admin/theme/SpecialDaysCard";
+import { useAsync } from "@/ui/useAsync";
 import { useT } from "@/i18n";
 
 type ColorKey = "primary" | "primaryContrast" | "accent" | "background" | "surface" | "text" | "muted";
@@ -27,6 +29,7 @@ export default function ThemeAdmin() {
   const [effects, setEffects] = useState<EffectsConfig | null>(null);
   const [emojiText, setEmojiText] = useState<string | null>(null);
   const tx = useT().superAdmin.theme;
+  const { data: profiles } = useAsync(() => backend.users.listProfiles(), [backend]);
 
   if (!content) return <PageLoader />;
   const t = theme ?? content.settings.theme;
@@ -116,6 +119,9 @@ export default function ThemeAdmin() {
         <Switch label={tx.reduceOnMobile} checked={fx.reduceOnMobile} onChange={(reduceOnMobile) => setFx({ reduceOnMobile })} />
         <p className="muted" style={{ margin: 0 }}>{tx.animationsHint}</p>
       </div>
+
+      <SpecialDaysCard value={fx.specialDays} relationshipStart={content.settings.relationshipStart}
+        profiles={profiles ?? []} onChange={(specialDays) => setFx({ specialDays })} />
     </AdminPage>
   );
 }

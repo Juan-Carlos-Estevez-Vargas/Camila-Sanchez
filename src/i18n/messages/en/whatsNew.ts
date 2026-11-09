@@ -10,6 +10,17 @@ export const whatsNew = {
   showHistory: "See everything that's new",
   footerLink: "✨ What's new",
   releases: {
+    "2026-11-10": {
+      news: {
+        specialDays: {
+          title: "The page dresses up for the party",
+          body: "On her birthday, our anniversary, Valentine's Day, Love and Friendship Day, Halloween, Christmas and New Year the whole page changes its colors, emojis and greeting for the entire day.",
+        },
+      },
+      changes: [
+        "Whoever manages the appearance sets her birthday, turns off the dates they don't want and can preview each theme before the day comes.",
+      ],
+    },
     "2026-11-09": {
       news: {
         photoReplace: {

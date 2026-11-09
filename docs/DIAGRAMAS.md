@@ -23,6 +23,7 @@ directamente al abrir este archivo. La explicación de cada pieza está en
 - [App de celular](#app-de-celular)
 - [Sorpresas para una persona](#sorpresas-para-una-persona)
 - [Colores por persona](#colores-por-persona)
+- [Temas de fechas especiales](#temas-de-fechas-especiales)
 - [Perfil de cada persona](#perfil-de-cada-persona)
 - [Listas compartidas](#listas-compartidas)
 - [Dedicatorias y playlist](#dedicatorias-y-playlist)
@@ -887,6 +888,65 @@ flowchart TD
   D --> F
   G["Mi cuenta → Mis colores → Guardar"] --> H["update profiles.theme_colors<br/>(sólo la propia fila, sólo #rrggbb)"]
   H --> C
+  S["Fecha especial de hoy<br/>(cumpleaños, Halloween, Navidad…)"] -. "gana sobre todo" .-> F
+```
+
+## Temas de fechas especiales
+
+Qué tema se ve cada día. Todo pasa en el navegador con la hora del teléfono:
+el tema empieza a las 00:00 y se quita a las 00:00 del día siguiente, aunque la
+página siga abierta.
+
+```mermaid
+flowchart TD
+  A["Se abre la app<br/>(o da la medianoche)"] --> P{"¿Hay vista previa?<br/>?tema=… en esta pestaña"}
+  P -- "sí" --> V["previewSpecialDay(id)<br/>+ franja «Vista previa · Quitar»"]
+  P -- "no" --> E{"¿effects.specialDays.enabled?"}
+  E -- "no" --> N["Tema de siempre<br/>(página + colores de cada persona)"]
+  E -- "sí" --> O["specialDayOn(): recorre en orden<br/>1 🎂 su cumpleaños · 2 💍 aniversario<br/>3 💘 San Valentín · 4 💛 Amor y Amistad<br/>5 🎃 Halloween · 6 🎄 Navidad · 7 🎆 Año Nuevo"]
+  O --> Q{"¿Hoy cae alguna<br/>que no esté apagada?"}
+  Q -- "no" --> N
+  Q -- "sí, la primera que coincide" --> D["Fecha especial del día"]
+  V --> D
+  D --> T["specialTheme(): sus colores encima del tema<br/>de la página, también para quien tiene los suyos"]
+  D --> R["html[data-special=…]: borde de fiesta,<br/>detalles por fecha en _special.scss"]
+  D --> H["Portada: saludo grande<br/>«¡Feliz cumpleaños, Camila!»"]
+  D --> F["Emojis del día flotando<br/>+ lluvia de bienvenida (1 vez por día)"]
+  D --> B["Franja bajo la cabecera<br/>en las demás páginas (no en el chat)"]
+  T --> C["ThemeController → variables CSS en :root"]
+```
+
+De dónde sale cada fecha:
+
+```mermaid
+flowchart LR
+  subgraph AJ["Apariencia → Fechas especiales (effects.specialDays)"]
+    BD["birthday + birthdayName<br/>(a mano o tomado del perfil de una cuenta)"]
+    OFF["off: fechas apagadas"]
+    EN["enabled"]
+  end
+  RS["Ajustes del sitio →<br/>fecha en que empezó todo"] --> ANI["💍 Aniversario<br/>(desde el primer año)"]
+  BD --> CUM["🎂 Cumpleaños<br/>(29 feb → 28 en años no bisiestos)"]
+  FIJ["Calendario"] --> F1["💘 14 feb · 🎃 31 oct<br/>🎄 24 y 25 dic · 🎆 31 dic y 1 ene"]
+  FIJ --> F2["💛 Tercer sábado de septiembre<br/>(Amor y Amistad, Colombia)"]
+```
+
+```mermaid
+sequenceDiagram
+  actor J as Juan (theme.manage)
+  participant A as Apariencia
+  participant DB as site_settings.effects
+  participant RT as Realtime
+  participant App as App de quien mira
+
+  J->>A: nombre «Camila» + fecha de su cumpleaños
+  J->>A: «Ver cómo se ve» (Halloween)
+  A->>App: /?tema=halloween (sólo esta pestaña)
+  J->>A: Guardar cambios
+  A->>DB: update effects (guard_site_settings exige theme.manage)
+  DB-->>RT: cambio en site_settings
+  RT-->>App: recarga los ajustes
+  Note over App: el día de su cumpleaños, de 00:00 a 23:59,<br/>toda la app se viste de cumpleaños para todos
 ```
 
 ## Perfil de cada persona

@@ -1,0 +1,59 @@
+@use "../abstracts" as *;
+
+// ==========================================================================
+// Fechas especiales (domain/specialDays.ts). Los colores ya los pone el
+// ThemeController; aquí van la franja bajo la cabecera y los detalles que
+// cambian según el día con :root[data-special="..."].
+// ==========================================================================
+.special-ribbon {
+  position: relative;
+  z-index: z("content");
+  background: linear-gradient(90deg, var(--c-primary), tint(var(--c-primary), 55%, var(--c-accent)), var(--c-primary));
+  background-size: 200% 100%;
+  color: var(--c-primary-contrast);
+  font-weight: 600;
+  animation: special-shine 8s linear infinite;
+
+  &__inner {
+    display: flex;
+    flex-wrap: wrap;
+    gap: space(2);
+    align-items: center;
+    justify-content: center;
+    padding-block: space(2);
+    text-align: center;
+  }
+
+  &__link {
+    color: inherit;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+}
+
+@keyframes special-shine { to { background-position: -200% 0; } }
+
+// Un borde de fiesta bajo la cabecera, distinto en cada fecha.
+:root[data-special] .app-header {
+  border-bottom: 3px solid transparent;
+  border-image: linear-gradient(90deg, var(--c-primary), var(--c-accent), var(--c-primary)) 1;
+}
+
+:root[data-special="halloween"],
+:root[data-special="newYear"] {
+  --shadow: 0 10px 30px -12px #{tint(var(--c-primary), 45%, black)}, 0 2px 6px rgb(0 0 0 / 35%);
+}
+
+:root[data-special="christmas"] body {
+  background-image:
+    radial-gradient(circle at 10% 20%, #{tint(var(--c-accent), 18%)} 0 2px, transparent 3px),
+    radial-gradient(circle at 70% 60%, #{tint(var(--c-primary), 14%)} 0 2px, transparent 3px),
+    linear-gradient(180deg, var(--c-bg), var(--c-bg-deep));
+  background-size: 120px 120px, 160px 160px, auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .special-ribbon { animation: none; }
+}
+
+:root[data-motion="reduce"] .special-ribbon { animation: none; }
