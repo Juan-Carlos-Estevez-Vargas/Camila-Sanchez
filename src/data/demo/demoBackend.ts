@@ -136,6 +136,7 @@ function baseState(): DemoState {
     dedications: [],
     dedicationPhotos: [],
     dedicationSongs: [],
+    dedicationViews: [],
     users: DEMO_ACCOUNTS.map((a) => ({
       id: uuid(), email: a.email, password: a.password, displayName: a.displayName,
       role: a.role, isActive: true, avatarUrl: null, createdAt: DEMO_ACCOUNTS_SINCE, themeColors: null,

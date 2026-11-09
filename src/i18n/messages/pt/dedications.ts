@@ -12,6 +12,7 @@ export const dedications: Messages["dedications"] = {
   emptyFiltered: "Nada por aqui com este filtro.",
   createFirst: "Escrever a primeira",
   forEveryone: "Para todos",
+  everyone: "todos",
   fromTo: (from: string, to: string) => `De ${from} para ${to}`,
   you: "você",
   someone: "alguém",
@@ -95,6 +96,19 @@ export const dedications: Messages["dedications"] = {
     photo: "Foto",
     importSongs: "⬆️ Colar várias",
     saved: "Salvo",
+  },
+  seen: {
+    title: "Quem viu",
+    count: (seen: number, total: number) => `${seen} de ${total}`,
+    seenAt: (when: string) => `viu ${when}`,
+    lastAt: (when: string) => `última vez ${when}`,
+    notYet: (name: string) => `${name} ainda não viu.`,
+    nobody: "Ninguém viu ainda.",
+    pending: (names: string) => `Ainda não: ${names}`,
+    someone: "Alguém",
+    chipSeen: "Vista",
+    chipNotSeen: "Não vista",
+    chipLabel: (seen: number, total: number) => `Vista por ${seen} de ${total}`,
   },
   playlist: {
     summary: (songs: number, dedications: number) =>

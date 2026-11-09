@@ -304,6 +304,9 @@ export interface DedicationsRepository {
   /** Nuevo orden de las canciones de una dedicatoria. */
   reorderSongs(dedicationId: Uuid, orderedIds: Uuid[]): Promise<void>;
 
+  /** Anota que quien tiene la sesión la abrió (no cuenta si la escribió). */
+  markSeen(dedicationId: Uuid): Promise<void>;
+
   /** URLs firmadas (o locales en demo) de fotos y audios, por ruta. */
   resolveMedia(paths: string[]): Promise<Map<string, string>>;
 }
@@ -385,7 +388,7 @@ export type RealtimeTable =
   | "interruptions" | "notes" | "chat_messages" | "chat_reads" | "notifications"
   | "chat_contacts" | "chat_participants" | "chat_reactions" | "chat_hidden_messages"
   | "todo_lists" | "todo_list_members" | "todo_items" | "todo_materials" | "todo_item_images"
-  | "dedications" | "dedication_photos" | "dedication_songs";
+  | "dedications" | "dedication_photos" | "dedication_songs" | "dedication_views";
 
 export interface RealtimeChange<T = Record<string, unknown>> {
   table: RealtimeTable;

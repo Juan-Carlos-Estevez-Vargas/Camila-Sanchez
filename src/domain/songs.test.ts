@@ -59,7 +59,7 @@ const song = (id: string, position: number, extra: Partial<DedicationSong> = {})
   id, dedicationId: "", title: id, artist: "", note: "", source: "youtube", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
   audioPath: null, position, createdAt: "2026-01-01T00:00:00Z", ...extra,
 });
-const withSongs = (d: Dedication, songs: DedicationSong[]): DedicationWithMedia => ({ dedication: d, photos: [], songs });
+const withSongs = (d: Dedication, songs: DedicationSong[]): DedicationWithMedia => ({ dedication: d, photos: [], songs, views: [] });
 
 describe("playlist", () => {
   const items = [

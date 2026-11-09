@@ -456,10 +456,20 @@ export interface DedicationSong {
 }
 
 /** Dedicatoria con sus fotos y canciones ya ordenadas. */
+/** Alguien (que no la escribió) abrió la dedicatoria. */
+export interface DedicationView {
+  dedicationId: Uuid;
+  userId: Uuid;
+  firstSeenAt: IsoDateTime;
+  lastSeenAt: IsoDateTime;
+}
+
 export interface DedicationWithMedia {
   dedication: Dedication;
   photos: DedicationPhoto[];
   songs: DedicationSong[];
+  /** Quién la vio: todas si la escribí yo; si no, sólo la mía. */
+  views: DedicationView[];
 }
 
 export interface AuditEntry {

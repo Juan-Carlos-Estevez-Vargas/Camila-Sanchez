@@ -4,7 +4,7 @@
  */
 import { useEffect, useMemo, useState } from "react";
 import { Link, NavLink } from "react-router-dom";
-import { filterDedications, sortDedications, type DedicationFilter } from "@/domain/dedications";
+import { dedicationReaders, filterDedications, sortDedications, type DedicationFilter } from "@/domain/dedications";
 import { formatLongDate } from "@/domain/dates";
 import { buildPlaylist } from "@/domain/songs";
 import type { DedicationWithMedia } from "@/domain/types";
@@ -20,15 +20,23 @@ import { PlaylistPanel } from "./PlaylistPanel";
 import { useDedicationMedia, usePeopleNames, useRecipients } from "./parts";
 import "./styles/dedications.scss";
 
-export const DEDICATION_TABLES = ["dedications", "dedication_photos", "dedication_songs"] as const;
+export const DEDICATION_TABLES = ["dedications", "dedication_photos", "dedication_songs", "dedication_views"] as const;
 
 const FILTERS: DedicationFilter[] = ["all", "received", "sent"];
 
-function DedicationCard({ item, fromTo, cover }: { item: DedicationWithMedia; fromTo: string; cover?: string }) {
+function DedicationCard({ item, fromTo, cover, audience }: {
+  item: DedicationWithMedia;
+  fromTo: string;
+  cover?: string;
+  /** Sólo en las mías: a quiénes va dirigida (para decir si ya la vieron). */
+  audience?: string[];
+}) {
   const t = useT().dedications;
   const player = usePlayer();
   const { dedication, photos, songs } = item;
   const counts = t.counts(photos.length, songs.length);
+  const readers = audience && dedicationReaders(dedication, item.views, audience);
+  const total = readers ? readers.seen.length + readers.pending.length : 0;
   return (
     <article className="dedication-card card card--interactive">
       <Link to={`/dedicatorias/${dedication.id}`} className="dedication-card__link">
@@ -40,11 +48,19 @@ function DedicationCard({ item, fromTo, cover }: { item: DedicationWithMedia; fr
           <strong className="dedication-card__title">{dedication.title}</strong>
           <span className="muted dedication-card__meta">{fromTo} · {formatLongDate(dedication.dedicatedOn)}</span>
           {dedication.message && <span className="dedication-card__excerpt">{dedication.message}</span>}
-          {counts && (
+          {(counts || (readers && total > 0)) && (
             <span className="dedication-card__chips">
               <span className="visually-hidden">{counts}</span>
               {photos.length > 0 && <span className="dedication-card__chip" aria-hidden>📷 {photos.length}</span>}
               {songs.length > 0 && <span className="dedication-card__chip" aria-hidden>🎵 {songs.length}</span>}
+              {readers && total > 0 && (
+                <span className={`dedication-card__chip${readers.seen.length ? " is-seen" : ""}`} title={t.seen.chipLabel(readers.seen.length, total)}>
+                  <span className="visually-hidden">{t.seen.chipLabel(readers.seen.length, total)}</span>
+                  <span aria-hidden>
+                    {total === 1 ? (readers.seen.length ? `👀 ${t.seen.chipSeen}` : `🙈 ${t.seen.chipNotSeen}`) : `👀 ${readers.seen.length}/${total}`}
+                  </span>
+                </span>
+              )}
             </span>
           )}
         </span>
@@ -72,6 +88,7 @@ export default function DedicationsPage({ tab = "dedications" }: { tab?: "dedica
   );
   const [items = [], profiles = [], rolePermissions = []] = data ?? [];
   const people = useRecipients(profiles, rolePermissions);
+  const audienceIds = useMemo(() => people.map((p) => p.id), [people]);
   const { fromTo } = usePeopleNames(profiles);
   const sorted = useMemo(() => sortDedications(items), [items]);
   const shown = useMemo(() => filterDedications(sorted, filter, user?.id ?? null), [sorted, filter, user?.id]);
@@ -124,6 +141,7 @@ export default function DedicationsPage({ tab = "dedications" }: { tab?: "dedica
             <div className="dedication-grid">
               {shown.map((item) => (
                 <DedicationCard key={item.dedication.id} item={item} fromTo={fromTo(item.dedication)}
+                  audience={item.dedication.authorId === user?.id ? audienceIds : undefined}
                   cover={item.photos[0] ? covers.get(item.photos[0].thumbPath) : undefined} />
               ))}
             </div>

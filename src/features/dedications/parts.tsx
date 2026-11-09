@@ -1,10 +1,12 @@
 /** Piezas compartidas por el listado, la página de cada dedicatoria y la playlist. */
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { canUseDedications } from "@/domain/dedications";
-import type { Dedication, DedicationSong, Profile, RolePermission, SongSource } from "@/domain/types";
+import { canUseDedications, dedicationReaders } from "@/domain/dedications";
+import { formatRelative } from "@/domain/dates";
+import type { Dedication, DedicationSong, DedicationView, Profile, RolePermission, SongSource } from "@/domain/types";
 import { useT } from "@/i18n";
 import { useAuth } from "@/state/AuthContext";
 import { useBackend } from "@/state/BackendContext";
+import { Avatar } from "@/ui/Avatar";
 import { Modal } from "@/ui/Modal";
 import { onRovingKeyDown, rovingTabIndex } from "@/ui/rovingFocus";
 import { DEDICATION_EMOJIS } from "@/domain/dedications";
@@ -42,7 +44,7 @@ export function usePeopleNames(profiles: readonly Profile[]) {
   );
   /** «De Juan para ti», «De ti para Todos»… */
   const fromTo = useCallback(
-    (d: Pick<Dedication, "authorId" | "recipientId">) => t.fromTo(nameOf(d.authorId), d.recipientId ? nameOf(d.recipientId) : t.forEveryone.toLowerCase()),
+    (d: Pick<Dedication, "authorId" | "recipientId">) => t.fromTo(nameOf(d.authorId), d.recipientId ? nameOf(d.recipientId) : t.everyone),
     [nameOf, t],
   );
   return { nameOf, fromTo };
@@ -120,4 +122,49 @@ export function downloadText(fileName: string, text: string, type: string): void
   a.click();
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+/**
+ * Para quien la escribió: quién ya abrió la dedicatoria (y cuándo) y quién
+ * todavía no. `audience` son las personas que pueden recibir dedicatorias.
+ */
+export function SeenBy({ dedication, views, audience, profiles }: {
+  dedication: Pick<Dedication, "authorId" | "recipientId">;
+  views: readonly DedicationView[];
+  audience: readonly Profile[];
+  profiles: readonly Profile[];
+}) {
+  const t = useT().dedications.seen;
+  const { seen, pending } = dedicationReaders(dedication, views, audience.map((p) => p.id));
+  const person = (id: string) => profiles.find((p) => p.id === id);
+  const name = (id: string) => person(id)?.displayName || t.someone;
+  return (
+    <section className="ded-seen" aria-labelledby="dedication-seen">
+      <h2 id="dedication-seen" className="ded-seen__title">
+        👀 {t.title}
+        {!dedication.recipientId && <span className="ded-seen__count">{t.count(seen.length, seen.length + pending.length)}</span>}
+      </h2>
+      {seen.length === 0 ? (
+        <p className="muted ded-seen__empty">{dedication.recipientId ? t.notYet(name(dedication.recipientId)) : t.nobody}</p>
+      ) : (
+        <ul className="ded-seen__list">
+          {seen.map((v) => (
+            <li key={v.userId} className="ded-seen__item">
+              <Avatar person={person(v.userId)} size={32} />
+              <span>
+                <strong>{name(v.userId)}</strong>
+                <span className="muted ded-seen__when" title={new Date(v.firstSeenAt).toLocaleString()}>
+                  {t.seenAt(formatRelative(v.firstSeenAt))}
+                  {v.lastSeenAt.slice(0, 16) !== v.firstSeenAt.slice(0, 16) && ` · ${t.lastAt(formatRelative(v.lastSeenAt))}`}
+                </span>
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+      {seen.length > 0 && pending.length > 0 && (
+        <p className="muted ded-seen__pending">{t.pending(pending.map(name).join(", "))}</p>
+      )}
+    </section>
+  );
 }

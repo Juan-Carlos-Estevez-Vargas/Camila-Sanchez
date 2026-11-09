@@ -597,13 +597,15 @@ const lists: ListsRepository = {
   resolveImages: (paths) => signedUrls(LIST_BUCKET, paths),
 };
 
-const DEDICATION_COLUMNS = "*, dedication_photos(*), dedication_songs(*)";
+const DEDICATION_COLUMNS = "*, dedication_photos(*), dedication_songs(*), dedication_views(*)";
 
 const toDedicationWithMedia = (r: Row) => ({
   dedication: map.toDedication(r),
   photos: (Array.isArray(r.dedication_photos) ? r.dedication_photos as Row[] : []).map(map.toDedicationPhoto)
     .sort((a, b) => a.position - b.position),
   songs: (Array.isArray(r.dedication_songs) ? r.dedication_songs as Row[] : []).map(map.toDedicationSong).sort(bySongPosition),
+  views: (Array.isArray(r.dedication_views) ? r.dedication_views as Row[] : []).map(map.toDedicationView)
+    .sort((a, b) => a.firstSeenAt.localeCompare(b.firstSeenAt)),
 });
 
 async function removeDedicationFiles(paths: Array<string | null | undefined>): Promise<void> {
@@ -742,6 +744,9 @@ const dedications: DedicationsRepository = {
   },
   async reorderSongs(dedicationId, orderedIds) {
     await unwrap(sb().rpc("reorder_dedication_songs", { p_dedication: dedicationId, p_ids: orderedIds }));
+  },
+  async markSeen(dedicationId) {
+    await unwrap(sb().rpc("mark_dedication_seen", { p_dedication: dedicationId }));
   },
   resolveMedia: (paths) => signedUrls(DEDICATION_BUCKET, paths),
 };

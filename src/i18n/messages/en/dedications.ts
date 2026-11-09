@@ -12,6 +12,7 @@ export const dedications: Messages["dedications"] = {
   emptyFiltered: "Nothing here with this filter.",
   createFirst: "Write the first one",
   forEveryone: "Everyone",
+  everyone: "everyone",
   fromTo: (from: string, to: string) => `From ${from} to ${to}`,
   you: "you",
   someone: "someone",
@@ -95,6 +96,19 @@ export const dedications: Messages["dedications"] = {
     photo: "Photo",
     importSongs: "⬆️ Paste several",
     saved: "Saved",
+  },
+  seen: {
+    title: "Who saw it",
+    count: (seen: number, total: number) => `${seen} of ${total}`,
+    seenAt: (when: string) => `saw it ${when}`,
+    lastAt: (when: string) => `last time ${when}`,
+    notYet: (name: string) => `${name} hasn't seen it yet.`,
+    nobody: "Nobody has seen it yet.",
+    pending: (names: string) => `Not yet: ${names}`,
+    someone: "Someone",
+    chipSeen: "Seen",
+    chipNotSeen: "Not seen",
+    chipLabel: (seen: number, total: number) => `Seen by ${seen} of ${total}`,
   },
   playlist: {
     summary: (songs: number, dedications: number) =>

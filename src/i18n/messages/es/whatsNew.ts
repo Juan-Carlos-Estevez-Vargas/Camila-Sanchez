@@ -16,6 +16,10 @@ export const whatsNew = {
           title: "Cambiar una foto",
           body: "Si una foto se subió mal o se ve borrosa, cámbiala con 🔄 sin perder su mensaje, su fecha ni su lugar. Funciona en el álbum del panel y en tus dedicatorias.",
         },
+        seenBy: {
+          title: "Quién vio tu dedicatoria",
+          body: "En tus dedicatorias ahora sabes quién ya la abrió y cuándo, y quién todavía no. En la lista verás 👀 Vista o cuántas personas la vieron.",
+        },
         photoQuality: {
           title: "Fotos más nítidas",
           body: "Las fotos nuevas se guardan más grandes (hasta 2560 px), con un reescalado de mejor calidad y un toque de nitidez. Te avisamos con ⚠️ cuando una foto es demasiado chica.",

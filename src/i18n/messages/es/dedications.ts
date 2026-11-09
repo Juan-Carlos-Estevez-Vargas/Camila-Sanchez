@@ -10,6 +10,7 @@ export const dedications = {
   emptyFiltered: "Nada por aquí con este filtro.",
   createFirst: "Escribir la primera",
   forEveryone: "Para todos",
+  everyone: "todos",
   fromTo: (from: string, to: string) => `De ${from} para ${to}`,
   you: "ti",
   someone: "alguien",
@@ -93,6 +94,19 @@ export const dedications = {
     photo: "Foto",
     importSongs: "⬆️ Pegar varias",
     saved: "Guardado",
+  },
+  seen: {
+    title: "Quién la vio",
+    count: (seen: number, total: number) => `${seen} de ${total}`,
+    seenAt: (when: string) => `la vio ${when}`,
+    lastAt: (when: string) => `última vez ${when}`,
+    notYet: (name: string) => `${name} todavía no la ha visto.`,
+    nobody: "Nadie la ha visto todavía.",
+    pending: (names: string) => `Todavía no: ${names}`,
+    someone: "Alguien",
+    chipSeen: "Vista",
+    chipNotSeen: "Sin ver",
+    chipLabel: (seen: number, total: number) => `La ${seen === 1 ? "vio" : "vieron"} ${seen} de ${total}`,
   },
   playlist: {
     summary: (songs: number, dedications: number) =>

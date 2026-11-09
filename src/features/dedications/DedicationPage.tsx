@@ -23,7 +23,7 @@ import { toPlayerTracks, usePlayer } from "@/features/player/PlayerContext";
 import { DEDICATION_IMAGE_OPTIONS, EditDedicationModal, replaceDedicationPhoto, saveSongDraft, uploadPhotos } from "./DedicationForm";
 import { DEDICATION_TABLES } from "./DedicationsPage";
 import { ImportSongsModal } from "./ImportSongsModal";
-import { PhotoViewer, SongLabel, useDedicationMedia, usePeopleNames, useRecipients } from "./parts";
+import { PhotoViewer, SeenBy, SongLabel, useDedicationMedia, usePeopleNames, useRecipients } from "./parts";
 import { SongAdder } from "./SongAdder";
 import "./styles/dedications.scss";
 
@@ -73,6 +73,15 @@ export default function DedicationPage() {
       clearTimeout(timer);
     };
   }, [backend, reload]);
+
+  // Abrirla cuenta como «la vio» (para quien la escribió); una vez por visita.
+  const markedSeen = useRef<string | null>(null);
+  const loadedId = item?.dedication.id;
+  useEffect(() => {
+    if (!loadedId || markedSeen.current === loadedId) return;
+    markedSeen.current = loadedId;
+    void backend.dedications.markSeen(loadedId).catch(() => undefined);
+  }, [backend, loadedId]);
 
   // Estando en la dedicatoria, su aviso se da por visto.
   useEffect(() => {
@@ -179,6 +188,7 @@ export default function DedicationPage() {
           </div>
         )}
         {editing && <p className="muted dedication-letter__hint">{t.page.editing}</p>}
+        {mine && <SeenBy dedication={dedication} views={item.views} audience={people} profiles={profiles} />}
       </article>
 
       {(photos.length > 0 || editing) && (

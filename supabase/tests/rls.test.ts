@@ -840,6 +840,23 @@ describe("dedicatorias con fotos y canciones", () => {
     expect(await as(CAMI, `update dedication_photos set path = '${PRIVATE}/${FILE}.webp' where id = '${photo!.id}' returning id`)).toEqual([]);
   });
 
+  it("quién la vio: sólo lo anota la función y sólo lo ve quien la escribió", async () => {
+    await as(CAMI, `select mark_dedication_seen('${PRIVATE}')`);
+    await as(CAMI, `select mark_dedication_seen('${PRIVATE}')`);
+    await as(JUAN, `select mark_dedication_seen('${PRIVATE}')`);
+    expect(await as(JUAN, `select user_id from dedication_views where dedication_id = '${PRIVATE}'`)).toEqual([{ user_id: CAMI }]);
+    await expect(as(GUEST, `select mark_dedication_seen('${PRIVATE}')`)).rejects.toThrow(/no es para ti/);
+    await expect(as(CAMI, `insert into dedication_views (dedication_id, user_id) values ('${PRIVATE}', '${GUEST}')`)).rejects.toThrow(/row-level security/);
+    expect(await as(CAMI, `update dedication_views set first_seen_at = now() - interval '1 year' returning user_id`)).toEqual([]);
+    await expect(as(null, `select mark_dedication_seen('${PRIVATE}')`)).rejects.toThrow(/permission denied/);
+
+    // «Para todos»: quien la escribió ve a cada una; las demás sólo su fila.
+    await as(JUAN, `select mark_dedication_seen('${FOR_ALL}')`);
+    await as(GUEST, `select mark_dedication_seen('${FOR_ALL}')`);
+    expect(await as(CAMI, `select count(*)::int as n from dedication_views where dedication_id = '${FOR_ALL}'`)).toEqual([{ n: 2 }]);
+    expect(await as(GUEST, "select count(*)::int as n from dedication_views")).toEqual([{ n: 1 }]);
+  });
+
   it("sin sesión no se usan sus funciones; borrar la dedicatoria borra todo lo de adentro", async () => {
     await expect(as(null, "select can_see_dedication(gen_random_uuid())")).rejects.toThrow(/permission denied/);
     await expect(as(null, "select is_dedication_author(gen_random_uuid())")).rejects.toThrow(/permission denied/);

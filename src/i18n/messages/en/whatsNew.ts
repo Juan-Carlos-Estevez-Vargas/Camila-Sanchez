@@ -16,6 +16,10 @@ export const whatsNew = {
           title: "Replace a photo",
           body: "If a photo uploaded badly or looks blurry, swap it with 🔄 without losing its message, date or place. It works in the panel album and in your dedications.",
         },
+        seenBy: {
+          title: "Who saw your dedication",
+          body: "In your dedications you now know who already opened it and when, and who hasn't yet. The list shows 👀 Seen or how many people saw it.",
+        },
         photoQuality: {
           title: "Sharper photos",
           body: "New photos are stored bigger (up to 2560 px), with better resizing and a touch of sharpening. We warn you with ⚠️ when a photo is too small.",
