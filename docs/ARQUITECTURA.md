@@ -175,6 +175,24 @@ cumpleaños (día y mes) y los días que faltan.
   cumpleaños (a mano o desde el perfil de una cuenta), interruptores y
   «Ver cómo se ve». Los textos están en `i18n/messages/*/special.ts`.
 
+### Fin de la relación
+
+- `site_settings.relationship_end` (migración `…1109000400_relationship_end`)
+  guarda el día en que terminó la relación; se cambia en **Super → Ajustes del
+  sitio** con el permiso `settings.manage` (lo vigila `guard_site_settings`) y
+  no puede ser antes de `relationship_start`. La migración la deja en el
+  31 de octubre de 2026.
+- `domain/relationship.ts` (puro y probado) decide qué cambia con fecha de fin:
+  `counterUntil()` congela el contador en ese día (a medianoche, sin reloj ni
+  re-render), `anniversaryStart()` devuelve `null` para que `specialDayOn()` ya
+  no celebre el aniversario y `countdownDates()` quita de las cuentas
+  regresivas (portada, sección y Panel) la fecha que se repite cada año el día
+  en que empezó todo.
+- `sections/TogetherCounter.tsx` muestra los números quietos y «El tiempo que
+  compartimos, del … al …»; `sections/Hero.tsx` dice «Del … al …» en vez de
+  «Juntos desde …». No se borra nada: si se quita la fecha todo vuelve a como
+  estaba.
+
 ### Tutorial guiado
 
 `features/tour` tiene tres piezas:
@@ -583,3 +601,4 @@ prueba comprueba que `supabase/setup.sql` esté al día).
 | `…1109000100_dedication_photo_replace` | Quien escribió la dedicatoria puede cambiar el archivo de una foto (`path`, `thumb_path`, medidas); un trigger exige que siga en la carpeta de su dedicatoria |
 | `…1109000200_dedication_views` | Quién vio cada dedicatoria: tabla `dedication_views`, función `mark_dedication_seen` y lectura sólo para la autora (y cada persona su fila) |
 | `…1109000300_two_step` | Verificación en dos pasos: `mfa_ok()`, política restrictiva en cada tabla y en `storage.objects`, `check_request()` como pre-request de PostgREST y `two_step_users()` para Usuarios |
+| `…1109000400_relationship_end` | Fin de la relación: `site_settings.relationship_end` (no antes del inicio, puesta en el 31 de octubre de 2026) y `guard_site_settings` que también la protege con `settings.manage` |

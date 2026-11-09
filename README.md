@@ -95,7 +95,7 @@ Funciona en dos modos:
 
 | Área | Ruta | Acceso |
 | --- | --- | --- |
-| Página principal: portada, tiempo juntos, cuentas regresivas, notas, hitos, galería por año/mes, carta y frases | `/` | Pública o con `site.view` |
+| Página principal: portada, tiempo juntos (quieto en el día del final si la relación terminó), cuentas regresivas, notas, hitos, galería por año/mes, carta y frases | `/` | Pública o con `site.view` |
 | Cajita de mensajes: notitas que se abren como una carta y las sorpresas recibidas, guardadas | `/mensajes` | `notes.send` |
 | App de chat a pantalla completa: buscar personas, solicitudes de contacto, chats privados, fotos, stickers, responder, reacciones (en el celular, manteniendo pulsado el mensaje), editar y borrar, «escribiendo…», en línea, vistos (✓ ✓✓), buscar mensajes, fijar, silenciar, archivar y bloquear | `/chat` | `chat.use` |
 | Listas compartidas con subtareas, materiales, fotos, fechas y responsables, en vivo | `/listas` | `lists.use` |
@@ -142,6 +142,16 @@ cuenta), se apaga cualquier fecha o todas, y **Ver cómo se ve** muestra cada
 tema ya mismo en esa pestaña (`/?tema=halloween`, se quita con *Quitar vista
 previa*). Se guarda dentro de `site_settings.effects`, así que no necesita
 migración ([diagramas](docs/DIAGRAMAS.md#temas-de-fechas-especiales)).
+
+**Fin de la relación.** La relación terminó el 31 de octubre de 2026, y la
+app lo refleja con respeto: el contador de tiempo juntos se queda quieto en ese
+día (518 días, 17 meses) en vez de seguir sumando, la portada dice «Del 31 de
+mayo de 2025 al 31 de octubre de 2026» y el aniversario deja de celebrarse
+(ni tema del día ni cuenta regresiva). El cumpleaños y las demás fechas siguen
+igual, y no se borra nada: fotos, dedicatorias, chat, notitas y listas se
+quedan como estaban. La fecha está en **Super → Ajustes del sitio → Fecha en que
+terminó** (`site_settings.relationship_end`); si se deja vacía, todo vuelve a
+como estaba ([diagramas](docs/DIAGRAMAS.md#fin-de-la-relación)).
 
 **Verificación en dos pasos (opcional).** Cada persona decide si la usa: en
 **Mi cuenta** pulsa *Activar*, escanea el QR con una app de autenticación
