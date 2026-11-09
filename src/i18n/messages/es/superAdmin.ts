@@ -199,6 +199,13 @@ export const superAdmin = {
     deleted: "Usuario eliminado",
     renamed: "Nombre actualizado",
     visibleName: "Nombre visible",
+    twoStepBadge: "🛡️ 2 pasos",
+    twoStepBadgeTitle: "Tiene activada la verificación en dos pasos",
+    resetTwoStepFor: (name: string) => `Quitar la verificación en dos pasos de ${name}`,
+    resetTwoStepTitle: (name: string) => `¿Quitarle la verificación en dos pasos a ${name}?`,
+    resetTwoStepBody: "Hazlo sólo si perdió el celular o borró la app. Podrá entrar con su contraseña y volver a activarla desde Mi cuenta.",
+    resetTwoStep: "Quitar",
+    twoStepReset: "Verificación en dos pasos quitada",
   },
   links: {
     ready: "Enlace listo 🔑",

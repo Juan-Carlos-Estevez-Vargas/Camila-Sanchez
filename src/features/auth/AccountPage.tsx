@@ -8,6 +8,7 @@ import { useSaver } from "@/features/admin/useSaver";
 import { PrivacyCard } from "@/features/legal/PrivacyCard";
 import { InstallAccountCard } from "@/features/install/InstallAccountCard";
 import { DeviceNotificationsCard } from "@/features/messages/EnableNotifications";
+import { TwoStepCard } from "./TwoStepCard";
 import { useAuth } from "@/state/AuthContext";
 import { useBackend } from "@/state/BackendContext";
 import { Avatar } from "@/ui/Avatar";
@@ -15,7 +16,7 @@ import { Field } from "@/ui/Field";
 import { useConfirm } from "@/ui/useConfirm";
 import { useT } from "@/i18n";
 
-/** Mi cuenta: mi perfil, mis colores, avisos, cambiar la contraseña y cerrar sesiones. */
+/** Mi cuenta: mi perfil, mis colores, avisos, contraseña, verificación en dos pasos y sesiones. */
 export default function AccountPage() {
   const backend = useBackend();
   const navigate = useNavigate();
@@ -99,6 +100,8 @@ export default function AccountPage() {
         {error && <p className="field__error" role="alert">{error}</p>}
         <button className="btn" style={{ justifySelf: "start" }} disabled={busy || !password}>{t.savePassword}</button>
       </form>
+
+      <TwoStepCard />
 
       <section className="card stack" style={{ marginTop: 16 }} data-tour="account-sessions">
         <h2 style={{ margin: 0, fontSize: "1.1rem" }}>{t.sessions}</h2>

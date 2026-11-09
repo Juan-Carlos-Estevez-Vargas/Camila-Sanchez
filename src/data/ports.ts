@@ -34,6 +34,36 @@ export interface AuthGateway {
   updatePassword(password: string, options?: { signOutOthers?: boolean }): Promise<void>;
   /** everywhere=true también revoca las sesiones de los demás dispositivos. */
   signOut(options?: { everywhere?: boolean }): Promise<void>;
+
+  /**
+   * Verificación en dos pasos (opcional, cada persona la activa en Mi cuenta).
+   * `pending`: entró con contraseña o enlace pero falta el código de la app;
+   * mientras tanto la base de datos no le entrega nada.
+   */
+  twoStepStatus(): Promise<TwoStepStatus>;
+  /** Empieza a activarla: secreto y enlace otpauth:// para el QR. */
+  startTwoStep(): Promise<TwoStepEnrollment>;
+  /** Termina de activarla con el primer código de la app. */
+  confirmTwoStep(factorId: string, code: string): Promise<void>;
+  /** Abandona una activación a medias. */
+  cancelTwoStep(factorId: string): Promise<void>;
+  /** Segundo paso al entrar: el código de la app. */
+  verifyTwoStep(code: string): Promise<void>;
+  /** La desactiva (pide un código de la app para confirmar). */
+  disableTwoStep(code: string): Promise<void>;
+}
+
+export interface TwoStepStatus {
+  enabled: boolean;
+  pending: boolean;
+}
+
+export interface TwoStepEnrollment {
+  factorId: string;
+  /** En base32, para escribirlo a mano si no se puede escanear. */
+  secret: string;
+  /** otpauth://… (se convierte en el código QR). */
+  uri: string;
 }
 
 export type ReorderableTable = "sections" | "photos" | "milestones";
@@ -341,6 +371,10 @@ export interface UserRepository {
   deleteUser(id: Uuid): Promise<void>;
   /** Token para un enlace de recuperación de contraseña, sin enviar correo. */
   createRecoveryLink(id: Uuid): Promise<string>;
+  /** Quiénes tienen activada la verificación en dos pasos. */
+  listTwoStepUsers(): Promise<Uuid[]>;
+  /** Se la quita a alguien que perdió el celular (vuelve a entrar sólo con su contraseña). */
+  resetTwoStep(id: Uuid): Promise<void>;
   /** Una página del registro con los filtros aplicados y el total que cumple esos filtros. */
   listAudit(query: AuditQuery): Promise<AuditPage>;
 }

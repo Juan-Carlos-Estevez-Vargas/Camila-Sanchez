@@ -9,6 +9,14 @@ interface AuthState {
   user: SessionUser | null;
   profile: Profile | null;
   policy: AccessPolicy;
+  /** ¿Tengo activada la verificación en dos pasos? */
+  twoStepEnabled: boolean;
+  /**
+   * Entró con contraseña o enlace pero falta el código de la app. Mientras
+   * tanto `user` es null (la app se comporta como sin sesión) y se muestra la
+   * pantalla del código.
+   */
+  twoStepPending: SessionUser | null;
   refresh(): Promise<void>;
   /** everywhere=true cierra también la sesión en los demás dispositivos. */
   signOut(options?: { everywhere?: boolean }): Promise<void>;
@@ -22,8 +30,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<SessionUser | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [policy, setPolicy] = useState(AccessPolicy.anonymous());
+  const [twoStepEnabled, setTwoStepEnabled] = useState(false);
+  const [twoStepPending, setTwoStepPending] = useState<SessionUser | null>(null);
 
-  const load = useCallback(async (sessionUser: SessionUser | null) => {
+  const load = useCallback(async (signedIn: SessionUser | null) => {
+    const twoStep = signedIn
+      ? await backend.auth.twoStepStatus().catch(() => ({ enabled: false, pending: false }))
+      : { enabled: false, pending: false };
+    setTwoStepEnabled(twoStep.enabled);
+    setTwoStepPending(twoStep.pending ? signedIn : null);
+    const sessionUser = twoStep.pending ? null : signedIn;
     setUser(sessionUser);
     if (!sessionUser) {
       setProfile(null);
@@ -63,6 +79,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     user,
     profile,
     policy,
+    twoStepEnabled,
+    twoStepPending,
     refresh: () => backend.auth.getSession().then(load),
     signOut: async (options) => {
       // Antes de salir: este dispositivo deja de recibir los avisos de la cuenta.
@@ -70,7 +88,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await backend.auth.signOut(options);
       await load(null);
     },
-  }), [backend, load, loading, policy, profile, user]);
+  }), [backend, load, loading, policy, profile, twoStepEnabled, twoStepPending, user]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

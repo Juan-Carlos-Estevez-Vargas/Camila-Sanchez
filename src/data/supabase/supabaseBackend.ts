@@ -12,6 +12,8 @@ import { bySongPosition, parseSongLink, AUDIO_TYPES, type AudioExtension } from 
 import { sanitizeColors } from "@/domain/palettes";
 import { isSurpriseFor } from "@/domain/surprises";
 import { RECOVERY_PATH } from "@/domain/recovery";
+import { normalizeCode } from "@/domain/totp";
+import { DEFAULT_TITLE } from "@/core/seo";
 import type { DedicationPhoto, InvitableRole, Photo, PhotoUrls, SessionUser, Uuid } from "@/domain/types";
 import { getSupabase, unwrap, type Row } from "./client";
 import * as map from "./mappers";
@@ -131,7 +133,57 @@ const auth: AuthGateway = {
     signedUrlCache.clear();
     await clearPrivateCaches();
   },
+
+  async twoStepStatus() {
+    const { data } = await sb().auth.getSession();
+    if (!data.session) return { enabled: false, pending: false };
+    // getUser trae los factores del servidor: si se activó en otro dispositivo,
+    // esta sesión (aal1) también tiene que pedir el código.
+    const { data: fresh } = await sb().auth.getUser();
+    const enabled = (fresh.user?.factors ?? data.session.user.factors ?? [])
+      .some((f) => f.factor_type === "totp" && f.status === "verified");
+    const { data: level } = await sb().auth.mfa.getAuthenticatorAssuranceLevel();
+    return { enabled, pending: enabled && level?.currentLevel !== "aal2" };
+  },
+  async startTwoStep() {
+    // Un intento anterior sin terminar se descarta (el nombre debe ser único).
+    const factors = await unwrap<{ all: Array<{ id: string; factor_type: string; status: string }> }>(sb().auth.mfa.listFactors());
+    for (const f of factors.all.filter((x) => x.factor_type === "totp" && x.status !== "verified")) {
+      await unwrap(sb().auth.mfa.unenroll({ factorId: f.id }));
+    }
+    const enrolled = await unwrap<{ id: string; totp: { secret: string; uri: string } }>(
+      sb().auth.mfa.enroll({ factorType: "totp", friendlyName: TWO_STEP_NAME, issuer: TWO_STEP_ISSUER }));
+    return { factorId: enrolled.id, secret: enrolled.totp.secret, uri: enrolled.totp.uri };
+  },
+  async confirmTwoStep(factorId, code) {
+    await unwrap(sb().auth.mfa.challengeAndVerify({ factorId, code: normalizeCode(code) }));
+  },
+  async cancelTwoStep(factorId) {
+    await unwrap(sb().auth.mfa.unenroll({ factorId }));
+  },
+  async verifyTwoStep(code) {
+    await unwrap(sb().auth.mfa.challengeAndVerify({ factorId: await verifiedTotpId(), code: normalizeCode(code) }));
+  },
+  async disableTwoStep(code) {
+    const factorId = await verifiedTotpId();
+    // Confirmar con un código: quien encuentre el celular desbloqueado con la
+    // sesión abierta no puede quitarla sin la app.
+    await unwrap(sb().auth.mfa.challengeAndVerify({ factorId, code: normalizeCode(code) }));
+    await unwrap(sb().auth.mfa.unenroll({ factorId }));
+    // La sesión sigue en aal2 hasta refrescarse; se refresca ya para que todo quede al día.
+    await sb().auth.refreshSession();
+  },
 };
+
+const TWO_STEP_NAME = "App de autenticación";
+const TWO_STEP_ISSUER = DEFAULT_TITLE;
+
+async function verifiedTotpId(): Promise<string> {
+  const factors = await unwrap<{ totp: Array<{ id: string; status: string }> }>(sb().auth.mfa.listFactors());
+  const factor = factors.totp.find((f) => f.status === "verified");
+  if (!factor) throw new AppError("La verificación en dos pasos no está activada.");
+  return factor.id;
+}
 
 /** Inserta o actualiza una fila y devuelve la fila resultante mapeada. */
 async function upsert<T>(table: string, row: Row, mapper: (r: Row) => T): Promise<T> {
@@ -850,6 +902,11 @@ const users: UserRepository = {
     const { tokenHash } = await invokeFunction<{ tokenHash: string }>("admin-users", { action: "recovery_link", userId: id });
     return tokenHash;
   },
+  async listTwoStepUsers() {
+    const rows = await unwrap<Array<string | { two_step_users: string }>>(sb().rpc("two_step_users"));
+    return rows.map((r) => (typeof r === "string" ? r : r.two_step_users));
+  },
+  resetTwoStep: (id) => adminUsers({ action: "reset_two_step", userId: id }),
   async listAudit({ page, pageSize, table, actorId, action, from, to, order = "desc" }) {
     let query = sb().from("audit_log").select("*", { count: "exact" })
       .order("created_at", { ascending: order === "asc" })

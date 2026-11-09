@@ -30,3 +30,50 @@
   justify-content: center;
   min-height: 65px;
 }
+
+// Verificación en dos pasos: el código grande y espaciado, y el QR para
+// activarla (Mi cuenta).
+.two-step-code {
+  font-variant-numeric: tabular-nums;
+  font-size: 1.5rem;
+  letter-spacing: 0.4em;
+  text-align: center;
+}
+
+.two-step-steps {
+  display: grid;
+  gap: space(3);
+  margin: 0;
+  padding-inline-start: 1.25rem;
+
+  li::marker { font-weight: 700; color: var(--c-primary); }
+  li > * { margin-top: space(2); }
+}
+
+.two-step-qr {
+  display: grid;
+  box-sizing: content-box;
+  place-items: center;
+  width: 216px;
+  height: 216px;
+  padding: space(2);
+  background: #fff;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
+
+  img { width: 200px; height: 200px; image-rendering: pixelated; }
+}
+
+// En el computador no hay app que abra el enlace otpauth://.
+.two-step-open {
+  @media (hover: hover) and (pointer: fine) { display: none; }
+}
+
+.two-step-secret {
+  display: block;
+  font-size: 1rem;
+  letter-spacing: 0.08em;
+  overflow-wrap: anywhere;
+  word-break: normal;
+  user-select: all;
+}

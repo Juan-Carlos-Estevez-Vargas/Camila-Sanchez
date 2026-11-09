@@ -34,6 +34,7 @@ export const RELEASES: Release[] = [
     news: [
       { id: "photoReplace", icon: "🔄", requires: PERMISSIONS.photosManage, tour: "/panel/fotos" },
       { id: "seenBy", icon: "👀", requires: PERMISSIONS.dedicationsUse, tour: "/dedicatorias" },
+      { id: "twoStep", icon: "🛡️", tour: "/cuenta" },
       { id: "photoQuality", icon: "📸" },
     ],
   },

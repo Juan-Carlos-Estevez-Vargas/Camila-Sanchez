@@ -48,6 +48,7 @@ export const tour = {
     "account-colors": { title: "Tus colores", body: "Elige con qué colores ves la app. Sólo cambia para ti." },
     "account-push": { title: "Avisos en el celular", body: "Actívalos en cada dispositivo para que los mensajes, las notitas y las sorpresas te lleguen aunque la app esté cerrada. En iPhone, primero agrega la app a la pantalla de inicio." },
     "account-password": { title: "Tu contraseña", body: "Cámbiala cuando quieras. Debe tener al menos 10 caracteres." },
+    "account-two-step": { title: "Verificación en dos pasos", body: "Opcional: actívala y al entrar te pediremos también el código de una app de autenticación del celular." },
     "account-sessions": { title: "Tus sesiones", body: "Si entraste en un dispositivo que ya no usas, cierra la sesión en todos los dispositivos." },
     "nav-entrar": { title: "Entrar", body: "Con tu cuenta ves las partes privadas, la cajita de mensajes y el chat." },
     "nav-mensajes": { title: "Cajita de mensajes", body: "Notitas que se guardan para siempre: cartas, perdones, «te amo» y sorpresas." },

@@ -49,6 +49,7 @@ export const tour: Messages["tour"] = {
     "account-colors": { title: "Suas cores", body: "Escolha com quais cores você vê o app. Só muda para você." },
     "account-push": { title: "Avisos no celular", body: "Ative em cada dispositivo para que as mensagens, os bilhetinhos e as surpresas cheguem mesmo com o app fechado. No iPhone, primeiro adicione o app à tela de início." },
     "account-password": { title: "Sua senha", body: "Troque quando quiser. Precisa ter pelo menos 10 caracteres." },
+    "account-two-step": { title: "Verificação em duas etapas", body: "Opcional: ative-a e, ao entrar, também pediremos o código de um app autenticador do celular." },
     "account-sessions": { title: "Suas sessões", body: "Se você entrou num dispositivo que não usa mais, encerre a sessão em todos os dispositivos." },
     "nav-entrar": { title: "Entrar", body: "Com sua conta você vê as partes privadas, a caixinha de mensagens e o chat." },
     "nav-mensajes": { title: "Caixinha de mensagens", body: "Bilhetinhos guardados para sempre: cartas, desculpas, «te amo» e surpresas." },

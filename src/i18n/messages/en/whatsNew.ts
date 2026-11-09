@@ -20,6 +20,10 @@ export const whatsNew = {
           title: "Who saw your dedication",
           body: "In your dedications you now know who already opened it and when, and who hasn't yet. The list shows 👀 Seen or how many people saw it.",
         },
+        twoStep: {
+          title: "Two-step verification",
+          body: "If you like, in My account you can also require a code from an authenticator app when you sign in. Even if someone knows your password, they can't get in. It's optional.",
+        },
         photoQuality: {
           title: "Sharper photos",
           body: "New photos are stored bigger (up to 2560 px), with better resizing and a touch of sharpening. We warn you with ⚠️ when a photo is too small.",

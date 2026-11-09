@@ -200,6 +200,13 @@ export const superAdmin: Messages["superAdmin"] = {
     deleted: "User deleted",
     renamed: "Name updated",
     visibleName: "Display name",
+    twoStepBadge: "🛡️ 2-step",
+    twoStepBadgeTitle: "Has two-step verification turned on",
+    resetTwoStepFor: (name: string) => `Remove two-step verification for ${name}`,
+    resetTwoStepTitle: (name: string) => `Remove two-step verification for ${name}?`,
+    resetTwoStepBody: "Only do this if they lost their phone or deleted the app. They'll sign in with their password and can turn it on again from My account.",
+    resetTwoStep: "Remove",
+    twoStepReset: "Two-step verification removed",
   },
   links: {
     ready: "Link ready 🔑",

@@ -11,8 +11,12 @@ export const errors: Messages["errors"] = {
   weakPassword: "That password is too weak: use at least 10 characters.",
   tooFast: "You're going too fast 😅 Wait a moment and try again.",
   lastSuperAdmin: "At least one active super administrator must remain.",
+  badCode: "That code is wrong or has already changed. Enter the one the app shows now.",
   generic: "Something went wrong. Please try again in a moment.",
   backend: {
+    twoStepMissing: "The two-step verification code is missing.",
+    twoStepOff: "Two-step verification is not turned on.",
+    twoStepOn: "Two-step verification is already on.",
     needLogin: "You need to sign in.",
     noPermission: "You don't have permission to do this.",
     listMissing: "This list doesn't exist or you're not part of it.",

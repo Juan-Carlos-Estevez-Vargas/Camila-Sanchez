@@ -200,6 +200,13 @@ export const superAdmin: Messages["superAdmin"] = {
     deleted: "Usuário excluído",
     renamed: "Nome atualizado",
     visibleName: "Nome visível",
+    twoStepBadge: "🛡️ 2 etapas",
+    twoStepBadgeTitle: "Tem a verificação em duas etapas ativada",
+    resetTwoStepFor: (name: string) => `Remover a verificação em duas etapas de ${name}`,
+    resetTwoStepTitle: (name: string) => `Remover a verificação em duas etapas de ${name}?`,
+    resetTwoStepBody: "Faça isso só se a pessoa perdeu o celular ou apagou o app. Ela entrará com a senha e poderá ativá-la de novo em Minha conta.",
+    resetTwoStep: "Remover",
+    twoStepReset: "Verificação em duas etapas removida",
   },
   links: {
     ready: "Link pronto 🔑",

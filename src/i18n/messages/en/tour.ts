@@ -49,6 +49,7 @@ export const tour: Messages["tour"] = {
     "account-colors": { title: "Your colors", body: "Choose the colors you see the app in. It only changes for you." },
     "account-push": { title: "Phone notifications", body: "Turn them on on each device so messages, notes and surprises reach you even when the app is closed. On iPhone, add the app to your home screen first." },
     "account-password": { title: "Your password", body: "Change it whenever you like. It must have at least 10 characters." },
+    "account-two-step": { title: "Two-step verification", body: "Optional: turn it on and we'll also ask for a code from an authenticator app on your phone when you sign in." },
     "account-sessions": { title: "Your sessions", body: "If you signed in on a device you no longer use, sign out on all devices." },
     "nav-entrar": { title: "Sign in", body: "With your account you see the private parts, the message box and the chat." },
     "nav-mensajes": { title: "Message box", body: "Notes that are kept forever: letters, apologies, “I love you”s and surprises." },

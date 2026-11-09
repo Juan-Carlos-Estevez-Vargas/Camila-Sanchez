@@ -5,7 +5,7 @@
  * nunca la ve. Cada llamada verifica primero, con el token de quien llama,
  * que tenga el permiso users.manage.
  *
- * Acciones: invite | create | delete | set_active | recovery_link
+ * Acciones: invite | create | delete | set_active | recovery_link | reset_two_step
  */
 import { createClient } from "npm:@supabase/supabase-js@2.117.3";
 import { corsHeaders, json } from "../_shared/cors.ts";
@@ -153,6 +153,22 @@ Deno.serve(async (req) => {
         if (error) throw error;
         await audit(callerId, "UPDATE", userId, { action });
         return json({ tokenHash: data.properties.hashed_token });
+      }
+
+      case "reset_two_step": {
+        // Para quien perdió el celular con la app de autenticación: se le
+        // quita la verificación en dos pasos y vuelve a entrar sólo con su
+        // contraseña (después puede activarla otra vez desde Mi cuenta).
+        const userId = str(body.userId, 64);
+        if (!userId) return json({ error: "Falta el usuario" }, 400);
+        const { data, error } = await admin.auth.admin.mfa.listFactors({ userId });
+        if (error) throw error;
+        for (const factor of data.factors) {
+          const { error: deleteError } = await admin.auth.admin.mfa.deleteFactor({ userId, id: factor.id });
+          if (deleteError) throw deleteError;
+        }
+        await audit(callerId, "UPDATE", userId, { action, removed: data.factors.length });
+        return json({ ok: true });
       }
 
       default:

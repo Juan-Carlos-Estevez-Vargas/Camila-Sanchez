@@ -20,6 +20,8 @@ import {
   expiryFromNow, generateInviteToken, hashInviteToken, invitationStatus, isInviteToken, MIN_PASSWORD_LENGTH,
 } from "@/domain/invitations";
 import { RECOVERY_LINK_HOURS } from "@/domain/recovery";
+import { generateSecret, otpauthUri, verifyTotp } from "@/domain/totp";
+import { DEFAULT_TITLE } from "@/core/seo";
 import type {
   AppNotification, AuditEntry, ImportantDate, Interruption, Invitation, Milestone, Note,
   PermissionDefinition, Photo, PhotoUrls, Profile, Role, RolePermission, Section, SessionUser,
@@ -35,6 +37,8 @@ import { SEED_TRANSLATIONS } from "./seedTranslations";
 const STORAGE_KEY = "love-demo-v3";
 const REVISION_KEY = "love-demo-rev";
 const SESSION_KEY = "love-demo-session";
+/** Id de quien ya escribió el código de la verificación en dos pasos en esta pestaña. */
+const SESSION_AAL2_KEY = "love-demo-session-aal2";
 const CHANNEL = "love-demo";
 
 export const DEMO_ACCOUNTS = [
@@ -47,6 +51,8 @@ export const DEMO_ACCOUNTS = [
 interface DemoUser extends Profile {
   email: string;
   password: string;
+  /** Secreto de la verificación en dos pasos (base32), si la activó. */
+  twoStepSecret?: string | null;
 }
 
 interface DemoInvitation extends Invitation {
@@ -257,15 +263,35 @@ export function resetDemoData(): void {
 
 const authListeners = new Set<(user: SessionUser | null) => void>();
 
-function sessionUser(): DemoUser | null {
+/** Quien entró, haya escrito o no el código de la verificación en dos pasos. */
+function signedInUser(): DemoUser | null {
   const id = safeStorage(() => sessionStorage.getItem(SESSION_KEY), null);
   return database().state.users.find((u) => u.id === id && u.isActive) ?? null;
 }
 
-function setSession(user: DemoUser | null) {
+/** ¿Falta el código? Mientras falte, la demo no le entrega nada (como la base de datos). */
+function twoStepPending(user: DemoUser): boolean {
+  return Boolean(user.twoStepSecret) && safeStorage(() => sessionStorage.getItem(SESSION_AAL2_KEY), null) !== user.id;
+}
+
+function sessionUser(): DemoUser | null {
+  const user = signedInUser();
+  return user && !twoStepPending(user) ? user : null;
+}
+
+function setSession(user: DemoUser | null, options?: { twoStepDone?: boolean }) {
   safeStorage(() => (user ? sessionStorage.setItem(SESSION_KEY, user.id) : sessionStorage.removeItem(SESSION_KEY)), undefined);
+  safeStorage(() => (user && options?.twoStepDone ? sessionStorage.setItem(SESSION_AAL2_KEY, user.id) : sessionStorage.removeItem(SESSION_AAL2_KEY)), undefined);
   const value = user ? { id: user.id, email: user.email } : null;
   authListeners.forEach((l) => l(value));
+}
+
+/** Activaciones a medias (id del factor → persona y secreto), sólo en memoria. */
+const pendingTwoStep = new Map<string, { userId: Uuid; secret: string }>();
+
+async function checkTwoStepCode(user: DemoUser, code: string) {
+  if (!user.twoStepSecret) throw new AppError("La verificación en dos pasos no está activada.");
+  if (!(await verifyTotp(user.twoStepSecret, code))) throw new AppError("Invalid TOTP code entered");
 }
 
 function policyOf(user: DemoUser | null): AccessPolicy {
@@ -679,7 +705,7 @@ export const demoBackend: Backend = {
 
   auth: {
     getSession: async () => {
-      const u = sessionUser();
+      const u = signedInUser();
       return u ? { id: u.id, email: u.email } : null;
     },
     onChange(listener) {
@@ -714,6 +740,46 @@ export const demoBackend: Backend = {
     },
     async signOut() {
       setSession(null);
+    },
+
+    async twoStepStatus() {
+      const user = signedInUser();
+      if (!user) return { enabled: false, pending: false };
+      return { enabled: Boolean(user.twoStepSecret), pending: twoStepPending(user) };
+    },
+    async startTwoStep() {
+      const user = requireUser();
+      if (user.twoStepSecret) throw new AppError("La verificación en dos pasos ya está activada.");
+      const secret = generateSecret();
+      const factorId = crypto.randomUUID();
+      pendingTwoStep.set(factorId, { userId: user.id, secret });
+      return { factorId, secret, uri: otpauthUri(secret, user.email, DEFAULT_TITLE) };
+    },
+    async confirmTwoStep(factorId, code) {
+      const user = requireUser();
+      const pending = pendingTwoStep.get(factorId);
+      if (!pending || pending.userId !== user.id) throw new AppError("Este enlace ya no es válido. Pide uno nuevo.");
+      if (!(await verifyTotp(pending.secret, code))) throw new AppError("Invalid TOTP code entered");
+      pendingTwoStep.delete(factorId);
+      user.twoStepSecret = pending.secret;
+      database().commit({ table: "site_settings", type: "UPDATE", record: null });
+      setSession(user, { twoStepDone: true });
+    },
+    async cancelTwoStep(factorId) {
+      pendingTwoStep.delete(factorId);
+    },
+    async verifyTwoStep(code) {
+      const user = signedInUser();
+      if (!user) throw new AppError("Necesitas iniciar sesión.");
+      await checkTwoStepCode(user, code);
+      setSession(user, { twoStepDone: true });
+    },
+    async disableTwoStep(code) {
+      const user = requireUser();
+      await checkTwoStepCode(user, code);
+      user.twoStepSecret = null;
+      database().commit({ table: "site_settings", type: "UPDATE", record: null });
+      setSession(user);
     },
   },
 
@@ -1098,6 +1164,18 @@ export const demoBackend: Backend = {
       database().state.recoveries.push({ tokenHash, userId: id, expiresAt: expiryFromNow(RECOVERY_LINK_HOURS) });
       database().commit({ table: "site_settings", type: "UPDATE", record: null });
       return tokenHash;
+    },
+    async listTwoStepUsers() {
+      require(PERMISSIONS.usersManage);
+      return database().state.users.filter((u) => u.twoStepSecret).map((u) => u.id);
+    },
+    async resetTwoStep(id) {
+      require(PERMISSIONS.usersManage);
+      const user = database().state.users.find((u) => u.id === id);
+      if (!user) throw new AppError("Ese usuario no existe.");
+      user.twoStepSecret = null;
+      audit("UPDATE", "accounts", id, null, { action: "reset_two_step" });
+      database().commit({ table: "site_settings", type: "UPDATE", record: null });
     },
     async listAudit({ page, pageSize, order = "desc", ...filters }) {
       require(PERMISSIONS.auditView);

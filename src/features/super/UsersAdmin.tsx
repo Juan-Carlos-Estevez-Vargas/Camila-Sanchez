@@ -79,6 +79,8 @@ export default function UsersAdmin() {
   const [renaming, setRenaming] = useState<Profile | null>(null);
   const [recovering, setRecovering] = useState<Profile | null>(null);
   const { data: users, loading, reload } = useAsync(() => backend.users.listProfiles(), [backend]);
+  const { data: twoStepIds, reload: reloadTwoStep } = useAsync(() => backend.users.listTwoStepUsers().catch(() => []), [backend]);
+  const twoStep = new Set(twoStepIds ?? []);
   const t = useT().superAdmin.users;
 
   const update = async (profile: Profile, patch: Partial<Profile>, message: string) => {
@@ -100,6 +102,7 @@ export default function UsersAdmin() {
                   <td>
                     <button className="btn btn--sm btn--ghost" onClick={() => setRenaming(u)} title={t.rename}>{u.displayName || t.noName} ✎</button>
                     {u.id === me?.id && <span className="badge" style={{ marginLeft: 6 }}>{t.you}</span>}
+                    {twoStep.has(u.id) && <span className="badge" style={{ marginLeft: 6 }} title={t.twoStepBadgeTitle}>{t.twoStepBadge}</span>}
                   </td>
                   <td>
                     <select className="select" style={{ minWidth: 170 }} value={u.role} aria-label={t.roleOf(u.displayName)}
@@ -119,6 +122,15 @@ export default function UsersAdmin() {
                     {u.id !== me?.id && u.isActive && (
                       <button className="btn btn--sm btn--ghost" aria-label={t.recoveryFor(u.displayName)}
                         title={t.recoveryTitle} onClick={() => setRecovering(u)}>🔑</button>
+                    )}
+                    {u.id !== me?.id && twoStep.has(u.id) && (
+                      <button className="btn btn--sm btn--ghost" aria-label={t.resetTwoStepFor(u.displayName)}
+                        title={t.resetTwoStepFor(u.displayName)} onClick={async () => {
+                          if (await confirm({ title: t.resetTwoStepTitle(u.displayName), body: t.resetTwoStepBody, confirmLabel: t.resetTwoStep, danger: true })) {
+                            await run(() => backend.users.resetTwoStep(u.id), t.twoStepReset);
+                            await reloadTwoStep();
+                          }
+                        }}>📵</button>
                     )}
                     {u.id !== me?.id && (
                       <button className="btn btn--sm btn--ghost" aria-label={t.deleteNamed(u.displayName)} onClick={async () => {
