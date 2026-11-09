@@ -136,6 +136,7 @@ function baseState(): DemoState {
     dedications: [],
     dedicationPhotos: [],
     dedicationSongs: [],
+    dedicationViews: [],
     users: DEMO_ACCOUNTS.map((a) => ({
       id: uuid(), email: a.email, password: a.password, displayName: a.displayName,
       role: a.role, isActive: true, avatarUrl: null, createdAt: DEMO_ACCOUNTS_SINCE, themeColors: null,
@@ -861,6 +862,16 @@ export const demoBackend: Backend = {
       await idbSet(storagePath, full);
       await idbSet(thumbPath, thumb);
       return { storagePath, thumbPath };
+    },
+    async replace(photo, image) {
+      require(PERMISSIONS.photosManage);
+      const uploaded = await demoBackend.photos.upload(image.full, image.thumb, image.extension);
+      const saved = upsertIn<Photo>("photos", {
+        ...photo, ...uploaded, externalUrl: null, width: image.width, height: image.height, bytes: image.full.size,
+        sourceHash: image.sourceHash ?? null,
+      });
+      dropDemoMedia([photo.storagePath, photo.thumbPath].filter((p): p is string => !!p), objectUrls);
+      return saved;
     },
     async resolveUrls(photos) {
       const result = new Map<Uuid, PhotoUrls>();

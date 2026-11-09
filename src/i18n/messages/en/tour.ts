@@ -65,7 +65,7 @@ export const tour: Messages["tour"] = {
   },
   pages: {
     "/panel": { title: "Your panel", body: "From here you change everything on the page: photos, texts, milestones, dates and surprises. Every change is saved and shown instantly." },
-    "/panel/fotos": { title: "Photos", body: "Upload one photo or many at once (drag them into the box). They're optimized before uploading and duplicates are detected. Drag the cards to change their order." },
+    "/panel/fotos": { title: "Photos", body: "Upload one photo or many at once (drag them into the box). They're optimized before uploading and duplicates are detected. Drag the cards to change their order, and if one looks bad or shows ⚠️ Low resolution, use 🔄 Replace photo to put another in its place." },
     "/panel/textos": { title: "Texts and animations", body: "Edit each section's title, subtitle and text, and choose the animation it appears with when scrolling." },
     "/panel/hitos": { title: "Milestones", body: "The important moments of the story, with their date and an optional photo. They appear as a timeline on the page." },
     "/panel/fechas": { title: "Important dates", body: "Anniversaries and birthdays. The page shows a countdown to the next date." },

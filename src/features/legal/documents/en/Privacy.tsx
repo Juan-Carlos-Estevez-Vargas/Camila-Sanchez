@@ -26,7 +26,7 @@ export function Privacy() {
           <tr><td>Account</td><td>Email, name and role. Your password is stored encrypted (hashed): nobody, not even the administrator, can read it.</td><td>You, when you create the account</td></tr>
           <tr><td>Profile (optional)</td><td>Photo or icon, a phrase, your birthday and your colors.</td><td>You, in My account</td></tr>
           <tr><td>What you share</td><td>Photos and their captions, notes, messages, chat photos and stickers, reactions, lists, tasks, dates and surprises.</td><td>You, while using the app</td></tr>
-          <tr><td>App usage</td><td>Your last connection, which messages you have read ("seen") and a change log (who changed what and when) to look into errors or abuse.</td><td>The app, while you use it</td></tr>
+          <tr><td>App usage</td><td>Your last connection, which messages you have read ("seen"), when you opened a dedication (only its author sees it) and a change log (who changed what and when) to look into errors or abuse.</td><td>The app, while you use it</td></tr>
           <tr><td>Technical data</td><td>If you turn on phone notifications: your browser's push service address and browser type. Servers briefly keep logs with your IP address, for security.</td><td>Your browser</td></tr>
         </tbody>
       </table>

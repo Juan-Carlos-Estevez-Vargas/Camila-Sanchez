@@ -112,7 +112,8 @@ Funciona en dos modos:
 | Botón opcional «Invítame un café», destacado en la cabecera y en el pie (donación voluntaria por un enlace externo) | Cabecera y pie | Todos, si `VITE_DONATION_URL` tiene valor |
 
 **Dedicatorias y playlist.** Cada dedicatoria es una carta con emoji,
-mensaje, hasta 12 fotos y hasta 50 canciones. Una canción puede ser un enlace
+mensaje, hasta 12 fotos y hasta 50 canciones. Quien la escribe ve quién ya la
+abrió y cuándo (y quién todavía no). Una canción puede ser un enlace
 de YouTube o Spotify, cualquier enlace `https` o un audio subido (MP3, M4A,
 OGG, WAV, FLAC…, hasta 20 MB). El reproductor queda abajo y sigue sonando al
 cambiar de página; pasa sola a la siguiente en YouTube y en los audios
@@ -126,11 +127,16 @@ enlaces (uno por línea, con «Artista - Título» si se quiere) o abrir un
 
 **Fotos optimizadas en el navegador.** Cada imagen pasa por un *pool* de Web
 Workers con `OffscreenCanvas`: corrige la orientación EXIF, elimina metadatos
-(GPS incluido), la reduce a 2048 px y la codifica en WebP (JPEG como respaldo)
-hasta unos 450 KB, más una miniatura de 480 px. La carga masiva acepta
-carpetas completas (hasta 1000 fotos por tanda), ubica cada foto en el mes en
-que se tomó, salta duplicados con una huella SHA-256 y permite reintentar las
-que fallen.
+(GPS incluido), la reescala con el filtro de alta calidad del navegador
+(`resizeQuality: "high"`), le aplica un toque de nitidez (*unsharp mask*) y la
+codifica en WebP (JPEG como respaldo) buscando la mejor calidad que quepa en su
+tamaño: hasta 2560 px y ~1,2 MB en el álbum, 2048 px y ~700 KB en chat, listas
+y dedicatorias, con miniaturas de 640 px. La carga masiva acepta carpetas
+completas (hasta 1000 fotos por tanda), ubica cada foto en el mes en que se
+tomó, salta duplicados con una huella SHA-256, avisa de las fotos de baja
+resolución y permite reintentar las que fallen. Cualquier foto del álbum o de
+una dedicatoria se puede **cambiar** por otra sin perder su mensaje, su fecha ni
+su lugar.
 
 Dentro de cada mes las fotos siguen el orden que se elige en el panel (↑ ↓ o
 arrastrando), aunque sean de días distintos; la fecha sólo decide el mes. El

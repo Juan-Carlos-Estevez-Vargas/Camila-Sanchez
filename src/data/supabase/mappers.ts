@@ -11,7 +11,7 @@ import type {
   AppNotification, AuditEntry, ChatContact, ChatConversation, ChatKind, ChatLastMessage, ChatMessage, ChatParticipant,
   ChatPerson, ChatPresence, ChatReaction, ChatRelation, ImportantDate, Interruption, Invitation, InvitableRole,
   Milestone, Note, Photo, Profile, Section, SectionKind, SiteSettings, TodoImage, TodoItem, TodoList, TodoMaterial,
-  Dedication, DedicationPhoto, DedicationSong, SongSource,
+  Dedication, DedicationPhoto, DedicationSong, DedicationView, SongSource,
 } from "@/domain/types";
 import { SONG_SOURCES } from "@/domain/types";
 import type { Row } from "./client";
@@ -394,6 +394,13 @@ export const toDedicationPhoto = (r: Row): DedicationPhoto => ({
   height: numOrNull(r.height),
   position: num(r.position),
   createdAt: str(r.created_at),
+});
+
+export const toDedicationView = (r: Row): DedicationView => ({
+  dedicationId: str(r.dedication_id),
+  userId: str(r.user_id),
+  firstSeenAt: str(r.first_seen_at),
+  lastSeenAt: str(r.last_seen_at),
 });
 
 export const toDedicationSong = (r: Row): DedicationSong => {

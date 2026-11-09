@@ -26,7 +26,7 @@ export function Privacy() {
           <tr><td>Cuenta</td><td>Correo, nombre y rol. La contraseña se guarda cifrada (con un hash): nadie, ni siquiera el administrador, puede leerla.</td><td>Tú, al crear la cuenta</td></tr>
           <tr><td>Perfil (opcional)</td><td>Foto o icono, una frase, tu cumpleaños y tus colores.</td><td>Tú, en Mi cuenta</td></tr>
           <tr><td>Lo que compartes</td><td>Fotos y sus descripciones, notitas, mensajes, fotos y stickers del chat, reacciones, listas, tareas, fechas y sorpresas.</td><td>Tú, al usar la app</td></tr>
-          <tr><td>Uso de la app</td><td>Tu última conexión, qué mensajes ya leíste («visto») y un registro de cambios (quién cambió qué y cuándo) para poder revisar errores o abusos.</td><td>La app, mientras la usas</td></tr>
+          <tr><td>Uso de la app</td><td>Tu última conexión, qué mensajes ya leíste («visto»), cuándo abriste una dedicatoria (lo ve sólo quien la escribió) y un registro de cambios (quién cambió qué y cuándo) para poder revisar errores o abusos.</td><td>La app, mientras la usas</td></tr>
           <tr><td>Datos técnicos</td><td>Si activas los avisos en el celular: la dirección del servicio de avisos de tu navegador y el tipo de navegador. Los servidores guardan por un tiempo corto registros con la dirección IP, por seguridad.</td><td>Tu navegador</td></tr>
         </tbody>
       </table>

@@ -224,13 +224,44 @@ flowchart TD
   B --> C{"¿Huella ya existe?"}
   C -- "sí" --> SKIP["Se omite como repetida"]
   C -- "no" --> D["Pool de Web Workers"]
-  D --> E["Orientar, quitar metadatos y GPS,<br/>reducir a 2048 px, WebP ~450 KB<br/>+ miniatura 480 px"]
-  E --> Q["TaskQueue<br/>concurrencia 2, reintentos con backoff"]
+  D --> E["Orientar y quitar metadatos y GPS"]
+  E --> S["Reescalar con alta calidad<br/>(hasta 2560 px) + nitidez suave"]
+  S --> BQ["Búsqueda binaria de la calidad<br/>WebP que cabe en ~1,2 MB<br/>+ miniatura 640 px"]
+  BQ --> LR{"¿Original menor a 1200 px?"}
+  LR -- "sí" --> W["Aviso ⚠️ Baja resolución"]
+  LR --> Q["TaskQueue<br/>concurrencia 2, reintentos con backoff"]
   Q --> U["Storage: bucket privado photos"]
   U --> R["insert photos<br/>(mes de la foto, source_hash)"]
   R --> T["Trigger de auditoría"]
   R --> RT["Realtime refresca la galería"]
   Q -- "falla tras reintentos" --> F["Resumen: reintentar las que fallaron"]
+```
+
+### Cambiar una foto
+
+Si una foto se subió mal o se ve borrosa, se cambia el archivo sin tocar su
+mensaje, su fecha ni su lugar (álbum del panel y dedicatorias).
+
+```mermaid
+sequenceDiagram
+  actor P as Persona
+  participant UI as Panel o dedicatoria
+  participant W as Web Worker
+  participant S as Storage
+  participant DB as Postgres
+  P->>UI: 🔄 Cambiar foto y elige otra
+  UI->>W: optimizar (alta calidad + nitidez)
+  W-->>UI: foto y miniatura nuevas
+  UI->>S: subir archivos nuevos
+  UI->>DB: update de la misma fila (path, thumb_path, medidas)
+  alt la fila no se pudo guardar
+    UI->>S: borrar los archivos nuevos
+    UI-->>P: error, la foto anterior sigue igual
+  else guardada
+    DB->>DB: trigger: el archivo sigue en su carpeta
+    UI->>S: borrar los archivos viejos
+    UI-->>P: Foto cambiada 💖
+  end
 ```
 
 ### Orden de las fotos en un mes
@@ -1108,6 +1139,28 @@ flowchart LR
   MP --> MS["Media Session:<br/>título y botones en<br/>la pantalla bloqueada"]
 ```
 
+### Quién la vio
+
+Al abrir una dedicatoria que no escribió, cada persona queda anotada (la
+primera y la última vez). Sólo quien la escribió ve la lista.
+
+```mermaid
+sequenceDiagram
+  actor C as Camila
+  participant App as SPA
+  participant DB as Postgres
+  actor J as Juan (la escribió)
+
+  C->>App: abre /dedicatorias/:id
+  App->>DB: rpc mark_dedication_seen(id)
+  DB->>DB: ¿can_see_dedication? ¿no es la autora?
+  DB->>DB: upsert dedication_views<br/>(first_seen_at, last_seen_at)
+  DB-->>J: Realtime: cambio en dedication_views
+  J->>App: abre su dedicatoria o la lista
+  App->>DB: select dedication_views<br/>(RLS: sólo la autora ve todas)
+  App-->>J: 👀 Quién la vio: Camila, hace 3 min<br/>Todavía no: Valentina
+```
+
 ### Importar y exportar
 
 ```mermaid
@@ -1368,6 +1421,14 @@ erDiagram
   AUTH_USERS |o--o{ DEDICATIONS : "es para (o nadie = todos)"
   DEDICATIONS ||--o{ DEDICATION_PHOTOS : "fotos"
   DEDICATIONS ||--o{ DEDICATION_SONGS : "canciones"
+  DEDICATIONS ||--o{ DEDICATION_VIEWS : "la vieron"
+  AUTH_USERS ||--o{ DEDICATION_VIEWS : "vio"
+  DEDICATION_VIEWS {
+    uuid dedication_id PK
+    uuid user_id PK
+    timestamptz first_seen_at
+    timestamptz last_seen_at
+  }
   DEDICATION_SONGS {
     uuid id PK
     uuid dedication_id FK

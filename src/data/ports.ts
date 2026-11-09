@@ -80,6 +80,11 @@ export interface PhotoRepository {
   delete(photo: Photo): Promise<void>;
   /** Sube el archivo optimizado y su miniatura. */
   upload(full: Blob, thumb: Blob, extension: string): Promise<UploadedImage>;
+  /**
+   * Cambia el archivo de una foto (mal cargada o de poca calidad) por otro y
+   * conserva todo lo demás: texto, fecha, orden y los hitos que la usan.
+   */
+  replace(photo: Photo, image: ReplacementImage): Promise<Photo>;
   /** URLs listas para <img>, resueltas en lote (una petición). */
   resolveUrls(photos: Photo[]): Promise<Map<Uuid, PhotoUrls>>;
   /**
@@ -153,6 +158,17 @@ export interface MessagingRepository {
 }
 
 /** Foto ya optimizada lista para subir (al chat o a una tarea). */
+/** Foto ya optimizada que reemplaza a otra. */
+export interface ReplacementImage {
+  full: Blob;
+  thumb: Blob;
+  extension: string;
+  width: number;
+  height: number;
+  /** Huella SHA-256 del original (para saltar repetidas en próximas cargas). */
+  sourceHash?: string | null;
+}
+
 export interface ChatImageUpload {
   full: Blob;
   thumb: Blob;
@@ -278,6 +294,8 @@ export interface DedicationsRepository {
 
   addPhoto(dedicationId: Uuid, image: ChatImageUpload): Promise<DedicationPhoto>;
   deletePhoto(photo: DedicationPhoto): Promise<void>;
+  /** Cambia el archivo de una foto y la deja en el mismo lugar. */
+  replacePhoto(photo: DedicationPhoto, image: ChatImageUpload): Promise<DedicationPhoto>;
 
   addSong(input: SongLinkInput): Promise<DedicationSong>;
   addAudioSong(input: SongAudioInput): Promise<DedicationSong>;
@@ -285,6 +303,9 @@ export interface DedicationsRepository {
   deleteSong(song: DedicationSong): Promise<void>;
   /** Nuevo orden de las canciones de una dedicatoria. */
   reorderSongs(dedicationId: Uuid, orderedIds: Uuid[]): Promise<void>;
+
+  /** Anota que quien tiene la sesión la abrió (no cuenta si la escribió). */
+  markSeen(dedicationId: Uuid): Promise<void>;
 
   /** URLs firmadas (o locales en demo) de fotos y audios, por ruta. */
   resolveMedia(paths: string[]): Promise<Map<string, string>>;
@@ -367,7 +388,7 @@ export type RealtimeTable =
   | "interruptions" | "notes" | "chat_messages" | "chat_reads" | "notifications"
   | "chat_contacts" | "chat_participants" | "chat_reactions" | "chat_hidden_messages"
   | "todo_lists" | "todo_list_members" | "todo_items" | "todo_materials" | "todo_item_images"
-  | "dedications" | "dedication_photos" | "dedication_songs";
+  | "dedications" | "dedication_photos" | "dedication_songs" | "dedication_views";
 
 export interface RealtimeChange<T = Record<string, unknown>> {
   table: RealtimeTable;

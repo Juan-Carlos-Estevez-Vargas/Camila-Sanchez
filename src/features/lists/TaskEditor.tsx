@@ -15,8 +15,9 @@ import { Modal } from "@/ui/Modal";
 import { useConfirm } from "@/ui/useConfirm";
 import { ImageViewer, useListImages } from "./listParts";
 import { useT } from "@/i18n";
+import { SHARED_IMAGE_OPTIONS } from "@/services/images/sizing";
 
-const TASK_IMAGE_OPTIONS = { maxEdge: 1600, thumbEdge: 480, quality: 0.82, targetBytes: 350 * 1024, minQuality: 0.66 };
+const TASK_IMAGE_OPTIONS = SHARED_IMAGE_OPTIONS;
 
 interface Props {
   item: TodoItem;

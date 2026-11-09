@@ -65,7 +65,7 @@ export const tour: Messages["tour"] = {
   },
   pages: {
     "/panel": { title: "Seu painel", body: "Daqui você muda tudo o que aparece na página: fotos, textos, marcos, datas e surpresas. Cada mudança é salva e aparece na hora." },
-    "/panel/fotos": { title: "Fotos", body: "Envie uma foto ou muitas de uma vez (arraste para o quadro). Elas são otimizadas antes de enviar e as repetidas são detectadas. Arraste os cartões para mudar a ordem." },
+    "/panel/fotos": { title: "Fotos", body: "Envie uma foto ou muitas de uma vez (arraste para o quadro). Elas são otimizadas antes de enviar e as repetidas são detectadas. Arraste os cartões para mudar a ordem e, se uma ficar ruim ou mostrar ⚠️ Baixa resolução, use 🔄 Trocar foto para colocar outra no lugar." },
     "/panel/textos": { title: "Textos e animações", body: "Edite o título, o subtítulo e o texto de cada seção, e escolha com que animação ela aparece ao rolar." },
     "/panel/hitos": { title: "Marcos", body: "Os momentos importantes da história, com data e uma foto opcional. Aparecem como uma linha do tempo na página." },
     "/panel/fechas": { title: "Datas importantes", body: "Aniversários e datas especiais. A página mostra uma contagem regressiva até a próxima data." },

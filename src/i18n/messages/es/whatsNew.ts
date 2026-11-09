@@ -10,6 +10,26 @@ export const whatsNew = {
   showHistory: "Ver todas las novedades",
   footerLink: "✨ Novedades",
   releases: {
+    "2026-11-09": {
+      news: {
+        photoReplace: {
+          title: "Cambiar una foto",
+          body: "Si una foto se subió mal o se ve borrosa, cámbiala con 🔄 sin perder su mensaje, su fecha ni su lugar. Funciona en el álbum del panel y en tus dedicatorias.",
+        },
+        seenBy: {
+          title: "Quién vio tu dedicatoria",
+          body: "En tus dedicatorias ahora sabes quién ya la abrió y cuándo, y quién todavía no. En la lista verás 👀 Vista o cuántas personas la vieron.",
+        },
+        photoQuality: {
+          title: "Fotos más nítidas",
+          body: "Las fotos nuevas se guardan más grandes (hasta 2560 px), con un reescalado de mejor calidad y un toque de nitidez. Te avisamos con ⚠️ cuando una foto es demasiado chica.",
+        },
+      },
+      changes: [
+        "Las miniaturas del álbum, el chat, las listas y las dedicatorias se ven más definidas.",
+        "Antes de enviar una dedicatoria puedes cambiar cualquiera de sus fotos.",
+      ],
+    },
     "2026-11-08": {
       news: {
         dedications: {

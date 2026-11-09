@@ -8,13 +8,14 @@ import { AppError } from "@/core/errors";
 import { canSeeDedication, MAX_DEDICATION_PHOTOS, MAX_DEDICATION_SONGS } from "@/domain/dedications";
 import { AUDIO_TYPES, bySongPosition, MAX_AUDIO_BYTES, parseSongLink, type AudioExtension } from "@/domain/songs";
 import { toIsoDate } from "@/domain/dates";
-import type { AppNotification, Dedication, DedicationPhoto, DedicationSong, DedicationWithMedia, Uuid } from "@/domain/types";
+import type { AppNotification, Dedication, DedicationPhoto, DedicationSong, DedicationView, DedicationWithMedia, Uuid } from "@/domain/types";
 import type { DedicationInput, DedicationsRepository, RealtimeChange } from "@/data/ports";
 
 export interface DemoDedicationsState {
   dedications: Dedication[];
   dedicationPhotos: DedicationPhoto[];
   dedicationSongs: DedicationSong[];
+  dedicationViews: DedicationView[];
 }
 
 export interface DemoDedicationsDeps {
@@ -37,7 +38,12 @@ const clone = <T>(value: T): T => structuredClone(value);
 export function createDemoDedications(deps: DemoDedicationsDeps): DedicationsRepository {
   const withMedia = (dedication: Dedication): DedicationWithMedia => {
     const state = deps.state();
+    const me = deps.me().id;
     return clone({
+      // Como la política de la base: todas para quien la escribió, si no sólo la mía.
+      views: state.dedicationViews
+        .filter((v) => v.dedicationId === dedication.id && (dedication.authorId === me || v.userId === me))
+        .sort((a, b) => a.firstSeenAt.localeCompare(b.firstSeenAt)),
       dedication,
       photos: state.dedicationPhotos.filter((p) => p.dedicationId === dedication.id).sort((a, b) => a.position - b.position),
       songs: state.dedicationSongs.filter((s) => s.dedicationId === dedication.id).sort(bySongPosition),
@@ -136,6 +142,7 @@ export function createDemoDedications(deps: DemoDedicationsDeps): DedicationsRep
       deps.forgetMedia([...photos.flatMap((p) => [p.path, p.thumbPath]), ...songs.flatMap((s) => (s.audioPath ? [s.audioPath] : []))]);
       state.dedicationPhotos = state.dedicationPhotos.filter((p) => p.dedicationId !== id);
       state.dedicationSongs = state.dedicationSongs.filter((s) => s.dedicationId !== id);
+      state.dedicationViews = state.dedicationViews.filter((v) => v.dedicationId !== id);
       state.dedications = state.dedications.filter((d) => d.id !== id);
       deps.commit({ table: "dedications", type: "DELETE", record: null, old: { id } });
     },
@@ -157,6 +164,20 @@ export function createDemoDedications(deps: DemoDedicationsDeps): DedicationsRep
       deps.state().dedicationPhotos.push(photo);
       deps.commit({ table: "dedication_photos", type: "INSERT", record: photo as never });
       return clone(photo);
+    },
+    async replacePhoto(photo, image) {
+      own(photo.dedicationId);
+      const id = uuid();
+      const path = `dedications/${photo.dedicationId}/${id}.${image.extension}`;
+      const thumbPath = `dedications/${photo.dedicationId}/${id}.thumb.${image.extension}`;
+      await idbSet(path, image.full);
+      await idbSet(thumbPath, image.thumb);
+      const current = deps.state().dedicationPhotos.find((p) => p.id === photo.id);
+      if (!current) throw new AppError("Esa foto ya no existe.");
+      deps.forgetMedia([current.path, current.thumbPath]);
+      Object.assign(current, { path, thumbPath, width: image.width, height: image.height });
+      deps.commit({ table: "dedication_photos", type: "UPDATE", record: current as never });
+      return clone(current);
     },
     async deletePhoto(photo) {
       own(photo.dedicationId);
@@ -222,6 +243,18 @@ export function createDemoDedications(deps: DemoDedicationsDeps): DedicationsRep
       });
       deps.commit({ table: "dedication_songs", type: "UPDATE", record: null });
     },
+    async markSeen(dedicationId) {
+      const { me, dedication } = visible(dedicationId);
+      if (dedication.authorId === me.id) return;
+      const state = deps.state();
+      const now = nowIso();
+      const current = state.dedicationViews.find((v) => v.dedicationId === dedicationId && v.userId === me.id);
+      const view = current ?? { dedicationId, userId: me.id, firstSeenAt: now, lastSeenAt: now };
+      view.lastSeenAt = now;
+      if (!current) state.dedicationViews.push(view);
+      deps.commit({ table: "dedication_views", type: current ? "UPDATE" : "INSERT", record: view as never });
+    },
+
     async resolveMedia(paths) {
       deps.me();
       return deps.mediaUrls(paths);

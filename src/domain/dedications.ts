@@ -3,7 +3,7 @@
  * recibirlas, cómo se ordenan y cómo se filtran.
  */
 import { PERMISSIONS } from "./permissions";
-import type { Dedication, DedicationWithMedia, Profile, RolePermission, Uuid } from "./types";
+import type { Dedication, DedicationView, DedicationWithMedia, Profile, RolePermission, Uuid } from "./types";
 
 export const DEDICATION_EMOJIS = ["💌", "💖", "🌹", "🎶", "✨", "🥰", "🌙", "☀️", "🎂", "🫶", "🌻", "🎁"] as const;
 
@@ -35,4 +35,28 @@ export function filterDedications(items: readonly DedicationWithMedia[], filter:
 /** ¿La puede ver esta persona? (la escribió, es para ella o es para todos) */
 export function canSeeDedication(dedication: Pick<Dedication, "authorId" | "recipientId">, userId: Uuid): boolean {
   return dedication.authorId === userId || dedication.recipientId === userId || dedication.recipientId === null;
+}
+
+export interface DedicationReaders {
+  /** Quienes ya la abrieron, en el orden en que la vieron. */
+  seen: DedicationView[];
+  /** Quienes todavía no (de las personas a las que va dirigida). */
+  pending: Uuid[];
+}
+
+/**
+ * Quién vio una dedicatoria y quién no. `audience` son las personas que pueden
+ * recibir dedicatorias; si es para una persona, sólo cuenta esa.
+ */
+export function dedicationReaders(
+  dedication: Pick<Dedication, "authorId" | "recipientId">,
+  views: readonly DedicationView[],
+  audience: readonly Uuid[],
+): DedicationReaders {
+  const seen = views
+    .filter((v) => v.userId !== dedication.authorId)
+    .sort((a, b) => a.firstSeenAt.localeCompare(b.firstSeenAt));
+  const seenIds = new Set(seen.map((v) => v.userId));
+  const expected = dedication.recipientId ? [dedication.recipientId] : audience.filter((id) => id !== dedication.authorId);
+  return { seen, pending: expected.filter((id) => !seenIds.has(id)) };
 }
