@@ -30,16 +30,23 @@ function DedicationCard({ item, fromTo, cover }: { item: DedicationWithMedia; fr
   const { dedication, photos, songs } = item;
   const counts = t.counts(photos.length, songs.length);
   return (
-    <article className="dedication-card card">
+    <article className="dedication-card card card--interactive">
       <Link to={`/dedicatorias/${dedication.id}`} className="dedication-card__link">
         <span className={`dedication-card__cover${cover ? " has-photo" : ""}`} aria-hidden>
-          {cover ? <img src={cover} alt="" loading="lazy" /> : <span>{dedication.emoji}</span>}
+          {cover ? <img src={cover} alt="" loading="lazy" /> : <span className="dedication-card__cover-emoji">{dedication.emoji}</span>}
         </span>
         <span className="dedication-card__body">
-          <strong className="dedication-card__title">{dedication.emoji} {dedication.title}</strong>
-          <span className="muted dedication-card__meta">{fromTo}</span>
-          <span className="muted dedication-card__meta">{formatLongDate(dedication.dedicatedOn)}{counts && ` · ${counts}`}</span>
+          {cover && <span className="dedication-card__badge" aria-hidden>{dedication.emoji}</span>}
+          <strong className="dedication-card__title">{dedication.title}</strong>
+          <span className="muted dedication-card__meta">{fromTo} · {formatLongDate(dedication.dedicatedOn)}</span>
           {dedication.message && <span className="dedication-card__excerpt">{dedication.message}</span>}
+          {counts && (
+            <span className="dedication-card__chips">
+              <span className="visually-hidden">{counts}</span>
+              {photos.length > 0 && <span className="dedication-card__chip" aria-hidden>📷 {photos.length}</span>}
+              {songs.length > 0 && <span className="dedication-card__chip" aria-hidden>🎵 {songs.length}</span>}
+            </span>
+          )}
         </span>
       </Link>
       {songs.length > 0 && (
