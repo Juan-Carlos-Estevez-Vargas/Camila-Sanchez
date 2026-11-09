@@ -156,6 +156,25 @@ agregar un paso basta con marcar el elemento, añadir su entrada en
 `tourSteps.ts` y su título y texto en `i18n/messages/*/tour.ts` (por id); las pruebas en `tourSteps.test.ts` comprueban que cada paso
 tenga texto e id único.
 
+### Novedades de cada versión
+
+- `domain/whatsNew.ts` lista las versiones (`RELEASES`, de la más nueva a la
+  más antigua) con sus novedades: icono, permiso necesario y página del
+  tutorial. Los textos están en `i18n/messages/*/whatsNew.ts`.
+  `pendingReleases()` decide qué mostrar: todo lo posterior a la última versión
+  vista; si nunca vio ninguna, sólo la última, y nada a una cuenta creada
+  después de ella.
+- `features/whatsNew/WhatsNew.tsx` abre la ventana al entrar después de una
+  actualización, sólo cuando ya se aceptaron los términos (va dentro de
+  `ConsentGate`) y sólo con lo que esa cuenta puede usar. La última versión
+  vista se guarda por persona en `localStorage` (`whatsNew:seen:<id>`). El pie
+  de página la abre con toda la historia.
+- **Ver cómo funciona** cierra la ventana, deja un pedido en
+  `features/tour/tourRequest.ts` y navega a la página. `GuidedTour` lo toma al
+  llegar, espera a que aparezca lo que va a señalar y arranca `featureTour()`:
+  la presentación de la novedad, los pasos de esa página y el botón del
+  tutorial.
+
 ### Idiomas
 
 `src/i18n` es una internacionalización propia, sin dependencias:

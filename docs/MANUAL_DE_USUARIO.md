@@ -16,6 +16,11 @@ Guía para usar la app día a día. Hay tres tipos de personas:
 > tecla Esc. El recorrido cambia según la página y según lo que tu cuenta
 > puede hacer.
 
+> **✨ Novedades.** Cuando la app se actualiza, al entrar verás una ventana
+> con lo que cambió. Si hay algo nuevo, **Ver cómo funciona** te lleva a esa
+> parte de la app y te la muestra paso a paso con el tutorial. Para volver a
+> verlas todas, toca **✨ Novedades** en el pie de página.
+
 > **Idioma.** La app se abre en el idioma de tu celular o computador
 > (español, inglés o portugués; si es otro, en español). Para cambiarlo, usa
 > el selector **🌐** de la cabecera (siempre a la vista, también en el

@@ -25,6 +25,7 @@ directamente al abrir este archivo. La explicación de cada pieza está en
 - [Listas compartidas](#listas-compartidas)
 - [Dedicatorias y playlist](#dedicatorias-y-playlist)
 - [Tutorial guiado](#tutorial-guiado)
+  - [Novedades de cada versión](#novedades-de-cada-versión)
 - [Idiomas](#idiomas)
 - [Capas de seguridad](#capas-de-seguridad)
 - [Integración y despliegue](#integración-y-despliegue)
@@ -1157,6 +1158,48 @@ flowchart LR
   O -- "sí" --> SKIP["Se omite"]
   O -- "no" --> F["Primer destino visible<br/>data-tour o ☰ en móvil"]
   F --> L["tourLayout<br/>resaltado + posición de la tarjeta"]
+```
+
+### Novedades de cada versión
+
+```mermaid
+sequenceDiagram
+  actor C as Camila
+  participant SW as Service worker
+  participant App as SPA
+  participant WN as WhatsNew
+  participant T as GuidedTour
+
+  SW-->>C: «Hay una versión nueva» → Actualizar
+  C->>App: la app se recarga con la versión nueva
+  App->>App: ConsentGate: términos aceptados
+  App->>WN: pendingReleases(RELEASES, última vista, alta de la cuenta)
+  WN->>WN: sólo lo que su cuenta puede usar (permisos)
+  WN-->>C: ✨ Novedades: tarjetas + «Además»
+  alt Ver cómo funciona
+    C->>WN: toca el botón de la novedad
+    WN->>WN: guarda la versión como vista
+    WN->>T: requestTour(página, presentación)
+    WN->>App: navega a la página (p. ej. /dedicatorias)
+    T->>T: espera a que cargue lo que va a señalar
+    T-->>C: presentación → pasos de la página → botón «?»
+  else ¡Entendido!
+    C->>WN: cierra
+    WN->>WN: guarda la versión como vista
+  end
+```
+
+```mermaid
+flowchart TD
+  E["Entra con sesión"] --> S{"¿Vio alguna versión<br/>en este navegador?"}
+  S -- "sí" --> P["Todas las posteriores"]
+  S -- "no" --> N{"¿Su cuenta es más nueva<br/>que la última versión?"}
+  N -- "sí" --> M["Nada: se guarda la última como vista"]
+  N -- "no" --> L["Sólo la última"]
+  P & L --> F["Quita las novedades de lo que<br/>su cuenta no puede usar"]
+  F --> V{"¿Queda algo?"}
+  V -- "sí" --> W["Ventana ✨ Novedades"]
+  V -- "no" --> X["No se muestra"]
 ```
 
 ## Idiomas

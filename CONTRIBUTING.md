@@ -37,6 +37,21 @@ Requisitos: Node.js 20 o superior. Para trabajar contra Supabase copia
 4. Abre el pull request contra `master` y completa la plantilla. CI debe
    quedar en verde para poder fusionar.
 
+### Novedades de cada versión
+
+Si el cambio se nota al usar la app, súmalo a las novedades antes de fusionar:
+
+1. Agrega arriba de `RELEASES` en `src/domain/whatsNew.ts` una entrada con la
+   fecha de publicación (`AAAA-MM-DD`) o suma la novedad a la de hoy. Cada
+   novedad lleva un icono, el permiso que hace falta para verla (si aplica) y,
+   si es una función nueva, `tour` con la página a la que lleva.
+2. Escribe su título, su texto y la lista «Además» en
+   `src/i18n/messages/{es,en,pt}/whatsNew.ts` con la misma clave.
+3. Si la página de `tour` es nueva, dale pasos en `tourSteps.ts`.
+
+`whatsNew.test.ts` falla si falta un texto, si las fechas no van de la más
+nueva a la más antigua o si un `tour` lleva a una página sin tutorial.
+
 ## Mensajes de commit
 
 El número de versión y las notas de cada release se generan a partir de los

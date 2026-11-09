@@ -81,6 +81,8 @@ Funciona en dos modos:
 | <img src="docs/capturas/chat-solicitudes.png" alt="Pestaña Solicitudes con una solicitud recibida para aceptar o rechazar" width="420"> | <img src="docs/capturas/movil-bandeja.png" alt="Bandeja de chats en un celular" width="240"> |
 | **Una dedicatoria** | **La playlist** |
 | <img src="docs/capturas/dedicatoria.png" alt="Dedicatoria «Para mi persona favorita» con el mensaje, tres fotos y cuatro canciones" width="420"> | <img src="docs/capturas/playlist.png" alt="Playlist con todas las canciones de las dedicatorias, botones para reproducir, mezclar e importar" width="420"> |
+| **Novedades al actualizar** | **Y el tutorial de lo nuevo** |
+| <img src="docs/capturas/novedades.png" alt="Ventana Novedades con la dedicatoria nueva y el botón Ver cómo funciona" width="420"> | <img src="docs/capturas/novedades-tutorial.png" alt="El tutorial de las dedicatorias empieza con la presentación de la novedad" width="420"> |
 
 <p align="center">
   <img src="docs/capturas/movil-chat.png" alt="Conversación a pantalla completa en un celular" width="240"><br>
@@ -104,6 +106,7 @@ Funciona en dos modos:
 | App de celular instalable (Android, iPhone y computador): ícono, pantalla completa, atajos, sin conexión y aviso de versión nueva | `/app` | Pública |
 | Avisos push en el celular: chat, notitas, sorpresas y listas | — | Quien los active |
 | Tutorial guiado según la página y los permisos de cada cuenta | Todas | Todos |
+| Novedades de cada versión: al actualizar se ve qué cambió y, si hay una función nueva, «Ver cómo funciona» lleva a su página con el tutorial. También en **✨ Novedades** del pie | Todas | Cualquier cuenta |
 | Idiomas: español, inglés y portugués. La app arranca en el idioma del dispositivo y se cambia con 🌐 en la cabecera, el pie o **Mi cuenta** | Todas | Todos |
 | Legal: privacidad, términos, cookies, cobros y licencias; aviso de cookies y aceptación de términos | `/legal` | Pública |
 | Botón opcional «Invítame un café», destacado en la cabecera y en el pie (donación voluntaria por un enlace externo) | Cabecera y pie | Todos, si `VITE_DONATION_URL` tiene valor |
