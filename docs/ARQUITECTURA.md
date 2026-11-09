@@ -348,7 +348,7 @@ Las tablas viven en `public` y se crean con las migraciones de
 
 | Función | Quién la llama | Qué hace |
 | --- | --- | --- |
-| `admin-users` | Super administrador con sesión | Crear, desactivar o borrar cuentas y generar enlaces de recuperación |
+| `admin-users` | Super administrador con sesión | Crear, desactivar o borrar cuentas, generar enlaces de recuperación y quitar la verificación en dos pasos (`reset_two_step`) |
 | `redeem-invite` | Cualquiera con un enlace de invitación | Comprobar y canjear la invitación de forma atómica |
 | `send-push` | La base de datos (trigger `notifications_push` con `pg_net`) en cada aviso nuevo; `GET` desde el navegador | Enviar Web Push a los dispositivos suscritos; entregar la clave pública VAPID |
 
@@ -362,6 +362,7 @@ navegador ni al repositorio.
 | Alguien lee o cambia datos ajenos | RLS en todas las tablas con `has_permission` |
 | Alguien se da más permisos | Triggers que bloquean cambios de rol y protegen al último super admin |
 | Robo del token de sesión por un script inyectado | CSP estricta (sólo scripts propios, conexiones sólo a Supabase), sin `eval` ni iframes |
+| Contraseña robada o adivinada | Verificación en dos pasos opcional (TOTP de Supabase Auth). Para quien la activa, `mfa_ok()` exige una sesión `aal2`: `check_request()` (pre-request de PostgREST) corta tablas y `rpc`, y la política restrictiva «dos pasos: falta el código» en cada tabla y en `storage.objects` cubre Realtime y Storage. En la app, `TwoStepGate` reemplaza todas las páginas hasta escribir el código ([diagrama](DIAGRAMAS.md#verificación-en-dos-pasos)) |
 | Token de sesión robado y reutilizado | Tokens de 1 hora con rotación de tokens de refresco y cierre en todos los dispositivos |
 | Enlaces de invitación o recuperación filtrados | Token aleatorio de un solo uso en el `#fragmento`, que no llega a servidores ni registros; en la base sólo se guarda su SHA-256; caducan |
 | Redirecciones abiertas | `?next=` sólo acepta rutas internas (`safeRedirect.ts`) |
@@ -557,3 +558,4 @@ prueba comprueba que `supabase/setup.sql` esté al día).
 | `…1108000100_dedications` | Dedicatorias con fotos y canciones (YouTube, Spotify, audio o enlace), permiso `dedications.use`, avisos, límites, bucket `dedication-media` y `reorder_dedication_songs` |
 | `…1109000100_dedication_photo_replace` | Quien escribió la dedicatoria puede cambiar el archivo de una foto (`path`, `thumb_path`, medidas); un trigger exige que siga en la carpeta de su dedicatoria |
 | `…1109000200_dedication_views` | Quién vio cada dedicatoria: tabla `dedication_views`, función `mark_dedication_seen` y lectura sólo para la autora (y cada persona su fila) |
+| `…1109000300_two_step` | Verificación en dos pasos: `mfa_ok()`, política restrictiva en cada tabla y en `storage.objects`, `check_request()` como pre-request de PostgREST y `two_step_users()` para Usuarios |

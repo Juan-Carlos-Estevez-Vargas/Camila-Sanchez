@@ -8,6 +8,7 @@ directamente al abrir este archivo. La explicación de cada pieza está en
 - [Capas del frontend](#capas-del-frontend)
 - [Navegación y permisos](#navegación-y-permisos)
 - [Inicio de sesión](#inicio-de-sesión)
+  - [Verificación en dos pasos](#verificación-en-dos-pasos)
 - [Invitación por enlace o QR](#invitación-por-enlace-o-qr)
 - [Recuperación de contraseña](#recuperación-de-contraseña)
 - [Subida de fotos](#subida-de-fotos)
@@ -145,6 +146,71 @@ sequenceDiagram
     Auth-->>App: tokens nuevos (el anterior deja de servir)
   end
 ```
+
+### Verificación en dos pasos
+
+Opcional: cada persona la activa o la quita en **Mi cuenta**. Quien no la
+activa entra como siempre.
+
+```mermaid
+sequenceDiagram
+  actor U as Persona
+  participant App as SPA
+  participant App2 as App de autenticación<br/>(celular)
+  participant Auth as Supabase Auth (MFA TOTP)
+  participant DB as Postgres
+
+  rect rgba(200, 200, 255, 0.15)
+  Note over U,DB: Activarla (Mi cuenta)
+  U->>App: Activar
+  App->>Auth: mfa.enroll(totp)
+  Auth-->>App: secreto + otpauth://
+  App-->>U: QR y clave para copiar
+  U->>App2: escanea el QR
+  App2-->>U: código de 6 dígitos (cambia cada 30 s)
+  U->>App: código
+  App->>Auth: challengeAndVerify
+  Auth-->>App: sesión aal2 · factor verificado
+  end
+
+  rect rgba(255, 200, 220, 0.15)
+  Note over U,DB: Entrar después
+  U->>App: contraseña, enlace mágico o de recuperación
+  Auth-->>App: sesión aal1
+  App->>Auth: getUser + nivel de la sesión
+  Note over App: falta el código → pantalla «Verificación en dos pasos»<br/>(en lugar de cualquier página)
+  App->>DB: (cualquier petición con aal1)
+  DB-->>App: nada · check_request() y RLS restrictiva
+  U->>App: código de la app
+  App->>Auth: challengeAndVerify
+  Auth-->>App: sesión aal2
+  App->>DB: my_permissions()
+  DB-->>App: rol y permisos
+  end
+```
+
+Cómo la base de datos hace cumplir el segundo paso, aunque alguien tenga la
+contraseña y llame a la API directamente:
+
+```mermaid
+flowchart LR
+  REQ["Petición con el token<br/>de la sesión"] --> PRE{"check_request()<br/>(PostgREST, antes de todo)"}
+  PRE -- "mfa_ok() = no" --> NO["Error 42501<br/>«Falta el código…»"]
+  PRE -- "sí" --> RLS{"RLS de la tabla<br/>+ política restrictiva<br/>«dos pasos: falta el código»"}
+  RLS --> OK["Datos"]
+  RT["Realtime y Storage<br/>(no pasan por PostgREST)"] --> RLS
+  subgraph mfa_ok["mfa_ok()"]
+    A["sin sesión"] --> Y["sí"]
+    B["token aal2"] --> Y
+    C["sin factor verificado<br/>en auth.mfa_factors"] --> Y
+    D["factor verificado y token aal1"] --> N["no"]
+  end
+```
+
+Si alguien pierde el celular, quien gestiona cuentas pulsa 📵 en
+**Super → Usuarios**: `admin-users` (`reset_two_step`) borra sus factores con
+la service role, queda en la auditoría y la persona vuelve a entrar sólo con su
+contraseña.
 
 ## Invitación por enlace o QR
 
@@ -1329,13 +1395,14 @@ flowchart TB
     HDR["Cabeceras: X-Frame-Options, nosniff,<br/>COOP/CORP, Permissions-Policy"]
   end
   subgraph Supabase
-    AUTH["Auth: bcrypt, tokens de 1 h con rotación,<br/>registro cerrado, límites por IP"]
+    AUTH["Auth: bcrypt, tokens de 1 h con rotación,<br/>registro cerrado, límites por IP,<br/>verificación en dos pasos (TOTP, opcional)"]
     subgraph EF["Edge Functions"]
       RL["hit_edge_rate_limit<br/>IP con HMAC · 429"]
       VAL["validan y recortan cada campo"]
     end
     subgraph PG["Postgres"]
-      RLS["RLS en todas las tablas"]
+      PRE["check_request(): sin el código<br/>de dos pasos no hay respuesta"]
+      RLS["RLS en todas las tablas<br/>+ política restrictiva de dos pasos"]
       TRG["Triggers: columnas inmutables,<br/>autoría puesta por la base,<br/>enforce_rate_limit"]
       CHK["CHECK de largo y formato"]
       PRM["supabase-js / PostgREST:<br/>consultas parametrizadas"]
@@ -1354,7 +1421,7 @@ flowchart TB
   CAP --> AUTH
   CAP --> EF
   HTTPS --> EF
-  HTTPS --> PRM --> RLS --> TRG --> CHK
+  HTTPS --> PRM --> PRE --> RLS --> TRG --> CHK
   RL --> VAL --> PG
   HTTPS --> ST
   CI -. "antes de publicar" .-> Netlify

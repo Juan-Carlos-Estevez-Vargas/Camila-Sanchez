@@ -100,7 +100,7 @@ Funciona en dos modos:
 | Dedicatorias para alguien o para todos: un mensaje, fotos y canciones. Todas las canciones forman una playlist que suena dentro de la app, se exporta (`.m3u8`, cola de YouTube, enlaces de Spotify o texto) y se le importan canciones pegando enlaces o abriendo un `.m3u` | `/dedicatorias` y `/dedicatorias/playlist` | `dedications.use` |
 | Perfil: nombre, foto o icono, frase y cumpleaños | `/cuenta/perfil` | Cualquier cuenta |
 | Mis colores: cada persona elige su paleta sin cambiársela a nadie | `/cuenta/colores` | Cualquier cuenta |
-| Mi cuenta: app en el celular, avisos en el dispositivo, contraseña y sesiones | `/cuenta` | Cualquier cuenta |
+| Mi cuenta: app en el celular, avisos en el dispositivo, contraseña, verificación en dos pasos (opcional) y sesiones | `/cuenta` | Cualquier cuenta |
 | Panel de contenido: fotos, textos y animaciones, hitos, fechas y sorpresas (cada sorpresa se prepara para una persona: sólo ella la ve, nunca quien la creó) | `/panel` | Editora y super admin |
 | Super admin: usuarios, invitaciones por enlace o QR, roles y permisos, apariencia, secciones, ajustes y auditoría (abre en el mes actual; filtros por mes o todo el historial, sección, acción y persona, orden y paginación con primera, última, números y tamaño de página) | `/super` | Super admin |
 | App de celular instalable (Android, iPhone y computador): ícono, pantalla completa, atajos, sin conexión y aviso de versión nueva | `/app` | Pública |
@@ -124,6 +124,16 @@ otra app: `.m3u8` (VLC, Winamp, Kodi, o TuneMyMusic/Soundiiz para pasarla a otro
 una playlist de Spotify, o la lista en texto. Para traer canciones: pegar
 enlaces (uno por línea, con «Artista - Título» si se quiere) o abrir un
 `.m3u`/`.m3u8` ([diagramas](docs/DIAGRAMAS.md#dedicatorias-y-playlist)).
+
+**Verificación en dos pasos (opcional).** Cada persona decide si la usa: en
+**Mi cuenta** pulsa *Activar*, escanea el QR con una app de autenticación
+(Google Authenticator, Microsoft Authenticator, 1Password…) y escribe el primer
+código. Desde ahí, después de la contraseña o del enlace, la app pide el código
+de 6 dígitos, también en los demás dispositivos donde ya tenía la sesión
+abierta. Se quita con un código de la app; si alguien pierde el celular, quien
+gestiona cuentas se la quita con 📵 en **Super → Usuarios**. Usa la MFA (TOTP)
+de Supabase Auth y la base de datos no entrega nada hasta escribir el código
+([diagramas](docs/DIAGRAMAS.md#verificación-en-dos-pasos)).
 
 **Fotos optimizadas en el navegador.** Cada imagen pasa por un *pool* de Web
 Workers con `OffscreenCanvas`: corrige la orientación EXIF, elimina metadatos
@@ -269,6 +279,11 @@ La seguridad vive en la base de datos, no en el navegador.
   guardado sólo como SHA-256 y enviado en el `#fragmento` de la URL).
 - Fotos en buckets **privados** servidas con URLs firmadas; la clave
   `service_role` sólo existe dentro de las Edge Functions.
+- **Verificación en dos pasos opcional** por persona (TOTP de Supabase Auth).
+  Para quien la activa, una sesión sin el código (aal1) no recibe nada:
+  `check_request()` corta cada petición a la API (también las funciones `rpc`)
+  y una política RLS restrictiva en cada tabla y en Storage cubre Realtime y
+  los archivos ([diagrama](docs/DIAGRAMAS.md#verificación-en-dos-pasos)).
 - Sesiones con PKCE, tokens de 1 hora con rotación de tokens de refresco,
   cierre de sesión en todos los dispositivos y recuperación de contraseña sin
   revelar qué correos existen.
