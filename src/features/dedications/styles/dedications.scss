@@ -31,8 +31,9 @@
 
 .dedication-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
   gap: space(4);
+  align-items: start;
 }
 
 .dedication-card {
@@ -48,35 +49,99 @@
     border-radius: inherit;
 
     &:hover .dedication-card__title { color: var(--c-primary-strong); }
+    &:hover .dedication-card__cover img { transform: scale(1.04); }
   }
 
+  // La portada siempre mide lo mismo, sea la foto vertical u horizontal.
   &__cover {
-    aspect-ratio: 16 / 9;
+    position: relative;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
     display: grid;
     place-items: center;
-    font-size: 3rem;
     background: linear-gradient(135deg, var(--c-primary-soft), tint(var(--c-accent), 70%));
 
-    img { width: 100%; height: 100%; object-fit: cover; }
+    img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.4s $ease;
+    }
+
+    &.has-photo::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to bottom, transparent 55%, rgb(0 0 0 / 25%));
+    }
+  }
+
+  &__cover-emoji {
+    font-size: 3.4rem;
+    line-height: 1;
+    filter: drop-shadow(0 6px 12px rgb(0 0 0 / 12%));
   }
 
   &__body {
+    position: relative;
     display: grid;
+    align-content: start;
     gap: space(1);
     padding: space(3) space(4) space(4);
     min-width: 0;
   }
 
-  &__title { font-size: 1.1rem; @include truncate; }
-  &__meta { font-size: 0.85rem; @include truncate; }
+  // El emoji asoma sobre la foto, como un sello.
+  &__badge {
+    position: absolute;
+    top: -22px;
+    left: space(4);
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: var(--c-surface);
+    box-shadow: var(--shadow);
+    font-size: 1.4rem;
+
+    & ~ .dedication-card__title { margin-top: space(3); }
+  }
+
+  &__title {
+    font-family: var(--font-display, inherit);
+    font-size: 1.15rem;
+    line-height: 1.3;
+    @include truncate;
+  }
+
+  &__meta { font-size: 0.82rem; overflow-wrap: anywhere; }
 
   &__excerpt {
-    font-size: 0.9rem;
+    font-size: 0.92rem;
+    margin-top: space(1);
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
     overflow-wrap: anywhere;
+  }
+
+  &__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: space(1);
+    margin-top: space(2);
+  }
+
+  &__chip {
+    font-size: 0.78rem;
+    padding: 2px space(2);
+    border-radius: 999px;
+    background: var(--c-surface-2);
+    color: var(--c-muted);
   }
 
   &__play {
@@ -93,11 +158,29 @@
   max-width: 760px;
 
   &__back { width: fit-content; }
-  &__heading { font-size: 1.25rem; margin: 0; }
+
+  &__heading {
+    font-size: 1.2rem;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: space(2);
+  }
+
+  &__count {
+    font-family: var(--font-body, inherit);
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 2px space(2);
+    border-radius: 999px;
+    background: var(--c-primary-soft);
+    color: var(--c-primary-strong);
+  }
 }
 
 .dedication-letter {
   padding: space(6) space(5);
+  border-top: 4px solid var(--c-primary);
   display: grid;
   gap: space(4);
   background:
@@ -115,13 +198,29 @@
     p { margin: 0; }
   }
 
-  &__emoji { font-size: 3rem; line-height: 1; }
+  &__emoji {
+    justify-self: center;
+    width: 76px;
+    height: 76px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: var(--c-primary-soft);
+    font-size: 2.4rem;
+    line-height: 1;
+    margin-bottom: space(1);
+  }
 
   &__message {
     white-space: pre-wrap;
     overflow-wrap: anywhere;
-    font-size: 1.05rem;
-    line-height: 1.7;
+    font-size: 1.08rem;
+    line-height: 1.75;
+    max-width: 58ch;
+    width: 100%;
+    justify-self: center;
+    padding-top: space(4);
+    border-top: 1px dashed var(--c-border-strong);
   }
 
   &__owner {
@@ -195,6 +294,53 @@
 }
 
 .ded-thumbs { grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); }
+
+// En la carta, las fotos van como polaroids un poco ladeadas.
+.ded-photos {
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: space(4);
+  padding: space(2) space(1);
+
+  &__item {
+    aspect-ratio: auto;
+    overflow: visible;
+    padding: 8px 8px 22px;
+    border-radius: 4px;
+    background: #fff;
+    box-shadow: var(--shadow);
+    transform: rotate(-1.6deg);
+    transition: transform 0.25s $ease, box-shadow 0.25s $ease;
+
+    &:nth-child(2n) { transform: rotate(1.4deg); }
+    &:nth-child(3n) { transform: rotate(-0.6deg); }
+    &:hover, &:focus-within { transform: rotate(0) scale(1.03); box-shadow: var(--shadow-lg); z-index: 1; }
+
+    &.is-loading { aspect-ratio: 1; padding: 0; }
+  }
+
+  &__open {
+    aspect-ratio: 1;
+    overflow: hidden;
+    border-radius: 2px;
+    background: var(--c-surface-2);
+  }
+
+  &__remove { top: 12px; right: 12px; }
+
+  // Una sola foto: centrada, más grande y con su forma (vertical u horizontal).
+  &.is-single {
+    grid-template-columns: minmax(0, 300px);
+    justify-content: center;
+
+    .ded-photos__item { transform: rotate(-1deg); }
+    .ded-photos__open { aspect-ratio: auto; max-height: 420px; }
+    .ded-photos__open img { height: auto; max-height: 420px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &__item, &__item:nth-child(n) { transform: none; }
+  }
+}
 
 .dedication-photo-viewer {
   display: grid;

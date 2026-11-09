@@ -53,7 +53,9 @@ export default function DedicationPage() {
   const [item = null, profiles = [], rolePermissions = []] = data ?? [];
   const people = useRecipients(profiles, rolePermissions);
   const { fromTo } = usePeopleNames(profiles);
-  const thumbs = useDedicationMedia(item?.photos.map((p) => p.thumbPath) ?? []);
+  // Una sola foto se ve grande: se usa la original en vez de la miniatura.
+  const shownPath = (p: { path: string; thumbPath: string }) => (item?.photos.length === 1 ? p.path : p.thumbPath);
+  const thumbs = useDedicationMedia(item?.photos.map(shownPath) ?? []);
   const queue = useMemo(() => (item ? toPlayerTracks(buildPlaylist([item])) : []), [item]);
 
   useEffect(() => {
@@ -164,13 +166,13 @@ export default function DedicationPage() {
       {(photos.length > 0 || editing) && (
         <section className="stack" aria-labelledby="dedication-photos">
           <h2 id="dedication-photos" className="dedication-page__heading">
-            {t.form.photos} {editing && <span className="muted">{photos.length}/{MAX_DEDICATION_PHOTOS}</span>}
+            📷 {t.form.photos} {editing && <span className="dedication-page__count">{photos.length}/{MAX_DEDICATION_PHOTOS}</span>}
           </h2>
           <div className={`ded-photos${photos.length === 1 ? " is-single" : ""}`}>
             {photos.map((photo, i) => (
               <div key={photo.id} className="ded-photos__item">
                 <button type="button" className="ded-photos__open" onClick={() => setViewing(photo.path)} aria-label={t.page.photoAlt(i + 1)}>
-                  {thumbs.get(photo.thumbPath) ? <img src={thumbs.get(photo.thumbPath)} alt="" loading="lazy" /> : <span aria-hidden>📷</span>}
+                  {thumbs.get(shownPath(photo)) ? <img src={thumbs.get(shownPath(photo))} alt="" loading="lazy" /> : <span aria-hidden>📷</span>}
                 </button>
                 {editing && (
                   <button type="button" className="ded-photos__remove" aria-label={t.form.removePhoto}
@@ -190,7 +192,7 @@ export default function DedicationPage() {
       <section className="stack" aria-labelledby="dedication-songs">
         <div className="row-between">
           <h2 id="dedication-songs" className="dedication-page__heading">
-            🎶 {t.form.songs} {songs.length > 0 && <span className="muted">{songs.length}</span>}
+            🎶 {t.form.songs} {songs.length > 0 && <span className="dedication-page__count">{songs.length}</span>}
           </h2>
           <div className="row">
             {songs.length > 0 && <button className="btn btn--sm" data-tour="dedication-play" onClick={() => player.play(queue, 0, { shuffle: false })}>{t.page.playAll}</button>}
