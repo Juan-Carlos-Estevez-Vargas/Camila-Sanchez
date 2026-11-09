@@ -11,6 +11,7 @@ import { TaskQueue, type TaskSnapshot } from "@/services/queue/TaskQueue";
 import { fingerprint } from "./bulk";
 import { readCapturedDate } from "./exif";
 import { ImageProcessor } from "./ImageProcessor";
+import { isLowResolution } from "./sizing";
 import { msg } from "@/i18n/store";
 
 export interface UploadRequest {
@@ -28,7 +29,7 @@ export interface UploadOptions {
 }
 
 export type UploadResult =
-  | { kind: "uploaded"; photo: Photo; originalBytes: number; finalBytes: number }
+  | { kind: "uploaded"; photo: Photo; originalBytes: number; finalBytes: number; lowResolution: boolean }
   | { kind: "duplicate" };
 
 export type UploadSnapshot = TaskSnapshot<UploadResult>;
@@ -36,6 +37,22 @@ export type UploadSnapshot = TaskSnapshot<UploadResult>;
 const abortIfNeeded = (signal: AbortSignal) => {
   if (signal.aborted) throw new DOMException("Cancelado", "AbortError");
 };
+
+/**
+ * Cambia el archivo de una foto del álbum (se cargó mal o con poca calidad):
+ * optimiza el nuevo y lo pone en su lugar; leyenda, fecha y orden se quedan.
+ */
+export async function replaceAlbumPhoto(backend: Backend, processor: ImageProcessor, photo: Photo, file: File): Promise<Photo> {
+  const [sourceHash, optimized] = await Promise.all([fingerprint(file), processor.process(file)]);
+  return backend.photos.replace(photo, {
+    full: optimized.full,
+    thumb: optimized.thumb,
+    extension: optimized.extension,
+    width: optimized.width,
+    height: optimized.height,
+    sourceHash,
+  });
+}
 
 export class PhotoUploader {
   // 3 a la vez: mientras una foto se optimiza, otra sube y otra se guarda.
@@ -91,7 +108,13 @@ export class PhotoUploader {
               bytes: optimized.full.size,
               sourceHash: hash,
             });
-            return { kind: "uploaded", photo, originalBytes: optimized.originalBytes, finalBytes: optimized.full.size } as const;
+            return {
+              kind: "uploaded",
+              photo,
+              originalBytes: optimized.originalBytes,
+              finalBytes: optimized.full.size,
+              lowResolution: isLowResolution(optimized.sourceWidth, optimized.sourceHeight),
+            } as const;
           } catch (error) {
             // Si falla (o se reintenta), la huella no debe bloquear el siguiente intento.
             if (hash && !options.knownHashes?.has(hash)) seen.delete(hash);

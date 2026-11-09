@@ -12,7 +12,7 @@ import { bySongPosition, parseSongLink, AUDIO_TYPES, type AudioExtension } from 
 import { sanitizeColors } from "@/domain/palettes";
 import { isSurpriseFor } from "@/domain/surprises";
 import { RECOVERY_PATH } from "@/domain/recovery";
-import type { InvitableRole, Photo, PhotoUrls, SessionUser, Uuid } from "@/domain/types";
+import type { DedicationPhoto, InvitableRole, Photo, PhotoUrls, SessionUser, Uuid } from "@/domain/types";
 import { getSupabase, unwrap, type Row } from "./client";
 import * as map from "./mappers";
 
@@ -234,6 +234,23 @@ const photos: PhotoRepository = {
     await unwrap(sb().storage.from(PHOTO_BUCKET).upload(storagePath, full, options));
     await unwrap(sb().storage.from(PHOTO_BUCKET).upload(thumbPath, thumb, { ...options, contentType: thumb.type }));
     return { storagePath, thumbPath };
+  },
+  async replace(photo, image) {
+    const uploaded = await photos.upload(image.full, image.thumb, image.extension);
+    let saved: Photo;
+    try {
+      saved = await photos.save({
+        ...photo, ...uploaded, externalUrl: null, width: image.width, height: image.height, bytes: image.full.size,
+        sourceHash: image.sourceHash ?? null,
+      });
+    } catch (error) {
+      await sb().storage.from(PHOTO_BUCKET).remove([uploaded.storagePath, uploaded.thumbPath]).catch(() => undefined);
+      throw error;
+    }
+    // Los archivos viejos ya no los usa nadie (si falla, sólo queda basura).
+    const old = [photo.storagePath, photo.thumbPath].filter((p): p is string => !!p);
+    if (old.length) await sb().storage.from(PHOTO_BUCKET).remove(old).catch(() => undefined);
+    return saved;
   },
   async resolveUrls(list) {
     const now = Date.now();
@@ -664,6 +681,28 @@ const dedications: DedicationsRepository = {
   async deletePhoto(photo) {
     await remove("dedication_photos", photo.id);
     await removeDedicationFiles([photo.path, photo.thumbPath]);
+  },
+  async replacePhoto(photo, image) {
+    const id = crypto.randomUUID();
+    const path = `${photo.dedicationId}/${id}.${image.extension}`;
+    const thumbPath = `${photo.dedicationId}/${id}.thumb.${image.extension}`;
+    const options = { cacheControl: "31536000", upsert: false };
+    const uploaded: string[] = [];
+    let saved: DedicationPhoto;
+    try {
+      await unwrap(sb().storage.from(DEDICATION_BUCKET).upload(path, image.full, { ...options, contentType: image.full.type }));
+      uploaded.push(path);
+      await unwrap(sb().storage.from(DEDICATION_BUCKET).upload(thumbPath, image.thumb, { ...options, contentType: image.thumb.type }));
+      uploaded.push(thumbPath);
+      saved = map.toDedicationPhoto(await unwrap<Row>(sb().from("dedication_photos")
+        .update({ path, thumb_path: thumbPath, width: image.width, height: image.height })
+        .eq("id", photo.id).select().single()));
+    } catch (error) {
+      if (uploaded.length) await removeDedicationFiles(uploaded);
+      throw error;
+    }
+    await removeDedicationFiles([photo.path, photo.thumbPath]).catch(() => undefined);
+    return saved;
   },
 
   async addSong(input) {

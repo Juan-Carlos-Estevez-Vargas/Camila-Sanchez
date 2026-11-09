@@ -148,6 +148,12 @@ export const admin: Messages["admin"] = {
     move: "Move",
     monthCount: (month: string, n: number) => `${month}: ${n} ${n === 1 ? "photo" : "photos"}`,
     reorderHint: "Drag the photos (or use ↑ ↓) to change the order they appear in.",
+    replace: "Replace photo",
+    replaceLabel: "Replace this photo's file",
+    replacing: "Replacing the photo…",
+    replaced: "Photo replaced 💖",
+    lowRes: "Low resolution",
+    lowResHint: (w: number, h: number) => `It's ${w}×${h}: it may look blurry. Replace it with a bigger version.`,
   },
   sortable: {
     movedTo: (pos: number, total: number) => `Moved to position ${pos} of ${total}`,
@@ -212,6 +218,7 @@ export const admin: Messages["admin"] = {
     when: "When was it?",
     captionHint: "You can change it later on each photo",
     skipDuplicates: "Skip photos that are already in the album",
+    lowRes: (n: number) => `${n} low resolution (replace them below)`,
   },
   translate: {
     language: "Content language",

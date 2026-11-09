@@ -25,6 +25,7 @@ import { Menu, type MenuItem } from "./Menu";
 import { StickerArt } from "./StickerArt";
 import { StickerPicker } from "./StickerPicker";
 import { dateFormat, msg, useT } from "@/i18n";
+import { SHARED_IMAGE_OPTIONS } from "@/services/images/sizing";
 
 const PAGE = 40;
 /** Distancia (px) que hay que deslizar un mensaje para responderlo. */
@@ -48,7 +49,7 @@ function previewUrl(file: File): string {
   return URL.createObjectURL(new Blob([file], { type }));
 }
 /** Las fotos del chat se ven en el celular: más livianas que las del álbum. */
-const CHAT_IMAGE_OPTIONS = { maxEdge: 1600, thumbEdge: 480, quality: 0.82, targetBytes: 350 * 1024, minQuality: 0.66 };
+const CHAT_IMAGE_OPTIONS = SHARED_IMAGE_OPTIONS;
 
 interface Pending extends ChatMessage {
   pending?: boolean;

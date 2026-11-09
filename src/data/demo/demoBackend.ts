@@ -862,6 +862,16 @@ export const demoBackend: Backend = {
       await idbSet(thumbPath, thumb);
       return { storagePath, thumbPath };
     },
+    async replace(photo, image) {
+      require(PERMISSIONS.photosManage);
+      const uploaded = await demoBackend.photos.upload(image.full, image.thumb, image.extension);
+      const saved = upsertIn<Photo>("photos", {
+        ...photo, ...uploaded, externalUrl: null, width: image.width, height: image.height, bytes: image.full.size,
+        sourceHash: image.sourceHash ?? null,
+      });
+      dropDemoMedia([photo.storagePath, photo.thumbPath].filter((p): p is string => !!p), objectUrls);
+      return saved;
+    },
     async resolveUrls(photos) {
       const result = new Map<Uuid, PhotoUrls>();
       const urlFor = async (path: string) => {

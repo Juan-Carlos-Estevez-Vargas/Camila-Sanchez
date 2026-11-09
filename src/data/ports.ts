@@ -80,6 +80,11 @@ export interface PhotoRepository {
   delete(photo: Photo): Promise<void>;
   /** Sube el archivo optimizado y su miniatura. */
   upload(full: Blob, thumb: Blob, extension: string): Promise<UploadedImage>;
+  /**
+   * Cambia el archivo de una foto (mal cargada o de poca calidad) por otro y
+   * conserva todo lo demás: texto, fecha, orden y los hitos que la usan.
+   */
+  replace(photo: Photo, image: ReplacementImage): Promise<Photo>;
   /** URLs listas para <img>, resueltas en lote (una petición). */
   resolveUrls(photos: Photo[]): Promise<Map<Uuid, PhotoUrls>>;
   /**
@@ -153,6 +158,17 @@ export interface MessagingRepository {
 }
 
 /** Foto ya optimizada lista para subir (al chat o a una tarea). */
+/** Foto ya optimizada que reemplaza a otra. */
+export interface ReplacementImage {
+  full: Blob;
+  thumb: Blob;
+  extension: string;
+  width: number;
+  height: number;
+  /** Huella SHA-256 del original (para saltar repetidas en próximas cargas). */
+  sourceHash?: string | null;
+}
+
 export interface ChatImageUpload {
   full: Blob;
   thumb: Blob;
@@ -278,6 +294,8 @@ export interface DedicationsRepository {
 
   addPhoto(dedicationId: Uuid, image: ChatImageUpload): Promise<DedicationPhoto>;
   deletePhoto(photo: DedicationPhoto): Promise<void>;
+  /** Cambia el archivo de una foto y la deja en el mismo lugar. */
+  replacePhoto(photo: DedicationPhoto, image: ChatImageUpload): Promise<DedicationPhoto>;
 
   addSong(input: SongLinkInput): Promise<DedicationSong>;
   addAudioSong(input: SongAudioInput): Promise<DedicationSong>;

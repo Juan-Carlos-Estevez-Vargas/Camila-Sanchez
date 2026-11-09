@@ -24,6 +24,7 @@ interface Summary {
   uploaded: number;
   duplicates: number;
   saved: number;
+  lowRes: number;
   failures: Failure[];
 }
 
@@ -39,6 +40,7 @@ function SummaryCard({ summary, onRetry, onClose }: { summary: Summary; onRetry(
         {summary.uploaded > 0
           ? <span className="badge badge--success">💖 {t.newPhotos(summary.uploaded)}</span>
           : !summary.failures.length && <span className="badge">{t.allKnown}</span>}
+        {summary.lowRes > 0 && <span className="badge badge--warning">⚠️ {t.lowRes(summary.lowRes)}</span>}
         {summary.duplicates > 0 && <span className="badge badge--muted">{t.skipped(summary.duplicates)}</span>}
         {summary.saved > 0 && <span className="badge badge--muted">{t.saved(formatBytes(summary.saved))}</span>}
         {summary.failures.length > 0 && <span className="badge badge--danger">{t.failed(summary.failures.length)}</span>}
@@ -112,7 +114,7 @@ export function BulkUploadPanel({ onUploaded }: { onUploaded(): void }) {
       { basePosition: (content?.photos.length ?? 0) + 1, knownHashes, skipDuplicates },
     );
 
-    const next: Summary = { uploaded: 0, duplicates: repeated.length, saved: 0, failures: [] };
+    const next: Summary = { uploaded: 0, duplicates: repeated.length, saved: 0, lowRes: 0, failures: [] };
     results.forEach((r, i) => {
       if (r.status === "rejected") {
         const cancelled = r.reason instanceof DOMException && r.reason.name === "AbortError";
@@ -120,6 +122,7 @@ export function BulkUploadPanel({ onUploaded }: { onUploaded(): void }) {
       } else if (r.value.kind === "duplicate") next.duplicates++;
       else {
         next.uploaded++;
+        if (r.value.lowResolution) next.lowRes++;
         next.saved += Math.max(0, r.value.originalBytes - r.value.finalBytes);
       }
     });
@@ -130,7 +133,7 @@ export function BulkUploadPanel({ onUploaded }: { onUploaded(): void }) {
     uploader.clearFinished();
     onUploaded();
     if (next.uploaded) toast.success(t.stored(next.uploaded));
-    if (results.length > 1 || next.failures.length || next.duplicates) setSummary(next);
+    if (results.length > 1 || next.failures.length || next.duplicates || next.lowRes) setSummary(next);
     if (filesInput.current) filesInput.current.value = "";
     if (folderInput.current) folderInput.current.value = "";
   };

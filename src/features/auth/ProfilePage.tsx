@@ -12,9 +12,9 @@ import { PageLoader } from "@/ui/Feedback";
 import { Field } from "@/ui/Field";
 import { onRovingKeyDown, rovingTabIndex } from "@/ui/rovingFocus";
 import { useT } from "@/i18n";
+import { AVATAR_IMAGE_OPTIONS } from "@/services/images/sizing";
 
 // Una foto de perfil se ve pequeña: 512 px y liviana.
-const AVATAR_IMAGE_OPTIONS = { maxEdge: 512, thumbEdge: 128, quality: 0.85, targetBytes: 120 * 1024, minQuality: 0.7 };
 
 /** Mi perfil: nombre, foto o icono, frase y cumpleaños. */
 export default function ProfilePage() {

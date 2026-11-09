@@ -64,7 +64,7 @@ export const tour = {
   },
   pages: {
     "/panel": { title: "Tu panel", body: "Desde aquí cambias todo lo que se ve en la página: fotos, textos, hitos, fechas y sorpresas. Cada cambio se guarda y se ve al instante." },
-    "/panel/fotos": { title: "Fotos", body: "Sube una foto o muchas a la vez (arrástralas al recuadro). Se optimizan solas antes de subir y las repetidas se detectan. Arrastra las tarjetas para cambiar su orden." },
+    "/panel/fotos": { title: "Fotos", body: "Sube una foto o muchas a la vez (arrástralas al recuadro). Se optimizan solas antes de subir y las repetidas se detectan. Arrastra las tarjetas para cambiar su orden y, si una se ve mal o sale ⚠️ Baja resolución, usa 🔄 Cambiar foto para poner otra en su lugar." },
     "/panel/textos": { title: "Textos y animaciones", body: "Edita el título, el subtítulo y el texto de cada sección, y elige con qué animación aparece al hacer scroll." },
     "/panel/hitos": { title: "Hitos", body: "Los momentos importantes de la historia, con su fecha y una foto opcional. Aparecen como una línea de tiempo en la página." },
     "/panel/fechas": { title: "Fechas importantes", body: "Aniversarios y cumpleaños. La página muestra una cuenta regresiva hacia la próxima fecha." },

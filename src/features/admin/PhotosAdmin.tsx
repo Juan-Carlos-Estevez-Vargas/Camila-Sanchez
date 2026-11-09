@@ -1,7 +1,9 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { groupPhotosByYearMonth, monthName } from "@/domain/dates";
 import type { Photo } from "@/domain/types";
-import { formatBytes } from "@/services/images/sizing";
+import { ImageProcessor } from "@/services/images/ImageProcessor";
+import { replaceAlbumPhoto } from "@/services/images/PhotoUploader";
+import { formatBytes, isLowResolution } from "@/services/images/sizing";
 import { useBackend } from "@/state/BackendContext";
 import { useContentStore, useSiteContent } from "@/state/SiteContentStore";
 import { EmptyState } from "@/ui/Feedback";
@@ -13,9 +15,10 @@ import { SortableList } from "./SortableList";
 import { useSaver } from "./useSaver";
 import { useT } from "@/i18n";
 
-function PhotoCard({ photo, thumb, onChanged, selected, onSelect }: {
+function PhotoCard({ photo, thumb, processor, onChanged, selected, onSelect }: {
   photo: Photo;
   thumb?: string;
+  processor: ImageProcessor;
   onChanged(): void;
   selected: boolean;
   onSelect(v: boolean): void;
@@ -25,6 +28,8 @@ function PhotoCard({ photo, thumb, onChanged, selected, onSelect }: {
   const [confirm, confirmElement] = useConfirm();
   const [caption, setCaption] = useState(photo.caption);
   const [date, setDate] = useState(photo.takenOn);
+  const [replacing, setReplacing] = useState(false);
+  const fileInput = useRef<HTMLInputElement>(null);
   const a = useT().admin;
   const t = a.photos;
 
@@ -33,12 +38,31 @@ function PhotoCard({ photo, thumb, onChanged, selected, onSelect }: {
     onChanged();
   };
 
+  // Cambia sólo el archivo: leyenda, fecha y orden se quedan.
+  const replace = async (file: File | undefined) => {
+    if (fileInput.current) fileInput.current.value = "";
+    if (!file) return;
+    setReplacing(true);
+    try {
+      await run(() => replaceAlbumPhoto(backend, processor, photo, file), t.replaced);
+      onChanged();
+    } finally {
+      setReplacing(false);
+    }
+  };
+
+  const lowRes = !!photo.width && !!photo.height && isLowResolution(photo.width, photo.height);
+
   return (
     <div className={`photo-card${selected ? " is-selected" : ""}`}>
       <label className="photo-card__check">
         <input type="checkbox" checked={selected} onChange={(e) => onSelect(e.target.checked)} aria-label={t.select} />
       </label>
       {thumb ? <img src={thumb} alt={photo.caption || t.noAlt} loading="lazy" decoding="async" /> : <div className="skeleton photo-card__ph" />}
+      {lowRes && (
+        <span className="badge badge--warning photo-card__lowres" title={t.lowResHint(photo.width!, photo.height!)}>⚠️ {t.lowRes}</span>
+      )}
+      {replacing && <div className="photo-card__busy" role="status"><span className="spinner" aria-hidden /> {t.replacing}</div>}
       <div className="photo-card__body">
         <textarea
           className="textarea photo-card__caption" rows={2} value={caption} maxLength={500} placeholder={t.captionPlaceholder}
@@ -52,6 +76,12 @@ function PhotoCard({ photo, thumb, onChanged, selected, onSelect }: {
             onChange={(e) => setDate(e.target.value)}
             onBlur={() => date && date !== photo.takenOn && void save({ takenOn: date }, t.moved)}
           />
+          <div className="row" style={{ gap: 4 }}>
+          <button
+            className="btn btn--sm btn--soft" aria-label={t.replaceLabel} title={t.replaceLabel}
+            disabled={replacing} onClick={() => fileInput.current?.click()}
+          >🔄 {t.replace}</button>
+          <input ref={fileInput} type="file" accept="image/*,.heic,.heif" hidden onChange={(e) => void replace(e.target.files?.[0])} />
           <button
             className="btn btn--icon btn--ghost btn--sm" aria-label={t.deleteLabel}
             onClick={async () => {
@@ -61,6 +91,7 @@ function PhotoCard({ photo, thumb, onChanged, selected, onSelect }: {
               }
             }}
           >🗑</button>
+          </div>
         </div>
         {photo.bytes && <span className="muted photo-card__meta">{photo.width}×{photo.height} · {formatBytes(photo.bytes)}</span>}
       </div>
@@ -80,6 +111,9 @@ export default function PhotosAdmin() {
   const [month, setMonth] = useState<number | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkDate, setBulkDate] = useState("");
+  // Un solo procesador (con sus workers) para todas las fotos que se cambien.
+  const processor = useMemo(() => new ImageProcessor(), []);
+  useEffect(() => () => processor.dispose(), [processor]);
   const a = useT().admin;
   const t = a.photos;
 
@@ -155,6 +189,7 @@ export default function PhotosAdmin() {
                 key={`${photo.id}-${photo.caption}-${photo.takenOn}`}
                 photo={photo}
                 thumb={photoUrls.get(photo.id)?.thumb}
+                processor={processor}
                 onChanged={refresh}
                 selected={selected.has(photo.id)}
                 onSelect={(v) => toggle(photo.id, v)}

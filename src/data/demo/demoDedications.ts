@@ -158,6 +158,20 @@ export function createDemoDedications(deps: DemoDedicationsDeps): DedicationsRep
       deps.commit({ table: "dedication_photos", type: "INSERT", record: photo as never });
       return clone(photo);
     },
+    async replacePhoto(photo, image) {
+      own(photo.dedicationId);
+      const id = uuid();
+      const path = `dedications/${photo.dedicationId}/${id}.${image.extension}`;
+      const thumbPath = `dedications/${photo.dedicationId}/${id}.thumb.${image.extension}`;
+      await idbSet(path, image.full);
+      await idbSet(thumbPath, image.thumb);
+      const current = deps.state().dedicationPhotos.find((p) => p.id === photo.id);
+      if (!current) throw new AppError("Esa foto ya no existe.");
+      deps.forgetMedia([current.path, current.thumbPath]);
+      Object.assign(current, { path, thumbPath, width: image.width, height: image.height });
+      deps.commit({ table: "dedication_photos", type: "UPDATE", record: current as never });
+      return clone(current);
+    },
     async deletePhoto(photo) {
       own(photo.dedicationId);
       const state = deps.state();

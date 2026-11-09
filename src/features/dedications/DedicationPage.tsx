@@ -7,10 +7,11 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { MAX_DEDICATION_PHOTOS, MAX_DEDICATION_SONGS } from "@/domain/dedications";
 import { formatLongDate } from "@/domain/dates";
 import { buildPlaylist } from "@/domain/songs";
-import type { DedicationSong } from "@/domain/types";
+import type { DedicationPhoto, DedicationSong } from "@/domain/types";
 import { useT } from "@/i18n";
 import { ImageProcessor } from "@/services/images/ImageProcessor";
 import { isImageFile } from "@/services/images/bulk";
+import { isLowResolution } from "@/services/images/sizing";
 import { useAuth } from "@/state/AuthContext";
 import { useBackend } from "@/state/BackendContext";
 import { useNotifications } from "@/state/NotificationsContext";
@@ -19,7 +20,7 @@ import { EmptyState, PageLoader } from "@/ui/Feedback";
 import { useAsync } from "@/ui/useAsync";
 import { useConfirm } from "@/ui/useConfirm";
 import { toPlayerTracks, usePlayer } from "@/features/player/PlayerContext";
-import { DEDICATION_IMAGE_OPTIONS, EditDedicationModal, saveSongDraft, uploadPhotos } from "./DedicationForm";
+import { DEDICATION_IMAGE_OPTIONS, EditDedicationModal, replaceDedicationPhoto, saveSongDraft, uploadPhotos } from "./DedicationForm";
 import { DEDICATION_TABLES } from "./DedicationsPage";
 import { ImportSongsModal } from "./ImportSongsModal";
 import { PhotoViewer, SongLabel, useDedicationMedia, usePeopleNames, useRecipients } from "./parts";
@@ -43,6 +44,9 @@ export default function DedicationPage() {
   const [viewing, setViewing] = useState<string | null>(null);
   const [uploading, setUploading] = useState(0);
   const fileInput = useRef<HTMLInputElement>(null);
+  const swapInput = useRef<HTMLInputElement>(null);
+  const [swapping, setSwapping] = useState<DedicationPhoto | null>(null);
+  const [replacingId, setReplacingId] = useState<string | null>(null);
   const processor = useMemo(() => new ImageProcessor(DEDICATION_IMAGE_OPTIONS), []);
   useEffect(() => () => processor.dispose(), [processor]);
 
@@ -126,6 +130,20 @@ export default function DedicationPage() {
     await reload();
   };
 
+  // Cambia el archivo de una foto (mal cargada o borrosa) sin moverla de lugar.
+  const replacePhoto = async (file: File | undefined) => {
+    const photo = swapping;
+    if (swapInput.current) swapInput.current.value = "";
+    setSwapping(null);
+    if (!photo || !file || !isImageFile(file)) return;
+    setReplacingId(photo.id);
+    await run(async () => {
+      await replaceDedicationPhoto(backend, processor, photo, file);
+      toast.success(t.form.photoReplaced);
+    });
+    setReplacingId(null);
+  };
+
   const move = (song: DedicationSong, delta: number) => {
     const ids = songs.map((s) => s.id);
     const from = ids.indexOf(song.id);
@@ -170,13 +188,20 @@ export default function DedicationPage() {
           </h2>
           <div className={`ded-photos${photos.length === 1 ? " is-single" : ""}`}>
             {photos.map((photo, i) => (
-              <div key={photo.id} className="ded-photos__item">
+              <div key={photo.id} className={`ded-photos__item${replacingId === photo.id ? " is-replacing" : ""}`} aria-busy={replacingId === photo.id}>
                 <button type="button" className="ded-photos__open" onClick={() => setViewing(photo.path)} aria-label={t.page.photoAlt(i + 1)}>
                   {thumbs.get(shownPath(photo)) ? <img src={thumbs.get(shownPath(photo))} alt="" loading="lazy" /> : <span aria-hidden>📷</span>}
                 </button>
+                {editing && photo.width && photo.height && isLowResolution(photo.width, photo.height) && (
+                  <span className="ded-photos__lowres" title={t.form.lowResHint(photo.width, photo.height)}>⚠️ {t.form.lowRes}</span>
+                )}
                 {editing && (
-                  <button type="button" className="ded-photos__remove" aria-label={t.form.removePhoto}
-                    onClick={() => void run(() => backend.dedications.deletePhoto(photo))}>✕</button>
+                  <>
+                    <button type="button" className="ded-photos__swap" aria-label={t.form.replacePhoto} title={t.form.replacePhoto}
+                      disabled={replacingId !== null} onClick={() => { setSwapping(photo); swapInput.current?.click(); }}>🔄</button>
+                    <button type="button" className="ded-photos__remove" aria-label={t.form.removePhoto}
+                      onClick={() => void run(() => backend.dedications.deletePhoto(photo))}>✕</button>
+                  </>
                 )}
               </div>
             ))}
@@ -186,6 +211,7 @@ export default function DedicationPage() {
             )}
           </div>
           <input ref={fileInput} type="file" accept="image/*" multiple hidden onChange={(e) => void addPhotos(e.target.files)} />
+          <input ref={swapInput} type="file" accept="image/*" hidden onChange={(e) => void replacePhoto(e.target.files?.[0])} />
         </section>
       )}
 

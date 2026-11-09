@@ -7,7 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { DEDICATION_EMOJIS, MAX_DEDICATION_PHOTOS, MAX_DEDICATION_SONGS } from "@/domain/dedications";
 import { toIsoDate } from "@/domain/dates";
 import { parseSongLink } from "@/domain/songs";
-import type { Dedication, Profile } from "@/domain/types";
+import type { Dedication, DedicationPhoto, Profile } from "@/domain/types";
 import type { Backend, DedicationInput } from "@/data/ports";
 import { useT } from "@/i18n";
 import { ImageProcessor } from "@/services/images/ImageProcessor";
@@ -19,8 +19,9 @@ import { Modal } from "@/ui/Modal";
 import { burst } from "@/features/site/effects/FloatingEffects";
 import { EmojiPicker, RecipientSelect, SongLabel } from "./parts";
 import { SongAdder, type SongDraft } from "./SongAdder";
+import { isLowResolution, SHARED_IMAGE_OPTIONS } from "@/services/images/sizing";
 
-export const DEDICATION_IMAGE_OPTIONS = { maxEdge: 1600, thumbEdge: 480, quality: 0.82, targetBytes: 350 * 1024, minQuality: 0.66 };
+export const DEDICATION_IMAGE_OPTIONS = SHARED_IMAGE_OPTIONS;
 
 export type DedicationFormValue = DedicationInput;
 
@@ -87,6 +88,14 @@ export async function uploadPhotos(backend: Backend, processor: ImageProcessor, 
   return failed;
 }
 
+/** Cambia el archivo de una foto ya subida (mal cargada o de poca calidad); conserva su lugar. */
+export async function replaceDedicationPhoto(backend: Backend, processor: ImageProcessor, photo: DedicationPhoto, file: File): Promise<DedicationPhoto> {
+  const image = await processor.process(file);
+  return backend.dedications.replacePhoto(photo, {
+    full: image.full, thumb: image.thumb, extension: image.extension, width: image.width, height: image.height,
+  });
+}
+
 /**
  * URL local (blob:) para ver una foto antes de subirla. Se copia a un Blob
  * nuevo con un tipo de imagen fijo, así el navegador sólo puede mostrarla como
@@ -108,6 +117,10 @@ export function NewDedicationModal({ people, onClose }: { people: Profile[]; onC
   const [songs, setSongs] = useState<SongDraft[]>([]);
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
+  const swapInput = useRef<HTMLInputElement>(null);
+  const [swapping, setSwapping] = useState<number | null>(null);
+  // Fotos chicas (se notan al cargar la vista previa): se avisa para cambiarlas.
+  const [small, setSmall] = useState<Map<string, string>>(new Map());
   const processor = useMemo(() => new ImageProcessor(DEDICATION_IMAGE_OPTIONS), []);
   useEffect(() => () => processor.dispose(), [processor]);
   const previews = useMemo(() => photos.map(previewUrl), [photos]);
@@ -120,6 +133,17 @@ export function NewDedicationModal({ people, onClose }: { people: Profile[]; onC
     if (images.length > room) toast.error(t.tooManyPhotos(MAX_DEDICATION_PHOTOS));
     setPhotos((p) => [...p, ...images.slice(0, Math.max(room, 0))]);
     if (fileInput.current) fileInput.current.value = "";
+  };
+
+  const swapPhoto = (file: File | undefined) => {
+    if (swapInput.current) swapInput.current.value = "";
+    if (file && isImageFile(file) && swapping !== null) setPhotos((p) => p.map((f, i) => (i === swapping ? file : f)));
+    setSwapping(null);
+  };
+
+  const checkSize = (url: string, img: HTMLImageElement) => {
+    if (!isLowResolution(img.naturalWidth, img.naturalHeight)) return;
+    setSmall((m) => new Map(m).set(url, t.lowResHint(img.naturalWidth, img.naturalHeight)));
   };
 
   const send = async (e: FormEvent) => {
@@ -171,7 +195,10 @@ export function NewDedicationModal({ people, onClose }: { people: Profile[]; onC
           <div className="ded-thumbs">
             {previews.map((url, i) => (
               <div key={url} className="ded-thumbs__item">
-                <img src={url} alt="" />
+                <img src={url} alt="" onLoad={(e) => checkSize(url, e.currentTarget)} />
+                {small.has(url) && <span className="ded-thumbs__lowres" title={small.get(url)} role="img" aria-label={`${t.lowRes}. ${small.get(url)}`}>⚠️</span>}
+                <button type="button" className="ded-thumbs__swap" aria-label={t.replacePhoto} title={t.replacePhoto} disabled={busy}
+                  onClick={() => { setSwapping(i); swapInput.current?.click(); }}>🔄</button>
                 <button type="button" className="ded-thumbs__remove" aria-label={t.removePhoto} disabled={busy}
                   onClick={() => setPhotos((p) => p.filter((_, j) => j !== i))}>✕</button>
               </div>
@@ -181,6 +208,7 @@ export function NewDedicationModal({ people, onClose }: { people: Profile[]; onC
             )}
           </div>
           <input ref={fileInput} type="file" accept="image/*" multiple hidden onChange={(e) => addPhotos(e.target.files)} />
+          <input ref={swapInput} type="file" accept="image/*" hidden onChange={(e) => swapPhoto(e.target.files?.[0])} />
         </section>
 
         <section className="stack" aria-labelledby="new-dedication-songs">

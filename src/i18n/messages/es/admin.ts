@@ -147,6 +147,12 @@ export const admin = {
     move: "Mover",
     monthCount: (month: string, n: number) => `${month}: ${n} ${n === 1 ? "foto" : "fotos"}`,
     reorderHint: "Arrastra las fotos (o usa ↑ ↓) para cambiar el orden en que aparecen.",
+    replace: "Cambiar foto",
+    replaceLabel: "Cambiar el archivo de esta foto",
+    replacing: "Cambiando la foto…",
+    replaced: "Foto cambiada 💖",
+    lowRes: "Baja resolución",
+    lowResHint: (w: number, h: number) => `Mide ${w}×${h}: puede verse borrosa. Cámbiala por una versión más grande.`,
   },
   sortable: {
     movedTo: (pos: number, total: number) => `Movido a la posición ${pos} de ${total}`,
@@ -211,6 +217,7 @@ export const admin = {
     when: "¿Cuándo fue?",
     captionHint: "Se puede cambiar luego en cada foto",
     skipDuplicates: "Saltar las fotos que ya están en el álbum",
+    lowRes: (n: number) => `${n} con baja resolución (cámbialas abajo)`,
   },
   translate: {
     language: "Idioma del contenido",

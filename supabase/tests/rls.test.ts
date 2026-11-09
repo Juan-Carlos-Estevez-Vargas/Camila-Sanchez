@@ -830,6 +830,16 @@ describe("dedicatorias con fotos y canciones", () => {
     expect(await as(CAMI, "delete from storage.objects where bucket_id = 'dedication-media' returning name")).toEqual([]);
   });
 
+  it("cambiar una foto: sólo quien la escribió, y el archivo nuevo sigue en su carpeta", async () => {
+    const NEW = "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee";
+    const [photo] = await as<{ id: string }>(JUAN, `select id from dedication_photos where dedication_id = '${PRIVATE}'`);
+    expect(await as(JUAN, `update dedication_photos set path = '${PRIVATE}/${NEW}.webp', thumb_path = '${PRIVATE}/${NEW}.thumb.webp', width = 2048, height = 1536 where id = '${photo!.id}' returning path, width`))
+      .toEqual([{ path: `${PRIVATE}/${NEW}.webp`, width: 2048 }]);
+    await expect(as(JUAN, `update dedication_photos set path = '${FOR_ALL}/${NEW}.webp' where id = '${photo!.id}'`)).rejects.toThrow(/carpeta de su dedicatoria/);
+    await expect(as(JUAN, `update dedication_photos set dedication_id = '${FOR_ALL}' where id = '${photo!.id}'`)).rejects.toThrow(/no se puede cambiar/);
+    expect(await as(CAMI, `update dedication_photos set path = '${PRIVATE}/${FILE}.webp' where id = '${photo!.id}' returning id`)).toEqual([]);
+  });
+
   it("sin sesión no se usan sus funciones; borrar la dedicatoria borra todo lo de adentro", async () => {
     await expect(as(null, "select can_see_dedication(gen_random_uuid())")).rejects.toThrow(/permission denied/);
     await expect(as(null, "select is_dedication_author(gen_random_uuid())")).rejects.toThrow(/permission denied/);
