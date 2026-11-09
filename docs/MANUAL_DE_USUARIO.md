@@ -370,6 +370,20 @@ Sólo cada persona puede cambiar su propio perfil.
 - **Avisos en este dispositivo:** actívalos y prueba que lleguen (ver la
   sección 6).
 - **Cambiar contraseña:** al menos 10 caracteres, escrita dos veces.
+- **Verificación en dos pasos 🛡️ (opcional):** además de la contraseña, al
+  entrar se pide un código de 6 dígitos de una app de autenticación (Google
+  Authenticator, Microsoft Authenticator, 1Password…). Así, aunque alguien
+  descubra tu contraseña, no puede entrar.
+  1. Toca **Activar**.
+  2. Abre la app de autenticación y escanea el código QR (en el celular puedes
+     tocar **Abrir en la app de este celular**, o escribir la clave a mano).
+  3. Escribe el código que muestra la app y toca **Activar verificación**.
+
+  Desde ahí, cada vez que entres (con contraseña, enlace o recuperación) te
+  pedirá el código; en tus otros dispositivos también, la próxima vez que
+  abras la página. Para quitarla toca **Desactivar** y escribe un código de la
+  app. Si perdiste el celular o borraste la app, pídele a Juan que te la quite
+  (ver sección 11).
 - **Cerrar sesión aquí:** sólo en este dispositivo.
 - **Cerrar en todos los dispositivos:** úsalo si perdiste el celular o entraste
   en un equipo ajeno.
@@ -482,6 +496,16 @@ te preparen a ti siguen siendo sorpresa.
 
 En **Usuarios**, toca 🔑 junto a la persona. Sale un enlace y un QR que vencen
 en 1 hora; mándaselo por donde quieras. No depende del correo.
+
+### Quitarle la verificación en dos pasos a alguien
+
+Quien la tiene activada lleva la marca **🛡️ 2 pasos** en **Usuarios**. Si
+perdió el celular o borró la app, toca 📵 junto a su nombre y confirma: vuelve
+a entrar sólo con su contraseña y puede activarla otra vez desde **Mi cuenta**.
+Queda anotado en la auditoría. Si eres tú quien la perdió y no hay otro super
+administrador, bórrala en Supabase → Authentication → Users → tu cuenta →
+*MFA factors* (o con `delete from auth.mfa_factors where user_id = '<tu id>';`
+en el SQL Editor).
 
 ## 12. Preguntas frecuentes
 

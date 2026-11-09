@@ -295,6 +295,11 @@ function pageSteps(ctx: TourContext): TourStep[] {
         ...text("account-password"),
       },
       {
+        id: "account-two-step",
+        target: [tourTarget("account-two-step")],
+        ...text("account-two-step"),
+      },
+      {
         id: "account-sessions",
         target: [tourTarget("account-sessions")],
         ...text("account-sessions"),

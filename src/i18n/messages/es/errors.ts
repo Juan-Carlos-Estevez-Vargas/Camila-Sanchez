@@ -10,6 +10,7 @@ export const errors = {
   weakPassword: "Esa contraseña es muy débil: usa al menos 10 caracteres.",
   tooFast: "Vas muy rápido 😅 Espera un momentito y vuelve a intentarlo.",
   lastSuperAdmin: "Debe quedar al menos un super administrador activo.",
+  badCode: "Ese código no es correcto o ya cambió. Escribe el que muestra la app ahora.",
   generic: "Algo salió mal. Inténtalo otra vez en un momento.",
   /** Respuestas de las Edge Functions (vienen en español y se traducen aquí). */
   /**
@@ -17,6 +18,9 @@ export const errors = {
    * Se reconocen por su texto y se muestran en el idioma activo.
    */
   backend: {
+    twoStepMissing: "Falta el código de la verificación en dos pasos.",
+    twoStepOff: "La verificación en dos pasos no está activada.",
+    twoStepOn: "La verificación en dos pasos ya está activada.",
     needLogin: "Necesitas iniciar sesión.",
     noPermission: "No tienes permiso para hacer esto.",
     listMissing: "Esta lista no existe o no eres parte de ella.",

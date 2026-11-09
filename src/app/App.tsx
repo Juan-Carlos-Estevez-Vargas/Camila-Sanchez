@@ -30,6 +30,7 @@ const InvitePage = lazy(() => import("@/features/auth/InvitePage"));
 const RecoverPage = lazy(() => import("@/features/auth/RecoverPage"));
 const LegalPage = lazy(() => import("@/features/legal/LegalPage"));
 const InstallPage = lazy(() => import("@/features/install/InstallPage"));
+const TwoStepGate = lazy(() => import("@/features/auth/TwoStepGate"));
 
 function NotFound() {
   const t = useT().app;
@@ -50,7 +51,7 @@ function Footer() {
 
 function ThemedShell() {
   const { content } = useSiteContent();
-  const { profile } = useAuth();
+  const { profile, twoStepPending } = useAuth();
   // Quien entra sin cuenta ve los colores de la página; cada persona, los suyos.
   const siteTheme = content?.settings.theme ?? DEFAULT_THEME;
   const theme = useMemo(() => personalTheme(siteTheme, profile?.themeColors), [siteTheme, profile?.themeColors]);
@@ -64,7 +65,8 @@ function ThemedShell() {
       <AppHeader />
       <ErrorBoundary>
         <Suspense fallback={<PageLoader />}>
-          <Routes>
+          {/* Falta el código de la verificación en dos pasos: nada más hasta escribirlo. */}
+          {twoStepPending ? <TwoStepGate /> : <Routes>
             <Route path="/" element={<SitePage />} />
             <Route path="/entrar" element={<LoginPage />} />
             <Route path="/invitacion" element={<InvitePage />} />
@@ -74,7 +76,7 @@ function ThemedShell() {
             <Route path={INSTALL_PATH} element={<InstallPage />} />
             {appRoutes}
             <Route path="*" element={<NotFound />} />
-          </Routes>
+          </Routes>}
         </Suspense>
       </ErrorBoundary>
       <Footer />

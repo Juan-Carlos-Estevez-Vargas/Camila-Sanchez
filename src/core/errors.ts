@@ -35,6 +35,7 @@ type ErrorKey = Exclude<keyof Messages["errors"], "server" | "backend">;
 // o en español: se reconocen por patrón y se muestran en el idioma activo.
 const KNOWN: Array<[RegExp, ErrorKey]> = [
   [/Invalid login credentials/i, "badCredentials"],
+  [/Invalid TOTP code|mfa_verification_failed|totp.*(invalid|expired)/i, "badCode"],
   [/Email not confirmed/i, "emailNotConfirmed"],
   [/row-level security|permission denied|42501|No tienes permiso|Permiso insuficiente/i, "forbidden"],
   [/Failed to fetch|NetworkError|network/i, "network"],

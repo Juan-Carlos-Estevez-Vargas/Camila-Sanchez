@@ -26,6 +26,14 @@ sign_in_sign_ups = 30
 token_verifications = 30
 token_refresh = 150
 
+# Verificación en dos pasos opcional (cada persona la activa en Mi cuenta).
+[auth.mfa]
+max_enrolled_factors = 10
+
+[auth.mfa.totp]
+enroll_enabled = true
+verify_enabled = true
+
 # Correo de recuperación con enlace a /recuperar#token_hash=… (sirve en otro
 # dispositivo). En producción lo aplica el flujo Deploy cuando hay SMTP propio.
 [auth.email.template.recovery]

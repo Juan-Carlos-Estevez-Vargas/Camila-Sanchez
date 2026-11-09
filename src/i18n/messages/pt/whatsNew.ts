@@ -20,6 +20,10 @@ export const whatsNew = {
           title: "Quem viu sua dedicatória",
           body: "Nas suas dedicatórias agora você sabe quem já abriu e quando, e quem ainda não. Na lista aparece 👀 Vista ou quantas pessoas viram.",
         },
+        twoStep: {
+          title: "Verificação em duas etapas",
+          body: "Se quiser, em Minha conta você pode exigir também um código de um app autenticador ao entrar. Assim, mesmo que alguém saiba sua senha, não consegue entrar. É opcional.",
+        },
         photoQuality: {
           title: "Fotos mais nítidas",
           body: "As fotos novas são guardadas maiores (até 2560 px), com um redimensionamento de melhor qualidade e um toque de nitidez. Avisamos com ⚠️ quando uma foto é pequena demais.",
