@@ -119,14 +119,25 @@ escucha `beforeinstallprompt` (`src/services/pwa/install.ts`) para ofrecer
 1. `ImageProcessor` reparte cada archivo a un pool de Web Workers
    (`image.worker.ts`, con `OffscreenCanvas`).
 2. El worker corrige la orientación EXIF, quita metadatos (GPS incluido),
-   reduce a 2048 px como máximo y codifica en WebP (JPEG si no se puede) hasta
-   unos 450 KB. También genera una miniatura de 480 px.
+   reescala con `createImageBitmap(..., { resizeQuality: "high" })` (o por
+   mitades si el navegador no lo soporta), aplica nitidez suave
+   (`sharpenPixels`, más fuerte cuanto más se reduce) y codifica en WebP (JPEG
+   si no se puede) con una búsqueda binaria de la calidad más alta que quepa en
+   el tamaño objetivo. Los ajustes viven en `services/images/sizing.ts`:
+   álbum 2560 px / ~1,2 MB, compartidas (chat, listas, dedicatorias) 2048 px /
+   ~700 KB, miniaturas de 640 px a calidad 0,85.
+   Si la foto original mide menos de 1200 px en su lado largo se marca como de
+   **baja resolución** (`isLowResolution`) y el panel lo avisa.
 3. `TaskQueue` sube con concurrencia 2, reintentos con backoff y cancelación.
 4. En la carga masiva, cada foto se ubica en el mes en que se tomó (fecha EXIF)
    y las repetidas se saltan gracias a una huella SHA-256 guardada en
    `photos.source_hash`.
-5. Las fotos de perfil pasan por el mismo worker con otro tamaño (512 px,
-   unos 120 KB) y van al bucket privado `avatars`, en la carpeta de cada
+5. **Cambiar una foto**: `photos.replace` (álbum) y
+   `dedications.replacePhoto` suben el archivo nuevo, actualizan la misma fila
+   (leyenda, fecha, orden y mensaje se conservan) y después borran los archivos
+   viejos. Si guardar la fila falla, se borran los nuevos.
+6. Las fotos de perfil pasan por el mismo worker con otro tamaño (640 px,
+   unos 160 KB) y van al bucket privado `avatars`, en la carpeta de cada
    persona.
 
 ### Perfil
@@ -537,3 +548,4 @@ prueba comprueba que `supabase/setup.sql` esté al día).
 | `…1103000800_security_review` | Revisión de seguridad: `created_by`/`created_at` inmutables en fotos y sorpresas, reacciones que no se mueven de mensaje, límite de sorpresas y contador `edge_rate_limits` para las Edge Functions |
 | `…1105000100_received_surprises` | Las sorpresas recibidas se quedan: la destinataria lee las que ya empezaron si siguen activas o ya las vio (aunque vencieran), para la Cajita → Recibidas; el aviso lleva a `/mensajes` |
 | `…1108000100_dedications` | Dedicatorias con fotos y canciones (YouTube, Spotify, audio o enlace), permiso `dedications.use`, avisos, límites, bucket `dedication-media` y `reorder_dedication_songs` |
+| `…1109000100_dedication_photo_replace` | Quien escribió la dedicatoria puede cambiar el archivo de una foto (`path`, `thumb_path`, medidas); un trigger exige que siga en la carpeta de su dedicatoria |

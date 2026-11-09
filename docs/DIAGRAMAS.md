@@ -224,13 +224,44 @@ flowchart TD
   B --> C{"¿Huella ya existe?"}
   C -- "sí" --> SKIP["Se omite como repetida"]
   C -- "no" --> D["Pool de Web Workers"]
-  D --> E["Orientar, quitar metadatos y GPS,<br/>reducir a 2048 px, WebP ~450 KB<br/>+ miniatura 480 px"]
-  E --> Q["TaskQueue<br/>concurrencia 2, reintentos con backoff"]
+  D --> E["Orientar y quitar metadatos y GPS"]
+  E --> S["Reescalar con alta calidad<br/>(hasta 2560 px) + nitidez suave"]
+  S --> BQ["Búsqueda binaria de la calidad<br/>WebP que cabe en ~1,2 MB<br/>+ miniatura 640 px"]
+  BQ --> LR{"¿Original menor a 1200 px?"}
+  LR -- "sí" --> W["Aviso ⚠️ Baja resolución"]
+  LR --> Q["TaskQueue<br/>concurrencia 2, reintentos con backoff"]
   Q --> U["Storage: bucket privado photos"]
   U --> R["insert photos<br/>(mes de la foto, source_hash)"]
   R --> T["Trigger de auditoría"]
   R --> RT["Realtime refresca la galería"]
   Q -- "falla tras reintentos" --> F["Resumen: reintentar las que fallaron"]
+```
+
+### Cambiar una foto
+
+Si una foto se subió mal o se ve borrosa, se cambia el archivo sin tocar su
+mensaje, su fecha ni su lugar (álbum del panel y dedicatorias).
+
+```mermaid
+sequenceDiagram
+  actor P as Persona
+  participant UI as Panel o dedicatoria
+  participant W as Web Worker
+  participant S as Storage
+  participant DB as Postgres
+  P->>UI: 🔄 Cambiar foto y elige otra
+  UI->>W: optimizar (alta calidad + nitidez)
+  W-->>UI: foto y miniatura nuevas
+  UI->>S: subir archivos nuevos
+  UI->>DB: update de la misma fila (path, thumb_path, medidas)
+  alt la fila no se pudo guardar
+    UI->>S: borrar los archivos nuevos
+    UI-->>P: error, la foto anterior sigue igual
+  else guardada
+    DB->>DB: trigger: el archivo sigue en su carpeta
+    UI->>S: borrar los archivos viejos
+    UI-->>P: Foto cambiada 💖
+  end
 ```
 
 ### Orden de las fotos en un mes

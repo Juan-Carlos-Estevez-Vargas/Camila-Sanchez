@@ -236,7 +236,9 @@ y no has abierto.
 **Escribir una.** Toca **+ Nueva dedicatoria**. Elige **para quién** (una
 persona o **Para todos**), un emoji, el título y el mensaje. Si quieres, suma
 hasta 12 fotos y hasta 50 canciones. Al guardar, a quien se la dedicaste le
-llega un aviso.
+llega un aviso Antes de enviarla puedes cambiar
+cualquier foto con 🔄 (si alguna sale con ⚠️ es que es muy chica y se verá
+borrosa).
 
 **Agregar una canción.** Pega el enlace de YouTube o Spotify (el botón
 **Compartir → Copiar enlace** de la app sirve) o de cualquier página, y
@@ -251,7 +253,8 @@ no le avisa a la app). Puedes ponerlo en aleatorio 🔀, achicarlo o cerrarlo. S
 sonando la música de la portada, se pausa.
 
 **Editar.** En una dedicatoria tuya toca **✏️ Editar**: cambia el texto,
-suma o quita fotos y canciones, y cambia el orden con ↑ ↓. **Pegar varias**
+suma o quita fotos y canciones, y cambia el orden con ↑ ↓. Con 🔄 en una
+foto la cambias por otra sin moverla de lugar. **Pegar varias**
 agrega muchas canciones de una vez. **Borrar** la quita para todos.
 
 **La playlist.** La pestaña **Playlist** junta las canciones de todas las
@@ -412,8 +415,13 @@ deseos, hazlo en la pestaña del español.
 4. Al final aparece un resumen: cuántas se subieron, cuántas repetidas se
    omitieron y un botón para **reintentar las que fallaron**.
 
-Cada foto se optimiza antes de subir (más liviana y sin datos de ubicación) y
-cae sola en el mes en que se tomó. Para cambiar el orden dentro del mes,
+Cada foto se optimiza antes de subir (más nítida, más liviana y sin datos de
+ubicación) y cae sola en el mes en que se tomó. Si una foto es muy chica, el
+resumen y su tarjeta muestran **⚠️ Baja resolución**.
+
+Si una foto se subió mal o se ve borrosa, toca **🔄 Cambiar foto** en su
+tarjeta y elige otra: se reemplaza en el mismo lugar y conserva su mensaje y su
+fecha. Para cambiar el orden dentro del mes,
 arrástralas o usa ↑ ↓: puedes poner primero una foto de un día posterior y el
 orden se queda así en el panel y en la galería. Para borrar varias, márcalas y
 toca **Borrar**.
