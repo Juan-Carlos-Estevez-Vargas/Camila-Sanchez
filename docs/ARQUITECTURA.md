@@ -20,7 +20,7 @@ corren en Edge Functions.
 | Datos en el navegador | Puerto `Backend` con dos adaptadores (Supabase y demo) | Aislar la UI del proveedor |
 | Autenticación | Supabase Auth (PKCE, rotación de tokens) | Sesiones, enlaces mágicos y recuperación |
 | Base de datos | Postgres con RLS, RBAC en SQL y auditoría por triggers | Reglas de negocio y permisos |
-| Archivos | Supabase Storage, buckets privados `photos`, `chat-media`, `list-media` y `avatars` | Fotos de la página, del chat, de las listas y de perfil servidas con URLs firmadas |
+| Archivos | Supabase Storage, buckets privados `photos`, `chat-media`, `list-media`, `avatars` y `dedication-media` | Fotos de la página, del chat, de las listas, de perfil y de las dedicatorias (y sus audios) servidas con URLs firmadas |
 | Tiempo real | Supabase Realtime | Chat, listas, notificaciones y contenido que se actualiza solo |
 | Avisos al celular | Web Push (VAPID), service worker, `pg_net` y Supabase Vault | Notificaciones en la pantalla del dispositivo con la app cerrada |
 | Funciones | Edge Functions en Deno | Gestión de cuentas, invitaciones y Web Push |
@@ -155,6 +155,25 @@ Los elementos que el tutorial resalta llevan un atributo `data-tour="…"`. Para
 agregar un paso basta con marcar el elemento, añadir su entrada en
 `tourSteps.ts` y su título y texto en `i18n/messages/*/tour.ts` (por id); las pruebas en `tourSteps.test.ts` comprueban que cada paso
 tenga texto e id único.
+
+### Novedades de cada versión
+
+- `domain/whatsNew.ts` lista las versiones (`RELEASES`, de la más nueva a la
+  más antigua) con sus novedades: icono, permiso necesario y página del
+  tutorial. Los textos están en `i18n/messages/*/whatsNew.ts`.
+  `pendingReleases()` decide qué mostrar: todo lo posterior a la última versión
+  vista; si nunca vio ninguna, sólo la última, y nada a una cuenta creada
+  después de ella.
+- `features/whatsNew/WhatsNew.tsx` abre la ventana al entrar después de una
+  actualización, sólo cuando ya se aceptaron los términos (va dentro de
+  `ConsentGate`) y sólo con lo que esa cuenta puede usar. La última versión
+  vista se guarda por persona en `localStorage` (`whatsNew:seen:<id>`). El pie
+  de página la abre con toda la historia.
+- **Ver cómo funciona** cierra la ventana, deja un pedido en
+  `features/tour/tourRequest.ts` y navega a la página. `GuidedTour` lo toma al
+  llegar, espera a que aparezca lo que va a señalar y arranca `featureTour()`:
+  la presentación de la novedad, los pasos de esa página y el botón del
+  tutorial.
 
 ### Idiomas
 
@@ -338,6 +357,7 @@ navegador ni al repositorio.
 | Fotos expuestas | Buckets privados, sólo imágenes de hasta 5 MB, URLs firmadas, metadatos borrados al subir |
 | Alguien sube o borra fotos del chat de otro | En `chat-media` cada persona sólo escribe y borra en su carpeta (`<user_id>/`), y un mensaje sólo puede apuntar a fotos de esa carpeta |
 | Avisos falsos o push a dispositivos ajenos | Sólo triggers crean avisos; `send-push` exige un secreto que vive en Vault y en los secretos de la función, nunca en el repositorio; cada dispositivo pertenece a una sola cuenta y se da de baja al cerrar sesión |
+| Alguien ve una dedicatoria ajena o la cambia sin ser quien la escribió | RLS con `can_see_dedication` (autor, destinataria o «para todos», siempre con `dedications.use`) e `is_dedication_author` para escribir; fotos y audios en `dedication-media/<id>/` con las mismas reglas en el bucket |
 | Alguien ve o cambia una lista ajena | RLS con `is_list_member` en las cinco tablas; las fotos van en `list-media/<list_id>/` y el bucket sólo deja ver, subir y borrar a los miembros de esa lista |
 | Perfil ajeno | El trigger `guard_profile_changes` sólo deja que cada persona cambie su foto, icono, frase y cumpleaños; las fotos van en `avatars/<user_id>/` (2 MB) y sólo su dueña o dueño sube o borra ahí |
 | Colores ajenos | `profiles.theme_colors` sólo lo cambia su dueña o dueño y sólo acepta colores `#rrggbb` |
@@ -385,6 +405,29 @@ Las cabeceras están en `public/_headers` (Netlify) y `vercel.json`; una prueba
   agrupan en 250 ms).
 - Las reglas puras (árbol de tareas, avance, fechas) están en
   `src/domain/lists.ts` y tienen pruebas.
+
+### Dedicatorias y playlist
+
+- `DedicationsPage` (`/dedicatorias` y `/dedicatorias/playlist`) muestra las
+  tarjetas con filtro (todas, recibidas, enviadas) y la pestaña Playlist;
+  `DedicationPage` (`/dedicatorias/:id`) la carta, con modo edición para
+  quien la escribió. `SongAdder` agrega una canción por enlace o archivo e
+  `ImportSongsModal` muchas a la vez.
+- Las reglas puras están en `src/domain/songs.ts` (reconocer enlaces de
+  YouTube y Spotify, URL del reproductor, armar la playlist, exportar a M3U,
+  cola de YouTube, enlaces de Spotify, leer un `.m3u` o enlaces pegados) y
+  `src/domain/dedications.ts` (límites, filtros y quién ve qué), con pruebas.
+- `features/player/PlayerContext` guarda la cola por encima de las rutas, así
+  que la música no se corta al navegar. `MiniPlayer` dibuja un reproductor
+  distinto según la fuente: iframe de YouTube (`youtube-nocookie`, eventos por
+  `postMessage`, sin cargar su script), iframe de Spotify, `<audio>` con URL
+  firmada o un botón para abrir el enlace. Pasa sola a la siguiente cuando
+  YouTube o el audio avisan que terminó, y publica título y botones en la
+  Media Session.
+- `services/audio/audioFocus.ts` es un bus pequeño entre la música de fondo
+  (`MusicToggle`) y la playlist: la que empieza a sonar pausa a la otra.
+- La CSP abre `frame-src` sólo a `https://www.youtube-nocookie.com` y
+  `https://open.spotify.com`.
 
 ### Avisos
 
@@ -493,3 +536,4 @@ prueba comprueba que `supabase/setup.sql` esté al día).
 | `…1103000500_surprise_recipient` | Cada sorpresa es para una persona (`recipient_id`): sólo ella la ve y recibe el aviso, nunca quien la creó; en el panel cada quien gestiona sólo las suyas |
 | `…1103000800_security_review` | Revisión de seguridad: `created_by`/`created_at` inmutables en fotos y sorpresas, reacciones que no se mueven de mensaje, límite de sorpresas y contador `edge_rate_limits` para las Edge Functions |
 | `…1105000100_received_surprises` | Las sorpresas recibidas se quedan: la destinataria lee las que ya empezaron si siguen activas o ya las vio (aunque vencieran), para la Cajita → Recibidas; el aviso lleva a `/mensajes` |
+| `…1108000100_dedications` | Dedicatorias con fotos y canciones (YouTube, Spotify, audio o enlace), permiso `dedications.use`, avisos, límites, bucket `dedication-media` y `reorder_dedication_songs` |

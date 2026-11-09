@@ -157,6 +157,11 @@ export function AppHeader() {
               {t.lists} <Unread count={unreadByKind.list} label={t.listsUnread} />
             </NavLink>
           )}
+          {user && policy.can(PERMISSIONS.dedicationsUse) && (
+            <NavLink to="/dedicatorias" data-tour="nav-dedicatorias" onClick={close}>
+              {t.dedications} <Unread count={unreadByKind.dedication} label={t.dedicationsUnread} />
+            </NavLink>
+          )}
           {policy.canUseContentPanel && <NavLink to="/panel" data-tour="nav-panel" onClick={close}>{t.panel}</NavLink>}
           {policy.canUseSuperPanel && <NavLink to="/super" data-tour="nav-super" onClick={close}>{t.super}</NavLink>}
         </nav>

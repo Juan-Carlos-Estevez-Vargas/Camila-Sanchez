@@ -149,7 +149,9 @@ Netlify.
 
 En Vercel la CSP vive en `vercel.json` y no se ajusta sola: agrega
 `https://challenges.cloudflare.com` a `script-src`, `connect-src` y
-`frame-src` a mano.
+`frame-src` a mano (después de `https://www.youtube-nocookie.com` y
+`https://open.spotify.com`, que ya están ahí para los reproductores de las
+dedicatorias).
 
 ## Avisos en la pantalla de notificaciones del celular
 

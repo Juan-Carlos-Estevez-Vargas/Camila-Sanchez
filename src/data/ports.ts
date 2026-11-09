@@ -11,6 +11,7 @@ import type {
   AppNotification, AuditEntry, ChatContact, ChatConversation, ChatMessage, ChatParticipant, ChatPerson, ChatPresence, ImportantDate, Interruption, Invitation, InvitableRole,
   Milestone, Note, NoteKind, PermissionDefinition, Photo, PhotoUrls, Profile, Role, RolePermission,
   Section, SessionUser, SiteSettings, TodoImage, TodoItem, TodoList, TodoListDetail, TodoListSummary, TodoMaterial, Uuid,
+  Dedication, DedicationPhoto, DedicationSong, DedicationWithMedia,
 } from "@/domain/types";
 import type { LegalConsent } from "@/domain/legal";
 
@@ -227,6 +228,68 @@ export interface ListsRepository {
   resolveImages(paths: string[]): Promise<Map<string, string>>;
 }
 
+export interface DedicationInput {
+  /** null = para todas las personas que usan dedicatorias. */
+  recipientId: Uuid | null;
+  title: string;
+  message: string;
+  emoji: string;
+  dedicatedOn: string;
+}
+
+/** Canción con enlace (YouTube, Spotify u otro). */
+export interface SongLinkInput {
+  id?: Uuid;
+  dedicationId: Uuid;
+  title: string;
+  artist: string;
+  note: string;
+  /** Sólo al crearla; después el enlace también se puede cambiar. */
+  url: string;
+}
+
+/** Archivo de audio para subir como canción. */
+export interface SongAudioInput {
+  dedicationId: Uuid;
+  title: string;
+  artist: string;
+  note: string;
+  file: Blob;
+  /** Extensión con la que se guarda (domain/songs.ts → audioExtension). */
+  extension: string;
+}
+
+export type SongPatch = Partial<Pick<DedicationSong, "title" | "artist" | "note" | "url">>;
+
+/**
+ * Dedicatorias: un mensaje con fotos y canciones para alguien (o para todos).
+ * Sólo las ve quien la escribió y a quien va dirigida; sólo quien la escribió
+ * la cambia. La base de datos lo vuelve a comprobar (RLS) y avisa.
+ */
+export interface DedicationsRepository {
+  /** Todas las que puedo ver, con sus fotos y canciones. */
+  list(): Promise<DedicationWithMedia[]>;
+  /** null si no existe o no la puedo ver. */
+  get(id: Uuid): Promise<DedicationWithMedia | null>;
+  create(input: DedicationInput): Promise<Dedication>;
+  update(id: Uuid, patch: Partial<DedicationInput>): Promise<Dedication>;
+  /** Borra también sus fotos y canciones (y los archivos). */
+  remove(id: Uuid): Promise<void>;
+
+  addPhoto(dedicationId: Uuid, image: ChatImageUpload): Promise<DedicationPhoto>;
+  deletePhoto(photo: DedicationPhoto): Promise<void>;
+
+  addSong(input: SongLinkInput): Promise<DedicationSong>;
+  addAudioSong(input: SongAudioInput): Promise<DedicationSong>;
+  updateSong(id: Uuid, patch: SongPatch): Promise<DedicationSong>;
+  deleteSong(song: DedicationSong): Promise<void>;
+  /** Nuevo orden de las canciones de una dedicatoria. */
+  reorderSongs(dedicationId: Uuid, orderedIds: Uuid[]): Promise<void>;
+
+  /** URLs firmadas (o locales en demo) de fotos y audios, por ruta. */
+  resolveMedia(paths: string[]): Promise<Map<string, string>>;
+}
+
 export type MyProfilePatch = Partial<Pick<Profile, "displayName" | "avatarEmoji" | "bio" | "birthday">>;
 
 export interface NewUserInput {
@@ -303,7 +366,8 @@ export type RealtimeTable =
   | "site_settings" | "sections" | "photos" | "milestones" | "important_dates"
   | "interruptions" | "notes" | "chat_messages" | "chat_reads" | "notifications"
   | "chat_contacts" | "chat_participants" | "chat_reactions" | "chat_hidden_messages"
-  | "todo_lists" | "todo_list_members" | "todo_items" | "todo_materials" | "todo_item_images";
+  | "todo_lists" | "todo_list_members" | "todo_items" | "todo_materials" | "todo_item_images"
+  | "dedications" | "dedication_photos" | "dedication_songs";
 
 export interface RealtimeChange<T = Record<string, unknown>> {
   table: RealtimeTable;
@@ -344,6 +408,7 @@ export interface Backend {
   readonly photos: PhotoRepository;
   readonly messaging: MessagingRepository;
   readonly lists: ListsRepository;
+  readonly dedications: DedicationsRepository;
   readonly users: UserRepository;
   readonly invitations: InvitationRepository;
   readonly realtime: RealtimeGateway;

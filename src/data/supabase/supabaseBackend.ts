@@ -1,13 +1,14 @@
 import { FunctionsHttpError } from "@supabase/supabase-js";
 import { AppError, fromServer } from "@/core/errors";
 import type {
-  AuthGateway, Backend, ContentRepository, InvitationRepository, LegalRepository, ListsRepository, MessagingRepository, PhotoRepository,
+  AuthGateway, Backend, ContentRepository, DedicationInput, DedicationsRepository, InvitationRepository, LegalRepository, ListsRepository, MessagingRepository, PhotoRepository,
   PushRepository, RealtimeChange, RealtimeGateway, RealtimeTable, UserRepository,
 } from "@/data/ports";
 import { clearPrivateCaches, readCache, writeCache } from "@/data/localCache";
 import { setRememberSession } from "@/data/sessionPersistence";
 import { expiryFromNow, generateInviteToken, hashInviteToken } from "@/domain/invitations";
 import { nextDueOf, progressOf } from "@/domain/lists";
+import { bySongPosition, parseSongLink, AUDIO_TYPES, type AudioExtension } from "@/domain/songs";
 import { sanitizeColors } from "@/domain/palettes";
 import { isSurpriseFor } from "@/domain/surprises";
 import { RECOVERY_PATH } from "@/domain/recovery";
@@ -19,6 +20,7 @@ const PHOTO_BUCKET = "photos";
 const CHAT_BUCKET = "chat-media";
 const LIST_BUCKET = "list-media";
 const AVATAR_BUCKET = "avatars";
+const DEDICATION_BUCKET = "dedication-media";
 /** Las URLs firmadas duran 1 h; se cachean 50 min para reutilizarlas. */
 const SIGNED_URL_TTL_S = 3600;
 const SIGNED_URL_CACHE_MS = 50 * 60 * 1000;
@@ -578,6 +580,133 @@ const lists: ListsRepository = {
   resolveImages: (paths) => signedUrls(LIST_BUCKET, paths),
 };
 
+const DEDICATION_COLUMNS = "*, dedication_photos(*), dedication_songs(*)";
+
+const toDedicationWithMedia = (r: Row) => ({
+  dedication: map.toDedication(r),
+  photos: (Array.isArray(r.dedication_photos) ? r.dedication_photos as Row[] : []).map(map.toDedicationPhoto)
+    .sort((a, b) => a.position - b.position),
+  songs: (Array.isArray(r.dedication_songs) ? r.dedication_songs as Row[] : []).map(map.toDedicationSong).sort(bySongPosition),
+});
+
+async function removeDedicationFiles(paths: Array<string | null | undefined>): Promise<void> {
+  const clean = paths.filter((p): p is string => typeof p === "string" && p.length > 0);
+  for (let i = 0; i < clean.length; i += 100) {
+    await sb().storage.from(DEDICATION_BUCKET).remove(clean.slice(i, i + 100));
+  }
+}
+
+function dedicationRow(input: Partial<DedicationInput>): Row {
+  const row: Row = {};
+  if (input.recipientId !== undefined) row.recipient_id = input.recipientId;
+  if (input.title !== undefined) row.title = input.title.trim();
+  if (input.message !== undefined) row.message = input.message;
+  if (input.emoji !== undefined) row.emoji = input.emoji;
+  if (input.dedicatedOn !== undefined) row.dedicated_on = input.dedicatedOn;
+  return row;
+}
+
+/** El enlace ya canónico (YouTube/Spotify) y su tipo, o un error amable. */
+function songSource(url: string): { source: "youtube" | "spotify" | "link"; url: string } {
+  const link = parseSongLink(url);
+  if (!link) throw new AppError("Ese enlace no es de una canción que se pueda agregar.");
+  return { source: link.source, url: link.url };
+}
+
+const dedications: DedicationsRepository = {
+  async list() {
+    const rows = await unwrap<Row[]>(sb().from("dedications").select(DEDICATION_COLUMNS).order("dedicated_on", { ascending: false }));
+    return rows.map(toDedicationWithMedia);
+  },
+  async get(id) {
+    const row = await unwrap<Row | null>(sb().from("dedications").select(DEDICATION_COLUMNS).eq("id", id).maybeSingle());
+    return row ? toDedicationWithMedia(row) : null;
+  },
+  async create(input) {
+    // author_id lo pone la base (auth.uid()).
+    return map.toDedication(await unwrap<Row>(sb().from("dedications").insert(dedicationRow(input)).select().single()));
+  },
+  async update(id, patch) {
+    const rows = await unwrap<Row[]>(sb().from("dedications").update(dedicationRow(patch)).eq("id", id).select());
+    if (!rows[0]) throw new AppError("Sólo quien escribió la dedicatoria puede cambiarla.");
+    return map.toDedication(rows[0]);
+  },
+  async remove(id) {
+    const [photos, songs] = await Promise.all([
+      unwrap<Row[]>(sb().from("dedication_photos").select("path, thumb_path").eq("dedication_id", id)),
+      unwrap<Row[]>(sb().from("dedication_songs").select("audio_path").eq("dedication_id", id)),
+    ]);
+    const deleted = await unwrap<Row[]>(sb().from("dedications").delete().eq("id", id).select("id"));
+    if (!deleted.length) throw new AppError("Sólo quien escribió la dedicatoria puede cambiarla.");
+    await removeDedicationFiles([...photos.flatMap((p) => [p.path, p.thumb_path]), ...songs.map((s) => s.audio_path)] as string[]);
+  },
+
+  async addPhoto(dedicationId, image) {
+    // Carpeta de la dedicatoria: la política del bucket sólo deja subir ahí a quien la escribió.
+    const id = crypto.randomUUID();
+    const path = `${dedicationId}/${id}.${image.extension}`;
+    const thumbPath = `${dedicationId}/${id}.thumb.${image.extension}`;
+    const options = { cacheControl: "31536000", upsert: false };
+    const uploaded: string[] = [];
+    try {
+      await unwrap(sb().storage.from(DEDICATION_BUCKET).upload(path, image.full, { ...options, contentType: image.full.type }));
+      uploaded.push(path);
+      await unwrap(sb().storage.from(DEDICATION_BUCKET).upload(thumbPath, image.thumb, { ...options, contentType: image.thumb.type }));
+      uploaded.push(thumbPath);
+      return map.toDedicationPhoto(await unwrap<Row>(sb().from("dedication_photos").insert({
+        dedication_id: dedicationId, path, thumb_path: thumbPath, width: image.width, height: image.height,
+      }).select().single()));
+    } catch (error) {
+      if (uploaded.length) await removeDedicationFiles(uploaded);
+      throw error;
+    }
+  },
+  async deletePhoto(photo) {
+    await remove("dedication_photos", photo.id);
+    await removeDedicationFiles([photo.path, photo.thumbPath]);
+  },
+
+  async addSong(input) {
+    const { source, url } = songSource(input.url);
+    return map.toDedicationSong(await unwrap<Row>(sb().from("dedication_songs").insert({
+      dedication_id: input.dedicationId, title: input.title.trim(), artist: input.artist.trim(), note: input.note.trim(), source, url,
+    }).select().single()));
+  },
+  async addAudioSong(input) {
+    const type = AUDIO_TYPES[input.extension as AudioExtension];
+    if (!type) throw new AppError("Ese archivo no es de audio (usa MP3, M4A, OGG, WAV, WEBM o FLAC).");
+    const path = `${input.dedicationId}/${crypto.randomUUID()}.${input.extension}`;
+    await unwrap(sb().storage.from(DEDICATION_BUCKET).upload(path, input.file, { cacheControl: "31536000", upsert: false, contentType: type }));
+    try {
+      return map.toDedicationSong(await unwrap<Row>(sb().from("dedication_songs").insert({
+        dedication_id: input.dedicationId, title: input.title.trim(), artist: input.artist.trim(), note: input.note.trim(),
+        source: "audio", audio_path: path,
+      }).select().single()));
+    } catch (error) {
+      await removeDedicationFiles([path]);
+      throw error;
+    }
+  },
+  async updateSong(id, patch) {
+    const row: Row = {};
+    if (patch.title !== undefined) row.title = patch.title.trim();
+    if (patch.artist !== undefined) row.artist = patch.artist.trim();
+    if (patch.note !== undefined) row.note = patch.note.trim();
+    if (patch.url !== undefined && patch.url !== null) row.url = songSource(patch.url).url;
+    const rows = await unwrap<Row[]>(sb().from("dedication_songs").update(row).eq("id", id).select());
+    if (!rows[0]) throw new AppError("Sólo quien escribió la dedicatoria puede cambiarla.");
+    return map.toDedicationSong(rows[0]);
+  },
+  async deleteSong(song) {
+    await remove("dedication_songs", song.id);
+    if (song.audioPath) await removeDedicationFiles([song.audioPath]);
+  },
+  async reorderSongs(dedicationId, orderedIds) {
+    await unwrap(sb().rpc("reorder_dedication_songs", { p_dedication: dedicationId, p_ids: orderedIds }));
+  },
+  resolveMedia: (paths) => signedUrls(DEDICATION_BUCKET, paths),
+};
+
 /**
  * Llama a una Edge Function. Sus mensajes de error ya están en español y
  * pensados para el usuario, así que se muestran tal cual.
@@ -777,6 +906,7 @@ export const supabaseBackend: Backend = {
   photos,
   messaging,
   lists,
+  dedications,
   users,
   invitations,
   realtime,

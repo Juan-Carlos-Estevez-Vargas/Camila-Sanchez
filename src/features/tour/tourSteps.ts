@@ -189,6 +189,36 @@ function pageSteps(ctx: TourContext): TourStep[] {
       },
     ];
   }
+  if (pathname === "/dedicatorias" || pathname === "/dedicatorias/playlist") {
+    return [
+      {
+        id: "dedications-new",
+        target: [tourTarget("dedications-new")],
+        ...text("dedications-new"),
+      },
+      {
+        id: "dedications-tabs",
+        target: [tourTarget("dedications-tabs")],
+        ...text("dedications-tabs"),
+      },
+      ...(pathname === "/dedicatorias/playlist" ? [{
+        id: "dedication-play",
+        target: [tourTarget("dedication-play")],
+        optional: true,
+        ...text("dedication-play"),
+      }] : []),
+    ];
+  }
+  if (areaOf(pathname) === "dedicatorias") {
+    return [
+      {
+        id: "dedication-play",
+        target: [tourTarget("dedication-play")],
+        optional: true,
+        ...text("dedication-play"),
+      },
+    ];
+  }
   if (areaOf(pathname) === "listas") {
     return [
       {
@@ -302,6 +332,9 @@ function navSteps(ctx: TourContext): TourStep[] {
   if (policy.can(PERMISSIONS.listsUse) && here !== "listas") {
     steps.push({ id: "nav-listas", target: navTarget("nav-listas"), fallbackNote: MENU_NOTE(), ...text("nav-listas") });
   }
+  if (policy.can(PERMISSIONS.dedicationsUse) && here !== "dedicatorias") {
+    steps.push({ id: "nav-dedicatorias", target: navTarget("nav-dedicatorias"), fallbackNote: MENU_NOTE(), ...text("nav-dedicatorias") });
+  }
   if (policy.canUseContentPanel && here !== "panel") {
     steps.push({ id: "nav-panel", target: navTarget("nav-panel"), fallbackNote: MENU_NOTE(), ...text("nav-panel") });
   }
@@ -332,3 +365,15 @@ export function tourFor(ctx: TourContext): TourStep[] {
   };
   return [welcome, ...pageSteps(ctx), ...navSteps(ctx), farewell];
 }
+
+/**
+ * Recorrido de una función nueva: su presentación (lo de las novedades),
+ * los pasos de su página y el recordatorio del botón del tutorial.
+ */
+export function featureTour(ctx: TourContext, intro: { title: string; body: string }): TourStep[] {
+  const farewell: TourStep = { id: "launcher", target: [tourTarget("tour-launcher")], ...text("launcher") };
+  return [{ id: "whats-new", ...intro }, ...pageSteps(ctx), farewell];
+}
+
+/** ¿La página tiene pasos propios? (para no llevar a un tutorial vacío). */
+export const hasPageTour = (ctx: TourContext): boolean => pageSteps(ctx).length > 0;

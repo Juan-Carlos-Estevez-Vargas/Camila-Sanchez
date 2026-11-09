@@ -21,6 +21,8 @@ export const CONTENT_SECURITY_POLICY = [
   "media-src 'self' blob: https:",
   "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
   "worker-src 'self' blob:",
+  // Sólo los reproductores de la playlist (YouTube sin cookies y Spotify).
+  "frame-src https://www.youtube-nocookie.com https://open.spotify.com",
   "manifest-src 'self'",
   "base-uri 'self'",
   "form-action 'self'",

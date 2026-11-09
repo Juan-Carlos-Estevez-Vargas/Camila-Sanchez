@@ -101,7 +101,7 @@ describe("roles y escalada de privilegios", () => {
   it("los permisos efectivos de la editora son los esperados", async () => {
     const rows = await as<{ p: string }>(CAMI, "select p from my_permissions() p order by p");
     expect(rows.map((r) => r.p)).toEqual([
-      "chat.use", "content.edit", "dates.manage", "interruptions.manage",
+      "chat.use", "content.edit", "dates.manage", "dedications.use", "interruptions.manage",
       "lists.use", "notes.send", "photos.manage", "site.view",
     ]);
   });
@@ -740,5 +740,102 @@ describe("revisión de seguridad: campos que no cambian y límites", () => {
       }
     };
     expect([await hit(), await hit(), await hit()]).toEqual([true, true, false]);
+  });
+});
+
+describe("dedicatorias con fotos y canciones", () => {
+  let PRIVATE = "";
+  let FOR_ALL = "";
+  const FILE = "dddddddd-dddd-4ddd-8ddd-dddddddddddd";
+  const YT = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
+  const notes = (uid: string) =>
+    as<{ title: string; body: string; link: string }>(uid, "select title, body, link from notifications where kind = 'dedication' order by created_at");
+
+  it("quien la escribe elige para quién; sólo esa persona la ve y le llega un aviso", async () => {
+    await db.exec("delete from notifications");
+    const [row] = await as<{ id: string; author_id: string }>(JUAN,
+      `insert into dedications (recipient_id, title, message, emoji, author_id) values ('${CAMI}', 'Nuestra canción', 'Te amo', '🎶', '${GUEST}') returning id, author_id`);
+    PRIVATE = row!.id;
+    // La autora la pone la base, no el navegador.
+    expect(row!.author_id).toBe(JUAN);
+    expect(await as(CAMI, "select title from dedications")).toEqual([{ title: "Nuestra canción" }]);
+    expect(await as(GUEST, "select count(*)::int as n from dedications")).toEqual([{ n: 0 }]);
+    expect(await as(null, "select count(*)::int as n from dedications")).toEqual([{ n: 0 }]);
+    expect(await notes(CAMI)).toEqual([{ title: "Juan te dedicó algo 🎶", body: "Nuestra canción", link: `/dedicatorias/${PRIVATE}` }]);
+    expect(await notes(GUEST)).toEqual([]);
+    expect(await notes(JUAN)).toEqual([]);
+  });
+
+  it("«para todos» la ven y la reciben todas las personas que usan dedicatorias", async () => {
+    const [row] = await as<{ id: string }>(CAMI, "insert into dedications (title) values ('Para la familia') returning id");
+    FOR_ALL = row!.id;
+    expect(await as(GUEST, "select title from dedications")).toEqual([{ title: "Para la familia" }]);
+    expect((await notes(GUEST)).map((n) => n.link)).toEqual([`/dedicatorias/${FOR_ALL}`]);
+    expect((await notes(JUAN)).map((n) => n.link)).toEqual([`/dedicatorias/${FOR_ALL}`]);
+    expect((await notes(CAMI)).map((n) => n.link)).toEqual([`/dedicatorias/${PRIVATE}`]);
+  });
+
+  it("no se dedica a sí misma ni a quien no puede usar dedicatorias", async () => {
+    await expect(as(JUAN, `insert into dedications (recipient_id, title) values ('${JUAN}', 'yo')`)).rejects.toThrow(/otra persona/);
+    await db.exec("delete from role_permissions where role = 'viewer' and permission = 'dedications.use'");
+    try {
+      await expect(as(JUAN, `insert into dedications (recipient_id, title) values ('${GUEST}', 'x')`)).rejects.toThrow(/no puede recibir/);
+      await expect(as(GUEST, "insert into dedications (title) values ('sin permiso')")).rejects.toThrow(/row-level security/);
+      expect(await as(GUEST, "select count(*)::int as n from dedications")).toEqual([{ n: 0 }]);
+    } finally {
+      await db.exec("insert into role_permissions values ('viewer', 'dedications.use')");
+    }
+  });
+
+  it("sólo quien la escribió la cambia, y no puede cambiar quién la escribió", async () => {
+    expect(await as(CAMI, `update dedications set title = 'robada' where id = '${PRIVATE}' returning id`)).toEqual([]);
+    await expect(as(JUAN, `update dedications set author_id = '${CAMI}' where id = '${PRIVATE}'`)).rejects.toThrow(/no se puede cambiar/);
+    expect(await as(JUAN, `update dedications set message = 'Te amo mucho' where id = '${PRIVATE}' returning message`)).toEqual([{ message: "Te amo mucho" }]);
+    // Cambiar el texto no vuelve a avisar.
+    expect(await notes(CAMI)).toHaveLength(1);
+  });
+
+  it("canciones: el tipo tiene que ir con su enlace, siempre https", async () => {
+    await as(JUAN, `insert into dedication_songs (dedication_id, title, artist, source, url) values ('${PRIVATE}', 'Perfect', 'Ed Sheeran', 'youtube', '${YT}')`);
+    await as(JUAN, `insert into dedication_songs (dedication_id, title, source, url) values ('${PRIVATE}', 'Yellow', 'spotify', 'https://open.spotify.com/track/4cOdK2wGLETKBW3PvgPWqT')`);
+    await expect(as(JUAN, `insert into dedication_songs (dedication_id, title, source, url) values ('${PRIVATE}', 'x', 'youtube', 'https://open.spotify.com/track/x')`)).rejects.toThrow(/dedication_songs_source/);
+    await expect(as(JUAN, `insert into dedication_songs (dedication_id, title, source, url) values ('${PRIVATE}', 'x', 'link', 'http://example.com')`)).rejects.toThrow(/check/);
+    await expect(as(JUAN, `insert into dedication_songs (dedication_id, title, source, url) values ('${PRIVATE}', 'x', 'link', 'javascript:alert(1)')`)).rejects.toThrow(/check/);
+    await expect(as(JUAN, `insert into dedication_songs (dedication_id, title, source) values ('${PRIVATE}', 'x', 'audio')`)).rejects.toThrow(/dedication_songs_source/);
+    expect(await as(CAMI, "select title from dedication_songs order by position")).toEqual([{ title: "Perfect" }, { title: "Yellow" }]);
+    expect(await as(GUEST, "select count(*)::int as n from dedication_songs")).toEqual([{ n: 0 }]);
+    await expect(as(CAMI, `insert into dedication_songs (dedication_id, title, source, url) values ('${PRIVATE}', 'colada', 'youtube', '${YT}')`)).rejects.toThrow(/row-level security/);
+  });
+
+  it("canciones: el orden lo cambia sólo quien la escribió y el archivo no se cambia", async () => {
+    const ids = await as<{ id: string }>(JUAN, `select id from dedication_songs where dedication_id = '${PRIVATE}' order by position desc`);
+    await as(JUAN, `select reorder_dedication_songs('${PRIVATE}', array[${ids.map((r) => `'${r.id}'`).join(",")}]::uuid[])`);
+    expect(await as(CAMI, "select title from dedication_songs order by position")).toEqual([{ title: "Yellow" }, { title: "Perfect" }]);
+    await expect(as(CAMI, `select reorder_dedication_songs('${PRIVATE}', array['${ids[0]!.id}']::uuid[])`)).rejects.toThrow(/Sólo quien escribió/);
+    await expect(as(JUAN, `update dedication_songs set source = 'link' where id = '${ids[0]!.id}'`)).rejects.toThrow(/no se puede cambiar/);
+  });
+
+  it("fotos y audios: en la carpeta de su dedicatoria; los ve a quien va dirigida y nadie más", async () => {
+    await as(JUAN, `insert into dedication_photos (dedication_id, path, thumb_path) values ('${PRIVATE}', '${PRIVATE}/${FILE}.webp', '${PRIVATE}/${FILE}.thumb.webp')`);
+    await expect(as(JUAN, `insert into dedication_photos (dedication_id, path, thumb_path) values ('${PRIVATE}', '${FOR_ALL}/${FILE}.webp', '${FOR_ALL}/${FILE}.thumb.webp')`)).rejects.toThrow(/carpeta de su dedicatoria/);
+    await expect(as(JUAN, `insert into dedication_songs (dedication_id, title, source, audio_path) values ('${PRIVATE}', 'voz', 'audio', '${FOR_ALL}/${FILE}.mp3')`)).rejects.toThrow(/carpeta de su dedicatoria/);
+    await as(JUAN, `insert into dedication_songs (dedication_id, title, source, audio_path) values ('${PRIVATE}', 'Nota de voz', 'audio', '${PRIVATE}/${FILE}.mp3')`);
+    expect(await as(GUEST, "select count(*)::int as n from dedication_photos")).toEqual([{ n: 0 }]);
+
+    await as(JUAN, `insert into storage.objects (bucket_id, name) values ('dedication-media', '${PRIVATE}/${FILE}.mp3')`);
+    await expect(as(CAMI, `insert into storage.objects (bucket_id, name) values ('dedication-media', '${PRIVATE}/${FILE}.webp')`)).rejects.toThrow(/row-level security/);
+    await expect(as(JUAN, `insert into storage.objects (bucket_id, name) values ('dedication-media', '../${FILE}.mp3')`)).rejects.toThrow(/row-level security/);
+    expect(await as(CAMI, "select count(*)::int as n from storage.objects where bucket_id = 'dedication-media'")).toEqual([{ n: 1 }]);
+    expect(await as(GUEST, "select count(*)::int as n from storage.objects where bucket_id = 'dedication-media'")).toEqual([{ n: 0 }]);
+    expect(await as(CAMI, "delete from storage.objects where bucket_id = 'dedication-media' returning name")).toEqual([]);
+  });
+
+  it("sin sesión no se usan sus funciones; borrar la dedicatoria borra todo lo de adentro", async () => {
+    await expect(as(null, "select can_see_dedication(gen_random_uuid())")).rejects.toThrow(/permission denied/);
+    await expect(as(null, "select is_dedication_author(gen_random_uuid())")).rejects.toThrow(/permission denied/);
+    expect(await as(CAMI, `delete from dedications where id = '${PRIVATE}' returning id`)).toEqual([]);
+    expect(await as(JUAN, `delete from dedications where id = '${PRIVATE}' returning id`)).toHaveLength(1);
+    const { rows } = await db.query<{ n: number }>(`select ((select count(*) from dedication_songs where dedication_id = '${PRIVATE}') + (select count(*) from dedication_photos))::int as n`);
+    expect(rows[0]!.n).toBe(0);
   });
 });

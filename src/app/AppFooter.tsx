@@ -10,6 +10,8 @@ import { openCookiePreferences } from "@/services/consent/cookieConsent";
 import { setReducedMotion, useReducedMotion } from "@/ui/motion";
 import { useT } from "@/i18n";
 import { LanguagePicker } from "./LanguagePicker";
+import { openWhatsNew } from "@/features/whatsNew/whatsNewStore";
+import { useAuth } from "@/state/AuthContext";
 
 const NETWORKS: Record<SocialNetwork, { label: string; icon: ReactElement }> = {
   github: {
@@ -50,6 +52,7 @@ export function AppFooter() {
   const t = i18n.app.footer;
   const legal = i18n.legal;
   const { installed } = useInstallState();
+  const { user } = useAuth();
 
   return (
     <footer className="app-footer" data-tour="footer">
@@ -87,6 +90,7 @@ export function AppFooter() {
                 <li key={doc.id}><Link to={legalPath(doc.id)}>{legal.docs[doc.id].short}</Link></li>
               ))}
               <li><button type="button" onClick={openCookiePreferences}>{t.cookiePrefs}</button></li>
+              {user && <li><button type="button" data-tour="whats-new" onClick={openWhatsNew}>{i18n.whatsNew.footerLink}</button></li>}
               {!installed && <li className="app-footer__app-link"><Link to={INSTALL_PATH}>📲 {i18n.install.footerLink}</Link></li>}
             </ul>
           </nav>

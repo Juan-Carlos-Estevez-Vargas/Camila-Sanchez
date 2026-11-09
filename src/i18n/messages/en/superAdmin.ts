@@ -40,6 +40,7 @@ export const superAdmin: Messages["superAdmin"] = {
       "notes.send": "Send notes to the message box",
       "chat.use": "Use the chat",
       "lists.use": "Create to-do lists and share them",
+      "dedications.use": "Write dedications with photos and songs and listen to the playlist",
       "sections.manage": "Create, reorder and hide sections",
       "theme.manage": "Change colors, fonts, effects and animations",
       "settings.manage": "General site settings",

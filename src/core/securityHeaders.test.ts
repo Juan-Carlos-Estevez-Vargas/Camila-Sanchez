@@ -57,6 +57,11 @@ describe("cabeceras de seguridad", () => {
     expect(imgSrc).toBe("img-src 'self' data: blob: https://*.supabase.co");
   });
 
+  it("sólo se incrustan los reproductores de YouTube (sin cookies) y Spotify", () => {
+    const frameSrc = netlify["Content-Security-Policy"]!.split(";").map((d) => d.trim()).find((d) => d.startsWith("frame-src"));
+    expect(frameSrc).toBe("frame-src https://www.youtube-nocookie.com https://open.spotify.com");
+  });
+
   it("nadie puede incrustar los archivos del sitio desde otro dominio", () => {
     expect(netlify["Cross-Origin-Resource-Policy"]).toBe("same-origin");
     expect(netlify["X-Permitted-Cross-Domain-Policies"]).toBe("none");

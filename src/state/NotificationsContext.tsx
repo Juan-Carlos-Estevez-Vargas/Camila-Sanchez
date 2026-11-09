@@ -71,7 +71,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   }, [backend, user, reload, toast, navigate]);
 
   const value = useMemo<NotificationsState>(() => {
-    const unreadByKind = { note: 0, chat: 0, system: 0, list: 0 };
+    const unreadByKind = { note: 0, chat: 0, system: 0, list: 0, dedication: 0 };
     for (const n of items) if (!n.readAt && n.kind in unreadByKind) unreadByKind[n.kind]++;
     return {
       items,

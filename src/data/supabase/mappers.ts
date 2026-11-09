@@ -11,7 +11,9 @@ import type {
   AppNotification, AuditEntry, ChatContact, ChatConversation, ChatKind, ChatLastMessage, ChatMessage, ChatParticipant,
   ChatPerson, ChatPresence, ChatReaction, ChatRelation, ImportantDate, Interruption, Invitation, InvitableRole,
   Milestone, Note, Photo, Profile, Section, SectionKind, SiteSettings, TodoImage, TodoItem, TodoList, TodoMaterial,
+  Dedication, DedicationPhoto, DedicationSong, SongSource,
 } from "@/domain/types";
+import { SONG_SOURCES } from "@/domain/types";
 import type { Row } from "./client";
 
 const str = (v: unknown, fallback = ""): string => (typeof v === "string" ? v : fallback);
@@ -370,3 +372,42 @@ export const toTodoImage = (r: Row): TodoImage => ({
   createdBy: strOrNull(r.created_by),
   createdAt: str(r.created_at),
 });
+
+export const toDedication = (r: Row): Dedication => ({
+  id: str(r.id),
+  authorId: str(r.author_id),
+  recipientId: strOrNull(r.recipient_id),
+  title: str(r.title),
+  message: str(r.message),
+  emoji: str(r.emoji, "💌"),
+  dedicatedOn: str(r.dedicated_on),
+  createdAt: str(r.created_at),
+  updatedAt: str(r.updated_at),
+});
+
+export const toDedicationPhoto = (r: Row): DedicationPhoto => ({
+  id: str(r.id),
+  dedicationId: str(r.dedication_id),
+  path: str(r.path),
+  thumbPath: str(r.thumb_path),
+  width: numOrNull(r.width),
+  height: numOrNull(r.height),
+  position: num(r.position),
+  createdAt: str(r.created_at),
+});
+
+export const toDedicationSong = (r: Row): DedicationSong => {
+  const source = str(r.source);
+  return {
+    id: str(r.id),
+    dedicationId: str(r.dedication_id),
+    title: str(r.title),
+    artist: str(r.artist),
+    note: str(r.note),
+    source: ((SONG_SOURCES as readonly string[]).includes(source) ? source : "link") as SongSource,
+    url: strOrNull(r.url),
+    audioPath: strOrNull(r.audio_path),
+    position: num(r.position),
+    createdAt: str(r.created_at),
+  };
+};

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Link, useLocation } from "react-router-dom";
 import { toUserMessage } from "@/core/errors";
@@ -17,8 +17,10 @@ type GateState = "idle" | "checking" | "needed" | "ok";
  * registra sola sin volver a preguntar.
  *
  * No se cuela en las páginas legales: así se pueden leer antes de aceptar.
+ * Lo que va adentro (las novedades) aparece sólo cuando ya aceptó, para no
+ * apilar dos ventanas.
  */
-export function ConsentGate() {
+export function ConsentGate({ children }: { children?: ReactNode }) {
   const backend = useBackend();
   const { user, signOut } = useAuth();
   const { pathname } = useLocation();
@@ -48,6 +50,7 @@ export function ConsentGate() {
     };
   }, [backend, user]);
 
+  if (state === "ok") return <>{children}</>;
   if (state !== "needed" || pathname === LEGAL_PATH || pathname.startsWith(`${LEGAL_PATH}/`)) return null;
   return <ConsentDialog onAccept={() => backend.legal.accept(LEGAL_VERSION).then(() => setState("ok"))} onSignOut={() => void signOut()} />;
 }

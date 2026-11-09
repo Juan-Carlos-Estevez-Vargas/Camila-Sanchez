@@ -79,6 +79,10 @@ Funciona en dos modos:
 | <img src="docs/capturas/colores.png" alt="Selector de paletas con vista previa en vivo" width="420"> | <img src="docs/capturas/permisos.png" alt="Matriz de permisos por rol en el panel de administración" width="420"> |
 | **Solicitudes de contacto** | **La bandeja en el celular** |
 | <img src="docs/capturas/chat-solicitudes.png" alt="Pestaña Solicitudes con una solicitud recibida para aceptar o rechazar" width="420"> | <img src="docs/capturas/movil-bandeja.png" alt="Bandeja de chats en un celular" width="240"> |
+| **Una dedicatoria** | **La playlist** |
+| <img src="docs/capturas/dedicatoria.png" alt="Dedicatoria «Para mi persona favorita» con el mensaje, tres fotos y cuatro canciones" width="420"> | <img src="docs/capturas/playlist.png" alt="Playlist con todas las canciones de las dedicatorias, botones para reproducir, mezclar e importar" width="420"> |
+| **Novedades al actualizar** | **Y el tutorial de lo nuevo** |
+| <img src="docs/capturas/novedades.png" alt="Ventana Novedades con la dedicatoria nueva y el botón Ver cómo funciona" width="420"> | <img src="docs/capturas/novedades-tutorial.png" alt="El tutorial de las dedicatorias empieza con la presentación de la novedad" width="420"> |
 
 <p align="center">
   <img src="docs/capturas/movil-chat.png" alt="Conversación a pantalla completa en un celular" width="240"><br>
@@ -93,6 +97,7 @@ Funciona en dos modos:
 | Cajita de mensajes: notitas que se abren como una carta y las sorpresas recibidas, guardadas | `/mensajes` | `notes.send` |
 | App de chat a pantalla completa: buscar personas, solicitudes de contacto, chats privados, fotos, stickers, responder, reacciones (en el celular, manteniendo pulsado el mensaje), editar y borrar, «escribiendo…», en línea, vistos (✓ ✓✓), buscar mensajes, fijar, silenciar, archivar y bloquear | `/chat` | `chat.use` |
 | Listas compartidas con subtareas, materiales, fotos, fechas y responsables, en vivo | `/listas` | `lists.use` |
+| Dedicatorias para alguien o para todos: un mensaje, fotos y canciones. Todas las canciones forman una playlist que suena dentro de la app, se exporta (`.m3u8`, cola de YouTube, enlaces de Spotify o texto) y se le importan canciones pegando enlaces o abriendo un `.m3u` | `/dedicatorias` y `/dedicatorias/playlist` | `dedications.use` |
 | Perfil: nombre, foto o icono, frase y cumpleaños | `/cuenta/perfil` | Cualquier cuenta |
 | Mis colores: cada persona elige su paleta sin cambiársela a nadie | `/cuenta/colores` | Cualquier cuenta |
 | Mi cuenta: app en el celular, avisos en el dispositivo, contraseña y sesiones | `/cuenta` | Cualquier cuenta |
@@ -101,9 +106,23 @@ Funciona en dos modos:
 | App de celular instalable (Android, iPhone y computador): ícono, pantalla completa, atajos, sin conexión y aviso de versión nueva | `/app` | Pública |
 | Avisos push en el celular: chat, notitas, sorpresas y listas | — | Quien los active |
 | Tutorial guiado según la página y los permisos de cada cuenta | Todas | Todos |
+| Novedades de cada versión: al actualizar se ve qué cambió y, si hay una función nueva, «Ver cómo funciona» lleva a su página con el tutorial. También en **✨ Novedades** del pie | Todas | Cualquier cuenta |
 | Idiomas: español, inglés y portugués. La app arranca en el idioma del dispositivo y se cambia con 🌐 en la cabecera, el pie o **Mi cuenta** | Todas | Todos |
 | Legal: privacidad, términos, cookies, cobros y licencias; aviso de cookies y aceptación de términos | `/legal` | Pública |
 | Botón opcional «Invítame un café», destacado en la cabecera y en el pie (donación voluntaria por un enlace externo) | Cabecera y pie | Todos, si `VITE_DONATION_URL` tiene valor |
+
+**Dedicatorias y playlist.** Cada dedicatoria es una carta con emoji,
+mensaje, hasta 12 fotos y hasta 50 canciones. Una canción puede ser un enlace
+de YouTube o Spotify, cualquier enlace `https` o un audio subido (MP3, M4A,
+OGG, WAV, FLAC…, hasta 20 MB). El reproductor queda abajo y sigue sonando al
+cambiar de página; pasa sola a la siguiente en YouTube y en los audios
+(Spotify no avisa cuándo termina una canción, así que ahí se usa ⏭). Al
+sonar la playlist se pausa la música de fondo de la portada. Para llevarla a
+otra app: `.m3u8` (VLC, Winamp, Kodi, o TuneMyMusic/Soundiiz para pasarla a otro servicio), la cola de YouTube
+(`watch_videos`, hasta 50), los enlaces de Spotify para pegarlos con Ctrl+V en
+una playlist de Spotify, o la lista en texto. Para traer canciones: pegar
+enlaces (uno por línea, con «Artista - Título» si se quiere) o abrir un
+`.m3u`/`.m3u8` ([diagramas](docs/DIAGRAMAS.md#dedicatorias-y-playlist)).
 
 **Fotos optimizadas en el navegador.** Cada imagen pasa por un *pool* de Web
 Workers con `OffscreenCanvas`: corrige la orientación EXIF, elimina metadatos
@@ -364,7 +383,7 @@ Netlify) está paso a paso en [docs/DESPLIEGUE.md](docs/DESPLIEGUE.md).
 | --- | --- |
 | [Manual de usuario](docs/MANUAL_DE_USUARIO.md) | Quien usa la app: visitantes, Camila y Juan |
 | [Manual de arquitectura](docs/ARQUITECTURA.md) | Quien mantiene o extiende el código |
-| [Diagramas](docs/DIAGRAMAS.md) | Flujos, secuencias, despliegue, modelo de datos, permisos, la app de chat y lo legal (Mermaid) |
+| [Diagramas](docs/DIAGRAMAS.md) | Flujos, secuencias, despliegue, modelo de datos, permisos, la app de chat, las dedicatorias con su playlist y lo legal (Mermaid) |
 | [App de celular](docs/APP_CELULAR.md) | Cómo se instala, cómo funciona sin conexión y cómo publicarla en Google Play |
 | [Despliegue y operación](docs/DESPLIEGUE.md) | Quien pone la app en producción o la administra |
 | [Seguridad OWASP](docs/SEGURIDAD_OWASP.md) | Cómo se cubre cada riesgo del OWASP Top 10 y del API Security Top 10 |

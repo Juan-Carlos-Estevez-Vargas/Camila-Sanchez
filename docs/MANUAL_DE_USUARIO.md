@@ -5,7 +5,7 @@ Guía para usar la app día a día. Hay tres tipos de personas:
 | Quién | Rol | Qué puede hacer |
 | --- | --- | --- |
 | Visitante | Sin cuenta | Ver la página si es pública (siempre con los colores Rosa vino) |
-| Invitado | `viewer` | Ver la página, escribir en la cajita, usar el chat y hacer listas |
+| Invitado | `viewer` | Ver la página, escribir en la cajita, usar el chat, hacer listas y dedicatorias |
 | Camila | `editor` | Lo anterior, más cambiar el contenido desde **Mi panel** |
 | Juan | `super_admin` | Todo, más **Administración**: usuarios, permisos, apariencia y ajustes |
 
@@ -15,6 +15,11 @@ Guía para usar la app día a día. Hay tres tipos de personas:
 > vuelve con **Anterior** (o ←) y sal cuando quieras con **Cerrar**, la ✕ o la
 > tecla Esc. El recorrido cambia según la página y según lo que tu cuenta
 > puede hacer.
+
+> **✨ Novedades.** Cuando la app se actualiza, al entrar verás una ventana
+> con lo que cambió. Si hay algo nuevo, **Ver cómo funciona** te lleva a esa
+> parte de la app y te la muestra paso a paso con el tutorial. Para volver a
+> verlas todas, toca **✨ Novedades** en el pie de página.
 
 > **Idioma.** La app se abre en el idioma de tu celular o computador
 > (español, inglés o portugués; si es otro, en español). Para cambiarlo, usa
@@ -222,7 +227,61 @@ todos.
 descripción o la fecha, y suma a alguien más. Quien creó la lista puede sacar
 a otros y **Borrar lista**; los demás pueden **Salirme de la lista**.
 
-## 6. Notificaciones
+## 6. Dedicatorias
+
+Cartas con fotos y canciones para alguien (o para todos). Entra desde
+**Dedicatorias** en la cabecera; el número a su lado son las que te llegaron
+y no has abierto.
+
+**Escribir una.** Toca **+ Nueva dedicatoria**. Elige **para quién** (una
+persona o **Para todos**), un emoji, el título y el mensaje. Si quieres, suma
+hasta 12 fotos y hasta 50 canciones. Al guardar, a quien se la dedicaste le
+llega un aviso.
+
+**Agregar una canción.** Pega el enlace de YouTube o Spotify (el botón
+**Compartir → Copiar enlace** de la app sirve) o de cualquier página, y
+ponle título, artista y, si quieres, una notita («la de nuestra primera
+cita»). También puedes **subir un audio** desde tu celular o computador (MP3,
+M4A, OGG, WAV…, hasta 20 MB), por ejemplo una nota de voz.
+
+**Escuchar.** Toca **▶ Escuchar todas** o el ▶ de una canción. El reproductor
+aparece abajo y sigue sonando aunque cambies de página. Con YouTube y los
+audios pasa sola a la siguiente; con Spotify toca ⏭ cuando termine (Spotify
+no le avisa a la app). Puedes ponerlo en aleatorio 🔀, achicarlo o cerrarlo. Si estaba
+sonando la música de la portada, se pausa.
+
+**Editar.** En una dedicatoria tuya toca **✏️ Editar**: cambia el texto,
+suma o quita fotos y canciones, y cambia el orden con ↑ ↓. **Pegar varias**
+agrega muchas canciones de una vez. **Borrar** la quita para todos.
+
+**La playlist.** La pestaña **Playlist** junta las canciones de todas las
+dedicatorias que ves, de la más antigua a la más nueva (o al revés). Desde
+ahí:
+
+| Botón | Para qué |
+| --- | --- |
+| ▶ Reproducir todo / 🔀 Aleatorio | Escucharla aquí mismo |
+| ⬆️ Importar | Traer canciones de otra parte (ver abajo) |
+| ⬇️ Descargar .m3u8 | Abrirla en VLC, Winamp o Kodi, o pasarla a Spotify, Apple Music o Deezer con TuneMyMusic o Soundiiz |
+| ▶ Abrir en YouTube | Una cola con los videos de YouTube (hasta 50) |
+| 📋 Copiar enlaces de Spotify | Pégalos con Ctrl+V (⌘V) dentro de una playlist en Spotify para el computador |
+| 📋 Copiar la lista | Título y artista de cada una, para mandarla por chat |
+
+**Importar una playlist.** Toca **⬆️ Importar** y pega los enlaces, uno por
+línea (puede ir «Artista - Título» antes del enlace), o abre un archivo
+`.m3u` o `.m3u8`. Antes de guardar ves la lista y puedes corregir los
+títulos. Eliges si van a una dedicatoria nueva o a una tuya.
+
+- *Desde Spotify:* en la app para computador, abre la playlist, selecciona
+  todas las canciones (Ctrl+A) y cópialas (Ctrl+C): se copian sus enlaces.
+  Pégalos aquí.
+- *Desde YouTube:* copia el enlace de cada video, o pega el enlace de una
+  playlist completa: queda como una sola canción que reproduce toda la lista.
+
+Los audios que subiste se quedan en la app: no van en el `.m3u8` ni en
+YouTube o Spotify.
+
+## 7. Notificaciones
 
 La campanita 🔔 de la cabecera cuenta los avisos sin leer. Tócala para verlos;
 cada uno te lleva directo a la notita o al chat. **Marcar todo leído** los
@@ -268,7 +327,7 @@ Manteniendo pulsado el ícono (en Android) aparecen atajos al **Chat**, la
 internet ves lo último que se guardó y un aviso **Sin conexión**. Si cierras
 el aviso de instalar con la ✕, no vuelve a salir en unas semanas.
 
-## 7. Mi cuenta
+## 8. Mi cuenta
 
 Toca tu foto (o tu inicial) en la esquina de la cabecera: se abre un menú con
 **Mi cuenta** y **Salir**.
@@ -309,7 +368,7 @@ Sólo cada persona puede cambiar su propio perfil.
   una copia de tus datos, corregirlos o borrar tu cuenta (gratis, sin
   preguntas).
 
-## 8. Recuperar la contraseña
+## 9. Recuperar la contraseña
 
 1. En **Entrar**, toca **Olvidé mi contraseña** y escribe tu correo.
 2. Abre el enlace del correo (vence en 1 hora y sirve una sola vez).
@@ -319,7 +378,7 @@ Sólo cada persona puede cambiar su propio perfil.
 Si el correo no llega, pídele a Juan un **enlace de recuperación** (ver
 sección 10): te lo puede mandar por WhatsApp o mostrártelo como QR.
 
-## 9. Mi panel (Camila y Juan)
+## 10. Mi panel (Camila y Juan)
 
 Desde **Mi panel** se cambia todo lo que se ve en la página. Los cambios se
 guardan solos y se ven al instante.
@@ -373,7 +432,7 @@ celular. Las programadas para más adelante le aparecen cuando entre a la
 página. En esta pantalla sólo ves las sorpresas que tú preparaste, así las que
 te preparen a ti siguen siendo sorpresa.
 
-## 10. Administración (Juan)
+## 11. Administración (Juan)
 
 | Opción | Para qué |
 | --- | --- |
@@ -410,7 +469,7 @@ te preparen a ti siguen siendo sorpresa.
 En **Usuarios**, toca 🔑 junto a la persona. Sale un enlace y un QR que vencen
 en 1 hora; mándaselo por donde quieras. No depende del correo.
 
-## 11. Preguntas frecuentes
+## 12. Preguntas frecuentes
 
 **No veo «Mi panel» o «Administración».** Tu cuenta no tiene esos permisos;
 pídeselos a Juan.
