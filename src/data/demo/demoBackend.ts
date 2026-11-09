@@ -107,8 +107,10 @@ function initialState(): DemoState {
   return state;
 }
 
+/** Las cuentas de la demo existen desde antes de las novedades (para verlas al entrar). */
+const DEMO_ACCOUNTS_SINCE = "2026-10-15T12:00:00.000Z";
+
 function baseState(): DemoState {
-  const created = nowIso();
   return {
     settings: { ...SEED_SETTINGS, translations: SEED_TRANSLATIONS.settings },
     sections: SEED_SECTIONS.map((s) => ({ ...s, id: uuid(), translations: SEED_TRANSLATIONS.sections[s.kind] ?? {} }) as Section),
@@ -136,7 +138,7 @@ function baseState(): DemoState {
     dedicationSongs: [],
     users: DEMO_ACCOUNTS.map((a) => ({
       id: uuid(), email: a.email, password: a.password, displayName: a.displayName,
-      role: a.role, isActive: true, avatarUrl: null, createdAt: created, themeColors: null,
+      role: a.role, isActive: true, avatarUrl: null, createdAt: DEMO_ACCOUNTS_SINCE, themeColors: null,
       avatarPath: null, avatarEmoji: null, bio: "", birthday: null,
     })),
     invitations: [],

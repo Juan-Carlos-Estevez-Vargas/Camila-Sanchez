@@ -17,6 +17,7 @@ import { CookieBanner } from "@/features/legal/CookieBanner";
 import { AppStatus } from "@/features/install/AppStatus";
 import { InstallBanner } from "@/features/install/InstallBanner";
 import { PlayerProvider } from "@/features/player/PlayerContext";
+import { WhatsNew } from "@/features/whatsNew/WhatsNew";
 import { INSTALL_PATH } from "@/core/seo";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { RouteAnnouncer, SkipLink } from "./RouteAnnouncer";
@@ -77,7 +78,9 @@ function ThemedShell() {
         </Suspense>
       </ErrorBoundary>
       <Footer />
-      <ConsentGate />
+      <ConsentGate>
+        <WhatsNew />
+      </ConsentGate>
       <CookieBanner />
       <InstallBanner />
       <AppStatus />

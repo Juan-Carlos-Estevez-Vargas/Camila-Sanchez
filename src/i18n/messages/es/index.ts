@@ -17,5 +17,6 @@ import { superAdmin } from "./superAdmin";
 import { theme } from "./theme";
 import { tour } from "./tour";
 import { ui } from "./ui";
+import { whatsNew } from "./whatsNew";
 
-export default { admin, app, auth, chat, common, dates, dedications, donate, errors, install, legal, lists, notes, site, superAdmin, theme, tour, ui };
+export default { admin, app, auth, chat, common, dates, dedications, donate, errors, install, legal, lists, notes, site, superAdmin, theme, tour, ui, whatsNew };

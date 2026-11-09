@@ -1,0 +1,72 @@
+@use "abstracts" as *;
+
+// Novedades de cada versión.
+.whats-new {
+  &__intro {
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: space(1) space(2);
+    align-items: baseline;
+  }
+
+  &__version {
+    @include chip;
+    font-size: 0.8rem;
+    padding: 2px space(2);
+  }
+
+  &__release + &__release {
+    border-top: 1px solid var(--c-border);
+    padding-top: space(4);
+  }
+
+  &__date {
+    margin: 0;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--c-muted);
+  }
+
+  &__news {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: space(3);
+  }
+
+  &__item {
+    display: flex;
+    gap: space(3);
+    align-items: flex-start;
+    padding: space(3) space(4);
+
+    @include below("sm") { padding: space(3); gap: space(2); }
+  }
+
+  &__icon {
+    flex: none;
+    font-size: 1.8rem;
+    line-height: 1;
+
+    @include below("sm") { font-size: 1.4rem; }
+  }
+
+  &__body {
+    min-width: 0;
+    display: grid;
+    gap: space(2);
+    justify-items: start;
+
+    h4 { margin: 0; font-size: 1.05rem; }
+    p { margin: 0; }
+  }
+
+  &__changes {
+    h4 { margin: 0 0 space(1); font-size: 0.95rem; }
+    ul { margin: 0; padding-left: 1.2rem; display: grid; gap: space(1); }
+    li { color: var(--c-muted); }
+  }
+}

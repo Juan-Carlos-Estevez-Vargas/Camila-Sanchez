@@ -365,3 +365,15 @@ export function tourFor(ctx: TourContext): TourStep[] {
   };
   return [welcome, ...pageSteps(ctx), ...navSteps(ctx), farewell];
 }
+
+/**
+ * Recorrido de una función nueva: su presentación (lo de las novedades),
+ * los pasos de su página y el recordatorio del botón del tutorial.
+ */
+export function featureTour(ctx: TourContext, intro: { title: string; body: string }): TourStep[] {
+  const farewell: TourStep = { id: "launcher", target: [tourTarget("tour-launcher")], ...text("launcher") };
+  return [{ id: "whats-new", ...intro }, ...pageSteps(ctx), farewell];
+}
+
+/** ¿La página tiene pasos propios? (para no llevar a un tutorial vacío). */
+export const hasPageTour = (ctx: TourContext): boolean => pageSteps(ctx).length > 0;

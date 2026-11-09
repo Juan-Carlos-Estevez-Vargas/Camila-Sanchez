@@ -4,7 +4,8 @@ import { useLocation } from "react-router-dom";
 import { useAuth } from "@/state/AuthContext";
 import { prefersReducedMotion } from "@/ui/motion";
 import { placePopover, spotlightBox, type Box, type PopoverPosition } from "./tourLayout";
-import { tourFor, type TourStep } from "./tourSteps";
+import { clearTourRequest, useTourRequest } from "./tourRequest";
+import { featureTour, tourFor, type TourStep } from "./tourSteps";
 import { useT } from "@/i18n";
 
 /** Recordatorio (sólo en este navegador) de que ya se abrió el tutorial. */
@@ -73,6 +74,30 @@ export function GuidedTour() {
 
   // Cambiar de página termina el recorrido: sus pasos eran de la anterior.
   useEffect(() => setSteps(null), [pathname]);
+
+  // Las novedades piden el recorrido de una función: empieza al llegar a su
+  // página, cuando ya cargó lo que se va a señalar (hasta unos 4 s).
+  const request = useTourRequest();
+  useEffect(() => {
+    if (!request || request.path !== pathname) return;
+    const all = featureTour({ pathname, loggedIn: Boolean(user), displayName: profile?.displayName, policy }, request.intro);
+    const waitFor = all.find((s) => s.target && !s.optional && s.id !== "launcher");
+    let tries = 0;
+    let timer: ReturnType<typeof setTimeout>;
+    const begin = () => {
+      if (waitFor && !findTarget(waitFor) && tries++ < 40) {
+        timer = setTimeout(begin, 100);
+        return;
+      }
+      clearTourRequest();
+      setSteps(all.filter((s) => !s.optional || findTarget(s)));
+      setIndex(0);
+      markSeen();
+      setSeen(true);
+    };
+    timer = setTimeout(begin, 50);
+    return () => clearTimeout(timer);
+  }, [request, pathname, user, profile?.displayName, policy]);
 
   return (
     <>
