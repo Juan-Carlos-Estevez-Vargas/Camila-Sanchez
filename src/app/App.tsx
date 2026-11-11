@@ -15,6 +15,7 @@ import { EmptyState, PageLoader } from "@/ui/Feedback";
 import { AppFooter } from "./AppFooter";
 import { AppHeader } from "./AppHeader";
 import { SpecialDayRibbon } from "./SpecialDayRibbon";
+import { SpecialDayGarland, SpecialDayScene } from "./SpecialDayScene";
 import { ConsentGate } from "@/features/legal/ConsentGate";
 import { CookieBanner } from "@/features/legal/CookieBanner";
 import { AppStatus } from "@/features/install/AppStatus";
@@ -72,7 +73,9 @@ function ThemedShell() {
       <SkipLink />
       <RouteAnnouncer />
       <AppHeader />
+      <SpecialDayGarland />
       <SpecialDayRibbon />
+      <SpecialDayScene />
       <ErrorBoundary>
         <Suspense fallback={<PageLoader />}>
           {/* Falta el código de la verificación en dos pasos: nada más hasta escribirlo. */}

@@ -171,6 +171,14 @@ cumpleaños (día y mes) y los días que faltan.
   `sections/Hero.tsx` el saludo grande y `SitePage.tsx` los emojis del día y la
   lluvia de bienvenida (una vez por día y pestaña, nada con «Reducir
   animaciones»). Los detalles por fecha están en `styles/layout/_special.scss`.
+- La escena de cada fecha está en `style.scene` (`SpecialScene`: lo que cae,
+  confeti, guirnalda de emojis, luces o banderines, suelo, lo que vuela, lo que
+  cuelga, telarañas y fuegos artificiales). `app/SpecialDayScene.tsx` la
+  dibuja: `SpecialDayGarland` va en el flujo bajo la cabecera y
+  `SpecialDayScene` es una capa fija detrás del contenido, sin clics y con
+  `aria-hidden`. Todo se anima con CSS (`transform` y `opacity`) y las
+  posiciones salen del índice; con «Reducir animaciones» no se pinta lo que
+  cae, vuela o estalla, y lo demás queda quieto. No sale en el chat.
 - `features/admin/theme/SpecialDaysCard.tsx` es la tarjeta de **Apariencia**:
   cumpleaños (a mano o desde el perfil de una cuenta), interruptores y
   «Ver cómo se ve». Los textos están en `i18n/messages/*/special.ts`.

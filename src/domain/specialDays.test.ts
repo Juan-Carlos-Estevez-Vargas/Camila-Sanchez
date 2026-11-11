@@ -71,7 +71,7 @@ describe("normalizeSpecialDays", () => {
 describe("specialTheme", () => {
   it("pone los colores del día y conserva tipografías y bordes", () => {
     const theme = specialTheme(DEFAULT_THEME, previewSpecialDay("halloween", null));
-    expect(theme.background).toBe("#16101e");
+    expect(theme.background).toBe(SPECIAL_DAY_STYLES.halloween.colors.background);
     expect(theme.darkMode).toBe("light");
     expect(theme.fontDisplay).toBe(DEFAULT_THEME.fontDisplay);
     expect(theme.radius).toBe(DEFAULT_THEME.radius);
@@ -98,6 +98,24 @@ describe("SPECIAL_DAY_STYLES", () => {
       expect(contrastRatio(c.text, c.surface), `${id} tarjetas`).toBeGreaterThanOrEqual(4.5);
       expect(contrastRatio(c.muted, c.background), `${id} secundario`).toBeGreaterThanOrEqual(4.5);
       expect(contrastRatio(c.primaryContrast, c.primary), `${id} botones`).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+});
+
+describe("escenas", () => {
+  it("cada fecha trae su decoración", () => {
+    const h = SPECIAL_DAY_STYLES.halloween.scene;
+    expect(h.ground).toContain("💀");
+    expect(h.cobwebs).toBe(true);
+    expect(SPECIAL_DAY_STYLES.christmas.scene.ground).toContain("🎄");
+    expect(SPECIAL_DAY_STYLES.christmas.scene.garland.kind).toBe("lights");
+    expect(SPECIAL_DAY_STYLES.newYear.scene.fireworks).toBe(true);
+    for (const [id, style] of Object.entries(SPECIAL_DAY_STYLES)) {
+      expect(style.scene.ground.length, id).toBeGreaterThan(0);
+      expect(style.scene.garland.items.length, id).toBeGreaterThan(0);
+      if (style.scene.garland.kind !== "emoji") {
+        expect(style.scene.garland.items.every((c) => /^#[0-9a-f]{6}$/i.test(c)), id).toBe(true);
+      }
     }
   });
 });

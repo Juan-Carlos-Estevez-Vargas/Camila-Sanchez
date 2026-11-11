@@ -133,7 +133,17 @@ teléfono de quien mira, toda la app se viste de fiesta para todos: colores
 propios de la fecha (también por encima de los colores que cada persona eligió),
 emojis de fondo del día, una lluvia de bienvenida, el saludo grande en la
 portada («¡Feliz cumpleaños, Camila!») y una franja bajo la cabecera en las
-demás páginas. Las fechas son 🎂 su cumpleaños, 💍 el aniversario (con la fecha
+demás páginas. Además, cada fecha trae su escena animada en todas las páginas
+(menos el chat): una guirnalda bajo la cabecera (calaveras y calabazas,
+luces de Navidad que parpadean, banderines de cumpleaños), cosas que caen
+(nieve, hojas, pétalos, confeti), que vuelan (murciélagos, la bruja, el
+trineo, estrellas fugaces), que cuelgan de un hilo (arañas, campanas, globos),
+telarañas, fuegos artificiales en Año Nuevo y una fila en el suelo (tumbas y
+calaveras, árboles y muñecos de nieve, regalos). El fondo, la cabecera, las
+tarjetas, los botones y los títulos también se visten: luna llena en Halloween,
+cabecera de bastón de caramelo y nieve en Navidad, confeti y arcoíris en el
+cumpleaños, cielo estrellado en Año Nuevo. Con «Reducir animaciones» sólo queda
+la decoración quieta. Las fechas son 🎂 su cumpleaños, 💍 el aniversario (con la fecha
 en que empezó todo), 💘 San Valentín, 💛 Amor y Amistad (tercer sábado de
 septiembre), 🎃 Halloween, 🎄 Navidad (24 y 25) y 🎆 Año Nuevo (31 y 1); si
 coinciden dos, gana el cumpleaños. En **Super → Apariencia → Fechas especiales**

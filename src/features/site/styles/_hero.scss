@@ -110,5 +110,52 @@
   to { opacity: 1; transform: none; }
 }
 
+// Cada fecha mueve su icono a su manera y le pone un detalle a la tarjeta.
+:root[data-special="halloween"] .hero__special-icon { animation: hero-swing 2.4s ease-in-out infinite; transform-origin: 50% 0; }
+:root[data-special="christmas"] .hero__special-icon { animation: hero-twinkle 2s ease-in-out infinite; }
+:root[data-special="birthday"] .hero__special-icon,
+:root[data-special="friendship"] .hero__special-icon { animation: hero-bounce 1.4s cubic-bezier(0.3, 0, 0.4, 1) infinite; }
+:root[data-special="newYear"] .hero__special-icon { animation: hero-glow 2.2s ease-in-out infinite; }
+:root[data-special="valentine"] .hero__special-icon,
+:root[data-special="anniversary"] .hero__special-icon { animation: heartbeat 1.6s ease-in-out infinite; }
+
+:root[data-special="christmas"] .hero__special {
+  position: relative;
+  border-color: var(--c-primary);
+
+  // Un poco de nieve encima de la tarjeta.
+  &::before {
+    content: "";
+    position: absolute;
+    inset: -7px -3px auto;
+    height: 20px;
+    border-radius: 14px 14px 0 0;
+    // Una capa de nieve con goteritas que caen sobre el borde.
+    background:
+      radial-gradient(circle at 18% 12px, #fff 0 6px, transparent 7px),
+      radial-gradient(circle at 46% 12px, #fff 0 8px, transparent 9px),
+      radial-gradient(circle at 74% 12px, #fff 0 5px, transparent 6px),
+      linear-gradient(#fff, #fff) 0 0 / 100% 13px no-repeat;
+    filter: drop-shadow(0 2px 2px rgb(0 0 0 / 12%));
+  }
+}
+
+:root[data-special="halloween"] .hero__special,
+:root[data-special="newYear"] .hero__special {
+  box-shadow: 0 0 0 1px var(--c-accent), 0 0 40px -6px var(--c-primary), var(--shadow-lg);
+}
+
+:root[data-special="birthday"] .hero__special {
+  border: 3px solid transparent;
+  background:
+    linear-gradient(var(--c-surface), var(--c-surface)) padding-box,
+    linear-gradient(120deg, #ff4d8d, #ffb703, #3ec7c2, #8c5cff, #ff4d8d) border-box;
+}
+
+@keyframes hero-swing { 0%, 100% { transform: rotate(-12deg); } 50% { transform: rotate(12deg); } }
+@keyframes hero-twinkle { 0%, 100% { transform: scale(1); filter: brightness(1); } 50% { transform: scale(1.1); filter: brightness(1.25) drop-shadow(0 0 12px #ffd166); } }
+@keyframes hero-bounce { 0%, 100% { transform: translateY(0); } 40% { transform: translateY(-16px) rotate(-4deg); } 60% { transform: translateY(-10px) rotate(3deg); } }
+@keyframes hero-glow { 0%, 100% { filter: drop-shadow(0 0 4px #ffd166); } 50% { filter: drop-shadow(0 0 22px #ffd166); transform: scale(1.08); } }
+
 :root[data-motion="reduce"] .hero__special,
 :root[data-motion="reduce"] .hero__special-icon { animation: none; }
