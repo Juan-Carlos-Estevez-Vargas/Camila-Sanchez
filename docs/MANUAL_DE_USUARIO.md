@@ -88,7 +88,12 @@ llega al celular cuando la publican. Después de verla queda guardada en
 En tu cumpleaños, nuestro aniversario, San Valentín, Amor y Amistad,
 Halloween, Navidad y Año Nuevo la página entera se viste de fiesta todo el día:
 cambian los colores, los emojis que flotan, aparece un saludo grande en la
-portada y una franja de fiesta arriba en las demás páginas. Al día siguiente
+portada y una franja de fiesta arriba en las demás páginas. Cada fecha trae
+además su decoración animada: en Halloween calaveras, calabazas, murciélagos,
+arañas colgando, telarañas y una luna llena; en Navidad luces de colores que
+parpadean, nieve cayendo, árboles, muñecos de nieve y el trineo cruzando; en tu
+cumpleaños banderines, confeti y globos; en Año Nuevo fuegos artificiales. Si
+activaste «Reducir animaciones» en el pie, la decoración se queda quieta. Al día siguiente
 vuelve sola a como estaba. Mientras dura, se ve igual para todos, aunque hayas
 elegido tus propios colores.
 

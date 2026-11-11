@@ -916,6 +916,34 @@ flowchart TD
   T --> C["ThemeController → variables CSS en :root"]
 ```
 
+Cómo se arma la escena de cada fecha (`SpecialDayGarland` y `SpecialDayScene`):
+
+```mermaid
+flowchart TD
+  D["Fecha especial del día<br/>style.scene"] --> G["Guirnalda bajo la cabecera<br/>emojis · luces de colores · banderines"]
+  D --> Q{"¿Reducir animaciones?"}
+  Q -- "no" --> M["En movimiento"]
+  Q -- "sí" --> S["Sólo lo quieto"]
+  M --> F["Cae meciéndose: nieve, hojas,<br/>pétalos, confeti de papelitos"]
+  M --> V["Cruza volando: murciélagos,<br/>la bruja, el trineo, estrellas fugaces"]
+  M --> W["Fuegos artificiales (Año Nuevo)"]
+  M & S --> H["Cuelga de un hilo: arañas,<br/>calaveras, campanas, globos"]
+  M & S --> T["Suelo: calabazas, tumbas, calaveras,<br/>árboles, muñecos de nieve, regalos"]
+  M & S --> C["Telarañas en las esquinas (Halloween)"]
+  D --> P["Toda la página: fondo propio (luna, nieve,<br/>confeti, cielo de noche), cabecera,<br/>tarjetas, botones y títulos"]
+  X["Chat a pantalla completa"] -. "sin escena" .-> D
+```
+
+| Fecha | Guirnalda | Cae | Vuela | Cuelga | Suelo |
+| --- | --- | --- | --- | --- | --- |
+| 🎂 Cumpleaños | Banderines | Confeti, 🎊 | — | 🎈 🎀 | 🎁 🎂 🎈 🥳 |
+| 💍 Aniversario | 💍 ❤️ 🥂 | 🌹 ❤️ ✨ | 🕊️ | — | 🌹 🥂 💐 |
+| 💘 San Valentín | ❤️ 💕 💘 | 💗 🌸 | 💘 | — | 🌹 💝 💌 🧸 |
+| 💛 Amor y Amistad | Banderines | 🌼 💛 🧡 | 🦋 | — | 🌻 🎁 🌷 |
+| 🎃 Halloween | 🎃 💀 🦇 | 🍂 🍁 | 🦇 🧙‍♀️ | 🕷️ 💀 + telarañas | 🎃 🪦 💀 🕯️ 🍬 |
+| 🎄 Navidad | Luces de colores | ❄️ nieve | 🛷 | 🔔 ⭐ 🎀 | 🎄 🎁 ☃️ 🦌 🎅 |
+| 🎆 Año Nuevo | Luces doradas | ✨ ⭐ + confeti | 🌠 | — | 🍾 🥂 🎉 🕛 + fuegos artificiales |
+
 De dónde sale cada fecha:
 
 ```mermaid
