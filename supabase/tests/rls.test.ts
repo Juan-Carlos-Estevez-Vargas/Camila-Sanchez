@@ -169,6 +169,18 @@ describe("edición de contenido", () => {
     expect(rows).toEqual([{ t: "Hi" }]);
   });
 
+  it("sólo settings.manage pone la fecha de fin, y nunca antes del inicio", async () => {
+    expect(await as(CAMI, `update site_settings set relationship_end = '2026-10-31' returning id`)).toEqual([]);
+    const rows = await as(JUAN, `update site_settings set relationship_end = '2026-10-31' returning relationship_end::text as e`);
+    expect(rows).toEqual([{ e: "2026-10-31" }]);
+    await expect(as(JUAN, `update site_settings set relationship_end = '2020-01-01' returning id`)).rejects.toThrow();
+  });
+
+  it("las fechas se pueden marcar «sólo mientras estemos juntos»", async () => {
+    const rows = await as(JUAN, `update important_dates set only_together = true where title = 'Navidad juntos' returning only_together`);
+    expect(rows).toEqual([{ only_together: true }]);
+  });
+
   it("la editora ya no cambia los colores de la página", async () => {
     expect(await as(CAMI, `update site_settings set theme = theme || '{"primary":"#123456"}' returning id`)).toEqual([]);
     const [row] = await as<{ p: string }>(JUAN, "select theme->>'primary' as p from site_settings");

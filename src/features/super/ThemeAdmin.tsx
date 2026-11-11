@@ -13,6 +13,7 @@ import { ColorInput } from "@/features/admin/theme/ColorInput";
 import { PalettePicker } from "@/features/admin/theme/PalettePicker";
 import { ThemePreview } from "@/features/admin/theme/ThemePreview";
 import { SpecialDaysCard } from "@/features/admin/theme/SpecialDaysCard";
+import { anniversaryStart, relationshipEnded } from "@/domain/relationship";
 import { useAsync } from "@/ui/useAsync";
 import { useT } from "@/i18n";
 
@@ -120,7 +121,7 @@ export default function ThemeAdmin() {
         <p className="muted" style={{ margin: 0 }}>{tx.animationsHint}</p>
       </div>
 
-      <SpecialDaysCard value={fx.specialDays} relationshipStart={content.settings.relationshipStart}
+      <SpecialDaysCard value={fx.specialDays} relationshipStart={anniversaryStart(content.settings)} ended={relationshipEnded(content.settings)}
         profiles={profiles ?? []} onChange={(specialDays) => setFx({ specialDays })} />
     </AdminPage>
   );

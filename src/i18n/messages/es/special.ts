@@ -45,6 +45,7 @@ export const special = {
     pick: "Elegir…",
     noBirthday: "Pon la fecha de su cumpleaños para que ese día la página se vista de fiesta.",
     noStart: "Falta la fecha en que empezó todo (Ajustes del sitio).",
+    ended: "Ya no se celebra: la relación terminó (Ajustes del sitio).",
     toggle: (name: string) => `Activar ${name}`,
     preview: "Ver cómo se ve",
     today: "¡Es hoy!",

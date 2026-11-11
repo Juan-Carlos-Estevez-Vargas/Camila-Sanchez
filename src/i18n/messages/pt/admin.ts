@@ -108,6 +108,9 @@ export const admin: Messages["admin"] = {
     yearlyHint: "Para aniversários use a data original: assim os anos são contados.",
     repeats: "Repete todo ano",
     show: "Mostrar na página",
+    onlyTogether: "Só enquanto estivermos juntos",
+    onlyTogetherHint: "Fica oculta sozinha se o relacionamento terminou (Ajustes do site) e volta se a data do fim for removida.",
+    pausedEnded: "pausada: o relacionamento terminou",
   },
   milestones: {
     title: "Marcos importantes",

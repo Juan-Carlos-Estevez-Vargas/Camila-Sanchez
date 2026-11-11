@@ -1,5 +1,6 @@
 import { buildCountdowns, countdownLabel, formatLongDate } from "@/domain/dates";
 import type { SectionProps } from "./types";
+import { countdownDates, relationshipEnded } from "@/domain/relationship";
 import { useT } from "@/i18n";
 import { useSpecialDay } from "@/state/SpecialDayContext";
 
@@ -8,7 +9,7 @@ export function Hero({ section, content }: SectionProps<"hero">) {
   const ts = useT().special;
   const { day } = useSpecialDay();
   const { settings } = content;
-  const next = buildCountdowns(content.dates)[0];
+  const next = buildCountdowns(countdownDates(content.dates, settings))[0];
   return (
     <div className="hero">
       <div className="hero__glow" aria-hidden />
@@ -24,7 +25,11 @@ export function Hero({ section, content }: SectionProps<"hero">) {
           </div>
         )}
         {settings.relationshipStart && (
-          <span className="hero__eyebrow">{t.together(formatLongDate(settings.relationshipStart))}</span>
+          <span className="hero__eyebrow">
+            {relationshipEnded(settings)
+              ? t.togetherUntil(formatLongDate(settings.relationshipStart), formatLongDate(settings.relationshipEnd!))
+              : t.together(formatLongDate(settings.relationshipStart))}
+          </span>
         )}
         <h1 className="hero__title">{section.title || settings.siteTitle}</h1>
         {(section.subtitle || settings.siteSubtitle) && (

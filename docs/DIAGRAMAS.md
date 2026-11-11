@@ -24,6 +24,7 @@ directamente al abrir este archivo. La explicación de cada pieza está en
 - [Sorpresas para una persona](#sorpresas-para-una-persona)
 - [Colores por persona](#colores-por-persona)
 - [Temas de fechas especiales](#temas-de-fechas-especiales)
+- [Fin de la relación](#fin-de-la-relación)
 - [Perfil de cada persona](#perfil-de-cada-persona)
 - [Listas compartidas](#listas-compartidas)
 - [Dedicatorias y playlist](#dedicatorias-y-playlist)
@@ -903,7 +904,7 @@ flowchart TD
   P -- "sí" --> V["previewSpecialDay(id)<br/>+ franja «Vista previa · Quitar»"]
   P -- "no" --> E{"¿effects.specialDays.enabled?"}
   E -- "no" --> N["Tema de siempre<br/>(página + colores de cada persona)"]
-  E -- "sí" --> O["specialDayOn(): recorre en orden<br/>1 🎂 su cumpleaños · 2 💍 aniversario<br/>3 💘 San Valentín · 4 💛 Amor y Amistad<br/>5 🎃 Halloween · 6 🎄 Navidad · 7 🎆 Año Nuevo"]
+  E -- "sí" --> O["specialDayOn(): recorre en orden<br/>1 🎂 su cumpleaños · 2 💍 aniversario (no si la relación terminó)<br/>3 💘 San Valentín · 4 💛 Amor y Amistad<br/>5 🎃 Halloween · 6 🎄 Navidad · 7 🎆 Año Nuevo"]
   O --> Q{"¿Hoy cae alguna<br/>que no esté apagada?"}
   Q -- "no" --> N
   Q -- "sí, la primera que coincide" --> D["Fecha especial del día"]
@@ -926,6 +927,7 @@ flowchart LR
     EN["enabled"]
   end
   RS["Ajustes del sitio →<br/>fecha en que empezó todo"] --> ANI["💍 Aniversario<br/>(desde el primer año)"]
+  RE["Ajustes del sitio →<br/>fecha en que terminó"] -. "con fecha: se apaga" .-> ANI
   BD --> CUM["🎂 Cumpleaños<br/>(29 feb → 28 en años no bisiestos)"]
   FIJ["Calendario"] --> F1["💘 14 feb · 🎃 31 oct<br/>🎄 24 y 25 dic · 🎆 31 dic y 1 ene"]
   FIJ --> F2["💛 Tercer sábado de septiembre<br/>(Amor y Amistad, Colombia)"]
@@ -947,6 +949,42 @@ sequenceDiagram
   DB-->>RT: cambio en site_settings
   RT-->>App: recarga los ajustes
   Note over App: el día de su cumpleaños, de 00:00 a 23:59,<br/>toda la app se viste de cumpleaños para todos
+```
+
+## Fin de la relación
+
+Qué cambia cuando hay `relationship_end` (en la base real, el 31 de octubre de
+2026). No se borra nada: si se quita la fecha, todo vuelve a como estaba.
+
+```mermaid
+flowchart TD
+  S["site_settings<br/>relationship_start · relationship_end"] --> Q{"¿Hay fecha de fin?<br/>relationshipEnded()"}
+  Q -- "no" --> T["Contador que suma cada segundo<br/>«Juntos desde el …»"]
+  Q -- "no" --> A1["💍 Aniversario celebrado<br/>y en las cuentas regresivas"]
+  Q -- "sí" --> C["counterUntil(): el contador queda quieto<br/>en el día del final (518 días, sin reloj)"]
+  C --> C2["«Fueron 17 meses que guardo con cariño»<br/>«El tiempo que compartimos, del … al …»"]
+  Q -- "sí" --> H["Portada: «Del 31 de mayo de 2025<br/>al 31 de octubre de 2026»"]
+  Q -- "sí" --> A["anniversaryStart() = null<br/>specialDayOn() ya no lo celebra"]
+  Q -- "sí" --> CD["countdownDates() / pausedByEnd(): sin el aniversario<br/>ni las fechas only_together («Navidad juntos»)<br/>(portada, Fechas que esperamos, Panel)"]
+  Q -- "sí" --> SUB["Contador sin subtítulo<br/>(«Y contando…» se oculta)"]
+  Q -- "sí" --> K["🎂 Cumpleaños, otras fechas, fotos,<br/>dedicatorias, chat y listas: igual"]
+```
+
+```mermaid
+sequenceDiagram
+  actor J as Juan (settings.manage)
+  participant A as Super → Ajustes del sitio
+  participant DB as site_settings
+  participant RT as Realtime
+  participant App as App de quien mira
+
+  J->>A: Fecha en que terminó = 31/10/2026
+  A->>A: validRelationshipEnd(): no antes del inicio
+  A->>DB: update relationship_end
+  Note over DB: guard_site_settings exige settings.manage<br/>check: fin ≥ inicio
+  DB-->>RT: cambio en site_settings
+  RT-->>App: recarga los ajustes
+  Note over App: contador quieto, «Del … al …»,<br/>sin aniversario
 ```
 
 ## Perfil de cada persona
@@ -1620,6 +1658,7 @@ erDiagram
     smallint id PK "siempre 1"
     text site_title
     date relationship_start
+    date relationship_end "fin de la relación (opcional)"
     boolean is_public
     jsonb theme
   }
@@ -1648,6 +1687,7 @@ erDiagram
     text title
     date event_date
     boolean recurs_yearly
+    boolean only_together "se oculta si la relación terminó"
   }
   INTERRUPTIONS {
     uuid id PK

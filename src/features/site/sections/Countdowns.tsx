@@ -1,4 +1,5 @@
 import { buildCountdowns, titleInSentence } from "@/domain/dates";
+import { countdownDates } from "@/domain/relationship";
 import { SectionHeading } from "./SectionHeading";
 import type { SectionProps } from "./types";
 import { dateFormat, useT } from "@/i18n";
@@ -6,7 +7,7 @@ import { dateFormat, useT } from "@/i18n";
 export function Countdowns({ section, content }: SectionProps<"countdowns">) {
   const t = useT().site.countdown;
   const dayFormat = dateFormat({ weekday: "long", day: "numeric", month: "long" });
-  const countdowns = buildCountdowns(content.dates);
+  const countdowns = buildCountdowns(countdownDates(content.dates, content.settings));
   if (!countdowns.length) return null;
   return (
     <div className="container" id="fechas">

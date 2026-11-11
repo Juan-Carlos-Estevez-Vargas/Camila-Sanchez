@@ -41,6 +41,7 @@ export const special: Messages["special"] = {
     pick: "Choose…",
     noBirthday: "Set her birthday so the page dresses up for the party that day.",
     noStart: "The date it all began is missing (Site settings).",
+    ended: "No longer celebrated: the relationship ended (Site settings).",
     toggle: (name) => `Turn on ${name}`,
     preview: "See how it looks",
     today: "It's today!",

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { TRANSLATABLE, translatableSource } from "@/domain/contentTranslations";
 import { buildCountdowns, countdownLabel, formatLongDate, toIsoDate } from "@/domain/dates";
+import { pausedByEnd } from "@/domain/relationship";
 import type { ImportantDate } from "@/domain/types";
 import { useBackend } from "@/state/BackendContext";
 import { useContentStore, useSiteContent } from "@/state/SiteContentStore";
@@ -67,6 +68,7 @@ export default function DatesAdmin() {
               <span className="list__icon" aria-hidden>{d.icon}</span>
               <span className="grow">
                 <strong>{d.title}</strong> {!d.isVisible && <span className="badge badge--muted">{a.hidden}</span>}
+                {content && d.isVisible && pausedByEnd(d, content.settings) && <span className="badge badge--muted">{t.pausedEnded}</span>}
                 <span className="muted list__sub">
                   {formatLongDate(d.eventDate)}{d.recursYearly ? t.yearly : ""} · {c ? countdownLabel(c) : t.past}
                 </span>
@@ -108,6 +110,8 @@ export default function DatesAdmin() {
             <Field label={a.messageOptional}>{(id) => <input id={id} className="input" maxLength={500} value={draft.message} onChange={(e) => setDraft({ ...draft, message: e.target.value })} />}</Field>
             <Switch label={t.repeats} checked={draft.recursYearly} onChange={(recursYearly) => setDraft({ ...draft, recursYearly })} />
             <Switch label={t.show} checked={draft.isVisible} onChange={(isVisible) => setDraft({ ...draft, isVisible })} />
+            <Switch label={t.onlyTogether} checked={!!draft.onlyTogether} onChange={(onlyTogether) => setDraft({ ...draft, onlyTogether })} />
+            <p className="muted" style={{ margin: 0 }}>{t.onlyTogetherHint}</p>
             </>)}
           </div>
         </Modal>

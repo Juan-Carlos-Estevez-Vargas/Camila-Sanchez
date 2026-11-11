@@ -70,7 +70,8 @@ que no pierdas lo que escribiste.
 
 Es la historia de los dos. Desplázate hacia abajo para ver:
 
-- la portada con el contador de tiempo juntos,
+- la portada con el contador de tiempo juntos (si la relación terminó, se
+  queda quieto en el día del final y dice «del … al …»),
 - las cuentas regresivas a las próximas fechas importantes,
 - las notitas de amor, la línea de tiempo de hitos,
 - la galería de fotos por año y mes (toca una foto para verla en grande),
@@ -480,7 +481,7 @@ te preparen a ti siguen siendo sorpresa.
 | 🔐 Roles y permisos | Qué puede hacer cada rol |
 | 🎨 Apariencia | Colores de la página (los que ve quien entra sin cuenta y quien no eligió los suyos), tipografías, bordes, modo oscuro, efectos animados y **fechas especiales** |
 | 🧩 Secciones | Agregar, ordenar, ocultar o quitar secciones de la página |
-| ⚙️ Ajustes del sitio | Título, fecha en que empezó todo, música y si la página es pública |
+| ⚙️ Ajustes del sitio | Título, fecha en que empezó todo, fecha en que terminó (opcional), música y si la página es pública |
 | 📜 Auditoría | Quién cambió qué y cuándo, filtrado por mes, sección, acción y persona |
 
 ### Preparar las fechas especiales
@@ -496,7 +497,18 @@ En **🎨 Apariencia → Fechas especiales**:
 4. Pulsa **Guardar cambios**.
 
 El aniversario usa la fecha de **⚙️ Ajustes del sitio → Fecha en que empezó
-todo**.
+todo**. Si en **Fecha en que terminó** hay una fecha, el aniversario ya no se
+celebra ni sale en las cuentas regresivas.
+
+### Cerrar la relación
+
+En **⚙️ Ajustes del sitio → Fecha en que terminó (opcional)** se pone el día en
+que terminó la relación. Desde ese momento el contador de tiempo juntos se
+queda quieto en ese día, la portada dice «Del … al …», el aniversario deja de
+celebrarse y se ocultan el subtítulo del contador («Y contando…») y las fechas
+marcadas **Sólo mientras estemos juntos** en **📅 Fechas** (como «Navidad
+juntos»), que llevan la etiqueta *pausada*. No se borra nada: fotos, dedicatorias, chat, notitas y listas siguen
+igual. Si se deja vacía, todo vuelve a como estaba.
 
 ### Revisar la auditoría
 

@@ -9,6 +9,7 @@ export const SEED_SETTINGS: SiteSettings = {
   siteTitle: "Para el amor de mi vida 💖",
   siteSubtitle: "Esta página es un reflejo de lo mucho que te amo. Cada detalle está hecho para ti.",
   relationshipStart: "2025-05-31",
+  relationshipEnd: null,
   isPublic: true,
   musicUrl: null,
   theme: DEFAULT_THEME,
@@ -165,8 +166,8 @@ export const SEED_MILESTONES: Seed<Milestone> = [
 ].map((m) => ({ ...m, photoId: null }));
 
 export const SEED_DATES: Seed<ImportantDate> = [
-  { title: "Nuestro aniversario", eventDate: "2025-05-31", recursYearly: true, icon: "💞", message: "Un año más eligiéndonos", isVisible: true },
-  { title: "Navidad juntos", eventDate: "2025-12-24", recursYearly: true, icon: "🎄", message: "Que cada Navidad la pasemos juntos", isVisible: true },
+  { title: "Nuestro aniversario", eventDate: "2025-05-31", recursYearly: true, icon: "💞", message: "Un año más eligiéndonos", isVisible: true, onlyTogether: true },
+  { title: "Navidad juntos", eventDate: "2025-12-24", recursYearly: true, icon: "🎄", message: "Que cada Navidad la pasemos juntos", isVisible: true, onlyTogether: true },
   { title: "Tu cumpleaños", eventDate: "2025-01-01", recursYearly: true, icon: "🎂", message: "El día en que el mundo se volvió más bonito", isVisible: false },
 ];
 

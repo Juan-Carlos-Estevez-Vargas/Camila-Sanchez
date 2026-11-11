@@ -12,6 +12,7 @@ export const site = {
   pauseMusic: "Pausar música",
   playMusic: "Poner música",
   together: (date: string) => `Juntos desde el ${date}`,
+  togetherUntil: (from: string, to: string) => `Del ${from} al ${to}`,
   seeMore: "Ver más",
   surprise: "¡Sorpresa!",
   countdown: {
@@ -23,6 +24,8 @@ export const site = {
   counter: {
     units: ["días", "horas", "minutos", "segundos"],
     months: (n: number) => `Son ${n} ${n === 1 ? "mes" : "meses"} eligiéndonos cada día.`,
+    monthsEnded: (n: number) => `Fueron ${n} ${n === 1 ? "mes" : "meses"} que guardo con cariño.`,
+    ended: (from: string, to: string) => `El tiempo que compartimos, del ${from} al ${to}.`,
   },
   gallery: {
     years: "Años",

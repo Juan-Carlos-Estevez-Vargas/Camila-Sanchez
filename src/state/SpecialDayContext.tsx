@@ -7,6 +7,7 @@
  * recuerda mientras siga abierta) y `/?tema=normal` la quita. La usan los
  * botones «Ver cómo se ve» de Apariencia.
  */
+import { anniversaryStart } from "@/domain/relationship";
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { useLocation } from "react-router-dom";
 import {
@@ -69,7 +70,7 @@ export function SpecialDayProvider({ children }: { children: ReactNode }) {
   const value = useMemo<SpecialDayState>(() => {
     if (!settings) return { day: null, preview: false };
     if (previewId) return { day: previewSpecialDay(previewId, settings.relationshipStart, today), preview: true };
-    return { day: specialDayOn(settings.effects.specialDays, settings.relationshipStart, today), preview: false };
+    return { day: specialDayOn(settings.effects.specialDays, anniversaryStart(settings), today), preview: false };
   }, [settings, previewId, today]);
 
   useEffect(() => {
