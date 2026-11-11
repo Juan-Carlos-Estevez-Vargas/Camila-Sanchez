@@ -37,6 +37,30 @@ export const DEFAULT_SPECIAL_DAYS: SpecialDaysConfig = {
   off: [],
 };
 
+/**
+ * La escena animada de cada fecha (state/../SpecialDayScene.tsx). Todo es
+ * decoración: pointer-events none, aria-hidden, y con «Reducir animaciones»
+ * sólo quedan quietos la guirnalda, el suelo y las esquinas.
+ */
+export interface SpecialScene {
+  /** Lo que cae meciéndose: nieve, hojas, pétalos, confeti. */
+  fall: string[];
+  /** Confeti de colores (papelitos) además de lo que cae. */
+  confetti: boolean;
+  /** Guirnalda bajo la cabecera: emojis, luces de colores o banderines. */
+  garland: { kind: "emoji" | "lights" | "bunting"; items: string[] };
+  /** Fila del suelo (árboles, calabazas, regalos). */
+  ground: string[];
+  /** Lo que cruza volando la pantalla (murciélagos, el trineo, estrellas fugaces). */
+  flyers: string[];
+  /** Lo que cuelga de un hilo y sube y baja (arañas, adornos). */
+  hang: string[];
+  /** Telarañas en las esquinas. */
+  cobwebs: boolean;
+  /** Fuegos artificiales que estallan de fondo. */
+  fireworks: boolean;
+}
+
 export interface SpecialDayStyle {
   icon: string;
   colors: PaletteColors;
@@ -47,59 +71,113 @@ export interface SpecialDayStyle {
   density: number;
   /** Lluvia de emojis al abrir la página ese día. */
   burst: string[];
+  scene: SpecialScene;
 }
+
+const scene = (patch: Partial<SpecialScene>): SpecialScene => ({
+  fall: [], confetti: false, garland: { kind: "emoji", items: [] }, ground: [], flyers: [], hang: [],
+  cobwebs: false, fireworks: false, ...patch,
+});
 
 export const SPECIAL_DAY_STYLES: Record<SpecialDayId, SpecialDayStyle> = {
   birthday: {
     icon: "🎂",
-    colors: { primary: "#c2255c", primaryContrast: "#ffffff", accent: "#f2b705", background: "#fff6e8", surface: "#ffffff", text: "#4a1630", muted: "#7d4560" },
-    emojis: ["🎈", "🎂", "🎉", "🎁", "🥳", "💖", "✨", "🌸"],
-    density: 24,
+    colors: { primary: "#c81d6a", primaryContrast: "#ffffff", accent: "#ffb703", background: "#fff3e3", surface: "#ffffff", text: "#47122f", muted: "#7a3b5c" },
+    emojis: ["🎈", "🎈", "🎂", "🎉", "🎁", "🥳", "💖", "✨"],
+    density: 26,
     burst: ["🎉", "🎊", "🎈", "💖", "✨", "🥳"],
+    scene: scene({
+      fall: ["🎊", "✨"],
+      confetti: true,
+      garland: { kind: "bunting", items: ["#ff4d8d", "#ffb703", "#3ec7c2", "#8c5cff", "#ff7a3d"] },
+      ground: ["🎁", "🎂", "🎈", "🎁", "🥳", "🎁", "🎈", "🎂"],
+      hang: ["🎈", "🎀", "🎈"],
+    }),
   },
   anniversary: {
     icon: "💍",
-    colors: { primary: "#a8123a", primaryContrast: "#ffffff", accent: "#d9a441", background: "#fff1f3", surface: "#fffafb", text: "#4a0d1f", muted: "#7d3a4d" },
+    colors: { primary: "#a8123a", primaryContrast: "#ffffff", accent: "#d9a441", background: "#fff0f2", surface: "#fffafb", text: "#480c1e", muted: "#7a364a" },
     emojis: ["💍", "❤️", "🥂", "🌹", "✨", "💞"],
     density: 20,
     burst: ["❤️", "💍", "🌹", "✨"],
+    scene: scene({
+      fall: ["🌹", "❤️", "✨"],
+      garland: { kind: "emoji", items: ["💍", "❤️", "🥂", "❤️"] },
+      ground: ["🌹", "🥂", "🌹", "💐", "🌹"],
+      flyers: ["🕊️", "🕊️"],
+    }),
   },
   valentine: {
     icon: "💘",
-    colors: { primary: "#c8104a", primaryContrast: "#ffffff", accent: "#ff7aa2", background: "#ffeef3", surface: "#fff9fb", text: "#5c0a26", muted: "#8a3553" },
+    colors: { primary: "#c8104a", primaryContrast: "#ffffff", accent: "#ff6f9c", background: "#ffecf2", surface: "#fff9fb", text: "#5a0a25", muted: "#873251" },
     emojis: ["💘", "💝", "❤️", "🌹", "💌", "💕"],
-    density: 22,
+    density: 24,
     burst: ["💘", "❤️", "💕", "🌹"],
+    scene: scene({
+      fall: ["💗", "🌸", "❤️"],
+      garland: { kind: "emoji", items: ["❤️", "💕", "💘", "💕"] },
+      ground: ["🌹", "💝", "🌹", "💌", "🌹", "🧸"],
+      flyers: ["💘"],
+    }),
   },
   friendship: {
     icon: "💛",
-    colors: { primary: "#b5452c", primaryContrast: "#ffffff", accent: "#ffc93c", background: "#fff8e6", surface: "#fffdf7", text: "#4a2a12", muted: "#7a5332" },
+    colors: { primary: "#b5452c", primaryContrast: "#ffffff", accent: "#ffc93c", background: "#fff7e0", surface: "#fffdf7", text: "#472811", muted: "#765030" },
     emojis: ["💛", "🧡", "🤝", "🎁", "💌", "🌻"],
-    density: 18,
+    density: 20,
     burst: ["💛", "🧡", "🎁", "🌻"],
+    scene: scene({
+      fall: ["🌼", "💛", "🧡"],
+      garland: { kind: "bunting", items: ["#ffc93c", "#ff8a3d", "#e8505b", "#ffde7d"] },
+      ground: ["🌻", "🎁", "🌻", "💌", "🌻", "🌷"],
+      flyers: ["🦋", "🦋"],
+    }),
   },
   halloween: {
     icon: "🎃",
-    colors: { primary: "#ff8a1f", primaryContrast: "#1a0f1f", accent: "#a970ff", background: "#16101e", surface: "#231a2e", text: "#f6eee6", muted: "#c4b4cb" },
+    colors: { primary: "#ff7b1c", primaryContrast: "#160c1d", accent: "#9b6bff", background: "#110a19", surface: "#1e142b", text: "#f8efe4", muted: "#c7b5cf" },
     darkMode: "light",
-    emojis: ["🎃", "👻", "🦇", "🕸️", "🍬", "🕯️"],
-    density: 20,
-    burst: ["🎃", "👻", "🦇", "🍬"],
+    emojis: ["🎃", "👻", "💀", "🦇", "🍬", "🕯️"],
+    density: 22,
+    burst: ["🎃", "👻", "💀", "🦇", "🍬"],
+    scene: scene({
+      fall: ["🍂", "🍁"],
+      garland: { kind: "emoji", items: ["🎃", "💀", "🦇", "💀"] },
+      ground: ["🎃", "🪦", "💀", "🕯️", "🎃", "🪦", "🍬", "💀", "🎃"],
+      flyers: ["🦇", "🦇", "🧙‍♀️", "🦇"],
+      hang: ["🕷️", "💀", "🕷️"],
+      cobwebs: true,
+    }),
   },
   christmas: {
     icon: "🎄",
-    colors: { primary: "#b8202c", primaryContrast: "#ffffff", accent: "#e0a83a", background: "#eef6f0", surface: "#ffffff", text: "#173a27", muted: "#4a6b55" },
-    emojis: ["❄️", "🎄", "🎁", "⭐", "🔔", "❄️"],
-    density: 26,
+    colors: { primary: "#c1121f", primaryContrast: "#ffffff", accent: "#d4a017", background: "#f1f8f3", surface: "#ffffff", text: "#103522", muted: "#3c5c48" },
+    emojis: ["🎄", "🎁", "⭐", "🔔", "🦌", "☃️"],
+    density: 16,
     burst: ["🎁", "🎄", "⭐", "❄️"],
+    scene: scene({
+      fall: ["❄️", "❅", "❆", "❄️"],
+      garland: { kind: "lights", items: ["#e63946", "#ffd166", "#2a9d8f", "#4cc9f0", "#f77f00"] },
+      ground: ["🎄", "🎁", "☃️", "🎄", "🦌", "🎁", "🎄", "🎅", "🎄"],
+      flyers: ["🛷"],
+      hang: ["🔔", "⭐", "🎀"],
+    }),
   },
   newYear: {
     icon: "🎆",
-    colors: { primary: "#e8b923", primaryContrast: "#1a1530", accent: "#c9a0ff", background: "#110f24", surface: "#1d1a38", text: "#f5f1ff", muted: "#bdb5d9" },
+    colors: { primary: "#e8b923", primaryContrast: "#14102b", accent: "#c9a0ff", background: "#0d0b1f", surface: "#1a1735", text: "#f6f2ff", muted: "#bfb7dc" },
     darkMode: "light",
-    emojis: ["🎆", "🥂", "✨", "🎇", "🍾", "⭐"],
-    density: 22,
+    emojis: ["🥂", "✨", "🍾", "⭐", "🎉"],
+    density: 18,
     burst: ["🎆", "🥂", "✨", "🎇"],
+    scene: scene({
+      fall: ["✨", "⭐"],
+      confetti: true,
+      garland: { kind: "lights", items: ["#ffd166", "#ffffff", "#c9a0ff", "#ffd166"] },
+      ground: ["🍾", "🥂", "🎉", "🕛", "🥂", "🍾"],
+      flyers: ["🌠", "🌠"],
+      fireworks: true,
+    }),
   },
 };
 

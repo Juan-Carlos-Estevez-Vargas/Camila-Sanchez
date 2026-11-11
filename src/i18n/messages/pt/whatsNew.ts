@@ -10,6 +10,17 @@ export const whatsNew = {
   showHistory: "Ver todas as novidades",
   footerLink: "✨ Novidades",
   releases: {
+    "2026-11-11": {
+      news: {
+        specialScenes: {
+          title: "Cada data com a sua decoração",
+          body: "Agora cada data especial traz a sua cena animada em todo o app: caveiras, morcegos, aranhas e lua cheia no Halloween; luzes, neve, árvores e o trenó no Natal; bandeirinhas e confete no aniversário dela, e fogos de artifício no Ano Novo.",
+        },
+      },
+      changes: [
+        "As cores, o fundo, o cabeçalho e os cartões também mudam conforme a data.",
+      ],
+    },
     "2026-11-10": {
       news: {
         specialDays: {

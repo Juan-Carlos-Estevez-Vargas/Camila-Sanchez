@@ -10,6 +10,17 @@ export const whatsNew = {
   showHistory: "See everything that's new",
   footerLink: "✨ What's new",
   releases: {
+    "2026-11-11": {
+      news: {
+        specialScenes: {
+          title: "Every date with its own decorations",
+          body: "Each special date now brings its own animated scene across the app: skulls, bats, spiders and a full moon on Halloween; lights, snow, trees and the sleigh at Christmas; bunting and confetti on her birthday, and fireworks on New Year.",
+        },
+      },
+      changes: [
+        "Colors, background, header and cards also change with the date.",
+      ],
+    },
     "2026-11-10": {
       news: {
         specialDays: {
