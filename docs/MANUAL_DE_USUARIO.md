@@ -98,6 +98,13 @@ activaste «Reducir animaciones» en el pie, la decoración se queda quieta. Al 
 vuelve sola a como estaba. Mientras dura, se ve igual para todos, aunque hayas
 elegido tus propios colores.
 
+Ese día también suena una música suave de fondo (en tu cumpleaños puede ser
+una serenata). Empieza cuando tocas la página. Al llegar sale un aviso; para
+apagarla toca **Apagar música** en el aviso o el botón **🔊** abajo a la
+izquierda (queda 🔇). Para volver a oírla, toca 🔇 otra vez. Si la apagas, ese
+día no vuelve a sonar en ese navegador; la próxima fecha especial sí. Si pones
+a sonar la playlist, la música de la fecha se pausa.
+
 ## 3. Cajita de mensajes
 
 Notitas que se guardan para siempre. Entra desde **Cajita** en la cabecera.
@@ -499,7 +506,15 @@ En **🎨 Apariencia → Fechas especiales**:
    de arriba las apaga todas.
 3. Toca **Ver cómo se ve** en cualquiera para ver ese tema ya mismo en la
    página (sólo en tu pestaña). Arriba sale *Quitar vista previa* para volver.
-4. Pulsa **Guardar cambios**.
+4. **Música suave de fondo ese día** prende o apaga la música de todas las
+   fechas. En cada fecha, **🎵 Música** muestra qué suena (la melodía de la
+   app) y deja pegar canciones propias, un enlace por línea: videos o listas
+   de YouTube, o archivos de audio (.mp3, .ogg, .m4a). Suenan en orden y
+   vuelven a empezar. En el cumpleaños hay accesos para buscar en YouTube la
+   serenata («Hasta dónde te quiero», «Sabes una cosa» de la Rondalla de
+   Roldanillo): abre el video, copia el enlace y pégalo. Lo que no sirve sale
+   marcado en rojo y no se guarda.
+5. Pulsa **Guardar cambios**.
 
 El aniversario usa la fecha de **⚙️ Ajustes del sitio → Fecha en que empezó
 todo**. Si en **Fecha en que terminó** hay una fecha, el aniversario ya no se

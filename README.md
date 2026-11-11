@@ -107,7 +107,7 @@ Funciona en dos modos:
 | Super admin: usuarios, invitaciones por enlace o QR, roles y permisos, apariencia, secciones, ajustes y auditoría (abre en el mes actual; filtros por mes o todo el historial, sección, acción y persona, orden y paginación con primera, última, números y tamaño de página) | `/super` | Super admin |
 | App de celular instalable (Android, iPhone y computador): ícono, pantalla completa, atajos, sin conexión y aviso de versión nueva | `/app` | Pública |
 | Avisos push en el celular: chat, notitas, sorpresas y listas | — | Quien los active |
-| Fechas especiales: en su cumpleaños, el aniversario, San Valentín, Amor y Amistad, Halloween, Navidad y Año Nuevo toda la app cambia de tema el día completo (colores, emojis, saludo y franja de fiesta). Se configuran y se previsualizan en **Super → Apariencia** | Todas | Todos (configura `theme.manage`) |
+| Fechas especiales: en su cumpleaños, el aniversario, San Valentín, Amor y Amistad, Halloween, Navidad y Año Nuevo toda la app cambia de tema el día completo (colores, emojis, saludo, franja de fiesta y música suave que se apaga con 🔊). Se configuran y se previsualizan en **Super → Apariencia** | Todas | Todos (configura `theme.manage`) |
 | Tutorial guiado según la página y los permisos de cada cuenta | Todas | Todos |
 | Novedades de cada versión: al actualizar se ve qué cambió y, si hay una función nueva, «Ver cómo funciona» lleva a su página con el tutorial. También en **✨ Novedades** del pie | Todas | Cualquier cuenta |
 | Idiomas: español, inglés y portugués. La app arranca en el idioma del dispositivo y se cambia con 🌐 en la cabecera, el pie o **Mi cuenta** | Todas | Todos |
@@ -152,6 +152,26 @@ cuenta), se apaga cualquier fecha o todas, y **Ver cómo se ve** muestra cada
 tema ya mismo en esa pestaña (`/?tema=halloween`, se quita con *Quitar vista
 previa*). Se guarda dentro de `site_settings.effects`, así que no necesita
 migración ([diagramas](docs/DIAGRAMAS.md#temas-de-fechas-especiales)).
+
+**Música en las fechas especiales.** Cada fecha suena con una música suave de
+fondo, tocada en el navegador como cajita musical (Web Audio, sin archivos):
+un vals de misterio en Halloween, «Noche de paz» con campanitas en Navidad,
+«Cumpleaños feliz» en su cumpleaños, «Auld Lang Syne» en Año Nuevo y melodías
+propias en el aniversario, San Valentín y Amor y Amistad. Las melodías son
+originales o de dominio público. Como los navegadores no dejan sonar nada solo,
+empieza con el primer toque en la página; al llegar sale un aviso que dice cómo
+apagarla, y abajo a la izquierda queda el botón 🔊/🔇 (apagarla vale ese día en
+ese navegador). Se pausa si empieza la playlist y no suena en el chat. En
+**Super → Apariencia → Fechas especiales** se apaga la música o se ponen
+canciones propias por fecha (enlaces de YouTube o de archivos de audio, uno por
+línea), por ejemplo la serenata del cumpleaños; para eso hay accesos para
+buscar en YouTube «Hasta dónde te quiero» y «Sabes una cosa» de la Rondalla de
+Roldanillo. El repositorio no guarda música con derechos de autor: esas
+canciones suenan desde YouTube ([diagramas](docs/DIAGRAMAS.md#música-de-las-fechas-especiales)).
+
+<p align="center">
+  <img src="docs/capturas/fecha-musica.png" alt="Halloween con el aviso «Hoy suena música suave por Halloween» y los botones ¡Que suene! y Apagar música, y el botón de silencio abajo a la izquierda" width="640">
+</p>
 
 **Fin de la relación.** La relación terminó el 31 de octubre de 2026, y la
 app lo refleja con respeto: el contador de tiempo juntos se queda quieto en ese
