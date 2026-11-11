@@ -42,6 +42,7 @@ export default function SitePage() {
   const { user, policy } = useAuth();
   const t = useT().site;
   const effects = useSpecialEffects(content?.settings.effects);
+  const { day } = useSpecialDay();
 
   if (status === "loading" || !content) return <PageLoader />;
   if (status === "error") {
@@ -90,7 +91,8 @@ export default function SitePage() {
           </Reveal>
         ))}
       </main>
-      {content.settings.musicUrl && <MusicToggle url={content.settings.musicUrl} />}
+      {/* En una fecha especial con música, su botón ocupa este lugar. */}
+      {content.settings.musicUrl && !(day && content.settings.effects.specialDays.music) && <MusicToggle url={content.settings.musicUrl} />}
     </>
   );
 }

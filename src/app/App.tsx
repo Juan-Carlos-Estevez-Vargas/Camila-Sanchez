@@ -16,6 +16,7 @@ import { AppFooter } from "./AppFooter";
 import { AppHeader } from "./AppHeader";
 import { SpecialDayRibbon } from "./SpecialDayRibbon";
 import { SpecialDayGarland, SpecialDayScene } from "./SpecialDayScene";
+import { SpecialDayMusic } from "./SpecialDayMusic";
 import { ConsentGate } from "@/features/legal/ConsentGate";
 import { CookieBanner } from "@/features/legal/CookieBanner";
 import { AppStatus } from "@/features/install/AppStatus";
@@ -76,6 +77,7 @@ function ThemedShell() {
       <SpecialDayGarland />
       <SpecialDayRibbon />
       <SpecialDayScene />
+      <SpecialDayMusic />
       <ErrorBoundary>
         <Suspense fallback={<PageLoader />}>
           {/* Falta el código de la verificación en dos pasos: nada más hasta escribirlo. */}

@@ -12,6 +12,10 @@ export const whatsNew = {
   releases: {
     "2026-11-11": {
       news: {
+        specialMusic: {
+          title: "Música em cada data especial",
+          body: "Nas datas especiais agora toca uma música suave de fundo: uma valsa de mistério no Halloween, «Noite feliz» com sininhos no Natal, «Happy Birthday» no seu aniversário… Ela começa quando você toca na página e dá para desligar no botão 🔊 no canto inferior esquerdo. Em Aparência dá para colocar músicas próprias, como uma serenata para o aniversário.",
+        },
         specialScenes: {
           title: "Cada data com a sua decoração",
           body: "Agora cada data especial traz a sua cena animada em todo o app: caveiras, morcegos, aranhas e lua cheia no Halloween; luzes, neve, árvores e o trenó no Natal; bandeirinhas e confete no aniversário dela, e fogos de artifício no Ano Novo.",

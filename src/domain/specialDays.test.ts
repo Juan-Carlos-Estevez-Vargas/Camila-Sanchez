@@ -57,7 +57,7 @@ describe("normalizeSpecialDays", () => {
   it("lo que falta o no vale vuelve a lo de fábrica", () => {
     expect(normalizeSpecialDays(undefined)).toEqual(DEFAULT_SPECIAL_DAYS);
     expect(normalizeSpecialDays({ birthday: "ayer", off: ["halloween", "nada", "halloween", 3], birthdayName: 5 }))
-      .toEqual({ enabled: true, birthday: null, birthdayName: "", off: ["halloween"] });
+      .toEqual({ enabled: true, birthday: null, birthdayName: "", off: ["halloween"], music: true, songs: {} });
     expect(normalizeSpecialDays({ enabled: false, birthday: "2001-03-15", birthdayName: "x".repeat(80) }))
       .toMatchObject({ enabled: false, birthday: "2001-03-15", birthdayName: "x".repeat(40) });
   });

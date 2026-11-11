@@ -56,3 +56,36 @@
   accent-color: currentColor;
   cursor: pointer;
 }
+
+.music {
+  flex: 1 1 100%;
+  min-width: 0;
+
+  summary {
+    cursor: pointer;
+    font-weight: 600;
+  }
+
+  :global(.textarea) {
+    width: 100%;
+    font-family: inherit;
+  }
+}
+
+.serenata {
+  font-size: 0.9rem;
+
+  p {
+    margin: space(2) 0 space(1);
+  }
+
+  ul {
+    margin: 0;
+    padding-left: 1.2rem;
+  }
+
+  a {
+    color: inherit;
+    font-weight: 600;
+  }
+}

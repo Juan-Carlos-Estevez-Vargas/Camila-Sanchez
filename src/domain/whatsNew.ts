@@ -32,6 +32,7 @@ export const RELEASES: Release[] = [
   {
     id: "2026-11-11",
     news: [
+      { id: "specialMusic", icon: "🎶" },
       { id: "specialScenes", icon: "🎃" },
     ],
   },

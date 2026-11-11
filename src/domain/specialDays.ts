@@ -10,6 +10,7 @@
  */
 import { asStringArray } from "@/core/validation";
 import { parseIsoDate } from "./dates";
+import { normalizeDaySongs } from "./specialMusic";
 import type { PaletteColors } from "./palettes";
 import type { IsoDate, ThemeTokens } from "./types";
 
@@ -28,6 +29,10 @@ export interface SpecialDaysConfig {
   birthdayName: string;
   /** Fechas que se apagaron una por una. */
   off: SpecialDayId[];
+  /** Música suave de fondo ese día (ver specialMusic.ts). */
+  music: boolean;
+  /** Canciones propias de cada fecha (YouTube o archivos de audio) en vez de la melodía de la app. */
+  songs: Partial<Record<SpecialDayId, string[]>>;
 }
 
 export const DEFAULT_SPECIAL_DAYS: SpecialDaysConfig = {
@@ -35,6 +40,8 @@ export const DEFAULT_SPECIAL_DAYS: SpecialDaysConfig = {
   birthday: null,
   birthdayName: "",
   off: [],
+  music: true,
+  songs: {},
 };
 
 /**
@@ -201,6 +208,8 @@ export function normalizeSpecialDays(raw: unknown): SpecialDaysConfig {
     // Sin recortar espacios: se escribe letra a letra en el panel («Camila Sánchez»).
     birthdayName: typeof o.birthdayName === "string" ? o.birthdayName.slice(0, 40) : "",
     off: [...new Set(asStringArray(o.off, SPECIAL_DAY_IDS.length, 20).filter(isId))],
+    music: o.music !== false,
+    songs: normalizeDaySongs(o.songs, SPECIAL_DAY_IDS),
   };
 }
 
