@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { contrastRatio } from "@/core/validation";
 import { DEFAULT_THEME, normalizeEffects } from "./defaults";
+import { DEFAULT_DAY_SONGS } from "./specialMusic";
 import {
   DEFAULT_SPECIAL_DAYS, SPECIAL_DAY_STYLES, friendshipDay, msUntilMidnight, normalizeSpecialDays, previewSpecialDay,
   specialDayOn, specialTheme, type SpecialDaysConfig,
@@ -57,7 +58,7 @@ describe("normalizeSpecialDays", () => {
   it("lo que falta o no vale vuelve a lo de fábrica", () => {
     expect(normalizeSpecialDays(undefined)).toEqual(DEFAULT_SPECIAL_DAYS);
     expect(normalizeSpecialDays({ birthday: "ayer", off: ["halloween", "nada", "halloween", 3], birthdayName: 5 }))
-      .toEqual({ enabled: true, birthday: null, birthdayName: "", off: ["halloween"], music: true, songs: {} });
+      .toEqual({ enabled: true, birthday: null, birthdayName: "", off: ["halloween"], music: true, songs: DEFAULT_DAY_SONGS, birthdayMessage: "" });
     expect(normalizeSpecialDays({ enabled: false, birthday: "2001-03-15", birthdayName: "x".repeat(80) }))
       .toMatchObject({ enabled: false, birthday: "2001-03-15", birthdayName: "x".repeat(40) });
   });

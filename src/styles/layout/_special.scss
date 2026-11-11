@@ -461,3 +461,23 @@
 }
 
 :root[data-motion="reduce"] .special-music__notice { animation: none; }
+
+// Ventana del cumpleaños (app/SpecialDayPopup.tsx).
+.special-popup {
+  text-align: center;
+
+  &__icons {
+    margin: 0;
+    font-size: 3rem;
+    line-height: 1.2;
+  }
+
+  &__message {
+    margin: space(2) 0 0;
+    font-family: var(--font-display, inherit);
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--c-primary);
+    white-space: pre-line;
+  }
+}

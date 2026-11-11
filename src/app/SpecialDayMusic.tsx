@@ -196,7 +196,7 @@ function Music({ id, songs, dayKey }: { id: SpecialDayId; songs: MusicLink[]; da
                 dismissNotice();
                 if (!muted && !playing) start();
               }}>
-              {muted ? t.ok : t.listen}
+              {muted || playing ? t.ok : t.listen}
             </button>
             {!muted && (
               <button type="button" className="btn btn--sm btn--ghost"

@@ -51,6 +51,10 @@ export const special: Messages["special"] = {
     position: (n, total) => `${n}/${total}`,
     frameTitle: (what) => `Music for ${what}`,
   },
+  popup: {
+    message: "I love you so much 💖 Happy birthday, my queen! 👑",
+    open: "Open my gift 🎁",
+  },
   admin: {
     title: "Special dates",
     hint: "On that day, from midnight to midnight, the whole page changes its colors, background emojis and greeting for everyone, even over each person's own colors.",
@@ -84,6 +88,10 @@ export const special: Messages["special"] = {
       christmas: "\"Silent Night\" with bells",
       newYear: "\"Auld Lang Syne\"",
     },
+    birthdayMessage: "Birthday pop-up message",
+    birthdayMessageHint: "Shows once that day when the page opens. Empty: the sample message.",
+    add: "Add",
+    added: "Added ✓",
     when: {
       valentine: "February 14",
       friendship: "Third Saturday of September",

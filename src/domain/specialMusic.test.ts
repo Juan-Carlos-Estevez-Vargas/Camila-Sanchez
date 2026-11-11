@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { normalizeSpecialDays, SPECIAL_DAY_IDS } from "./specialDays";
 import {
-  musicDayKey, normalizeDaySongs, parseMusicLink, parseSongLines, SPECIAL_TUNES, tuneBeats, tuneSchedule,
+  EL_COLOR_DE_TUS_OJOS, musicDayKey, normalizeDaySongs, parseMusicLink, parseSongLines, SPECIAL_TUNES, tuneBeats, tuneSchedule,
 } from "./specialMusic";
 
 describe("parseMusicLink", () => {
@@ -36,6 +36,17 @@ describe("canciones de cada fecha", () => {
     expect(songs.halloween).toHaveLength(20);
     expect(songs).not.toHaveProperty("christmas");
     expect(songs).not.toHaveProperty("inventada");
+  });
+
+  it("el cumpleaños trae «El color de tus ojos» hasta que se guarden otras (o ninguna)", () => {
+    expect(normalizeSpecialDays({}).songs.birthday).toEqual([EL_COLOR_DE_TUS_OJOS]);
+    expect(parseMusicLink(EL_COLOR_DE_TUS_OJOS)?.kind).toBe("youtube");
+    expect(normalizeSpecialDays({ songs: {} }).songs).toEqual({});
+  });
+
+  it("el mensaje del cumpleaños se recorta", () => {
+    expect(normalizeSpecialDays({ birthdayMessage: "x".repeat(400) }).birthdayMessage).toHaveLength(300);
+    expect(normalizeSpecialDays({ birthdayMessage: 3 }).birthdayMessage).toBe("");
   });
 
   it("la música viene prendida y se puede apagar", () => {

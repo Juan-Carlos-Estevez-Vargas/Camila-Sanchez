@@ -12,6 +12,10 @@ export const whatsNew = {
   releases: {
     "2026-11-11": {
       news: {
+        birthdayPopup: {
+          title: "Uma janela para o aniversário dela",
+          body: "No aniversário aparece uma janelinha com uma mensagem de amor e, ao abrir o presente, toca «El color de tus ojos».",
+        },
         specialMusic: {
           title: "Música em cada data especial",
           body: "Nas datas especiais agora toca uma música suave de fundo: uma valsa de mistério no Halloween, «Noite feliz» com sininhos no Natal, «Happy Birthday» no seu aniversário… Ela começa quando você toca na página e dá para desligar no botão 🔊 no canto inferior esquerdo. Em Aparência dá para colocar músicas próprias, como uma serenata para o aniversário.",

@@ -55,6 +55,10 @@ export const special = {
     position: (n: number, total: number) => `${n}/${total}`,
     frameTitle: (what: string) => `Música de ${what}`,
   },
+  popup: {
+    message: "Te amo demasiado 💖 ¡Feliz cumpleaños, mi reina! 👑",
+    open: "Abrir mi regalo 🎁",
+  },
   admin: {
     title: "Fechas especiales",
     hint: "Ese día, de medianoche a medianoche, toda la página cambia de colores, emojis de fondo y saludo para todos, también por encima de los colores de cada persona.",
@@ -88,6 +92,10 @@ export const special = {
       christmas: "«Noche de paz» con campanitas",
       newYear: "«Auld Lang Syne»",
     },
+    birthdayMessage: "Mensaje de la ventana de cumpleaños",
+    birthdayMessageHint: "Sale una vez ese día al abrir la página. Vacío: el mensaje de ejemplo.",
+    add: "Agregar",
+    added: "Agregada ✓",
     when: {
       valentine: "14 de febrero",
       friendship: "Tercer sábado de septiembre",

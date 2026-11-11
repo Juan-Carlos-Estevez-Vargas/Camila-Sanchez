@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { parseIsoDate } from "@/domain/dates";
 import type { Profile } from "@/domain/types";
 import {
-  SPECIAL_DAY_IDS, SPECIAL_DAY_STYLES, specialDayOn, type SpecialDayId, type SpecialDaysConfig,
+  MAX_BIRTHDAY_MESSAGE, SPECIAL_DAY_IDS, SPECIAL_DAY_STYLES, specialDayOn, type SpecialDayId, type SpecialDaysConfig,
 } from "@/domain/specialDays";
 import { parseSongLines, SERENATA_SUGGESTIONS, youtubeSearchUrl } from "@/domain/specialMusic";
 import { Field, Switch } from "@/ui/Field";
@@ -48,13 +48,31 @@ function DaySongs({ id, urls, onChange }: { id: SpecialDayId; urls: string[]; on
         <div className={styles.serenata}>
           <p>{t.serenata}</p>
           <ul>
-            {SERENATA_SUGGESTIONS.map((song) => (
-              <li key={song.title}>
-                <a href={youtubeSearchUrl(`${song.title} ${song.artist}`)} target="_blank" rel="noopener noreferrer">
-                  {t.search(`${song.title} · ${song.artist}`)}
-                </a>
-              </li>
-            ))}
+            {SERENATA_SUGGESTIONS.map((song) => {
+              const added = !!song.url && urls.includes(song.url);
+              return (
+                <li key={song.title}>
+                  {song.url ? (
+                    <>
+                      <a href={song.url} target="_blank" rel="noopener noreferrer">{`${song.title} · ${song.artist}`}</a>
+                      {" "}
+                      <button type="button" className="btn btn--sm btn--ghost" disabled={added}
+                        onClick={() => {
+                          const next = `${text.trim()}${text.trim() ? "\n" : ""}${song.url}`;
+                          setText(next);
+                          onChange(parseSongLines(next).urls);
+                        }}>
+                        {added ? t.added : t.add}
+                      </button>
+                    </>
+                  ) : (
+                    <a href={youtubeSearchUrl(`${song.title} ${song.artist}`)} target="_blank" rel="noopener noreferrer">
+                      {t.search(`${song.title} · ${song.artist}`)}
+                    </a>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         </div>
       )}
@@ -113,6 +131,12 @@ export function SpecialDaysCard({ value, relationshipStart, ended = false, profi
           </Field>
         )}
       </div>
+      <Field label={t.admin.birthdayMessage} hint={t.admin.birthdayMessageHint}>
+        {(id) => (
+          <textarea id={id} className="textarea" rows={2} maxLength={MAX_BIRTHDAY_MESSAGE} placeholder={t.popup.message}
+            value={value.birthdayMessage} onChange={(e) => set({ birthdayMessage: e.target.value })} />
+        )}
+      </Field>
 
       <ul className={styles.list}>
         {SPECIAL_DAY_IDS.map((id) => {

@@ -73,12 +73,26 @@ export function parseSongLines(text: string): { urls: string[]; invalid: string[
   return { urls: urls.slice(0, MAX_DAY_SONGS), invalid };
 }
 
-/** Canciones sugeridas para la serenata del cumpleaños: se buscan en YouTube y se pega el enlace. */
-export const SERENATA_SUGGESTIONS = [
+/** «El color de tus ojos» (Banda MS), video oficial en YouTube: sólo el enlace, nunca el audio. */
+export const EL_COLOR_DE_TUS_OJOS = "https://www.youtube.com/watch?v=7UO0O6ADu4Q";
+
+/**
+ * Lo que suena en el cumpleaños si nunca se guardaron canciones propias.
+ * Se guarda como enlace de YouTube (suena desde YouTube, el repositorio no
+ * tiene el audio).
+ */
+export const DEFAULT_DAY_SONGS: Partial<Record<SpecialDayId, string[]>> = { birthday: [EL_COLOR_DE_TUS_OJOS] };
+
+/**
+ * Canciones sugeridas para la serenata del cumpleaños. Las que traen `url`
+ * se agregan con un toque; las demás se buscan en YouTube y se pega el enlace.
+ */
+export const SERENATA_SUGGESTIONS: readonly { title: string; artist: string; url?: string }[] = [
+  { title: "El color de tus ojos", artist: "Banda MS", url: EL_COLOR_DE_TUS_OJOS },
   { title: "Hasta dónde te quiero", artist: "Rondalla de Roldanillo" },
   { title: "Sabes una cosa", artist: "Rondalla de Roldanillo" },
   { title: "Serenata", artist: "Rondalla de Roldanillo" },
-] as const;
+];
 
 export const youtubeSearchUrl = (query: string) =>
   `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
