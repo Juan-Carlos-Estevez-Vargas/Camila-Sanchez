@@ -174,6 +174,8 @@ export interface ImportantDate {
   icon: string;
   message: string;
   isVisible: boolean;
+  /** Sólo mientras siguen juntos: se oculta sola si la relación terminó (ver relationship.ts). */
+  onlyTogether?: boolean;
   translations?: ContentTranslations;
 }
 

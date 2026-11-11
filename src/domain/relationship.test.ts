@@ -43,6 +43,13 @@ describe("fin de la relación", () => {
     expect(countdownDates([date({}), navidad], together)).toHaveLength(2);
   });
 
+  it("las fechas «sólo mientras estemos juntos» se ocultan y vuelven al quitar el fin", () => {
+    const navidad = date({ title: "Navidad juntos", eventDate: "2025-12-24", onlyTogether: true });
+    const halloween = date({ title: "Halloween", eventDate: "2025-10-31" });
+    expect(countdownDates([navidad, halloween], ended).map((d) => d.title)).toEqual(["Halloween"]);
+    expect(countdownDates([navidad, halloween], together)).toHaveLength(2);
+  });
+
   it("el fin no puede ser antes del inicio", () => {
     expect(validRelationshipEnd(ended)).toBe(true);
     expect(validRelationshipEnd({ relationshipStart: "2025-05-31", relationshipEnd: "2025-01-01" })).toBe(false);

@@ -7,7 +7,9 @@ type Dates = Pick<SiteSettings, "relationshipStart" | "relationshipEnd">;
  * Fin de la relación. Cuando hay `relationshipEnd`:
  *   - el contador de «tiempo juntos» se queda quieto en ese día,
  *   - la portada dice «del … al …»,
- *   - el aniversario deja de celebrarse (tema del día y cuenta regresiva).
+ *   - el aniversario deja de celebrarse (tema del día y cuenta regresiva),
+ *   - las fechas marcadas «sólo mientras estemos juntos» se ocultan,
+ *   - el subtítulo del contador («Y contando…») se oculta.
  * No se borra nada: si se quita la fecha, todo vuelve a como estaba.
  */
 export function relationshipEnded(s: Dates): boolean {
@@ -31,10 +33,15 @@ export function isAnniversaryDate(date: ImportantDate, relationshipStart: IsoDat
   return !!relationshipStart && date.recursYearly && date.eventDate.slice(5) === relationshipStart.slice(5);
 }
 
-/** Las fechas para las cuentas regresivas: sin el aniversario si la relación terminó. */
+/** ¿Se pausa esta fecha porque la relación terminó? (aniversario o «sólo mientras estemos juntos»). */
+export function pausedByEnd(date: ImportantDate, s: Dates): boolean {
+  return relationshipEnded(s) && (!!date.onlyTogether || isAnniversaryDate(date, s.relationshipStart));
+}
+
+/** Las fechas para las cuentas regresivas: sin las pausadas si la relación terminó. */
 export function countdownDates(dates: ImportantDate[], s: Dates): ImportantDate[] {
   if (!relationshipEnded(s)) return dates;
-  return dates.filter((d) => !isAnniversaryDate(d, s.relationshipStart));
+  return dates.filter((d) => !pausedByEnd(d, s));
 }
 
 /** El fin no puede ser antes del inicio. */

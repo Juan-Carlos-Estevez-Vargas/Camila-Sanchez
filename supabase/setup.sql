@@ -4284,7 +4284,10 @@ grant execute on function public.two_step_users() to authenticated;
 --   - el contador de «tiempo juntos» se queda quieto en ese día en vez de
 --     seguir sumando,
 --   - la portada dice «del … al …» en vez de «juntos desde …»,
---   - el aniversario deja de celebrarse (tema del día y cuenta regresiva).
+--   - el aniversario deja de celebrarse (tema del día y cuenta regresiva),
+--   - las fechas importantes marcadas only_together («sólo mientras estemos
+--     juntos») se ocultan de las cuentas regresivas,
+--   - el subtítulo del contador («Y contando…») se oculta.
 -- No se borra nada: fotos, dedicatorias, chat y listas siguen igual. Se puede
 -- quitar la fecha desde Configuración y todo vuelve a como estaba.
 
@@ -4301,6 +4304,21 @@ update public.site_settings
    and relationship_end is null
    and relationship_start is not null
    and relationship_start <= '2026-10-31';
+
+-- Fechas que sólo tienen sentido mientras siguen juntos. Se marcan el
+-- aniversario (se repite el mismo día en que empezó todo) y las que dicen
+-- «juntos» en el título, como «Navidad juntos». Se cambia en Panel → Fechas.
+alter table public.important_dates
+  add column only_together boolean not null default false;
+
+update public.important_dates d
+   set only_together = true
+  from public.site_settings s
+ where s.id = 1
+   and d.recurs_yearly
+   and (d.title ilike '%juntos%'
+        or (s.relationship_start is not null
+            and to_char(d.event_date, 'MM-DD') = to_char(s.relationship_start, 'MM-DD')));
 
 -- Cambiar la fecha de fin pide el mismo permiso que la de inicio.
 create or replace function public.guard_site_settings()

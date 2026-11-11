@@ -52,7 +52,8 @@ export function TogetherCounter({ section, content }: SectionProps<"together_cou
   const ended = relationshipEnded(settings);
   return (
     <div className="container">
-      <SectionHeading title={section.title} subtitle={section.subtitle} />
+      {/* «Y contando…» ya no aplica cuando terminó; vuelve si se quita la fecha del final. */}
+      <SectionHeading title={section.title} subtitle={ended ? "" : section.subtitle} />
       {ended ? (
         <>
           <Counter start={parseIsoDate(start)} now={counterUntil(settings)} ended />

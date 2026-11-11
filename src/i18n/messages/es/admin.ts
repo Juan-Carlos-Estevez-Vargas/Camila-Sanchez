@@ -107,6 +107,9 @@ export const admin = {
     yearlyHint: "Para cumpleaños o aniversarios pon la fecha original: así se cuentan los años.",
     repeats: "Se repite cada año",
     show: "Mostrar en la página",
+    onlyTogether: "Sólo mientras estemos juntos",
+    onlyTogetherHint: "Se oculta sola si la relación terminó (Ajustes del sitio) y vuelve si se quita la fecha del final.",
+    pausedEnded: "pausada: la relación terminó",
   },
   milestones: {
     title: "Hitos importantes",

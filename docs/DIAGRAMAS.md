@@ -965,7 +965,8 @@ flowchart TD
   C --> C2["«Fueron 17 meses que guardo con cariño»<br/>«El tiempo que compartimos, del … al …»"]
   Q -- "sí" --> H["Portada: «Del 31 de mayo de 2025<br/>al 31 de octubre de 2026»"]
   Q -- "sí" --> A["anniversaryStart() = null<br/>specialDayOn() ya no lo celebra"]
-  Q -- "sí" --> CD["countdownDates(): sin la fecha que se repite<br/>el día en que empezó todo<br/>(portada, Fechas que esperamos, Panel)"]
+  Q -- "sí" --> CD["countdownDates() / pausedByEnd(): sin el aniversario<br/>ni las fechas only_together («Navidad juntos»)<br/>(portada, Fechas que esperamos, Panel)"]
+  Q -- "sí" --> SUB["Contador sin subtítulo<br/>(«Y contando…» se oculta)"]
   Q -- "sí" --> K["🎂 Cumpleaños, otras fechas, fotos,<br/>dedicatorias, chat y listas: igual"]
 ```
 
@@ -1686,6 +1687,7 @@ erDiagram
     text title
     date event_date
     boolean recurs_yearly
+    boolean only_together "se oculta si la relación terminó"
   }
   INTERRUPTIONS {
     uuid id PK

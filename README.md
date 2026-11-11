@@ -147,7 +147,10 @@ migración ([diagramas](docs/DIAGRAMAS.md#temas-de-fechas-especiales)).
 app lo refleja con respeto: el contador de tiempo juntos se queda quieto en ese
 día (518 días, 17 meses) en vez de seguir sumando, la portada dice «Del 31 de
 mayo de 2025 al 31 de octubre de 2026» y el aniversario deja de celebrarse
-(ni tema del día ni cuenta regresiva). El cumpleaños y las demás fechas siguen
+(ni tema del día ni cuenta regresiva). También se ocultan el subtítulo del
+contador («Y contando…») y las fechas marcadas **Sólo mientras estemos juntos**
+en **Panel → Fechas** (como «Navidad juntos»); vuelven solas si se quita la
+fecha del final, igual que el contador. El cumpleaños y las demás fechas siguen
 igual, y no se borra nada: fotos, dedicatorias, chat, notitas y listas se
 quedan como estaban. La fecha está en **Super → Ajustes del sitio → Fecha en que
 terminó** (`site_settings.relationship_end`); si se deja vacía, todo vuelve a

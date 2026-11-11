@@ -108,6 +108,9 @@ export const admin: Messages["admin"] = {
     yearlyHint: "For birthdays or anniversaries use the original date: that way the years are counted.",
     repeats: "Repeats every year",
     show: "Show on the page",
+    onlyTogether: "Only while we’re together",
+    onlyTogetherHint: "Hidden automatically if the relationship ended (Site settings), and back if the end date is removed.",
+    pausedEnded: "paused: the relationship ended",
   },
   milestones: {
     title: "Important milestones",

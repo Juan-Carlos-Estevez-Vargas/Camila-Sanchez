@@ -136,6 +136,7 @@ export const toDate = (r: Row): ImportantDate => ({
   icon: str(r.icon, "🎉"),
   message: str(r.message),
   isVisible: r.is_visible !== false,
+  onlyTogether: r.only_together === true,
   translations: normalizeTranslations(r.translations),
 });
 
@@ -147,6 +148,7 @@ export const fromDate = (d: Partial<ImportantDate>): Row => ({
   icon: d.icon,
   message: d.message,
   is_visible: d.isVisible,
+  only_together: d.onlyTogether,
   translations: d.translations,
 });
 

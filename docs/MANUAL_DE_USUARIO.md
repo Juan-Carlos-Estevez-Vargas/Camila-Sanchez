@@ -504,8 +504,10 @@ celebra ni sale en las cuentas regresivas.
 
 En **⚙️ Ajustes del sitio → Fecha en que terminó (opcional)** se pone el día en
 que terminó la relación. Desde ese momento el contador de tiempo juntos se
-queda quieto en ese día, la portada dice «Del … al …» y el aniversario deja de
-celebrarse. No se borra nada: fotos, dedicatorias, chat, notitas y listas siguen
+queda quieto en ese día, la portada dice «Del … al …», el aniversario deja de
+celebrarse y se ocultan el subtítulo del contador («Y contando…») y las fechas
+marcadas **Sólo mientras estemos juntos** en **📅 Fechas** (como «Navidad
+juntos»), que llevan la etiqueta *pausada*. No se borra nada: fotos, dedicatorias, chat, notitas y listas siguen
 igual. Si se deja vacía, todo vuelve a como estaba.
 
 ### Revisar la auditoría
