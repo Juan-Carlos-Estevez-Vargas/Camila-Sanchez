@@ -198,6 +198,11 @@ cumpleaños (día y mes) y los días que faltan.
   empieza, las otras se pausan. Ese día su botón reemplaza al de la música
   de la portada. No hace falta tocar la CSP: `media-src https:` y
   `frame-src youtube-nocookie` ya estaban.
+  `DEFAULT_DAY_SONGS` pone «El color de tus ojos» (enlace de YouTube) en el
+  cumpleaños mientras `songs` no exista en lo guardado.
+- `app/SpecialDayPopup.tsx`: la ventana del cumpleaños (un `Modal`), una vez
+  por día y navegador, con `effects.specialDays.birthdayMessage` o el texto de
+  `special.popup.message`.
 
 ### Fin de la relación
 

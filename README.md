@@ -166,8 +166,15 @@ ese navegador). Se pausa si empieza la playlist y no suena en el chat. En
 canciones propias por fecha (enlaces de YouTube o de archivos de audio, uno por
 línea), por ejemplo la serenata del cumpleaños; para eso hay accesos para
 buscar en YouTube «Hasta dónde te quiero» y «Sabes una cosa» de la Rondalla de
-Roldanillo. El repositorio no guarda música con derechos de autor: esas
-canciones suenan desde YouTube ([diagramas](docs/DIAGRAMAS.md#música-de-las-fechas-especiales)).
+Roldanillo. Mientras no se guarden otras, en el cumpleaños suena «El color de
+tus ojos» (Banda MS) desde su video de YouTube. El repositorio no guarda música
+con derechos de autor: esas canciones suenan desde YouTube
+([diagramas](docs/DIAGRAMAS.md#música-de-las-fechas-especiales)).
+
+**Ventana del cumpleaños.** Ese día, al abrir la página sale una vez una
+ventana con el saludo y el mensaje («Te amo demasiado 💖 ¡Feliz cumpleaños, mi
+reina! 👑», se cambia en Apariencia → *Mensaje de la ventana de cumpleaños*).
+Su botón *Abrir mi regalo 🎁* es también el toque que hace sonar la música.
 
 <p align="center">
   <img src="docs/capturas/fecha-musica.png" alt="Halloween con el aviso «Hoy suena música suave por Halloween» y los botones ¡Que suene! y Apagar música, y el botón de silencio abajo a la izquierda" width="640">

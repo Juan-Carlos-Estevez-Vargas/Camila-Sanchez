@@ -98,6 +98,9 @@ activaste «Reducir animaciones» en el pie, la decoración se queda quieta. Al 
 vuelve sola a como estaba. Mientras dura, se ve igual para todos, aunque hayas
 elegido tus propios colores.
 
+En tu cumpleaños, al abrir la página sale una ventanita con un mensaje para ti;
+toca **Abrir mi regalo 🎁** y empieza la música («El color de tus ojos»).
+
 Ese día también suena una música suave de fondo (en tu cumpleaños puede ser
 una serenata). Empieza cuando tocas la página. Al llegar sale un aviso; para
 apagarla toca **Apagar música** en el aviso o el botón **🔊** abajo a la
@@ -513,8 +516,12 @@ En **🎨 Apariencia → Fechas especiales**:
    vuelven a empezar. En el cumpleaños hay accesos para buscar en YouTube la
    serenata («Hasta dónde te quiero», «Sabes una cosa» de la Rondalla de
    Roldanillo): abre el video, copia el enlace y pégalo. Lo que no sirve sale
-   marcado en rojo y no se guarda.
-5. Pulsa **Guardar cambios**.
+   marcado en rojo y no se guarda. «El color de tus ojos» (Banda MS) viene
+   puesta en el cumpleaños y se agrega o quita con **Agregar**.
+5. **Mensaje de la ventana de cumpleaños**: lo que dice la ventanita que sale
+   ese día al abrir la página. Vacío: «Te amo demasiado 💖 ¡Feliz cumpleaños,
+   mi reina! 👑».
+6. Pulsa **Guardar cambios**.
 
 El aniversario usa la fecha de **⚙️ Ajustes del sitio → Fecha en que empezó
 todo**. Si en **Fecha en que terminó** hay una fecha, el aniversario ya no se

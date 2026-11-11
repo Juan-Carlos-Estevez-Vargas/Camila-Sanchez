@@ -993,6 +993,8 @@ flowchart TD
   CH -- "no" --> S{"¿songs[fecha]<br/>tiene enlaces?"}
   S -- "sí" --> L["Canciones propias en orden y en bucle<br/>YouTube (tarjetita con el video) · archivos de audio"]
   S -- "no" --> T["Melodía de la app (cajita musical)<br/>SPECIAL_TUNES → tuneSchedule() → musicBox"]
+  D -- "cumpleaños" --> W["Ventana: «Te amo demasiado…<br/>¡Feliz cumpleaños, mi reina!»<br/>(una vez por día)"]
+  W -- "Abrir mi regalo 🎁" --> G
   L & T --> O{"¿La apagó hoy?<br/>localStorage = musicDayKey()"}
   O -- "sí" --> B0["Botón 🔇: tocar para oírla"]
   O -- "no" --> A["Aviso: cómo apagarla<br/>¡Que suene! · Apagar música"]
@@ -1016,7 +1018,9 @@ Las melodías de la app:
 
 La serenata del cumpleaños (por ejemplo «Hasta dónde te quiero» y «Sabes una
 cosa» de la Rondalla de Roldanillo) tiene derechos de autor: no se guarda en el
-repositorio, se pegan sus enlaces de YouTube en Apariencia:
+repositorio, se pegan sus enlaces de YouTube en Apariencia. «El color de tus
+ojos» (Banda MS) viene puesta de fábrica (`DEFAULT_DAY_SONGS`) hasta que se
+guarden otras:
 
 ```mermaid
 sequenceDiagram
