@@ -12,6 +12,14 @@ export const whatsNew = {
   releases: {
     "2026-11-11": {
       news: {
+        birthdayPopup: {
+          title: "Una ventana para su cumpleaños",
+          body: "En el cumpleaños sale una ventanita con un mensaje de amor y, al abrir el regalo, suena «El color de tus ojos».",
+        },
+        specialMusic: {
+          title: "Música en cada fecha especial",
+          body: "En las fechas especiales ahora suena una música suave de fondo: un vals de misterio en Halloween, «Noche de paz» con campanitas en Navidad, «Cumpleaños feliz» en tu cumpleaños… Empieza cuando tocas la página y la puedes apagar con el botón 🔊 de abajo a la izquierda. En Apariencia se pueden poner canciones propias, como una serenata para el cumpleaños.",
+        },
         specialScenes: {
           title: "Cada fecha con su decoración",
           body: "Ahora cada fecha especial trae su escena animada en toda la app: calaveras, murciélagos, arañas y luna llena en Halloween; luces, nieve, árboles y el trineo en Navidad; banderines y confeti en tu cumpleaños, y fuegos artificiales en Año Nuevo.",

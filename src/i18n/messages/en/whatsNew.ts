@@ -12,6 +12,14 @@ export const whatsNew = {
   releases: {
     "2026-11-11": {
       news: {
+        birthdayPopup: {
+          title: "A pop-up for her birthday",
+          body: "On her birthday a little window shows a love message and, when the gift is opened, \"El color de tus ojos\" plays.",
+        },
+        specialMusic: {
+          title: "Music on every special date",
+          body: "Special dates now play soft background music: a mystery waltz on Halloween, \"Silent Night\" with bells at Christmas, \"Happy Birthday\" on your birthday… It starts when you tap the page and you can turn it off with the 🔊 button at the bottom left. In Appearance you can add your own songs, like a serenade for the birthday.",
+        },
         specialScenes: {
           title: "Every date with its own decorations",
           body: "Each special date now brings its own animated scene across the app: skulls, bats, spiders and a full moon on Halloween; lights, snow, trees and the sleigh at Christmas; bunting and confetti on her birthday, and fireworks on New Year.",

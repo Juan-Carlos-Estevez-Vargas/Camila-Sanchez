@@ -182,6 +182,27 @@ cumpleaños (día y mes) y los días que faltan.
 - `features/admin/theme/SpecialDaysCard.tsx` es la tarjeta de **Apariencia**:
   cumpleaños (a mano o desde el perfil de una cuenta), interruptores y
   «Ver cómo se ve». Los textos están en `i18n/messages/*/special.ts`.
+- Música: `domain/specialMusic.ts` (puro y probado) tiene la melodía de cada
+  fecha (`SPECIAL_TUNES`, notas MIDI y acordes; originales o de dominio
+  público), `tuneSchedule()` que la pasa a segundos, `parseMusicLink()` para
+  las canciones propias (YouTube o archivos de audio por https; Spotify no) y
+  `musicDayKey()` para recordar «apagada» sólo ese día.
+  `services/audio/musicBox.ts` la toca con Web Audio (osciladores con golpe y
+  cola, eco suave, programadas medio segundo por delante) y
+  `app/SpecialDayMusic.tsx` decide cuándo: empieza con el primer
+  `pointerdown`/`keydown` (la regla de autoplay de los navegadores), muestra
+  el aviso de cómo apagarla y el botón 🔊/🔇, y si la fecha tiene canciones en
+  `effects.specialDays.songs` las toca en orden (YouTube incrustado con
+  `youtube-nocookie`, o `<audio>`). Comparte `services/audio/audioFocus.ts`
+  con la playlist y la música de la portada (dueño `"special"`): cuando una
+  empieza, las otras se pausan. Ese día su botón reemplaza al de la música
+  de la portada. No hace falta tocar la CSP: `media-src https:` y
+  `frame-src youtube-nocookie` ya estaban.
+  `DEFAULT_DAY_SONGS` pone «El color de tus ojos» (enlace de YouTube) en el
+  cumpleaños mientras `songs` no exista en lo guardado.
+- `app/SpecialDayPopup.tsx`: la ventana del cumpleaños (un `Modal`), una vez
+  por día y navegador, con `effects.specialDays.birthdayMessage` o el texto de
+  `special.popup.message`.
 
 ### Fin de la relación
 

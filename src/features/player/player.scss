@@ -8,11 +8,13 @@
 :root[data-player] {
   body { padding-bottom: var(--player-space); }
 
-  .music-toggle { bottom: calc(var(--player-space) + #{space(2)} + env(safe-area-inset-bottom)); }
+  .music-toggle,
+  .special-music { bottom: calc(var(--player-space) + #{space(2)} + env(safe-area-inset-bottom)); }
 
   @include above("md") {
     body { padding-bottom: 0; }
-    .music-toggle { bottom: calc(#{space(4)} + env(safe-area-inset-bottom)); }
+    .music-toggle,
+    .special-music { bottom: calc(#{space(4)} + env(safe-area-inset-bottom)); }
   }
 }
 

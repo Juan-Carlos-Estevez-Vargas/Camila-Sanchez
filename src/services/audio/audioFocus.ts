@@ -4,7 +4,7 @@
  */
 import { EventBus } from "@/core/events";
 
-export type AudioOwner = "background" | "playlist";
+export type AudioOwner = "background" | "playlist" | "special";
 
 const bus = new EventBus<{ claim: AudioOwner }>();
 

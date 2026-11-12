@@ -10,6 +10,7 @@
  */
 import { asStringArray } from "@/core/validation";
 import { parseIsoDate } from "./dates";
+import { DEFAULT_DAY_SONGS, normalizeDaySongs } from "./specialMusic";
 import type { PaletteColors } from "./palettes";
 import type { IsoDate, ThemeTokens } from "./types";
 
@@ -28,13 +29,25 @@ export interface SpecialDaysConfig {
   birthdayName: string;
   /** Fechas que se apagaron una por una. */
   off: SpecialDayId[];
+  /** Música suave de fondo ese día (ver specialMusic.ts). */
+  music: boolean;
+  /** Canciones propias de cada fecha (YouTube o archivos de audio) en vez de la melodía de la app. */
+  songs: Partial<Record<SpecialDayId, string[]>>;
+  /** Lo que dice la ventana del cumpleaños (vacío: el texto de la app). */
+  birthdayMessage: string;
 }
+
+/** Largo máximo del mensaje de la ventana del cumpleaños. */
+export const MAX_BIRTHDAY_MESSAGE = 300;
 
 export const DEFAULT_SPECIAL_DAYS: SpecialDaysConfig = {
   enabled: true,
   birthday: null,
   birthdayName: "",
   off: [],
+  music: true,
+  songs: DEFAULT_DAY_SONGS,
+  birthdayMessage: "",
 };
 
 /**
@@ -201,6 +214,10 @@ export function normalizeSpecialDays(raw: unknown): SpecialDaysConfig {
     // Sin recortar espacios: se escribe letra a letra en el panel («Camila Sánchez»).
     birthdayName: typeof o.birthdayName === "string" ? o.birthdayName.slice(0, 40) : "",
     off: [...new Set(asStringArray(o.off, SPECIAL_DAY_IDS.length, 20).filter(isId))],
+    music: o.music !== false,
+    // Si nunca se guardaron canciones, suenan las de fábrica (la del cumpleaños).
+    songs: o.songs === undefined ? DEFAULT_DAY_SONGS : normalizeDaySongs(o.songs, SPECIAL_DAY_IDS),
+    birthdayMessage: typeof o.birthdayMessage === "string" ? o.birthdayMessage.slice(0, MAX_BIRTHDAY_MESSAGE) : "",
   };
 }
 

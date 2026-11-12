@@ -24,6 +24,7 @@ directamente al abrir este archivo. La explicación de cada pieza está en
 - [Sorpresas para una persona](#sorpresas-para-una-persona)
 - [Colores por persona](#colores-por-persona)
 - [Temas de fechas especiales](#temas-de-fechas-especiales)
+- [Música de las fechas especiales](#música-de-las-fechas-especiales)
 - [Fin de la relación](#fin-de-la-relación)
 - [Perfil de cada persona](#perfil-de-cada-persona)
 - [Listas compartidas](#listas-compartidas)
@@ -977,6 +978,64 @@ sequenceDiagram
   DB-->>RT: cambio en site_settings
   RT-->>App: recarga los ajustes
   Note over App: el día de su cumpleaños, de 00:00 a 23:59,<br/>toda la app se viste de cumpleaños para todos
+```
+
+## Música de las fechas especiales
+
+Qué suena y cuándo empieza (`app/SpecialDayMusic.tsx`):
+
+```mermaid
+flowchart TD
+  D["Fecha especial de hoy<br/>(o vista previa)"] --> M{"¿effects.specialDays.music?"}
+  M -- "no" --> N["Sin música"]
+  M -- "sí" --> CH{"¿Está en el chat?"}
+  CH -- "sí" --> N
+  CH -- "no" --> S{"¿songs[fecha]<br/>tiene enlaces?"}
+  S -- "sí" --> L["Canciones propias en orden y en bucle<br/>YouTube (tarjetita con el video) · archivos de audio"]
+  S -- "no" --> T["Melodía de la app (cajita musical)<br/>SPECIAL_TUNES → tuneSchedule() → musicBox"]
+  D -- "cumpleaños" --> W["Ventana: «Te amo demasiado…<br/>¡Feliz cumpleaños, mi reina!»<br/>(una vez por día)"]
+  W -- "Abrir mi regalo 🎁" --> G
+  L & T --> O{"¿La apagó hoy?<br/>localStorage = musicDayKey()"}
+  O -- "sí" --> B0["Botón 🔇: tocar para oírla"]
+  O -- "no" --> A["Aviso: cómo apagarla<br/>¡Que suene! · Apagar música"]
+  A --> G["Primer toque o tecla en la página<br/>(los navegadores bloquean el sonido antes)"]
+  G --> P["Suena bajito · botón 🔊"]
+  P -- "toca 🔊 / Apagar música" --> B0
+  P -- "empieza la playlist o la música de la portada<br/>(audioFocus)" --> PA["Se pausa"]
+```
+
+Las melodías de la app:
+
+| Fecha | Melodía | Timbre |
+| --- | --- | --- |
+| 🎂 Cumpleaños | «Cumpleaños feliz» (dominio público), 3/4 | Cajita musical |
+| 💍 Aniversario | Vals romántico (original) | Cajita musical |
+| 💘 San Valentín | Arpegios de amor (original) | Cajita musical |
+| 💛 Amor y Amistad | Melodía alegre pentatónica (original) | Cajita musical |
+| 🎃 Halloween | Vals de misterio en la menor (original) | Grave, triangular |
+| 🎄 Navidad | «Noche de paz» (Gruber, 1818, dominio público) | Campanitas |
+| 🎆 Año Nuevo | «Auld Lang Syne» (tradicional, dominio público) | Cajita musical |
+
+La serenata del cumpleaños (por ejemplo «Hasta dónde te quiero» y «Sabes una
+cosa» de la Rondalla de Roldanillo) tiene derechos de autor: no se guarda en el
+repositorio, se pegan sus enlaces de YouTube en Apariencia. «El color de tus
+ojos» (Banda MS) viene puesta de fábrica (`DEFAULT_DAY_SONGS`) hasta que se
+guarden otras:
+
+```mermaid
+sequenceDiagram
+  actor J as Juan (theme.manage)
+  participant P as Apariencia → 🎂 Música
+  participant Y as YouTube
+  participant DB as site_settings.effects.specialDays.songs
+  participant C as Camila (su cumpleaños)
+  J->>P: «Buscar Hasta dónde te quiero en YouTube»
+  P->>Y: abre la búsqueda en otra pestaña
+  J->>P: pega los enlaces (uno por línea)
+  P->>P: parseSongLines(): guarda los que sirven, marca los demás
+  J->>DB: Guardar cambios
+  C->>C: abre la página ese día, toca la pantalla
+  C->>Y: suena el video (youtube-nocookie) y al terminar el siguiente
 ```
 
 ## Fin de la relación
