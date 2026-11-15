@@ -17,6 +17,7 @@ export const app: Messages["app"] = {
     "/chat": "Chat",
     "/listas": "Lists",
     "/dedicatorias": "Dedications",
+    "/para-ti": "For you",
     "/panel": "My panel",
     "/super": "Administration",
   },

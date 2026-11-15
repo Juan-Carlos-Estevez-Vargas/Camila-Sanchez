@@ -7,7 +7,7 @@ import { useT } from "@/i18n";
 import { InstallButton } from "./InstallButton";
 
 /** Rutas donde el aviso estorbaría (el chat ocupa la pantalla; /app ya lo explica). */
-const HIDDEN = [INSTALL_PATH, "/chat", "/entrar", "/invitacion", "/recuperar"];
+const HIDDEN = [INSTALL_PATH, "/chat", "/para-ti", "/entrar", "/invitacion", "/recuperar"];
 const DELAY_MS = 4000;
 
 /**

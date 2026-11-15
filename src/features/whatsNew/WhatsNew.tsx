@@ -5,7 +5,7 @@
  * pie de página con toda la historia.
  */
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { config } from "@/core/config";
 import { formatLongDate } from "@/domain/dates";
 import { latestRelease, pendingReleases, RELEASES, visibleRelease, type Novelty, type Release } from "@/domain/whatsNew";
@@ -25,6 +25,7 @@ interface ReleaseText {
 export function WhatsNew() {
   const { user, profile, policy } = useAuth();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const t = useT().whatsNew;
   const texts = t.releases as Record<string, ReleaseText | undefined>;
   const manual = useWhatsNewOpen();
@@ -54,7 +55,8 @@ export function WhatsNew() {
     if (userId && createdAt && unseen.length === 0 && !readSeenRelease(userId)) markReleaseSeen(userId, latestRelease());
   }, [userId, createdAt, unseen]);
 
-  const auto = !dismissed && pending.length > 0;
+  // «Para ti» es una carta a pantalla completa: las novedades esperan.
+  const auto = !dismissed && pending.length > 0 && pathname !== "/para-ti";
   if (!userId || (!auto && !manual)) return null;
   const history = manual || showAll;
   const list = history ? visible : pending;

@@ -33,6 +33,8 @@
   X-Robots-Tag: noindex, nofollow
 /dedicatorias/*
   X-Robots-Tag: noindex, nofollow
+/para-ti
+  X-Robots-Tag: noindex, nofollow
 /invitacion
   X-Robots-Tag: noindex, nofollow
   Cache-Control: no-store
