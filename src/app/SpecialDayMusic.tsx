@@ -248,7 +248,8 @@ export function SpecialDayMusic() {
   const urls = (id && config?.songs[id]) || null;
   const songs = useMemo(() => (urls ?? []).flatMap((u) => parseMusicLink(u) ?? []), [urls]);
   if (!day || !config?.music) return null;
-  if (pathname === "/chat" || pathname.startsWith("/chat/")) return null;
+  // Ni en el chat ni en «Para ti», que trae su propia canción.
+  if (pathname === "/chat" || pathname.startsWith("/chat/") || pathname === "/para-ti") return null;
   const dayKey = musicDayKey(day.id, new Date(), preview);
   // La clave hace que todo vuelva a empezar si cambia la fecha o sus canciones.
   return <Music key={`${dayKey}|${songs.map((s) => s.url).join(" ")}`} id={day.id} songs={songs} dayKey={dayKey} />;

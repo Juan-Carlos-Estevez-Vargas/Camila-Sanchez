@@ -16,7 +16,7 @@
       ]
     },
     {
-      "source": "/(entrar|mensajes|chat|cuenta|cuenta/.*|listas|listas/.*|dedicatorias|dedicatorias/.*|invitacion|recuperar|panel|panel/.*|super|super/.*)",
+      "source": "/(entrar|mensajes|chat|cuenta|cuenta/.*|listas|listas/.*|dedicatorias|dedicatorias/.*|para-ti|invitacion|recuperar|panel|panel/.*|super|super/.*)",
       "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
     },
     {

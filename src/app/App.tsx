@@ -37,6 +37,7 @@ const RecoverPage = lazy(() => import("@/features/auth/RecoverPage"));
 const LegalPage = lazy(() => import("@/features/legal/LegalPage"));
 const InstallPage = lazy(() => import("@/features/install/InstallPage"));
 const TwoStepGate = lazy(() => import("@/features/auth/TwoStepGate"));
+const ForYouPage = lazy(() => import("@/features/forYou/ForYouPage"));
 
 function NotFound() {
   const t = useT().app;
@@ -91,6 +92,8 @@ function ThemedShell() {
             <Route path="/legal" element={<LegalPage />} />
             <Route path="/legal/:doc" element={<LegalPage />} />
             <Route path={INSTALL_PATH} element={<InstallPage />} />
+            {/* «Para ti»: la carta «No quiero perderte», con su canción. */}
+            <Route path="/para-ti" element={<ForYouPage />} />
             {appRoutes}
             <Route path="*" element={<NotFound />} />
           </Routes>}

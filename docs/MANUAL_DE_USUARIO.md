@@ -315,6 +315,21 @@ títulos. Eliges si van a una dedicatoria nueva o a una tuya.
 Los audios que subiste se quedan en la app: no van en el `.m3u8` ni en
 YouTube o Spotify.
 
+### Para ti 💌
+
+Juan te dejó una carta. Al abrir la página principal te sale abajo la tarjeta
+**Tengo algo para ti 💌**: toca **Ábrela**. Si prefieres verla después, toca
+**Luego** y vuelve a salir la próxima vez que entres. También puedes abrirla
+directo en **/para-ti**.
+
+1. Sube el volumen y toca **Ábrelo 💌**: empieza a sonar «Iris» de Dean Lewis.
+   Si en el iPhone no arranca sola, toca el videíto de la tarjeta de abajo.
+2. Ve pasando las tarjetas: toca a la derecha para seguir y a la izquierda
+   para volver, o desliza con el dedo. En el computador sirven las flechas.
+3. Al final puedes **Verlo otra vez** o **Escribirle a Juan**.
+
+Con ❚❚ pausas la canción y con × sales a la página principal.
+
 ## 7. Notificaciones
 
 La campanita 🔔 de la cabecera cuenta los avisos sin leer. Tócala para verlos;
