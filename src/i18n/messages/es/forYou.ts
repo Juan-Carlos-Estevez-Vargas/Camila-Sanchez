@@ -1,6 +1,12 @@
 /** «No quiero perderte»: la carta en tarjetas de /para-ti. */
 export const forYou = {
   pageTitle: "Para ti",
+  invite: {
+    title: "Tengo algo para ti",
+    body: "Juan te dejó una carta. Sube el volumen.",
+    open: "Ábrela 💌",
+    later: "Luego",
+  },
   intro: {
     to: "Para ti, Cami",
     hint: "Sube el volumen y ve pasando despacito.",

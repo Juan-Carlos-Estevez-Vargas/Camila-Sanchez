@@ -13,6 +13,7 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent } from "react";
 import { Link } from "react-router-dom";
+import { markForYouOpened } from "@/domain/forYouSeen";
 import { cardTone, FOR_YOU_SONG, INTRO_STEP, moveStep } from "@/domain/forYou";
 import { embedUrl, EMBED_ORIGINS, parseSongLink } from "@/domain/songs";
 import { useT } from "@/i18n";
@@ -94,6 +95,8 @@ export default function ForYouPage() {
   const go = useCallback((delta: number) => setStep((s) => moveStep(s, delta, phrases)), [phrases]);
 
   const open = () => {
+    // Ya la abrió: la tarjeta del inicio deja de salir en este navegador.
+    markForYouOpened();
     setStarted(true);
     setPlaying(true);
     claimAudio("letter");

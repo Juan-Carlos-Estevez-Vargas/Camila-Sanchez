@@ -1,0 +1,136 @@
+@use "abstracts" as *;
+
+// Tarjeta «Tengo algo para ti 💌» del inicio (CSS Module).
+// Mismos colores que la carta: terracota con letra crema.
+
+@font-face {
+  font-family: "Caveat Brush";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/assets/fonts/caveat-brush-latin.woff2") format("woff2");
+}
+
+$terracotta: #84402f;
+$cream: #fbf7ce;
+
+.invite {
+  position: fixed;
+  right: space(4);
+  bottom: calc(#{space(4)} + env(safe-area-inset-bottom));
+  z-index: z("banner");
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px 14px;
+  align-items: center;
+  width: min(360px, calc(100vw - 32px));
+  padding: 16px 18px;
+  border-radius: 18px;
+  background: $terracotta;
+  color: $cream;
+  box-shadow: 0 12px 32px rgb(0 0 0 / 0.25);
+  animation: invite-rise 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+
+  // En el celular deja libre el botón de la música (abajo a la izquierda).
+  @media (max-width: 600px) {
+    right: 12px;
+    left: 72px;
+    width: auto;
+  }
+}
+
+.envelope {
+  font-size: 2rem;
+  line-height: 1;
+  animation: invite-wiggle 2.4s 1s ease-in-out infinite;
+}
+
+.text {
+  min-width: 0;
+}
+
+.title {
+  margin: 0;
+  font-family: "Caveat Brush", "Segoe Print", "Bradley Hand", cursive;
+  font-size: 1.6rem;
+  line-height: 1.05;
+}
+
+.body {
+  margin: 2px 0 0;
+  font-size: 0.9rem;
+  opacity: 0.85;
+}
+
+.actions {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 8px;
+}
+
+.open,
+.later {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0 18px;
+  border-radius: 999px;
+  border: 2px solid $cream;
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 3px solid $cream;
+    outline-offset: 2px;
+  }
+}
+
+.open {
+  flex: 1;
+  background: $cream;
+  color: $terracotta;
+}
+
+.later {
+  background: transparent;
+  color: $cream;
+}
+
+@keyframes invite-rise {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes invite-wiggle {
+  0%,
+  70%,
+  100% {
+    transform: rotate(0);
+  }
+  78% {
+    transform: rotate(-12deg);
+  }
+  86% {
+    transform: rotate(10deg);
+  }
+  94% {
+    transform: rotate(-4deg);
+  }
+}
+
+@include reduced-motion {
+  .invite,
+  .envelope {
+    animation: none;
+  }
+}

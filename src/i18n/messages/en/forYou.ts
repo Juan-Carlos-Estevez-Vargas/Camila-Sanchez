@@ -2,6 +2,12 @@ import type { Messages } from "@/i18n";
 
 export const forYou: Messages["forYou"] = {
   pageTitle: "For you",
+  invite: {
+    title: "I have something for you",
+    body: "Juan left you a letter. Turn the volume up.",
+    open: "Open it 💌",
+    later: "Later",
+  },
   intro: {
     to: "For you, Cami",
     hint: "Turn the volume up and go slowly.",
