@@ -29,6 +29,7 @@ directamente al abrir este archivo. La explicación de cada pieza está en
 - [Perfil de cada persona](#perfil-de-cada-persona)
 - [Listas compartidas](#listas-compartidas)
 - [Dedicatorias y playlist](#dedicatorias-y-playlist)
+- [Carta «Para ti»](#carta-para-ti)
 - [Tutorial guiado](#tutorial-guiado)
   - [Novedades de cada versión](#novedades-de-cada-versión)
 - [Idiomas](#idiomas)
@@ -106,7 +107,7 @@ flowchart TB
 
 ```mermaid
 flowchart TD
-  A["La persona abre una ruta"] --> B{"¿Es pública?<br/>/, /entrar, /invitacion, /recuperar"}
+  A["La persona abre una ruta"] --> B{"¿Es pública?<br/>/, /entrar, /invitacion, /recuperar, /para-ti"}
   B -- "sí" --> P["Se muestra"]
   B -- "no" --> C{"¿Hay sesión?"}
   C -- "no" --> L["/entrar?next=ruta"]
@@ -1461,6 +1462,55 @@ flowchart LR
 
 Los audios subidos se quedan en la app: el `.m3u8` los nombra en un
 comentario, pero no los incluye porque sus enlaces firmados vencen.
+
+## Carta «Para ti»
+
+La carta «No quiero perderte» de `/para-ti`: tarjetas a pantalla completa
+con «Iris» de Dean Lewis de fondo. No usa la base de datos: los textos viven en
+los diccionarios (`forYou` en `src/i18n/messages/<idioma>/`).
+
+### Pasar las tarjetas
+
+```mermaid
+stateDiagram-v2
+  [*] --> Portada: abre /para-ti
+  Portada --> Tarjeta1: Ábrelo 💌 (empieza la canción)
+  Tarjeta1 --> Tarjeta2: toque a la derecha · deslizar ← · →
+  Tarjeta2 --> Tarjeta1: toque a la izquierda · deslizar → · ←
+  Tarjeta2 --> Tarjeta6: …
+  Tarjeta6 --> Final: siguiente
+  Final --> Tarjeta1: Verlo otra vez
+  Final --> Chat: Escribirle a Juan (/chat)
+  Portada --> [*]: ×
+  Final --> [*]: ×
+  note right of Tarjeta1
+    moveStep() no deja pasar de la portada
+    ni del final. cardTone() alterna
+    terracota (pares) y crema (impares).
+  end note
+```
+
+### La canción
+
+```mermaid
+sequenceDiagram
+  actor C as Camila
+  participant P as ForYouPage
+  participant F as audioFocus
+  participant YT as iframe youtube-nocookie
+  participant O as Otras músicas<br/>(portada, playlist, fechas)
+
+  C->>P: toca «Ábrelo» (gesto que deja sonar audio)
+  P->>F: claimAudio("letter")
+  F-->>O: se pausan
+  P->>YT: monta el video de «Iris»<br/>autoplay + loop + enablejsapi
+  YT-->>P: onStateChange 1 (sonando) / 2 (pausa)
+  Note over P,YT: Si el celular no deja arrancar solo (iPhone),<br/>se toca el video de la tarjetita y el botón<br/>sigue el estado real
+  C->>P: ❚❚ / ▶
+  P->>YT: postMessage pauseVideo / playVideo
+  O->>F: otra música empieza
+  F-->>P: pausa la canción
+```
 
 ## Tutorial guiado
 
