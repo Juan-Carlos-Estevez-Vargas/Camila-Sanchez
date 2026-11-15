@@ -317,7 +317,10 @@ YouTube o Spotify.
 
 ### Para ti 💌
 
-Juan te dejó una carta en **/para-ti** (te puede mandar el enlace por el chat).
+Juan te dejó una carta. Al abrir la página principal te sale abajo la tarjeta
+**Tengo algo para ti 💌**: toca **Ábrela**. Si prefieres verla después, toca
+**Luego** y vuelve a salir la próxima vez que entres. También puedes abrirla
+directo en **/para-ti**.
 
 1. Sube el volumen y toca **Ábrelo 💌**: empieza a sonar «Iris» de Dean Lewis.
    Si en el iPhone no arranca sola, toca el videíto de la tarjeta de abajo.

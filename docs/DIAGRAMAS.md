@@ -1466,15 +1466,21 @@ comentario, pero no los incluye porque sus enlaces firmados vencen.
 ## Carta «Para ti»
 
 La carta «No quiero perderte» de `/para-ti`: tarjetas a pantalla completa
-con «Iris» de Dean Lewis de fondo. No usa la base de datos: los textos viven en
+con «Iris» de Dean Lewis de fondo. Se llega por el enlace directo o por la
+tarjeta «Tengo algo para ti 💌» del inicio (`ForYouInvite`). No usa la base de datos: los textos viven en
 los diccionarios (`forYou` en `src/i18n/messages/<idioma>/`).
 
 ### Pasar las tarjetas
 
 ```mermaid
 stateDiagram-v2
-  [*] --> Portada: abre /para-ti
-  Portada --> Tarjeta1: Ábrelo 💌 (empieza la canción)
+  state "Tarjeta «Tengo algo para ti 💌»" as Tarjeta_invitacion
+  [*] --> Inicio: abre /
+  Inicio --> Tarjeta_invitacion: a los 1,2 s, si no la ha abierto<br/>ni pidió «Luego» en esta visita
+  Tarjeta_invitacion --> Portada: Ábrela 💌
+  Tarjeta_invitacion --> Inicio: Luego (sessionStorage)
+  [*] --> Portada: enlace directo /para-ti
+  Portada --> Tarjeta1: Ábrelo 💌 (empieza la canción<br/>y guarda for-you-seen, así la invitación ya no sale)
   Tarjeta1 --> Tarjeta2: toque a la derecha · deslizar ← · →
   Tarjeta2 --> Tarjeta1: toque a la izquierda · deslizar → · ←
   Tarjeta2 --> Tarjeta6: …

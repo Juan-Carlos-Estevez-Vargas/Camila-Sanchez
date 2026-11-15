@@ -83,6 +83,8 @@ Funciona en dos modos:
 | <img src="docs/capturas/dedicatoria.png" alt="Dedicatoria «Para mi persona favorita» con el mensaje, tres fotos y cuatro canciones" width="420"> | <img src="docs/capturas/playlist.png" alt="Playlist con todas las canciones de las dedicatorias, botones para reproducir, mezclar e importar" width="420"> |
 | **Su cumpleaños: toda la página de fiesta** | **Halloween** |
 | <img src="docs/capturas/fecha-cumpleanos.png" alt="Portada con el tema de cumpleaños: colores crema y fucsia, globos flotando y el saludo «¡Feliz cumpleaños, Camila!»" width="420"> | <img src="docs/capturas/fecha-halloween.png" alt="Portada con el tema de Halloween: fondo oscuro, naranja, calabazas y fantasmas flotando y el saludo «¡Feliz Halloween!»" width="420"> |
+| **«Tengo algo para ti 💌» en el inicio** | |
+| <img src="docs/capturas/para-ti-invitacion.png" alt="Página principal con la tarjeta terracota «Tengo algo para ti» abajo a la derecha y los botones Ábrela y Luego" width="420"> | |
 | **«Para ti»: la carta en tarjetas** | **Y el final** |
 | <img src="docs/capturas/para-ti-tarjeta.png" alt="Tarjeta terracota con letra a mano crema: «No quiero perderte.», contador 1/6 y la canción Iris de Dean Lewis abajo" width="240"> | <img src="docs/capturas/para-ti-final.png" alt="Última tarjeta: «Te amo, Cami.», un mensaje, la firma de Juan y los botones Verlo otra vez y Escribirle a Juan" width="240"> |
 | **Novedades al actualizar** | **Y el tutorial de lo nuevo** |
@@ -102,7 +104,7 @@ Funciona en dos modos:
 | App de chat a pantalla completa: buscar personas, solicitudes de contacto, chats privados, fotos, stickers, responder, reacciones (en el celular, manteniendo pulsado el mensaje), editar y borrar, «escribiendo…», en línea, vistos (✓ ✓✓), buscar mensajes, fijar, silenciar, archivar y bloquear | `/chat` | `chat.use` |
 | Listas compartidas con subtareas, materiales, fotos, fechas y responsables, en vivo | `/listas` | `lists.use` |
 | Dedicatorias para alguien o para todos: un mensaje, fotos y canciones. Todas las canciones forman una playlist que suena dentro de la app, se exporta (`.m3u8`, cola de YouTube, enlaces de Spotify o texto) y se le importan canciones pegando enlaces o abriendo un `.m3u` | `/dedicatorias` y `/dedicatorias/playlist` | `dedications.use` |
-| «Para ti»: carta a pantalla completa en tarjetas («No quiero perderte…») que se pasan tocando o deslizando, con «Iris» de Dean Lewis de fondo y un «Te amo» al final | `/para-ti` | Pública (fuera de buscadores) |
+| «Para ti»: carta a pantalla completa en tarjetas («No quiero perderte…») que se pasan tocando o deslizando, con «Iris» de Dean Lewis de fondo y un «Te amo» al final. En el inicio sale la tarjeta «Tengo algo para ti 💌» hasta que se abre | `/para-ti` | Pública (fuera de buscadores) |
 | Perfil: nombre, foto o icono, frase y cumpleaños (dentro de Mi cuenta) | `/cuenta/perfil` | Cualquier cuenta |
 | Mis colores: cada persona elige su paleta sin cambiársela a nadie (dentro de Mi cuenta) | `/cuenta/colores` | Cualquier cuenta |
 | Mi cuenta: menú a la izquierda (en el celular, pestañas arriba) con Mi perfil, Mis colores, Idioma, App y avisos, Seguridad (contraseña, verificación en dos pasos opcional y sesiones) y Privacidad; la opción elegida se abre en el centro | `/cuenta/*` | Cualquier cuenta |
@@ -118,7 +120,10 @@ Funciona en dos modos:
 | Botón opcional «Invítame un café», destacado en la cabecera y en el pie (donación voluntaria por un enlace externo) | Cabecera y pie | Todos, si `VITE_DONATION_URL` tiene valor |
 
 **«Para ti» 💌.** En `/para-ti` hay una carta a pantalla completa para
-Camila: una portada («Para ti, Cami» y **Ábrelo**), seis tarjetas que alternan
+Camila. Al abrir el inicio, a los pocos segundos sale abajo una tarjeta
+terracota «Tengo algo para ti 💌» con **Ábrela** (y **Luego**, que la esconde
+hasta la próxima visita); deja de salir en ese navegador cuando la carta se
+abre. La carta tiene una portada («Para ti, Cami» y **Ábrelo**), seis tarjetas que alternan
 terracota y crema con letra a mano («No quiero perderte.», «No quiero dejar de
 escuchar tus cosas.»…) y una última con «Te amo, Cami.», un mensaje y la firma.
 Se pasa tocando a la derecha (a la izquierda vuelve), deslizando o con las
