@@ -30,6 +30,7 @@ directamente al abrir este archivo. La explicación de cada pieza está en
 - [Listas compartidas](#listas-compartidas)
 - [Dedicatorias y playlist](#dedicatorias-y-playlist)
 - [Carta «Para ti»](#carta-para-ti)
+  - [Carta «Hasta siempre»](#carta-hasta-siempre)
 - [Tutorial guiado](#tutorial-guiado)
   - [Novedades de cada versión](#novedades-de-cada-versión)
 - [Idiomas](#idiomas)
@@ -107,7 +108,7 @@ flowchart TB
 
 ```mermaid
 flowchart TD
-  A["La persona abre una ruta"] --> B{"¿Es pública?<br/>/, /entrar, /invitacion, /recuperar, /para-ti"}
+  A["La persona abre una ruta"] --> B{"¿Es pública?<br/>/, /entrar, /invitacion, /recuperar,<br/>/para-ti, /despedida"}
   B -- "sí" --> P["Se muestra"]
   B -- "no" --> C{"¿Hay sesión?"}
   C -- "no" --> L["/entrar?next=ruta"]
@@ -1466,8 +1467,8 @@ comentario, pero no los incluye porque sus enlaces firmados vencen.
 ## Carta «Para ti»
 
 La carta «No quiero perderte» de `/para-ti`: tarjetas a pantalla completa
-con «Iris» de Dean Lewis de fondo. Se llega por el enlace directo o por la
-tarjeta «Tengo algo para ti 💌» del inicio (`ForYouInvite`). No usa la base de datos: los textos viven en
+con «Iris» de Dean Lewis de fondo. Se llega por el enlace directo (la tarjeta
+del inicio ahora anuncia «Hasta siempre», la carta más reciente). No usa la base de datos: los textos viven en
 los diccionarios (`forYou` en `src/i18n/messages/<idioma>/`).
 
 ### Pasar las tarjetas
@@ -1507,15 +1508,51 @@ sequenceDiagram
   participant O as Otras músicas<br/>(portada, playlist, fechas)
 
   C->>P: toca «Ábrelo» (gesto que deja sonar audio)
-  P->>F: claimAudio("letter")
+  P->>F: claimAudio("letter")<br/>(igual en las dos cartas)
   F-->>O: se pausan
-  P->>YT: monta el video de «Iris»<br/>autoplay + loop + enablejsapi
+  P->>YT: monta el video de LETTERS[letter].song<br/>(«Iris» o «Lloro por ti»)<br/>autoplay + loop + enablejsapi
   YT-->>P: onStateChange 1 (sonando) / 2 (pausa)
   Note over P,YT: Si el celular no deja arrancar solo (iPhone),<br/>se toca el video de la tarjetita y el botón<br/>sigue el estado real
   C->>P: ❚❚ / ▶
   P->>YT: postMessage pauseVideo / playVideo
   O->>F: otra música empieza
   F-->>P: pausa la canción
+```
+
+### Carta «Hasta siempre»
+
+La carta de despedida de `/despedida`. Usa la misma página que «Para ti»: lo
+que cambia entre las dos cartas está en `LETTERS` (`src/domain/forYou.ts`) y
+en sus textos (`forYou` y `goodbye` en `src/i18n/messages/<idioma>/`).
+
+```mermaid
+flowchart LR
+  subgraph Rutas
+    R1["/para-ti"] --> P1["ForYouPage letter=forYou"]
+    R2["/despedida"] --> P2["ForYouPage letter=goodbye"]
+  end
+  P1 & P2 --> L["LETTERS[letter]<br/>path · song · doneTo · long"]
+  P1 & P2 --> T["useT()[letter]<br/>portada · tarjetas · final"]
+  L --> S1["forYou: «Iris», 6 tarjetas,<br/>final → /chat"]
+  L --> S2["goodbye: «Lloro por ti», 9 tarjetas<br/>con letra más pequeña, final → /"]
+  LP["LETTER_PATHS"] -.-> X["sin música de fechas especiales,<br/>aviso de instalar ni novedades"]
+  INV["ForYouInvite letter=LATEST_LETTER"] -->|«Tengo algo que decirte»| R2
+```
+
+```mermaid
+stateDiagram-v2
+  state "Tarjeta «Tengo algo que decirte»" as Invitacion
+  [*] --> Inicio: abre /
+  Inicio --> Invitacion: a los 1,2 s, si no la ha abierto<br/>ni pidió «Luego» en esta visita
+  Invitacion --> Portada: Ábrela 💌
+  Invitacion --> Inicio: Luego (goodbye-later, sessionStorage)
+  [*] --> Portada: enlace directo /despedida
+  Portada --> Tarjeta1: Ábrela 💌 (suena «Lloro por ti»<br/>y guarda goodbye-seen)
+  Tarjeta1 --> Tarjeta9: toques, deslizar o flechas
+  Tarjeta9 --> Final: siguiente
+  Final --> Tarjeta1: Leerla otra vez
+  Final --> Inicio: Volver al inicio
+  Final --> [*]: ×
 ```
 
 ## Tutorial guiado

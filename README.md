@@ -87,6 +87,10 @@ Funciona en dos modos:
 | <img src="docs/capturas/para-ti-invitacion.png" alt="Página principal con la tarjeta terracota «Tengo algo para ti» abajo a la derecha y los botones Ábrela y Luego" width="420"> | |
 | **«Para ti»: la carta en tarjetas** | **Y el final** |
 | <img src="docs/capturas/para-ti-tarjeta.png" alt="Tarjeta terracota con letra a mano crema: «No quiero perderte.», contador 1/6 y la canción Iris de Dean Lewis abajo" width="240"> | <img src="docs/capturas/para-ti-final.png" alt="Última tarjeta: «Te amo, Cami.», un mensaje, la firma de Juan y los botones Verlo otra vez y Escribirle a Juan" width="240"> |
+| **«Hasta siempre»: la carta de despedida** | **Y su final** |
+| <img src="docs/capturas/despedida-tarjeta.png" alt="Tarjeta terracota con un párrafo a mano: «Te extraño en las cosas pequeñas…», contador 3/9 y la canción Lloro por ti de Enrique Iglesias abajo" width="240"> | <img src="docs/capturas/despedida-final.png" alt="Última tarjeta: «Sé feliz, Cami.», un mensaje de gracias, la firma «Con todo el amor que todavía tengo, Juan» y los botones Leerla otra vez y Volver al inicio" width="240"> |
+| **«Tengo algo que decirte» en el inicio** | |
+| <img src="docs/capturas/despedida-invitacion.png" alt="Página principal en el celular con la tarjeta terracota «Tengo algo que decirte», «Juan te dejó una última carta» y los botones Ábrela y Luego" width="240"> | |
 | **Novedades al actualizar** | **Y el tutorial de lo nuevo** |
 | <img src="docs/capturas/novedades.png" alt="Ventana Novedades con la dedicatoria nueva y el botón Ver cómo funciona" width="420"> | <img src="docs/capturas/novedades-tutorial.png" alt="El tutorial de las dedicatorias empieza con la presentación de la novedad" width="420"> |
 
@@ -104,7 +108,8 @@ Funciona en dos modos:
 | App de chat a pantalla completa: buscar personas, solicitudes de contacto, chats privados, fotos, stickers, responder, reacciones (en el celular, manteniendo pulsado el mensaje), editar y borrar, «escribiendo…», en línea, vistos (✓ ✓✓), buscar mensajes, fijar, silenciar, archivar y bloquear | `/chat` | `chat.use` |
 | Listas compartidas con subtareas, materiales, fotos, fechas y responsables, en vivo | `/listas` | `lists.use` |
 | Dedicatorias para alguien o para todos: un mensaje, fotos y canciones. Todas las canciones forman una playlist que suena dentro de la app, se exporta (`.m3u8`, cola de YouTube, enlaces de Spotify o texto) y se le importan canciones pegando enlaces o abriendo un `.m3u` | `/dedicatorias` y `/dedicatorias/playlist` | `dedications.use` |
-| «Para ti»: carta a pantalla completa en tarjetas («No quiero perderte…») que se pasan tocando o deslizando, con «Iris» de Dean Lewis de fondo y un «Te amo» al final. En el inicio sale la tarjeta «Tengo algo para ti 💌» hasta que se abre | `/para-ti` | Pública (fuera de buscadores) |
+| «Para ti»: carta a pantalla completa en tarjetas («No quiero perderte…») que se pasan tocando o deslizando, con «Iris» de Dean Lewis de fondo y un «Te amo» al final | `/para-ti` | Pública (fuera de buscadores) |
+| «Hasta siempre»: la carta de despedida, en nueve tarjetas con párrafos a mano, con «Lloro por ti» de Enrique Iglesias de fondo y un «Sé feliz, Cami.» al final. En el inicio sale la tarjeta «Tengo algo que decirte» hasta que se abre | `/despedida` | Pública (fuera de buscadores) |
 | Perfil: nombre, foto o icono, frase y cumpleaños (dentro de Mi cuenta) | `/cuenta/perfil` | Cualquier cuenta |
 | Mis colores: cada persona elige su paleta sin cambiársela a nadie (dentro de Mi cuenta) | `/cuenta/colores` | Cualquier cuenta |
 | Mi cuenta: menú a la izquierda (en el celular, pestañas arriba) con Mi perfil, Mis colores, Idioma, App y avisos, Seguridad (contraseña, verificación en dos pasos opcional y sesiones) y Privacidad; la opción elegida se abre en el centro | `/cuenta/*` | Cualquier cuenta |
@@ -120,10 +125,8 @@ Funciona en dos modos:
 | Botón opcional «Invítame un café», destacado en la cabecera y en el pie (donación voluntaria por un enlace externo) | Cabecera y pie | Todos, si `VITE_DONATION_URL` tiene valor |
 
 **«Para ti» 💌.** En `/para-ti` hay una carta a pantalla completa para
-Camila. Al abrir el inicio, a los pocos segundos sale abajo una tarjeta
-terracota «Tengo algo para ti 💌» con **Ábrela** (y **Luego**, que la esconde
-hasta la próxima visita); deja de salir en ese navegador cuando la carta se
-abre. La carta tiene una portada («Para ti, Cami» y **Ábrelo**), seis tarjetas que alternan
+Camila. (La tarjeta del inicio ahora anuncia la carta más reciente, la de
+despedida: ver «Hasta siempre» abajo.) La carta tiene una portada («Para ti, Cami» y **Ábrelo**), seis tarjetas que alternan
 terracota y crema con letra a mano («No quiero perderte.», «No quiero dejar de
 escuchar tus cosas.»…) y una última con «Te amo, Cami.», un mensaje y la firma.
 Se pasa tocando a la derecha (a la izquierda vuelve), deslizando o con las
@@ -134,6 +137,20 @@ música de las fechas especiales, el aviso de instalar ni las novedades. La
 letra (Caveat Brush) se sirve desde el propio sitio, así que no sale nada hacia
 Google. Respeta «Reducir animaciones», está en los tres idiomas y no aparece en
 buscadores ([diagrama](docs/DIAGRAMAS.md#carta-para-ti)).
+
+**«Hasta siempre» 💌.** En `/despedida` está la carta de despedida de Juan, con
+el mismo diseño y la misma página que «Para ti» (`ForYouPage` con
+`letter="goodbye"`). Al abrir el inicio, a los pocos segundos sale abajo la
+tarjeta terracota «Tengo algo que decirte» («Juan te dejó una última carta»)
+con **Ábrela** y **Luego**; deja de salir en ese navegador cuando la carta se
+abre (`goodbye-seen`). Tiene una portada («Para ti, Cami» y **Ábrela**), nueve
+tarjetas con párrafos enteros en letra a mano un poco más pequeña, y un final
+con «Sé feliz, Cami.», un mensaje de gracias, la firma «Con todo el amor que
+todavía tengo, Juan» y los botones **Leerla otra vez** y **Volver al inicio**.
+Suena «Lloro por ti» de Enrique Iglesias en bucle, con las mismas reglas que
+«Iris». Para cambiar la canción basta con cambiar `GOODBYE_SONG` en
+`src/domain/forYou.ts`; los textos están en `goodbye` de cada idioma
+([diagrama](docs/DIAGRAMAS.md#carta-hasta-siempre)).
 
 **Dedicatorias y playlist.** Cada dedicatoria es una carta con emoji,
 mensaje, hasta 12 fotos y hasta 50 canciones. Quien la escribe ve quién ya la
