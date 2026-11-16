@@ -1,0 +1,42 @@
+/** «Hasta siempre»: la carta de despedida en tarjetas de /despedida. */
+export const goodbye = {
+  pageTitle: "Hasta siempre",
+  invite: {
+    title: "Tengo algo que decirte",
+    body: "Juan te dejó una última carta. Sube el volumen.",
+    open: "Ábrela 💌",
+    later: "Luego",
+  },
+  intro: {
+    to: "Para ti, Cami",
+    hint: "Sube el volumen y léela despacito.",
+    open: "Ábrela 💌",
+  },
+  cards: [
+    "No sé muy bien cómo empezar esta carta, porque es la que nunca quise escribir.",
+    "Te amo. Te lo digo sin adornos, porque es la verdad más grande que tengo.",
+    "Te extraño en las cosas pequeñas: en los mensajes de buenos días, en tu risa, en la forma en que el día se sentía más liviano cuando estabas en él. Te extraño incluso ahora, y eso es lo que más me duele.",
+    "Lo habría dado todo por ti. Mi tiempo, mi paciencia, mis planes, lo que hiciera falta para verte feliz. Quererte nunca fue un sacrificio; fue lo más bonito que me ha pasado.",
+    "Si pudiera devolver el tiempo, haría tantas cosas diferentes. Te escucharía más, te cuidaría mejor, estaría presente en los momentos que de verdad importaban.",
+    "Te diría más veces lo que significas para mí, en vez de darlo por sentado. No puedo cambiar lo que pasó, pero quiero que sepas que lo veo, y que lo siento.",
+    "Hoy entiendo algo que me cuesta aceptar: ya no sientes lo mismo por mí. Se nota, y no te lo reprocho. El amor no se puede pedir ni obligar, y tú mereces estar donde tu corazón quiera estar.",
+    "Por eso me retiro, aunque duela. No porque haya dejado de amarte, sino justamente porque te amo. Prefiero verte feliz lejos de mí que tenerte cerca sin que lo seas.",
+    "Ojalá encuentres a alguien que te valore como mereces, que vea en ti todo lo que yo vi y que te lo recuerde todos los días.",
+  ],
+  final: {
+    title: "Sé feliz, Cami.",
+    message: "Gracias por cada momento, por cada risa, por haberme dejado quererte. Una parte de mí siempre va a guardar con cariño lo que fuimos. Cuídate mucho. De verdad.",
+    signature: "Con todo el amor que todavía tengo, Juan",
+    again: "Leerla otra vez",
+    write: "Volver al inicio",
+  },
+  counter: (current: number, total: number) => `${current}/${total}`,
+  next: "Siguiente",
+  previous: "Anterior",
+  close: "Salir",
+  song: "Lloro por ti · Enrique Iglesias",
+  songFrame: "Canción: Lloro por ti de Enrique Iglesias",
+  pause: "Pausar la canción",
+  play: "Poner la canción",
+  swipe: "Toca a la derecha o desliza para seguir",
+};

@@ -17,6 +17,7 @@ export const app = {
     "/listas": "Listas",
     "/dedicatorias": "Dedicatorias",
     "/para-ti": "Para ti",
+    "/despedida": "Hasta siempre",
     "/panel": "Mi panel",
     "/super": "Administración",
   } as Record<string, string>,

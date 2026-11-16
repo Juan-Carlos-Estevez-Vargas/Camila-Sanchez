@@ -17,6 +17,7 @@ import { useLocation } from "react-router-dom";
 import { embedUrl, EMBED_ORIGINS } from "@/domain/songs";
 import { musicDayKey, parseMusicLink, SPECIAL_TUNES, type MusicLink } from "@/domain/specialMusic";
 import type { SpecialDayId } from "@/domain/specialDays";
+import { LETTER_PATHS } from "@/domain/forYou";
 import { useT } from "@/i18n";
 import { claimAudio, onAudioClaimed } from "@/services/audio/audioFocus";
 import { createMusicBox, type MusicBox } from "@/services/audio/musicBox";
@@ -248,8 +249,8 @@ export function SpecialDayMusic() {
   const urls = (id && config?.songs[id]) || null;
   const songs = useMemo(() => (urls ?? []).flatMap((u) => parseMusicLink(u) ?? []), [urls]);
   if (!day || !config?.music) return null;
-  // Ni en el chat ni en «Para ti», que trae su propia canción.
-  if (pathname === "/chat" || pathname.startsWith("/chat/") || pathname === "/para-ti") return null;
+  // Ni en el chat ni en las cartas, que traen su propia canción.
+  if (pathname === "/chat" || pathname.startsWith("/chat/") || LETTER_PATHS.includes(pathname)) return null;
   const dayKey = musicDayKey(day.id, new Date(), preview);
   // La clave hace que todo vuelva a empezar si cambia la fecha o sus canciones.
   return <Music key={`${dayKey}|${songs.map((s) => s.url).join(" ")}`} id={day.id} songs={songs} dayKey={dayKey} />;

@@ -1,20 +1,21 @@
 /**
- * «Para ti» (/para-ti): una carta en tarjetas a pantalla completa.
+ * Una carta en tarjetas a pantalla completa. Sirve para las dos cartas:
  *
- *   portada «Para ti, Cami» → 6 tarjetas «No quiero perderte…» → «Te amo»
+ *   «Para ti» (/para-ti): portada → 6 tarjetas «No quiero perderte…» → «Te amo»
+ *   «Hasta siempre» (/despedida): portada → 9 tarjetas → «Sé feliz, Cami.»
  *
  * Las tarjetas alternan terracota y crema con letra a mano (Caveat Brush,
  * servida desde el propio sitio: no sale nada hacia Google). Se pasan
  * tocando a la derecha/izquierda, deslizando o con las flechas del teclado.
  *
- * El toque de «Ábrelo» es el que deja sonar la canción («Iris», Dean Lewis):
+ * El toque de «Ábrelo» es el que deja sonar la canción de cada carta:
  * un video de YouTube sin cookies en una tarjetita abajo, con su botón para
  * pausar. Al sonar, se pausa cualquier otra música de la app (audioFocus).
  */
 import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent } from "react";
 import { Link } from "react-router-dom";
 import { markForYouOpened } from "@/domain/forYouSeen";
-import { cardTone, FOR_YOU_SONG, INTRO_STEP, moveStep } from "@/domain/forYou";
+import { cardTone, INTRO_STEP, LETTERS, moveStep, type LetterId } from "@/domain/forYou";
 import { embedUrl, EMBED_ORIGINS, parseSongLink } from "@/domain/songs";
 import { useT } from "@/i18n";
 import { claimAudio, onAudioClaimed } from "@/services/audio/audioFocus";
@@ -40,15 +41,16 @@ function playerState(raw: unknown): number | undefined {
  * La canción. Si el celular no deja que arranque sola (iPhone), el video se ve
  * en la tarjetita y basta con tocarlo; el botón sigue lo que de verdad pasa.
  */
-function Song({ playing, onToggle, onState }: { playing: boolean; onToggle(): void; onState(playing: boolean): void }) {
-  const t = useT().forYou;
+function Song({ letter, playing, onToggle, onState }: { letter: LetterId; playing: boolean; onToggle(): void; onState(playing: boolean): void }) {
+  const t = useT()[letter];
+  const song = LETTERS[letter].song;
   const frame = useRef<HTMLIFrameElement>(null);
   const src = useMemo(() => {
-    const link = parseSongLink(FOR_YOU_SONG);
+    const link = parseSongLink(song);
     const url = link && embedUrl(link, window.location.origin);
     // En bucle: la canción sigue mientras ella lee.
     return url && link && link.source === "youtube" ? `${url}&loop=1&playlist=${link.id}` : null;
-  }, []);
+  }, [song]);
 
   const send = useCallback((data: Record<string, unknown>) => {
     frame.current?.contentWindow?.postMessage(JSON.stringify({ id: 1, channel: "widget", ...data }), EMBED_ORIGINS.youtube);
@@ -83,8 +85,9 @@ function Song({ playing, onToggle, onState }: { playing: boolean; onToggle(): vo
   );
 }
 
-export default function ForYouPage() {
-  const t = useT().forYou;
+export default function ForYouPage({ letter = "forYou" }: { letter?: LetterId }) {
+  const t = useT()[letter];
+  const { doneTo, long } = LETTERS[letter];
   const phrases = t.cards.length;
   const [step, setStep] = useState(INTRO_STEP);
   const [started, setStarted] = useState(false);
@@ -96,7 +99,7 @@ export default function ForYouPage() {
 
   const open = () => {
     // Ya la abrió: la tarjeta del inicio deja de salir en este navegador.
-    markForYouOpened();
+    markForYouOpened(letter);
     setStarted(true);
     setPlaying(true);
     claimAudio("letter");
@@ -163,7 +166,7 @@ export default function ForYouPage() {
   const tone = step === INTRO_STEP ? "cream" : isFinal ? "warm" : cardTone(step);
 
   return (
-    <main id="contenido-principal" className={`${styles.letter} ${styles[tone]}`}>
+    <main id="contenido-principal" className={`${styles.letter} ${styles[tone]}${long ? ` ${styles.long}` : ""}`}>
       <Link to="/" className={styles.close} aria-label={t.close}>×</Link>
       {step !== INTRO_STEP && (
         <p className={styles.counter} aria-hidden>{t.counter(Math.min(step + 1, phrases), phrases)}</p>
@@ -186,7 +189,7 @@ export default function ForYouPage() {
               <p className={`${styles.hand} ${styles.signature}`}>{t.final.signature}</p>
               <div className={styles.actions}>
                 <button type="button" className={styles.ghost} onClick={() => setStep(0)}>{t.final.again}</button>
-                <Link to="/chat" className={styles.open}>{t.final.write}</Link>
+                <Link to={doneTo} className={styles.open}>{t.final.write}</Link>
               </div>
             </div>
           ) : (
@@ -206,7 +209,7 @@ export default function ForYouPage() {
       )}
       {step === 0 && <p className={styles.swipe}>{t.swipe}</p>}
 
-      {started && <Song playing={playing} onToggle={toggleSong} onState={onSongState} />}
+      {started && <Song letter={letter} playing={playing} onToggle={toggleSong} onState={onSongState} />}
     </main>
   );
 }
