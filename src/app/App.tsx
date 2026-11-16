@@ -94,6 +94,8 @@ function ThemedShell() {
             <Route path={INSTALL_PATH} element={<InstallPage />} />
             {/* «Para ti»: la carta «No quiero perderte», con su canción. */}
             <Route path="/para-ti" element={<ForYouPage />} />
+            {/* «Hasta siempre»: la carta de despedida, con «Lloro por ti». */}
+            <Route path="/despedida" element={<ForYouPage letter="goodbye" />} />
             {appRoutes}
             <Route path="*" element={<NotFound />} />
           </Routes>}

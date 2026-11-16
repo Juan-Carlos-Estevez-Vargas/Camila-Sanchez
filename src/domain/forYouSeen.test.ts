@@ -29,3 +29,13 @@ describe("tarjeta «Tengo algo para ti»", () => {
     expect(wasForYouOpened()).toBe(false);
   });
 });
+
+describe("tarjeta «Tengo algo que decirte»", () => {
+  it("la despedida lleva sus propias claves", () => {
+    vi.stubGlobal("localStorage", new MemoryStorage());
+    markForYouOpened("forYou");
+    expect(wasForYouOpened("goodbye")).toBe(false);
+    markForYouOpened("goodbye");
+    expect(wasForYouOpened("goodbye")).toBe(true);
+  });
+});

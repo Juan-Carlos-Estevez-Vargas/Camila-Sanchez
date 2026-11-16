@@ -18,6 +18,7 @@ export const app: Messages["app"] = {
     "/listas": "Listas",
     "/dedicatorias": "Dedicatórias",
     "/para-ti": "Para você",
+    "/despedida": "Até sempre",
     "/panel": "Meu painel",
     "/super": "Administração",
   },

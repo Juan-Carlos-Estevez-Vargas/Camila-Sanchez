@@ -8,6 +8,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { config } from "@/core/config";
 import { formatLongDate } from "@/domain/dates";
+import { LETTER_PATHS } from "@/domain/forYou";
 import { latestRelease, pendingReleases, RELEASES, visibleRelease, type Novelty, type Release } from "@/domain/whatsNew";
 import { useT } from "@/i18n";
 import { useAuth } from "@/state/AuthContext";
@@ -55,8 +56,8 @@ export function WhatsNew() {
     if (userId && createdAt && unseen.length === 0 && !readSeenRelease(userId)) markReleaseSeen(userId, latestRelease());
   }, [userId, createdAt, unseen]);
 
-  // «Para ti» es una carta a pantalla completa: las novedades esperan.
-  const auto = !dismissed && pending.length > 0 && pathname !== "/para-ti";
+  // Las cartas («Para ti», «Hasta siempre») son a pantalla completa: las novedades esperan.
+  const auto = !dismissed && pending.length > 0 && !LETTER_PATHS.includes(pathname);
   if (!userId || (!auto && !manual)) return null;
   const history = manual || showAll;
   const list = history ? visible : pending;

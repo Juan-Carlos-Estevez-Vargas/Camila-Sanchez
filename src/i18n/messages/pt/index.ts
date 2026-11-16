@@ -9,6 +9,7 @@ import { dedications } from "./dedications";
 import { donate } from "./donate";
 import { errors } from "./errors";
 import { forYou } from "./forYou";
+import { goodbye } from "./goodbye";
 import { install } from "./install";
 import { legal } from "./legal";
 import { lists } from "./lists";
@@ -21,6 +22,6 @@ import { tour } from "./tour";
 import { ui } from "./ui";
 import { whatsNew } from "./whatsNew";
 
-const messages: Messages = { admin, app, auth, chat, common, dates, dedications, donate, errors, forYou, install, legal, lists, notes, site, special, superAdmin, theme, tour, ui, whatsNew };
+const messages: Messages = { admin, app, auth, chat, common, dates, dedications, donate, errors, forYou, goodbye, install, legal, lists, notes, site, special, superAdmin, theme, tour, ui, whatsNew };
 
 export default messages;

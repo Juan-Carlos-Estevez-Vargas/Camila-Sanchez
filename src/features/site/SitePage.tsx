@@ -9,6 +9,7 @@ import { burst, FloatingEffects } from "./effects/FloatingEffects";
 import { Reveal } from "./effects/Reveal";
 import { InterruptionHost } from "./InterruptionHost";
 import { ForYouInvite } from "@/features/forYou/ForYouInvite";
+import { LATEST_LETTER } from "@/domain/forYou";
 import { MusicToggle } from "./MusicToggle";
 import { renderSection } from "./sections/registry";
 import "./styles/site.scss";
@@ -78,8 +79,8 @@ export default function SitePage() {
     <>
       <FloatingEffects effects={effects ?? content.settings.effects} />
       <InterruptionHost items={content.interruptions} />
-      {/* «Tengo algo para ti 💌»: lleva a la carta /para-ti hasta que se abra. */}
-      <ForYouInvite />
+      {/* Lleva a la carta más reciente (hoy, la despedida) hasta que se abra. */}
+      <ForYouInvite letter={LATEST_LETTER} />
       <main id="contenido-principal" className="site" data-tour="site">
         {sections.length === 0 && <EmptyState title={t.noSections} heading>{t.noSectionsHint}</EmptyState>}
         {sections.map((section, index) => (

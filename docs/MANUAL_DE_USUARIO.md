@@ -317,10 +317,7 @@ YouTube o Spotify.
 
 ### Para ti 💌
 
-Juan te dejó una carta. Al abrir la página principal te sale abajo la tarjeta
-**Tengo algo para ti 💌**: toca **Ábrela**. Si prefieres verla después, toca
-**Luego** y vuelve a salir la próxima vez que entres. También puedes abrirla
-directo en **/para-ti**.
+Juan te dejó una carta. Puedes abrirla directo en **/para-ti**.
 
 1. Sube el volumen y toca **Ábrelo 💌**: empieza a sonar «Iris» de Dean Lewis.
    Si en el iPhone no arranca sola, toca el videíto de la tarjeta de abajo.
@@ -329,6 +326,19 @@ directo en **/para-ti**.
 3. Al final puedes **Verlo otra vez** o **Escribirle a Juan**.
 
 Con ❚❚ pausas la canción y con × sales a la página principal.
+
+### Hasta siempre 💌
+
+Juan te dejó una última carta. Al abrir la página principal te sale abajo la
+tarjeta **Tengo algo que decirte**: toca **Ábrela**. Si prefieres leerla
+después, toca **Luego** y vuelve a salir la próxima vez que entres. También
+puedes abrirla directo en **/despedida**.
+
+1. Sube el volumen y toca **Ábrela 💌**: empieza a sonar «Lloro por ti» de
+   Enrique Iglesias. Si en el iPhone no arranca sola, toca el videíto de abajo.
+2. Ve pasando las tarjetas como en «Para ti»: toca a la derecha para seguir y a
+   la izquierda para volver, o desliza con el dedo.
+3. Al final puedes **Leerla otra vez** o **Volver al inicio**.
 
 ## 7. Notificaciones
 
