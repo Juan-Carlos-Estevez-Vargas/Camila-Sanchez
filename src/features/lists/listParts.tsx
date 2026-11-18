@@ -1,7 +1,7 @@
 /** Piezas compartidas por el listado y la página de cada lista. */
 import { useEffect, useState } from "react";
-import { dueLabel, dueState, LIST_EMOJIS } from "@/domain/lists";
-import type { IsoDate } from "@/domain/types";
+import { dueLabel, dueState, LIST_EMOJIS, TASK_STATUSES, timelinessLabel, timelinessOf } from "@/domain/lists";
+import type { IsoDate, TaskStatus, TodoItem } from "@/domain/types";
 import { useBackend } from "@/state/BackendContext";
 import { Field } from "@/ui/Field";
 import { onRovingKeyDown, rovingTabIndex } from "@/ui/rovingFocus";
@@ -62,6 +62,33 @@ export function DueBadge({ dueOn, done = false }: { dueOn: IsoDate; done?: boole
   const state = done ? "later" : dueState(dueOn);
   const tone = state === "overdue" ? " badge--danger" : state === "today" || state === "soon" ? " badge--warning" : " badge--muted";
   return <span className={`badge${tone}`}>📅 {dueLabel(dueOn)}</span>;
+}
+
+/** «A tiempo» en verde o «Con 3 días de retraso» en rojo, para una tarea hecha. */
+export function TimelinessBadge({ item }: { item: Pick<TodoItem, "doneAt" | "doneDueOn"> }) {
+  const result = timelinessOf(item);
+  if (!result) return null;
+  return (
+    <span className={`badge ${result.onTime ? "badge--success" : "badge--danger"}`}>
+      <span aria-hidden>{result.onTime ? "⏱️ " : "🐢 "}</span>{timelinessLabel(result)}
+    </span>
+  );
+}
+
+/** Pendiente / En progreso / Hecha, como botones de una sola elección. */
+export function StatusPicker({ value, labelledBy, onChange }: { value: TaskStatus; labelledBy: string; onChange(status: TaskStatus): void }) {
+  const t = useT().lists;
+  return (
+    <div className="status-picker" role="radiogroup" aria-labelledby={labelledBy} onKeyDown={onRovingKeyDown}>
+      {TASK_STATUSES.map((status) => (
+        <button key={status} type="button" role="radio" aria-checked={value === status} tabIndex={rovingTabIndex(value === status)}
+          className={`status-picker__option status-picker__option--${status.replace("_", "-")}${value === status ? " is-active" : ""}`}
+          onClick={() => onChange(status)}>
+          <span aria-hidden>{t.statusIcon[status]}</span> {t.status[status]}
+        </button>
+      ))}
+    </div>
+  );
 }
 
 /** Resuelve (y recuerda) las URLs de las fotos de una lista. */

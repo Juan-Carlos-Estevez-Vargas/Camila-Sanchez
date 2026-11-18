@@ -35,7 +35,7 @@ export const tour = {
     "lists-new": { title: "Nueva lista", body: "Crea una lista, ponle nombre e icono y elige con quién compartirla: una persona o varias. Les llega un aviso." },
     "lists-grid": { title: "Tus listas", body: "Cada tarjeta muestra con quién la compartes, cuánto llevan y la fecha más cercana. Tócala para abrirla." },
     "list-add": { title: "Agregar tareas", body: "Escribe una tarea y pulsa Enter. A los demás de la lista les llega un aviso." },
-    "list-tasks": { title: "Tachar y abrir", body: "Marca el círculo cuando esté hecha. Toca la tarea para agregarle descripción, fecha, quién se encarga, subtareas, materiales y fotos." },
+    "list-tasks": { title: "Tachar y abrir", body: "Marca el círculo cuando esté hecha, o toca «▶ Empezar» para ponerla en progreso. Toca la tarea para cambiar su estado y agregarle descripción, fecha, quién se encarga, subtareas, materiales y fotos." },
     "list-settings": { title: "Ajustes", body: "Cambia el nombre o la fecha, suma o saca personas, o sal de la lista. Quien la creó también puede borrarla." },
     "dedications-new": { title: "Nueva dedicatoria", body: "Escribe un mensaje, elige para quién es (o para todos) y súmale fotos y canciones de YouTube, Spotify o un audio. Le llega un aviso." },
     "dedications-tabs": { title: "Dedicatorias y playlist", body: "En Playlist están todas las canciones juntas: reprodúcelas aquí mismo, en orden o en aleatorio, impórtalas o llévalas a Spotify, YouTube o un archivo .m3u8." },

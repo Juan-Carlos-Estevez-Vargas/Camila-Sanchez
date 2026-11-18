@@ -10,6 +10,17 @@ export const whatsNew = {
   showHistory: "Ver todas as novidades",
   footerLink: "✨ Novidades",
   releases: {
+    "2026-11-18": {
+      news: {
+        taskStatus: {
+          title: "As listas agora são tarefas com status",
+          body: "Cada tarefa pode estar pendente, em andamento ou feita. Toque em «▶ Começar» para colocá-la em andamento e, ao terminar, o app diz se foi no prazo ou com quantos dias de atraso, segundo o prazo dela.",
+        },
+      },
+      changes: [
+        "No topo de cada lista aparece quantas tarefas estão em andamento, quantas foram feitas no prazo e quantas com atraso.",
+      ],
+    },
     "2026-11-11": {
       news: {
         birthdayPopup: {

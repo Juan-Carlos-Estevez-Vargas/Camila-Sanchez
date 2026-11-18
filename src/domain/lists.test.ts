@@ -1,17 +1,18 @@
 import { describe, expect, it } from "vitest";
-import { buildTasks, canUseLists, dueLabel, dueState, joinNames, materialsLabel, nextDueOf, progressOf } from "./lists";
+import { buildTasks, canUseLists, dueLabel, dueState, joinNames, materialsLabel, nextDueOf, progressOf, punctualityOf, taskStatusOf, timelinessLabel, timelinessOf } from "./lists";
 import type { TodoItem } from "./types";
 
 const NOW = new Date("2026-10-21T10:00:00");
 
 const item = (id: string, patch: Partial<TodoItem> = {}): TodoItem => ({
   id, listId: "l", parentId: null, title: id, description: "", dueOn: null, assigneeId: null,
-  doneAt: null, doneBy: null, position: 0, createdBy: null, createdAt: "2026-10-21T00:00:00Z", ...patch,
+  startedAt: null, startedBy: null, doneAt: null, doneBy: null, doneDueOn: null, position: 0, createdBy: null, createdAt: "2026-10-21T00:00:00Z", ...patch,
 });
 
 describe("tareas de una lista", () => {
-  it("separa pendientes y hechas, con sus subtareas en orden", () => {
-    const { pending, done } = buildTasks([
+  it("separa en progreso, pendientes y hechas, con sus subtareas en orden", () => {
+    const { inProgress, pending, done } = buildTasks([
+      item("c", { position: 3, startedAt: "2026-10-21T00:00:00Z" }),
       item("b", { position: 2 }),
       item("a", { position: 1 }),
       item("a2", { parentId: "a", position: 2 }),
@@ -19,6 +20,7 @@ describe("tareas de una lista", () => {
       item("viejo", { doneAt: "2026-10-20T00:00:00Z" }),
       item("nuevo", { doneAt: "2026-10-21T00:00:00Z" }),
     ]);
+    expect(inProgress.map((n) => n.item.id)).toEqual(["c"]);
     expect(pending.map((n) => n.item.id)).toEqual(["a", "b"]);
     expect(pending[0]!.subtasks.map((s) => s.id)).toEqual(["a1", "a2"]);
     expect(done.map((n) => n.item.id)).toEqual(["nuevo", "viejo"]);
@@ -34,6 +36,41 @@ describe("tareas de una lista", () => {
     expect(nextDueOf([item("a", { dueOn: "2026-12-01" }), item("b", { dueOn: "2026-11-01" }), item("c", { dueOn: "2026-10-01", doneAt: "x" })]))
       .toBe("2026-11-01");
     expect(nextDueOf([item("a")], "2026-12-24")).toBe("2026-12-24");
+  });
+});
+
+describe("estado de una tarea", () => {
+  it("sale de cuándo se empezó y cuándo se terminó", () => {
+    expect(taskStatusOf(item("a"))).toBe("pending");
+    expect(taskStatusOf(item("a", { startedAt: "x" }))).toBe("in_progress");
+    expect(taskStatusOf(item("a", { startedAt: "x", doneAt: "y" }))).toBe("done");
+    expect(taskStatusOf(item("a", { doneAt: "y" }))).toBe("done");
+  });
+
+  it("dice si se hizo a tiempo o con cuántos días de retraso", () => {
+    const done = (doneAt: string, doneDueOn: string | null) => item("a", { doneAt, doneDueOn });
+    expect(timelinessOf(item("a", { doneDueOn: "2026-10-21" }))).toBeNull();
+    expect(timelinessOf(done("2026-10-21T10:00:00", null))).toBeNull();
+    expect(timelinessOf(done("2026-10-21T23:30:00", "2026-10-21"))).toEqual({ onTime: true, lateDays: 0, earlyDays: 0 });
+    expect(timelinessOf(done("2026-10-19T10:00:00", "2026-10-21"))).toEqual({ onTime: true, lateDays: 0, earlyDays: 2 });
+    expect(timelinessOf(done("2026-10-24T08:00:00", "2026-10-21"))).toEqual({ onTime: false, lateDays: 3, earlyDays: 0 });
+  });
+
+  it("lo describe en palabras", () => {
+    expect(timelinessLabel({ onTime: true, lateDays: 0, earlyDays: 0 })).toBe("A tiempo");
+    expect(timelinessLabel({ onTime: true, lateDays: 0, earlyDays: 1 })).toBe("A tiempo · 1 día antes");
+    expect(timelinessLabel({ onTime: false, lateDays: 1, earlyDays: 0 })).toBe("Con 1 día de retraso");
+    expect(timelinessLabel({ onTime: false, lateDays: 4, earlyDays: 0 })).toBe("Con 4 días de retraso");
+  });
+
+  it("cuenta cuántas tareas se hicieron a tiempo y cuántas tarde (no las subtareas)", () => {
+    expect(punctualityOf([
+      item("a", { doneAt: "2026-10-20T10:00:00", doneDueOn: "2026-10-21" }),
+      item("b", { doneAt: "2026-10-22T10:00:00", doneDueOn: "2026-10-21" }),
+      item("c", { doneAt: "2026-10-22T10:00:00" }),
+      item("s", { parentId: "a", doneAt: "2026-10-25T10:00:00", doneDueOn: "2026-10-21" }),
+      item("d", { dueOn: "2026-10-01" }),
+    ])).toEqual({ onTime: 1, late: 1 });
   });
 });
 

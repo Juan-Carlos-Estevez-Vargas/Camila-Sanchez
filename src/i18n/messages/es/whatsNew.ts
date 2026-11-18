@@ -10,6 +10,17 @@ export const whatsNew = {
   showHistory: "Ver todas las novedades",
   footerLink: "✨ Novedades",
   releases: {
+    "2026-11-18": {
+      news: {
+        taskStatus: {
+          title: "Las listas ahora son tareas con estado",
+          body: "Cada tarea puede estar pendiente, en progreso o hecha. Toca «▶ Empezar» para ponerla en progreso, y al terminarla la app te dice si fue a tiempo o con cuántos días de retraso según su fecha límite.",
+        },
+      },
+      changes: [
+        "Arriba de cada lista se ve cuántas tareas van en progreso, cuántas se hicieron a tiempo y cuántas con retraso.",
+      ],
+    },
     "2026-11-11": {
       news: {
         birthdayPopup: {
