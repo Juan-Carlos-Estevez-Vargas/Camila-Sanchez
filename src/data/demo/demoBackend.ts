@@ -11,7 +11,7 @@
  */
 import { del as idbDel, get as idbGet, set as idbSet } from "idb-keyval";
 import { AccessPolicy, DEFAULT_ROLE_PERMISSIONS, PERMISSIONS, type Permission } from "@/domain/permissions";
-import { MAX_TASK_IMAGES, nextDueOf, progressOf } from "@/domain/lists";
+import { MAX_TASK_IMAGES, nextDueOf, progressOf, taskStatusOf } from "@/domain/lists";
 import { sanitizeColors } from "@/domain/palettes";
 import { isSurpriseFor, isSurpriseLive, isSurpriseReceived } from "@/domain/surprises";
 import { matchesAudit } from "@/domain/audit";
@@ -585,7 +585,7 @@ const demoLists: ListsRepository = {
     const item: TodoItem = {
       id: uuid(), listId: list.id, parentId, title: patch.title ?? textOf("", 1, "la tarea"),
       description: patch.description ?? "", dueOn: patch.dueOn ?? null, assigneeId: patch.assigneeId ?? null,
-      doneAt: null, doneBy: null, position: Date.now() / 1000, createdBy: user.id, createdAt: nowIso(),
+      startedAt: null, startedBy: null, doneAt: null, doneBy: null, doneDueOn: null, position: Date.now() / 1000, createdBy: user.id, createdAt: nowIso(),
     };
     state.todoItems.push(item);
     database().commit({ table: "todo_items", type: "INSERT", record: item as never });
@@ -593,13 +593,25 @@ const demoLists: ListsRepository = {
     if (item.assigneeId && item.assigneeId !== user.id) notifyList(user, list, `👉 Te asignó: ${item.title}`, item.assigneeId);
     return clone(item);
   },
-  async setItemDone(id, done) {
+  async setItemStatus(id, status) {
+    // Igual que el trigger guard_todo_item de la base.
     const { user, list, item } = memberItem(id);
-    if (!!item.doneAt === done) return;
-    item.doneAt = done ? nowIso() : null;
-    item.doneBy = done ? user.id : null;
+    if (taskStatusOf(item) === status) return;
+    const wasStarted = !!item.startedAt;
+    if (status === "pending") {
+      Object.assign(item, { startedAt: null, startedBy: null });
+    } else if (status === "in_progress" && !item.startedAt) {
+      Object.assign(item, { startedAt: nowIso(), startedBy: user.id });
+    }
+    if (status === "done") {
+      Object.assign(item, { doneAt: nowIso(), doneBy: user.id, doneDueOn: item.dueOn });
+    } else {
+      Object.assign(item, { doneAt: null, doneBy: null, doneDueOn: null });
+    }
     database().commit({ table: "todo_items", type: "UPDATE", record: item as never });
-    if (done && !item.parentId) notifyList(user, list, `✅ ${item.title}`);
+    if (item.parentId) return;
+    if (status === "done") notifyList(user, list, `✅ ${item.title}`);
+    else if (status === "in_progress" && !wasStarted) notifyList(user, list, `⏳ ${item.title}`);
   },
   async deleteItem(id) {
     memberItem(id);

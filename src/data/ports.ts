@@ -10,7 +10,7 @@ import type { AuditFilters } from "@/domain/audit";
 import type {
   AppNotification, AuditEntry, ChatContact, ChatConversation, ChatMessage, ChatParticipant, ChatPerson, ChatPresence, ImportantDate, Interruption, Invitation, InvitableRole,
   Milestone, Note, NoteKind, PermissionDefinition, Photo, PhotoUrls, Profile, Role, RolePermission,
-  Section, SessionUser, SiteSettings, TodoImage, TodoItem, TodoList, TodoListDetail, TodoListSummary, TodoMaterial, Uuid,
+  Section, SessionUser, SiteSettings, TaskStatus, TodoImage, TodoItem, TodoList, TodoListDetail, TodoListSummary, TodoMaterial, Uuid,
   Dedication, DedicationPhoto, DedicationSong, DedicationWithMedia,
 } from "@/domain/types";
 import type { LegalConsent } from "@/domain/legal";
@@ -261,7 +261,8 @@ export interface ListsRepository {
   removeMember(listId: Uuid, userId: Uuid): Promise<void>;
 
   saveItem(item: TodoItemInput): Promise<TodoItem>;
-  setItemDone(id: Uuid, done: boolean): Promise<void>;
+  /** Pendiente, en progreso o hecha. Las fechas y quién lo hizo los pone la base. */
+  setItemStatus(id: Uuid, status: TaskStatus): Promise<void>;
   /** Borra la tarea, sus subtareas, materiales y fotos. */
   deleteItem(id: Uuid): Promise<void>;
 

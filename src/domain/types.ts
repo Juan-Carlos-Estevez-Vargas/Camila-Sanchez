@@ -364,6 +364,9 @@ export interface TodoListSummary extends TodoList {
 }
 
 /** Tarea o subtarea (si tiene parentId). */
+/** Estado de una tarea: sale de startedAt y doneAt. */
+export type TaskStatus = "pending" | "in_progress" | "done";
+
 export interface TodoItem {
   id: Uuid;
   listId: Uuid;
@@ -372,8 +375,13 @@ export interface TodoItem {
   description: string;
   dueOn: IsoDate | null;
   assigneeId: Uuid | null;
+  /** Cuándo y quién la pasó a «en progreso» (lo pone la base). */
+  startedAt: IsoDateTime | null;
+  startedBy: Uuid | null;
   doneAt: IsoDateTime | null;
   doneBy: Uuid | null;
+  /** Fecha límite que tenía al terminarla: dice si fue a tiempo o con retraso. */
+  doneDueOn: IsoDate | null;
   position: number;
   createdBy: Uuid | null;
   createdAt: IsoDateTime;

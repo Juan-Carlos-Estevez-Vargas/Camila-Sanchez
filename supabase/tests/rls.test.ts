@@ -507,6 +507,30 @@ describe("listas compartidas", () => {
     expect(await as(CAMI, `select done_by from todo_items where id = '${ITEM}'`)).toEqual([{ done_by: null }]);
   });
 
+  it("una tarea pasa por pendiente, en progreso y hecha; la base guarda fechas y la fecha límite de ese momento", async () => {
+    const [task] = await as<{ id: string }>(CAMI, `insert into todo_items (list_id, title, due_on) values ('${LIST}', 'Empacar', '2000-01-01') returning id`);
+    const id = task!.id;
+    const state = () => as<{ started_by: string | null; started: boolean; done: boolean; done_due_on: string | null }>(CAMI,
+      `select started_by, started_at > now() - interval '1 minute' as started, done_at is not null as done, done_due_on::text from todo_items where id = '${id}'`);
+
+    await as(JUAN, "select mark_notifications_read()");
+    await as(CAMI, `update todo_items set started_at = '1999-01-01', started_by = '${JUAN}' where id = '${id}'`);
+    expect(await state()).toEqual([{ started_by: CAMI, started: true, done: false, done_due_on: null }]);
+    expect((await listNotes(JUAN)).map((n) => n.body)).toEqual(["⏳ Empacar"]);
+
+    // Al terminarla se congela la fecha límite: cambiarla después no reescribe si fue a tiempo.
+    await as(JUAN, `update todo_items set done_at = now(), done_due_on = '2100-01-01' where id = '${id}'`);
+    await as(JUAN, `update todo_items set due_on = '2100-01-01', done_due_on = '2100-01-01' where id = '${id}'`);
+    expect(await state()).toEqual([{ started_by: CAMI, started: true, done: true, done_due_on: "2000-01-01" }]);
+
+    // Reabrirla la deja en progreso; volverla pendiente borra quién la empezó.
+    await as(CAMI, `update todo_items set done_at = null where id = '${id}'`);
+    expect(await state()).toEqual([{ started_by: CAMI, started: true, done: false, done_due_on: null }]);
+    await as(CAMI, `update todo_items set started_at = null where id = '${id}'`);
+    expect(await state()).toEqual([{ started_by: null, started: null, done: false, done_due_on: null }]);
+    await as(CAMI, `delete from todo_items where id = '${id}'`);
+  });
+
   it("sólo se asigna a alguien de la lista, y le llega el aviso", async () => {
     await expect(as(CAMI, `update todo_items set assignee_id = '${GUEST}' where id = '${ITEM}'`)).rejects.toThrow(/alguien de la lista/);
     await as(JUAN, "select mark_notifications_read()");
