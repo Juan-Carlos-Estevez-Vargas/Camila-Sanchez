@@ -1172,12 +1172,16 @@ classDiagram
   }
   class Tarea {
     título y descripción
-    fecha
+    fecha límite
     responsable: un miembro
+    estado: pendiente, en progreso o hecha
+    empezada: cuándo y quién
     hecha: cuándo y quién
+    fecha límite al terminarla
   }
   class Subtarea {
     título
+    estado
     hecha: cuándo y quién
   }
   class Material {
@@ -1203,9 +1207,10 @@ flowchart LR
   NAV["Cabecera → Listas<br/>(contador de avisos)"] --> L["/listas<br/>tarjetas con avance,<br/>fecha y caras"]
   BELL["Campana o aviso<br/>en el celular"] --> D
   L -- "+ Nueva lista" --> NL["Ventana: con quién,<br/>icono, nombre, fecha"]
-  NL -- "Crear lista" --> D["/listas/:id<br/>avance, agregar tarea,<br/>pendientes y hechas"]
+  NL -- "Crear lista" --> D["/listas/:id<br/>avance, a tiempo y con retraso,<br/>en progreso, pendientes y hechas"]
   L -- "toca una tarjeta" --> D
-  D -- "toca una tarea" --> T["Detalle de la tarea:<br/>fecha, responsable, descripción,<br/>subtareas, materiales, fotos"]
+  D -- "toca una tarea" --> T["Detalle de la tarea:<br/>estado, a tiempo o con retraso,<br/>fecha, responsable, descripción,<br/>subtareas, materiales, fotos"]
+  D -- "▶ Empezar" --> D
   D -- "⚙️ Ajustes" --> S["Ajustes: datos de la lista,<br/>sumar o sacar personas,<br/>salirse o borrarla"]
   T -- "Listo" --> D
   S -- "salirse o borrar" --> L
@@ -1213,13 +1218,24 @@ flowchart LR
 
 ### Estados de una tarea
 
+Cada tarea (y subtarea) está **pendiente**, **en progreso** o **hecha**. El
+estado no es una columna: sale de dos fechas que pone la base de datos
+(`started_at` y `done_at`), así nunca queda una tarea «hecha» sin fecha de
+cuándo se hizo.
+
 ```mermaid
 stateDiagram-v2
   [*] --> Pendiente: se agrega
+  Pendiente --> EnProgreso: ▶ Empezar
   Pendiente --> Hecha: se marca ✓
-  Hecha --> Pendiente: se desmarca
+  EnProgreso --> Hecha: se marca ✓
+  EnProgreso --> Pendiente: se vuelve a «Pendiente»
+  Hecha --> EnProgreso: se desmarca (si ya se había empezado)
+  Hecha --> Pendiente: se desmarca (si nunca se empezó)
   Hecha --> [*]: se borra
   Pendiente --> [*]: se borra
+  EnProgreso --> [*]: se borra
+  state "En progreso" as EnProgreso
   state Pendiente {
     state "Sin fecha" as SinFecha
     state "Más adelante" as Mas_adelante
@@ -1231,17 +1247,44 @@ stateDiagram-v2
     Pronto --> Hoy: es el día
     Hoy --> Vencida: pasó la fecha
   }
+  state Hecha {
+    state "Sin fecha límite" as SinMedir
+    state "A tiempo" as ATiempo
+    state "Con N días de retraso" as Tarde
+    [*] --> SinMedir: no tenía fecha
+    [*] --> ATiempo: se hizo el día límite o antes
+    [*] --> Tarde: se hizo después
+  }
+  note right of EnProgreso
+    guard_todo_item pone started_at y started_by.
+    Avisa «⏳ título» a los demás.
+  end note
   note right of Hecha
-    guard_todo_item pone done_at y done_by;
-    el navegador no puede inventarlos.
+    guard_todo_item pone done_at y done_by y copia
+    due_on en done_due_on: si después se cambia la
+    fecha, el «a tiempo / con retraso» no cambia.
     Si era la última, salen 🎉 y confeti.
   end note
 ```
 
+### A tiempo o con retraso
+
+```mermaid
+flowchart TD
+  H["Tarea hecha"] --> F{"¿Tenía fecha límite<br/>al terminarla?<br/>(done_due_on)"}
+  F -- "no" --> N["No se mide"]
+  F -- "sí" --> C["Día en que se terminó<br/>(done_at en la hora local)<br/>vs. done_due_on"]
+  C -- "el mismo día" --> A["⏱️ A tiempo"]
+  C -- "antes" --> E["⏱️ A tiempo · N días antes"]
+  C -- "después" --> T["🐢 Con N días de retraso"]
+  A & E & T --> R["Resumen arriba de la lista:<br/>N a tiempo · N con retraso<br/>(sólo tareas, no subtareas)"]
+```
+
 La etiqueta de la fecha sale de `dueState()` y `dueLabel()` en
 `domain/lists.ts`: «En 5 días», «Mañana», «Vence hoy», «Venció hace 2 días».
-Las subtareas se tachan igual, pero no cambian el avance de la lista, que
-cuenta sólo las tareas principales.
+El estado sale de `taskStatusOf()`, y si fue a tiempo de `timelinessOf()`,
+`timelinessLabel()` y `punctualityOf()`. Las subtareas se tachan igual, pero
+no cambian el avance de la lista, que cuenta sólo las tareas principales.
 
 ### Quién recibe cada aviso
 
@@ -1250,6 +1293,7 @@ flowchart TD
   E1["Te suman a una lista"] --> N1["Aviso propio:<br/>«Juan te sumó a la lista…»<br/>enlace /listas/:id?nueva=1"]
   E2["Alguien agrega una tarea"] --> G["notify_list_members()"]
   E3["Alguien termina una tarea"] --> G
+  E5["Alguien empieza una tarea<br/>(⏳ en progreso)"] --> G
   E4["Alguien te asigna una tarea"] --> G1["notify_list_members()<br/>sólo para la persona asignada"]
   G --> R["Para cada miembro<br/>menos quien lo hizo<br/>y que tenga lists.use"]
   G1 --> R
@@ -1986,8 +2030,11 @@ erDiagram
     text description
     date due_on
     uuid assignee_id FK "miembro"
+    timestamptz started_at "en progreso (lo pone la base)"
+    uuid started_by FK
     timestamptz done_at
     uuid done_by FK
+    date done_due_on "fecha límite al terminarla"
   }
   TODO_MATERIALS {
     uuid id PK

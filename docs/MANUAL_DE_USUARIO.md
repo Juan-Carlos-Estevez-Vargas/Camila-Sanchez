@@ -230,15 +230,27 @@ la ven.
 tarea nueva le avisa a los demás. Lo que hace cada quien aparece en las otras
 pantallas al instante, sin recargar.
 
+**Estados.** Cada tarea está **⚪ Pendiente**, **⏳ En progreso** o
+**✅ Hecha**. Toca **▶ Empezar** en una tarea pendiente cuando la empiecen:
+sube al grupo **En progreso** y a los demás les llega un aviso. También puedes
+cambiar el estado desde el detalle de la tarea.
+
 **Tachar.** Toca el círculo de una tarea cuando esté hecha: baja a
-**Hechas** y dice quién la terminó. Tócalo otra vez para desmarcarla. La barra
-de arriba muestra cuántas van.
+**Hechas** y dice quién la terminó. Tócalo otra vez para desmarcarla (vuelve a
+«En progreso» si ya se había empezado). La barra de arriba muestra cuántas van.
+
+**¿A tiempo o con retraso?** Si la tarea tenía fecha límite, al terminarla
+aparece **⏱️ A tiempo** (o «A tiempo · 2 días antes») o **🐢 Con 3 días de
+retraso**. Se guarda la fecha que tenía en ese momento, así que cambiarla
+después no cambia el resultado. Arriba de la lista se ve el resumen: cuántas
+van en progreso, cuántas se hicieron a tiempo y cuántas con retraso.
 
 **El detalle de una tarea.** Toca la tarea para abrirla. Todo se guarda solo:
 
 | Parte | Para qué |
 | --- | --- |
 | Título y descripción | Qué hay que hacer y los detalles (se guardan al salir del cuadro) |
+| Estado | Pendiente, En progreso o Hecha; si está hecha, si fue a tiempo o con retraso |
 | Fecha límite | Se pinta de color cuando se acerca o ya pasó |
 | ¿Quién se encarga? | Elige a alguien de la lista; le llega un aviso |
 | ☑️ Subtareas | Pasos más pequeños, cada uno con su círculo |

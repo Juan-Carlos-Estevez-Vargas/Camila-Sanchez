@@ -58,7 +58,7 @@ tiempo juntos, cuentas regresivas a fechas especiales, hitos, una galería de
 fotos por año y mes, una carta y sorpresas. Detrás hay un producto completo:
 cuentas con roles y permisos, una app de chat (buscar personas, solicitudes,
 chats privados con reacciones, edición y vistos), listas de tareas
-compartidas, avisos en la pantalla del celular y un panel para editar todo sin
+compartidas (pendiente, en progreso o hecha, a tiempo o con retraso), avisos en la pantalla del celular y un panel para editar todo sin
 tocar código.
 
 Funciona en dos modos:
@@ -74,7 +74,7 @@ Funciona en dos modos:
 
 | App de chat | Listas compartidas |
 | --- | --- |
-| <img src="docs/capturas/chat.png" alt="App de chat: bandeja a la izquierda y la conversación con Camila, con un mensaje editado y una reacción" width="420"> | <img src="docs/capturas/listas.png" alt="Lista «Viaje a la playa» con tareas, subtareas y barra de progreso" width="420"> |
+| <img src="docs/capturas/chat.png" alt="App de chat: bandeja a la izquierda y la conversación con Camila, con un mensaje editado y una reacción" width="420"> | <img src="docs/capturas/listas.png" alt="Lista «Preparar la Navidad» con tareas en progreso, pendientes y hechas, marcadas a tiempo o con días de retraso" width="420"> |
 | **Paletas de colores por persona** | **Roles y permisos** |
 | <img src="docs/capturas/colores.png" alt="Selector de paletas con vista previa en vivo" width="420"> | <img src="docs/capturas/permisos.png" alt="Matriz de permisos por rol en el panel de administración" width="420"> |
 | **Solicitudes de contacto** | **La bandeja en el celular** |
@@ -106,7 +106,7 @@ Funciona en dos modos:
 | Página principal: portada, tiempo juntos (quieto en el día del final si la relación terminó), cuentas regresivas, notas, hitos, galería por año/mes, carta y frases | `/` | Pública o con `site.view` |
 | Cajita de mensajes: notitas que se abren como una carta y las sorpresas recibidas, guardadas | `/mensajes` | `notes.send` |
 | App de chat a pantalla completa: buscar personas, solicitudes de contacto, chats privados, fotos, stickers, responder, reacciones (en el celular, manteniendo pulsado el mensaje), editar y borrar, «escribiendo…», en línea, vistos (✓ ✓✓), buscar mensajes, fijar, silenciar, archivar y bloquear | `/chat` | `chat.use` |
-| Listas compartidas con subtareas, materiales, fotos, fechas y responsables, en vivo | `/listas` | `lists.use` |
+| Listas compartidas como tareas: pendiente, en progreso o hecha, si se hizo a tiempo o con cuántos días de retraso, subtareas, materiales, fotos, fechas y responsables, en vivo | `/listas` | `lists.use` |
 | Dedicatorias para alguien o para todos: un mensaje, fotos y canciones. Todas las canciones forman una playlist que suena dentro de la app, se exporta (`.m3u8`, cola de YouTube, enlaces de Spotify o texto) y se le importan canciones pegando enlaces o abriendo un `.m3u` | `/dedicatorias` y `/dedicatorias/playlist` | `dedications.use` |
 | «Para ti»: carta a pantalla completa en tarjetas («No quiero perderte…») que se pasan tocando o deslizando, con «Iris» de Dean Lewis de fondo y un «Te amo» al final | `/para-ti` | Pública (fuera de buscadores) |
 | «Hasta siempre»: la carta de despedida, en nueve tarjetas con párrafos a mano, con «Lloro por ti» de Enrique Iglesias de fondo y un «Sé feliz, Cami.» al final. En el inicio sale la tarjeta «Tengo algo que decirte» hasta que se abre | `/despedida` | Pública (fuera de buscadores) |
