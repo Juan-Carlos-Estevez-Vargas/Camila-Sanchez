@@ -36,7 +36,7 @@ export const tour: Messages["tour"] = {
     "lists-new": { title: "New list", body: "Create a list, give it a name and icon and choose who to share it with: one person or several. They get a notification." },
     "lists-grid": { title: "Your lists", body: "Each card shows who you share it with, how far along it is and the nearest date. Tap it to open it." },
     "list-add": { title: "Add tasks", body: "Type a task and press Enter. Everyone else on the list gets a notification." },
-    "list-tasks": { title: "Tick off and open", body: "Tick the circle when it's done. Tap the task to add a description, date, who's in charge, subtasks, materials and photos." },
+    "list-tasks": { title: "Tick off and open", body: "Tick the circle when it's done, or tap «▶ Start» to put it in progress. Tap the task to change its status and add a description, date, who's in charge, subtasks, materials and photos." },
     "list-settings": { title: "Settings", body: "Change the name or date, add or remove people, or leave the list. Whoever created it can also delete it." },
     "dedications-new": { title: "New dedication", body: "Write a message, choose who it's for (or everyone) and add photos and songs from YouTube, Spotify or an audio file. They get a notification." },
     "dedications-tabs": { title: "Dedications and playlist", body: "Playlist has every song together: play them right here, in order or shuffled, import them or take them to Spotify, YouTube or an .m3u8 file." },

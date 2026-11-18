@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { Link, useParams } from "react-router-dom";
-import { buildTasks, joinNames, materialsLabel, progressOf, type TaskNode } from "@/domain/lists";
-import type { Profile, TodoItem, TodoListDetail } from "@/domain/types";
+import { buildTasks, joinNames, materialsLabel, progressOf, punctualityOf, taskStatusOf, type TaskNode } from "@/domain/lists";
+import type { Profile, TaskStatus, TodoItem, TodoListDetail } from "@/domain/types";
 import { useAuth } from "@/state/AuthContext";
 import { useBackend } from "@/state/BackendContext";
 import { useNotifications } from "@/state/NotificationsContext";
@@ -10,7 +10,7 @@ import { AvatarStack } from "@/ui/Avatar";
 import { EmptyState, PageLoader } from "@/ui/Feedback";
 import { useAsync } from "@/ui/useAsync";
 import { burst } from "@/features/site/effects/FloatingEffects";
-import { DueBadge, ProgressBar } from "./listParts";
+import { DueBadge, ProgressBar, TimelinessBadge } from "./listParts";
 import { ListSettings } from "./ListSettings";
 import { TaskEditor } from "./TaskEditor";
 import "./styles/lists.scss";
@@ -23,24 +23,27 @@ interface RowProps {
   detail: TodoListDetail;
   nameOf(id: string | null): string;
   onToggle(item: TodoItem): void;
+  onStatus(item: TodoItem, status: TaskStatus): void;
   onOpen(item: TodoItem): void;
 }
 
-function TaskRow({ node, detail, nameOf, onToggle, onOpen }: RowProps) {
+function TaskRow({ node, detail, nameOf, onToggle, onStatus, onOpen }: RowProps) {
   const { item, subtasks } = node;
   const done = !!item.doneAt;
   const materials = detail.materials.filter((m) => m.itemId === item.id);
   const photos = detail.images.filter((i) => i.itemId === item.id).length;
   const subDone = subtasks.filter((s) => s.doneAt).length;
+  const status = taskStatusOf(item);
   const t = useT().lists.page;
   return (
-    <li className={`task${done ? " is-done" : ""}`}>
+    <li className={`task task--${status.replace("_", "-")}${done ? " is-done" : ""}`}>
       <div className="task__main">
         <input type="checkbox" className="check" checked={done} onChange={() => onToggle(item)} aria-label={t.doneLabel(item.title)} />
         <button className="task__open" onClick={() => onOpen(item)}>
           <span className="task__title">{item.title}</span>
           <span className="task__meta">
-            {item.dueOn && <DueBadge dueOn={item.dueOn} done={done} />}
+            {done ? <TimelinessBadge item={item} /> : item.dueOn && <DueBadge dueOn={item.dueOn} />}
+            {status === "in_progress" && item.startedBy && <span className="muted task__by">{t.startedBy(nameOf(item.startedBy))}</span>}
             {item.assigneeId && <span className="badge badge--muted"><span aria-hidden>👤 </span><span className="visually-hidden">{t.assignee}</span>{nameOf(item.assigneeId)}</span>}
             {subtasks.length > 0 && <span className="badge badge--muted"><span aria-hidden>☑️ </span>{subDone}/{subtasks.length}<span className="visually-hidden">{t.subtasksDone}</span></span>}
             {materials.length > 0 && <span className="badge badge--muted"><span aria-hidden>🧰 </span><span className="visually-hidden">{t.materials}</span>{materialsLabel(materials)}</span>}
@@ -49,6 +52,9 @@ function TaskRow({ node, detail, nameOf, onToggle, onOpen }: RowProps) {
             {done && item.doneBy && <span className="muted task__by">{t.doneBy(nameOf(item.doneBy))}</span>}
           </span>
         </button>
+        {status === "pending" && (
+          <button className="btn btn--soft btn--sm task__start" onClick={() => onStatus(item, "in_progress")} aria-label={t.startLabel(item.title)}>{t.start}</button>
+        )}
       </div>
       {subtasks.length > 0 && !done && (
         <ul className="task__subtasks">
@@ -111,6 +117,7 @@ export default function ListPage() {
   );
   const tasks = useMemo(() => buildTasks(detail?.items ?? []), [detail]);
   const progress = progressOf(detail?.items ?? []);
+  const punctuality = punctualityOf(detail?.items ?? []);
 
   if (loading && !data) return <main id="contenido-principal" className="container lists"><PageLoader /></main>;
   if (!detail) {
@@ -141,25 +148,38 @@ export default function ListPage() {
     }
   };
 
-  const toggle = async (item: TodoItem) => {
-    const done = !item.doneAt;
-    // Se marca al instante; si falla, se recarga lo real.
+  const setStatus = async (item: TodoItem, status: TaskStatus) => {
+    if (taskStatusOf(item) === status) return;
+    const now = new Date().toISOString();
+    // Se cambia al instante (como lo haría la base); si falla, se recarga lo real.
+    const next = (i: TodoItem): TodoItem => status === "done"
+      ? { ...i, doneAt: now, doneBy: user?.id ?? null, doneDueOn: i.dueOn }
+      : { ...i, doneAt: null, doneBy: null, doneDueOn: null,
+        ...(status === "pending" ? { startedAt: null, startedBy: null } : i.startedAt ? {} : { startedAt: now, startedBy: user?.id ?? null }) };
     setData((current) => {
       if (!current?.[0]) return current!;
       const [d, ...rest] = current;
-      return [{ ...d!, items: d!.items.map((i) => (i.id === item.id ? { ...i, doneAt: done ? new Date().toISOString() : null, doneBy: done ? user?.id ?? null : null } : i)) }, ...rest];
+      return [{ ...d!, items: d!.items.map((i) => (i.id === item.id ? next(i) : i)) }, ...rest];
     });
-    if (done) {
+    if (status === "done") {
       const remaining = detail.items.filter((i) => !i.parentId && !i.doneAt && i.id !== item.id).length;
       burst(!item.parentId && remaining === 0 ? ["🎉", "💖", "✨", "🥳"] : ["✅", "💖"], !item.parentId && remaining === 0 ? 40 : 12);
     }
     try {
-      await backend.lists.setItemDone(item.id, done);
+      await backend.lists.setItemStatus(item.id, status);
     } catch (error) {
       toast.error(error);
     }
     await reload();
   };
+
+  // La casilla marca como hecha; al desmarcarla vuelve a «en progreso» si ya se había empezado.
+  const toggle = (item: TodoItem) => setStatus(item, item.doneAt ? (item.startedAt ? "in_progress" : "pending") : "done");
+
+  const row = (node: TaskNode) => (
+    <TaskRow key={node.item.id} node={node} detail={detail} nameOf={nameOf}
+      onToggle={(i) => void toggle(i)} onStatus={(i, st) => void setStatus(i, st)} onOpen={(i) => setOpenId(i.id)} />
+  );
 
   const openItem = openId ? detail.items.find((i) => i.id === openId) ?? null : null;
 
@@ -181,6 +201,13 @@ export default function ListPage() {
           {list.dueOn && <DueBadge dueOn={list.dueOn} done={progress.total > 0 && progress.done === progress.total} />}
         </div>
         <ProgressBar done={progress.done} total={progress.total} />
+        {(punctuality.onTime > 0 || punctuality.late > 0 || tasks.inProgress.length > 0) && (
+          <p className="list-page__stats">
+            {tasks.inProgress.length > 0 && <span className="badge"><span aria-hidden>{t.statusIcon.in_progress} </span>{t.page.inProgressSection(tasks.inProgress.length)}</span>}
+            {punctuality.onTime > 0 && <span className="badge badge--success"><span aria-hidden>⏱️ </span>{t.punctuality(punctuality.onTime, 0)}</span>}
+            {punctuality.late > 0 && <span className="badge badge--danger"><span aria-hidden>🐢 </span>{t.punctuality(0, punctuality.late)}</span>}
+          </p>
+        )}
       </div>
 
       <form className="list-page__add card" onSubmit={add} data-tour="list-add">
@@ -188,26 +215,33 @@ export default function ListPage() {
         <button className="btn" disabled={!title.trim()}>{t.add}</button>
       </form>
 
-      {tasks.pending.length === 0 && tasks.done.length === 0 ? (
+      {tasks.inProgress.length === 0 && tasks.pending.length === 0 && tasks.done.length === 0 ? (
         <EmptyState icon="🌱" title={t.page.empty}>{t.page.emptyHint}</EmptyState>
       ) : (
         <>
+          {tasks.inProgress.length > 0 && (
+            <section className="tasks-group" aria-labelledby="tasks-in-progress">
+              <h2 id="tasks-in-progress" className="tasks-group__title"><span aria-hidden>{t.statusIcon.in_progress} </span>{t.page.inProgressSection(tasks.inProgress.length)}</h2>
+              <ul className="tasks">
+                {tasks.inProgress.map((node) => row(node))}
+              </ul>
+            </section>
+          )}
           {tasks.pending.length > 0 ? (
-            <ul className="tasks" data-tour="list-tasks">
-              {tasks.pending.map((node) => (
-                <TaskRow key={node.item.id} node={node} detail={detail} nameOf={nameOf} onToggle={(i) => void toggle(i)} onOpen={(i) => setOpenId(i.id)} />
-              ))}
-            </ul>
-          ) : (
+            <section className="tasks-group" aria-labelledby="tasks-pending" data-tour="list-tasks">
+              {tasks.inProgress.length > 0 && <h2 id="tasks-pending" className="tasks-group__title"><span aria-hidden>{t.statusIcon.pending} </span>{t.page.pendingSection(tasks.pending.length)}</h2>}
+              <ul className="tasks" aria-label={tasks.inProgress.length > 0 ? undefined : t.page.pendingSection(tasks.pending.length)}>
+                {tasks.pending.map((node) => row(node))}
+              </ul>
+            </section>
+          ) : tasks.inProgress.length === 0 && (
             <p className="muted center">{t.page.nothingPending}</p>
           )}
           {tasks.done.length > 0 && (
             <details className="tasks-done">
               <summary>{t.page.doneSection(tasks.done.length)}</summary>
               <ul className="tasks">
-                {tasks.done.map((node) => (
-                  <TaskRow key={node.item.id} node={node} detail={detail} nameOf={nameOf} onToggle={(i) => void toggle(i)} onOpen={(i) => setOpenId(i.id)} />
-                ))}
+                {tasks.done.map((node) => row(node))}
               </ul>
             </details>
           )}
@@ -216,7 +250,7 @@ export default function ListPage() {
 
       {openItem && (
         <TaskEditor key={openItem.id} item={openItem} detail={detail} members={members} nameOf={nameOf}
-          onChanged={reload} onToggle={(i) => void toggle(i)} onClose={() => setOpenId(null)} />
+          onChanged={reload} onToggle={(i) => void toggle(i)} onStatus={(i, st) => void setStatus(i, st)} onClose={() => setOpenId(null)} />
       )}
       {settings && (
         <ListSettings detail={detail} profiles={profiles} rolePermissions={rolePermissions} onChanged={reload} onClose={() => setSettings(false)} />

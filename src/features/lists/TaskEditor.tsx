@@ -3,9 +3,9 @@
  * demás al cambiarlo) y los demás lo ven en vivo.
  */
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from "react";
-import { formatRelative } from "@/domain/dates";
-import { MAX_TASK_IMAGES } from "@/domain/lists";
-import type { Profile, TodoImage, TodoItem, TodoListDetail } from "@/domain/types";
+import { formatLongDate, formatRelative } from "@/domain/dates";
+import { MAX_TASK_IMAGES, taskStatusOf, timelinessOf } from "@/domain/lists";
+import type { Profile, TaskStatus, TodoImage, TodoItem, TodoListDetail } from "@/domain/types";
 import { ImageProcessor } from "@/services/images/ImageProcessor";
 import { isImageFile } from "@/services/images/bulk";
 import { useBackend } from "@/state/BackendContext";
@@ -13,7 +13,7 @@ import { useToast } from "@/state/ToastContext";
 import { Field } from "@/ui/Field";
 import { Modal } from "@/ui/Modal";
 import { useConfirm } from "@/ui/useConfirm";
-import { ImageViewer, useListImages } from "./listParts";
+import { ImageViewer, StatusPicker, TimelinessBadge, useListImages } from "./listParts";
 import { useT } from "@/i18n";
 import { SHARED_IMAGE_OPTIONS } from "@/services/images/sizing";
 
@@ -26,6 +26,7 @@ interface Props {
   nameOf(id: string | null): string;
   onChanged(): Promise<void>;
   onToggle(item: TodoItem): void;
+  onStatus(item: TodoItem, status: TaskStatus): void;
   onClose(): void;
 }
 
@@ -39,7 +40,7 @@ function useDraft(value: string): [string, (v: string) => void, { onFocus(): voi
   return [draft, setDraft, { onFocus: () => (focused.current = true), onBlur: () => (focused.current = false) }];
 }
 
-export function TaskEditor({ item, detail, members, nameOf, onChanged, onToggle, onClose }: Props) {
+export function TaskEditor({ item, detail, members, nameOf, onChanged, onToggle, onStatus, onClose }: Props) {
   const backend = useBackend();
   const toast = useToast();
   const [confirm, confirmElement] = useConfirm();
@@ -158,8 +159,20 @@ export function TaskEditor({ item, detail, members, nameOf, onChanged, onToggle,
           onKeyDown={(e) => e.key === "Enter" && (e.currentTarget as HTMLInputElement).blur()} />
         <p className="muted task-editor__meta">
           {item.createdBy && <>{t.addedBy(nameOf(item.createdBy), formatRelative(item.createdAt))}</>}
+          {item.startedAt && <>{t.startedBy(nameOf(item.startedBy), formatRelative(item.startedAt))}</>}
           {item.doneAt && <>{t.doneBy(nameOf(item.doneBy), formatRelative(item.doneAt))}</>}
         </p>
+
+        <div className="field">
+          <span className="field__label" id="task-status-label">{t.status}</span>
+          <StatusPicker value={taskStatusOf(item)} labelledBy="task-status-label" onChange={(status) => onStatus(item, status)} />
+          {item.doneAt && (
+            <p className="task-editor__timeliness">
+              <TimelinessBadge item={item} />
+              <span className="muted">{timelinessOf(item) && item.doneDueOn ? t.onTimeHint(formatLongDate(item.doneDueOn)) : t.noDueHint}</span>
+            </p>
+          )}
+        </div>
 
         <div className="form-grid">
           <Field label={t.due}>

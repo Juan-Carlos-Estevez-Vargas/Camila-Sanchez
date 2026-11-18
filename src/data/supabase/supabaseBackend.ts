@@ -598,9 +598,14 @@ const lists: ListsRepository = {
       : sb().from("todo_items").insert({ ...row, list_id: item.listId }).select().single();
     return map.toTodoItem(await unwrap<Row>(query));
   },
-  async setItemDone(id, done) {
-    // La hora y quién la terminó los pone la base de datos.
-    await unwrap(sb().from("todo_items").update({ done_at: done ? new Date().toISOString() : null }).eq("id", id));
+  async setItemStatus(id, status) {
+    // La hora, quién la empezó o terminó y la fecha límite de ese momento los
+    // pone la base de datos; aquí sólo se dice qué fechas quedan vacías.
+    const now = new Date().toISOString();
+    const row: Row = status === "pending" ? { started_at: null, done_at: null }
+      : status === "in_progress" ? { started_at: now, done_at: null }
+      : { done_at: now };
+    await unwrap(sb().from("todo_items").update(row).eq("id", id));
   },
   async deleteItem(id) {
     const subtasks = await unwrap<Row[]>(sb().from("todo_items").select("id").eq("parent_id", id));

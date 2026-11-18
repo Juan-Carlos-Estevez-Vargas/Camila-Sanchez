@@ -30,6 +30,12 @@ export interface Release {
 /** De la más nueva a la más antigua. */
 export const RELEASES: Release[] = [
   {
+    id: "2026-11-18",
+    news: [
+      { id: "taskStatus", icon: "⏳", requires: PERMISSIONS.listsUse },
+    ],
+  },
+  {
     id: "2026-11-11",
     news: [
       { id: "birthdayPopup", icon: "👑" },

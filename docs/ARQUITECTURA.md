@@ -489,8 +489,14 @@ Las cabeceras están en `public/_headers` (Netlify) y `vercel.json`; una prueba
 - Las cinco tablas están en la publicación de Realtime: lo que hace una
   persona aparece en la pantalla de las demás sin recargar (las recargas se
   agrupan en 250 ms).
-- Las reglas puras (árbol de tareas, avance, fechas) están en
-  `src/domain/lists.ts` y tienen pruebas.
+- Las reglas puras (árbol de tareas, avance, fechas, estado y si se hizo a
+  tiempo) están en `src/domain/lists.ts` y tienen pruebas.
+- **Estado de una tarea**: no hay columna `status`; sale de `started_at` y
+  `done_at` (`taskStatusOf`). El trigger `guard_todo_item` pone esas fechas,
+  quién lo hizo y, al terminarla, copia `due_on` en `done_due_on`, que no
+  cambia después. `timelinessOf` compara el día local de `done_at` con
+  `done_due_on`. `lists.setItemStatus(id, status)` es lo único que usa la
+  interfaz para cambiar el estado (migración `20261118000100_list_task_status`).
 
 ### Dedicatorias y playlist
 
@@ -634,3 +640,4 @@ prueba comprueba que `supabase/setup.sql` esté al día).
 | `…1109000200_dedication_views` | Quién vio cada dedicatoria: tabla `dedication_views`, función `mark_dedication_seen` y lectura sólo para la autora (y cada persona su fila) |
 | `…1109000300_two_step` | Verificación en dos pasos: `mfa_ok()`, política restrictiva en cada tabla y en `storage.objects`, `check_request()` como pre-request de PostgREST y `two_step_users()` para Usuarios |
 | `…1109000400_relationship_end` | Fin de la relación: `site_settings.relationship_end` (no antes del inicio, puesta en el 31 de octubre de 2026), `important_dates.only_together` y `guard_site_settings` que también la protege con `settings.manage` |
+| `…1118000100_list_task_status` | Tareas con estado: `todo_items.started_at`, `started_by` y `done_due_on`; `guard_todo_item` pone esas fechas y congela la fecha límite al terminar, y `notify_todo_item` avisa «⏳» al empezar una tarea |

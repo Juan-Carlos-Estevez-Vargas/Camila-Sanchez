@@ -4,7 +4,7 @@
  */
 import { daysUntil, formatLongDate, parseIsoDate } from "./dates";
 import { PERMISSIONS } from "./permissions";
-import type { IsoDate, Profile, RolePermission, TodoItem, TodoMaterial } from "./types";
+import type { IsoDate, Profile, RolePermission, TaskStatus, TodoItem, TodoMaterial } from "./types";
 import { msg } from "@/i18n/store";
 
 export const LIST_EMOJIS = ["📝", "🛒", "🏖️", "🏠", "🎁", "🎉", "✈️", "🍳", "💪", "📚", "🌱", "💖"] as const;
@@ -19,8 +19,11 @@ export interface TaskNode {
 
 const byPosition = (a: TodoItem, b: TodoItem) => a.position - b.position || a.createdAt.localeCompare(b.createdAt);
 
-/** Arma el árbol de tareas: pendientes primero (en su orden) y luego las hechas. */
-export function buildTasks(items: readonly TodoItem[]): { pending: TaskNode[]; done: TaskNode[] } {
+/**
+ * Arma el árbol de tareas en tres grupos: en progreso y pendientes (cada uno
+ * en su orden) y las hechas.
+ */
+export function buildTasks(items: readonly TodoItem[]): { inProgress: TaskNode[]; pending: TaskNode[]; done: TaskNode[] } {
   const children = new Map<string, TodoItem[]>();
   for (const item of items) {
     if (!item.parentId) continue;
@@ -33,7 +36,8 @@ export function buildTasks(items: readonly TodoItem[]): { pending: TaskNode[]; d
     .sort(byPosition)
     .map((item) => ({ item, subtasks: (children.get(item.id) ?? []).sort(byPosition) }));
   return {
-    pending: nodes.filter((n) => !n.item.doneAt),
+    inProgress: nodes.filter((n) => taskStatusOf(n.item) === "in_progress"),
+    pending: nodes.filter((n) => taskStatusOf(n.item) === "pending"),
     // Las recién terminadas arriba.
     done: nodes.filter((n) => n.item.doneAt).sort((a, b) => (b.item.doneAt ?? "").localeCompare(a.item.doneAt ?? "")),
   };
@@ -72,6 +76,54 @@ export function dueLabel(dueOn: IsoDate, now: Date = new Date()): string {
   if (days < 0) return t.ago(-days);
   if (days <= 7) return t.inDays(days);
   return formatLongDate(dueOn);
+}
+
+export const TASK_STATUSES: readonly TaskStatus[] = ["pending", "in_progress", "done"];
+
+/** Pendiente, en progreso o hecha, según sus fechas. */
+export function taskStatusOf(item: Pick<TodoItem, "startedAt" | "doneAt">): TaskStatus {
+  if (item.doneAt) return "done";
+  return item.startedAt ? "in_progress" : "pending";
+}
+
+/** Cómo terminó una tarea con fecha límite: a tiempo o con N días de retraso. */
+export interface Timeliness {
+  onTime: boolean;
+  /** Días de retraso (0 si fue a tiempo). */
+  lateDays: number;
+  /** Días que sobraron (0 si se hizo el mismo día o tarde). */
+  earlyDays: number;
+}
+
+/**
+ * Compara el día en que se terminó (en la hora local) con la fecha límite que
+ * tenía en ese momento. null si no está hecha o no tenía fecha.
+ */
+export function timelinessOf(item: Pick<TodoItem, "doneAt" | "doneDueOn">): Timeliness | null {
+  if (!item.doneAt || !item.doneDueOn) return null;
+  const diff = daysUntil(parseIsoDate(item.doneDueOn), new Date(item.doneAt));
+  return { onTime: diff >= 0, lateDays: Math.max(-diff, 0), earlyDays: Math.max(diff, 0) };
+}
+
+/** «A tiempo», «A tiempo · 2 días antes» o «Con 3 días de retraso». */
+export function timelinessLabel(timeliness: Timeliness): string {
+  const t = msg().lists.timeliness;
+  if (!timeliness.onTime) return t.late(timeliness.lateDays);
+  return timeliness.earlyDays > 0 ? t.early(timeliness.earlyDays) : t.onTime;
+}
+
+/** Cuántas de las tareas hechas (con fecha) se hicieron a tiempo y cuántas tarde. */
+export function punctualityOf(items: readonly Pick<TodoItem, "parentId" | "doneAt" | "doneDueOn">[]): { onTime: number; late: number } {
+  let onTime = 0;
+  let late = 0;
+  for (const item of items) {
+    if (item.parentId) continue;
+    const result = timelinessOf(item);
+    if (!result) continue;
+    if (result.onTime) onTime++;
+    else late++;
+  }
+  return { onTime, late };
 }
 
 /** «2 de 3 listos» para los materiales de una tarea. */

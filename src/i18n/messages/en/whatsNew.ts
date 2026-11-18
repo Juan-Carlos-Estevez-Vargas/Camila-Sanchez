@@ -10,6 +10,17 @@ export const whatsNew = {
   showHistory: "See everything that's new",
   footerLink: "✨ What's new",
   releases: {
+    "2026-11-18": {
+      news: {
+        taskStatus: {
+          title: "Lists now work as tasks with a status",
+          body: "Each task can be to do, in progress or done. Tap «▶ Start» to put it in progress, and when it's done the app tells you whether it was on time or how many days late, based on its deadline.",
+        },
+      },
+      changes: [
+        "The top of each list shows how many tasks are in progress, how many were done on time and how many late.",
+      ],
+    },
     "2026-11-11": {
       news: {
         birthdayPopup: {

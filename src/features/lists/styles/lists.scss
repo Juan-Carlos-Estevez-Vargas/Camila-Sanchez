@@ -125,6 +125,26 @@
 
     .input { min-width: 0; }
   }
+
+  &__stats {
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+}
+
+// Grupos de tareas por estado: en progreso y pendientes.
+.tasks-group {
+  display: grid;
+  gap: space(2);
+
+  &__title {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--c-muted);
+  }
 }
 
 .check {
@@ -216,6 +236,15 @@
 
   &__by { font-size: 0.8rem; }
 
+  &__start {
+    flex: none;
+    align-self: center;
+    white-space: nowrap;
+  }
+
+  // En progreso: una franja del color principal a la izquierda.
+  &--in-progress { box-shadow: inset 4px 0 0 var(--c-primary), var(--shadow-sm); }
+
   &__subtasks {
     list-style: none;
     margin: space(1) 0 0;
@@ -292,6 +321,50 @@
   }
 
   &__delete { color: var(--c-danger); margin-right: auto; }
+
+  &__timeliness {
+    margin: space(1) 0 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: space(2);
+    font-size: 0.85rem;
+  }
+}
+
+.status-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: space(2);
+
+  &__option {
+    @include chip;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 40px;
+    padding: 0.35rem 0.9rem;
+    font-weight: 500;
+
+    &.is-active { @include chip-active; }
+    &--done.is-active { background: var(--c-success); border-color: var(--c-success); color: #fff; }
+  }
+
+  // En el celular, los tres en una sola fila.
+  @include below(sm) {
+    flex-wrap: nowrap;
+    gap: 6px;
+
+    &__option {
+      flex: 1 1 0;
+      min-width: 0;
+      justify-content: center;
+      gap: 4px;
+      padding-inline: 0.4rem;
+      font-size: 0.85rem;
+      white-space: nowrap;
+    }
+  }
 }
 
 .list-settings__danger { color: var(--c-danger); margin-right: auto; }
