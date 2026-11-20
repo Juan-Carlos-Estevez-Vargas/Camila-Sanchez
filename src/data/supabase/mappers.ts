@@ -8,6 +8,7 @@ import {
 import { normalizeTranslations } from "@/domain/contentTranslations";
 import { sanitizeColors } from "@/domain/palettes";
 import type {
+  ActivityDevice, ActivitySession, PageView,
   AppNotification, AuditEntry, ChatContact, ChatConversation, ChatKind, ChatLastMessage, ChatMessage, ChatParticipant,
   ChatPerson, ChatPresence, ChatReaction, ChatRelation, ImportantDate, Interruption, Invitation, InvitableRole,
   Milestone, Note, Photo, Profile, Section, SectionKind, SiteSettings, TodoImage, TodoItem, TodoList, TodoMaterial,
@@ -324,6 +325,37 @@ export const toAudit = (r: Row): AuditEntry => ({
   oldData: (r.old_data as Record<string, unknown> | null) ?? null,
   newData: (r.new_data as Record<string, unknown> | null) ?? null,
   createdAt: str(r.created_at),
+});
+
+const ACTIVITY_DEVICE_KINDS = new Set(["phone", "tablet", "computer"]);
+
+export const toActivitySession = (r: Row): ActivitySession => {
+  const d = (r.device as Record<string, unknown> | null) ?? {};
+  const kind = str(d.kind, "computer");
+  return {
+    id: str(r.id),
+    userId: str(r.user_id),
+    startedAt: str(r.started_at),
+    lastSeenAt: str(r.last_seen_at),
+    activeSeconds: num(r.active_seconds),
+    pages: num(r.pages),
+    device: {
+      kind: (ACTIVITY_DEVICE_KINDS.has(kind) ? kind : "computer") as ActivityDevice["kind"],
+      os: str(d.os, "Otro"),
+      browser: str(d.browser, "Otro"),
+      installed: d.installed === true,
+    },
+  };
+};
+
+export const toPageView = (r: Row): PageView => ({
+  id: str(r.id),
+  sessionId: str(r.session_id),
+  userId: str(r.user_id),
+  path: str(r.path),
+  section: str(r.section, "otra") as PageView["section"],
+  startedAt: str(r.started_at),
+  seconds: num(r.seconds),
 });
 
 const rows = (v: unknown): Row[] => (Array.isArray(v) ? (v as Row[]) : []);

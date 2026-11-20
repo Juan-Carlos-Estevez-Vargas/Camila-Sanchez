@@ -15,6 +15,7 @@ import { MAX_TASK_IMAGES, nextDueOf, progressOf, taskStatusOf } from "@/domain/l
 import { sanitizeColors } from "@/domain/palettes";
 import { isSurpriseFor, isSurpriseLive, isSurpriseReceived } from "@/domain/surprises";
 import { matchesAudit } from "@/domain/audit";
+import { matchesActivity, summarizeActivity } from "@/domain/activity";
 import { AppError } from "@/core/errors";
 import {
   expiryFromNow, generateInviteToken, hashInviteToken, invitationStatus, isInviteToken, MIN_PASSWORD_LENGTH,
@@ -23,7 +24,7 @@ import { RECOVERY_LINK_HOURS } from "@/domain/recovery";
 import { generateSecret, otpauthUri, verifyTotp } from "@/domain/totp";
 import { DEFAULT_TITLE } from "@/core/seo";
 import type {
-  AppNotification, AuditEntry, ImportantDate, Interruption, Invitation, Milestone, Note,
+  ActivitySession, AppNotification, AuditEntry, ImportantDate, Interruption, Invitation, Milestone, Note, PageView,
   PermissionDefinition, Photo, PhotoUrls, Profile, Role, RolePermission, Section, SessionUser,
   SiteSettings, TodoImage, TodoItem, TodoList, TodoMaterial, Uuid,
 } from "@/domain/types";
@@ -84,6 +85,8 @@ interface DemoState extends Omit<DemoChatState, "users" | "notifications">, Demo
   recoveries: DemoRecovery[];
   rolePermissions: RolePermission[];
   audit: AuditEntry[];
+  activitySessions: ActivitySession[];
+  activityViews: PageView[];
 }
 
 const PERMISSION_DESCRIPTIONS: Record<Permission, string> = {
@@ -154,6 +157,8 @@ function baseState(): DemoState {
       DEFAULT_ROLE_PERMISSIONS[role].map((permission) => ({ role, permission })),
     ),
     audit: [],
+    activitySessions: [],
+    activityViews: [],
   };
 }
 
@@ -1197,6 +1202,58 @@ export const demoBackend: Backend = {
       const rows = database().state.audit.filter((a) => matchesAudit(a, filters));
       if (order === "asc") rows.reverse();
       return { entries: clone(rows.slice(page * pageSize, (page + 1) * pageSize)), total: rows.length };
+    },
+  },
+
+  activity: {
+    async track({ sessionId, viewId, device, path, section, deltaSeconds }) {
+      const user = sessionUser();
+      if (!user) return;
+      const delta = Math.min(Math.max(Math.round(deltaSeconds) || 0, 0), 120);
+      const state = database().state;
+      const now = nowIso();
+      let session = state.activitySessions.find((s) => s.id === sessionId);
+      if (session) {
+        if (session.userId !== user.id) return; // la visita es de otra persona
+        session.lastSeenAt = now;
+        session.activeSeconds += delta;
+        if (device && (device.os || device.browser)) session.device = device;
+      } else {
+        session = { id: sessionId, userId: user.id, startedAt: now, lastSeenAt: now, device, activeSeconds: delta, pages: 0 };
+        state.activitySessions.unshift(session);
+      }
+      const view = state.activityViews.find((v) => v.id === viewId);
+      if (view) {
+        if (view.userId !== user.id) return;
+        view.seconds = Math.min(view.seconds + delta, 6 * 60 * 60);
+      } else {
+        state.activityViews.unshift({ id: viewId, sessionId, userId: user.id, path, section, startedAt: now, seconds: delta });
+        session.pages += 1;
+      }
+      database().commit({ table: "activity_sessions", type: session.pages === 0 ? "INSERT" : "UPDATE", record: null });
+    },
+    async summary(filters) {
+      require(PERMISSIONS.auditView);
+      const state = database().state;
+      const sessions = state.activitySessions.filter((s) => matchesActivity(s, filters));
+      const ids = new Set(sessions.map((s) => s.id));
+      const views = state.activityViews.filter((v) => ids.has(v.sessionId));
+      return summarizeActivity(sessions, views);
+    },
+    async listSessions({ page, pageSize, order = "desc", ...filters }) {
+      require(PERMISSIONS.auditView);
+      const rows = database().state.activitySessions
+        .filter((s) => matchesActivity(s, filters))
+        .sort((a, b) => b.startedAt.localeCompare(a.startedAt));
+      if (order === "asc") rows.reverse();
+      return { sessions: clone(rows.slice(page * pageSize, (page + 1) * pageSize)), total: rows.length };
+    },
+    async sessionPages(sessionId) {
+      require(PERMISSIONS.auditView);
+      const rows = database().state.activityViews
+        .filter((v) => v.sessionId === sessionId)
+        .sort((a, b) => a.startedAt.localeCompare(b.startedAt));
+      return clone(rows);
     },
   },
 

@@ -7,9 +7,10 @@
  * La fábrica de data/backend.ts elige uno al arrancar (patrón Strategy).
  */
 import type { AuditFilters } from "@/domain/audit";
+import type { ActivityFilters, ActivitySummary } from "@/domain/activity";
 import type {
-  AppNotification, AuditEntry, ChatContact, ChatConversation, ChatMessage, ChatParticipant, ChatPerson, ChatPresence, ImportantDate, Interruption, Invitation, InvitableRole,
-  Milestone, Note, NoteKind, PermissionDefinition, Photo, PhotoUrls, Profile, Role, RolePermission,
+  ActivityDevice, ActivitySection, ActivitySession, AppNotification, AuditEntry, ChatContact, ChatConversation, ChatMessage, ChatParticipant, ChatPerson, ChatPresence, ImportantDate, Interruption, Invitation, InvitableRole,
+  Milestone, Note, NoteKind, PageView, PermissionDefinition, Photo, PhotoUrls, Profile, Role, RolePermission,
   Section, SessionUser, SiteSettings, TaskStatus, TodoImage, TodoItem, TodoList, TodoListDetail, TodoListSummary, TodoMaterial, Uuid,
   Dedication, DedicationPhoto, DedicationSong, DedicationWithMedia,
 } from "@/domain/types";
@@ -393,6 +394,48 @@ export interface AuditPage {
   total: number;
 }
 
+/** Un latido de actividad que manda la app mientras alguien la usa. */
+export interface ActivityPing {
+  /** Identificador de la visita (lo genera el navegador y dura la visita). */
+  sessionId: Uuid;
+  /** Identificador de la página abierta (uno nuevo por cada navegación). */
+  viewId: Uuid;
+  device: ActivityDevice;
+  /** Ruta ya limpia (sin identificadores); el chat llega como "/chat". */
+  path: string;
+  section: ActivitySection;
+  /** Segundos con la app a la vista desde el latido anterior. */
+  deltaSeconds: number;
+}
+
+export interface SessionQuery extends ActivityFilters {
+  page: number;
+  pageSize: number;
+  order?: "asc" | "desc";
+}
+
+export interface SessionPage {
+  sessions: ActivitySession[];
+  total: number;
+}
+
+/**
+ * Seguimiento de actividad para el administrador: cuándo entra cada persona,
+ * qué mira, cuánto tiempo y desde qué dispositivo. Nunca el contenido de los
+ * mensajes ni lo que escribe. No se le muestra ningún aviso a nadie dentro de
+ * la app; sólo lo lee quien tiene el permiso audit.view.
+ */
+export interface ActivityRepository {
+  /** La app avisa, cada pocos segundos, de la página que tiene a la vista. */
+  track(ping: ActivityPing): Promise<void>;
+  /** Totales (visitas, tiempo, por sección) con los filtros de la auditoría. */
+  summary(filters: ActivityFilters): Promise<ActivitySummary>;
+  /** Una página de visitas, de la más reciente a la más antigua. */
+  listSessions(query: SessionQuery): Promise<SessionPage>;
+  /** Las páginas que se abrieron en una visita, en orden. */
+  sessionPages(sessionId: Uuid): Promise<PageView[]>;
+}
+
 export interface CreatedInvitation {
   invitation: Invitation;
   /** Token en claro: sólo existe en este momento, para armar el enlace. */
@@ -423,7 +466,8 @@ export type RealtimeTable =
   | "interruptions" | "notes" | "chat_messages" | "chat_reads" | "notifications"
   | "chat_contacts" | "chat_participants" | "chat_reactions" | "chat_hidden_messages"
   | "todo_lists" | "todo_list_members" | "todo_items" | "todo_materials" | "todo_item_images"
-  | "dedications" | "dedication_photos" | "dedication_songs" | "dedication_views";
+  | "dedications" | "dedication_photos" | "dedication_songs" | "dedication_views"
+  | "activity_sessions" | "activity_page_views";
 
 export interface RealtimeChange<T = Record<string, unknown>> {
   table: RealtimeTable;
@@ -466,6 +510,7 @@ export interface Backend {
   readonly lists: ListsRepository;
   readonly dedications: DedicationsRepository;
   readonly users: UserRepository;
+  readonly activity: ActivityRepository;
   readonly invitations: InvitationRepository;
   readonly realtime: RealtimeGateway;
   readonly push: PushRepository;

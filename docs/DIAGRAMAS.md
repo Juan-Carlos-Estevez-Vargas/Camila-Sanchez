@@ -39,6 +39,7 @@ directamente al abrir este archivo. La explicación de cada pieza está en
 - [Modelo de datos](#modelo-de-datos)
 - [Roles y permisos](#roles-y-permisos)
 - [Auditoría: filtros y páginas](#auditoría-filtros-y-páginas)
+- [Seguimiento de actividad](#seguimiento-de-actividad)
 - [Legal y privacidad](#legal-y-privacidad)
 
 ## Arquitectura general
@@ -2130,6 +2131,53 @@ El mes es un rango en hora local: desde el día 1 a las 00:00 (incluido) hasta
 el día 1 del mes siguiente (excluido). "Sistema" en **Persona** busca los
 cambios sin cuenta detrás (`actor_id` vacío). La lectura sigue protegida por la
 política RLS de `audit_log` (permiso `audit.view`).
+
+## Seguimiento de actividad
+
+**Administración → Auditoría → Actividad** le muestra al super administrador
+cuándo entra cada persona, qué secciones mira, cuánto tiempo y desde qué
+dispositivo. Usa los mismos filtros de la auditoría (mes y persona). A nadie se
+le muestra ningún aviso dentro de la app: el seguimiento es silencioso y sólo
+lo lee quien tiene el permiso `audit.view`.
+
+Mientras alguien usa la app, un «latido» (`ActivityHeartbeat`) avisa cada ~30 s
+de la página que tiene a la vista y cuántos segundos lleva. Una «visita» dura
+mientras se siga usando sin un hueco de más de 30 minutos.
+
+```mermaid
+flowchart TD
+  subgraph Mientras la persona usa la app
+    NAV["Cambia de página"] --> VIEW["Nueva página vista (viewId)"]
+    HB["Cada ~30 s si está a la vista"] --> SEND
+    HIDE["Pestaña en segundo plano o se va"] --> SEND
+    VIEW --> SEND["activity.track(sessionId, viewId, device,<br/>ruta limpia, sección, segundos)"]
+  end
+  SEND --> CLEAN["Se limpia la ruta:<br/>sin ?query ni #ancla · IDs → :id · chat → /chat"]
+  CLEAN --> RPC["activity_track() en la base (security definer)"]
+  RPC --> S["Visita: crea o suma segundos, última vez, dispositivo"]
+  RPC --> P["Página: crea o suma segundos (tope 6 h)"]
+  RPC --> PRUNE["Al empezar una visita nueva:<br/>borra lo más viejo (180 días)"]
+
+  subgraph Panel del administrador (permiso audit.view)
+    FIL["Filtros: mes · persona"] --> SUM["Resumen:<br/>visitas · tiempo total · promedio ·<br/>última vez · tiempo por sección"]
+    FIL --> LIST["Lista de visitas:<br/>cuándo · quién · dispositivo · tiempo · páginas"]
+    LIST --> DET["Detalle de la visita:<br/>cada página y su tiempo"]
+  end
+  S & P --> SUM
+```
+
+**Qué se guarda y qué no.** Sólo el inicio de cada visita, la última vez a la
+vista, el tipo de dispositivo (celular/tablet/computador), el sistema y el
+navegador, las rutas (sin identificadores; el chat siempre como `/chat`, nunca
+con quién habla ni qué conversación abre) y los segundos a la vista. **No** se
+guarda el contenido de los mensajes privados, lo que se escribe, la dirección
+IP ni la ubicación.
+
+Las dos tablas (`activity_sessions` y `activity_page_views`) sólo las puede
+**leer** quien tiene `audit.view`; nadie las escribe directo, sólo la función
+`activity_track`, que siempre usa la cuenta de quien tiene la sesión (así nadie
+registra actividad por otra persona). Los segundos por latido se recortan para
+que una pestaña olvidada no sume de más.
 
 ## Legal y privacidad
 

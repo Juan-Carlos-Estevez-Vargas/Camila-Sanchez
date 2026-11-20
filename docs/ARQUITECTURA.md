@@ -416,6 +416,12 @@ Las tablas viven en `public` y se crean con las migraciones de
   Auditoría pide una página a la vez con sus filtros (mes, sección, acción,
   persona y orden) y el total con `count: "exact"`; las reglas de meses y
   páginas viven en `domain/audit.ts` y `domain/pagination.ts`.
+- `activity_track`: registra la actividad de cada persona (visita, páginas,
+  tiempo y dispositivo) con su propia cuenta; sólo quien tiene `audit.view` la
+  lee. El latido lo manda `state/ActivityHeartbeat.tsx` y las reglas puras (a
+  qué sección pertenece cada ruta, limpieza de la ruta, dispositivo y totales)
+  viven en `domain/activity.ts`. No se guarda el contenido de los mensajes ni
+  las teclas, y a nadie se le muestra un aviso.
 - Publicación `supabase_realtime`: avisa al navegador de los cambios.
 
 ### Edge Functions
@@ -641,3 +647,4 @@ prueba comprueba que `supabase/setup.sql` esté al día).
 | `…1109000300_two_step` | Verificación en dos pasos: `mfa_ok()`, política restrictiva en cada tabla y en `storage.objects`, `check_request()` como pre-request de PostgREST y `two_step_users()` para Usuarios |
 | `…1109000400_relationship_end` | Fin de la relación: `site_settings.relationship_end` (no antes del inicio, puesta en el 31 de octubre de 2026), `important_dates.only_together` y `guard_site_settings` que también la protege con `settings.manage` |
 | `…1118000100_list_task_status` | Tareas con estado: `todo_items.started_at`, `started_by` y `done_due_on`; `guard_todo_item` pone esas fechas y congela la fecha límite al terminar, y `notify_todo_item` avisa «⏳» al empezar una tarea |
+| `…1119000100_activity_tracking` | Seguimiento de actividad: tablas `activity_sessions` y `activity_page_views`, función `activity_track` (security definer), lectura sólo con `audit.view`, política restrictiva de dos pasos y publicación de Realtime; borra lo de más de 180 días |

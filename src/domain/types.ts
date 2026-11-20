@@ -524,3 +524,43 @@ export interface Invitation {
   expiresAt: IsoDateTime;
   usedAt: IsoDateTime | null;
 }
+
+/** Parte de la app a la que pertenece una página (para agrupar el tiempo). */
+export type ActivitySection =
+  | "inicio" | "para-ti" | "chat" | "mensajes" | "listas" | "dedicatorias"
+  | "cuenta" | "panel" | "super" | "legal" | "instalar" | "otra";
+
+/** Tipo de dispositivo, sistema y navegador; nunca la IP ni la huella del equipo. */
+export interface ActivityDevice {
+  kind: "phone" | "tablet" | "computer";
+  os: string;
+  browser: string;
+  /** Abierta como app instalada (pantalla de inicio) y no en una pestaña. */
+  installed: boolean;
+}
+
+/** Una visita a la app: desde que entra hasta que la deja de usar un rato. */
+export interface ActivitySession {
+  id: Uuid;
+  userId: Uuid;
+  startedAt: IsoDateTime;
+  /** Último momento en que la app estuvo abierta y a la vista. */
+  lastSeenAt: IsoDateTime;
+  device: ActivityDevice;
+  /** Segundos con la app a la vista (la suma de sus páginas). */
+  activeSeconds: number;
+  /** Cuántas páginas abrió. */
+  pages: number;
+}
+
+/** Una página abierta dentro de una visita y cuánto tiempo estuvo a la vista. */
+export interface PageView {
+  id: Uuid;
+  sessionId: Uuid;
+  userId: Uuid;
+  /** Ruta sin parámetros ni identificadores (p. ej. /listas/:id). */
+  path: string;
+  section: ActivitySection;
+  startedAt: IsoDateTime;
+  seconds: number;
+}

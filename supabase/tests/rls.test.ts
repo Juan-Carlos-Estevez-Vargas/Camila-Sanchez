@@ -902,3 +902,38 @@ describe("dedicatorias con fotos y canciones", () => {
     expect(rows[0]!.n).toBe(0);
   });
 });
+
+describe("actividad: sólo el admin la ve; cada quien registra la suya", () => {
+  const S1 = "a1a1a1a1-a1a1-4a1a-8a1a-a1a1a1a1a1a1";
+  const V1 = "b1b1b1b1-b1b1-4b1b-8b1b-b1b1b1b1b1b1";
+
+  it("activity_track crea y actualiza la visita y sus páginas con la cuenta de quien llama", async () => {
+    await as(CAMI, `select activity_track('${S1}', '${V1}', '{"kind":"phone","os":"iOS","browser":"Safari","installed":false}'::jsonb, '/listas', 'listas', 30)`);
+    await as(CAMI, `select activity_track('${S1}', '${V1}', '{}'::jsonb, '/listas', 'listas', 30)`);
+    const [session] = await as<{ user_id: string; active_seconds: number; pages: number; os: string }>(
+      JUAN, `select user_id, active_seconds, pages, device->>'os' as os from activity_sessions where id = '${S1}'`);
+    expect(session).toMatchObject({ user_id: CAMI, active_seconds: 60, pages: 1, os: "iOS" });
+  });
+
+  it("recorta los segundos exagerados y conserva el dispositivo en latidos vacíos", async () => {
+    await as(CAMI, `select activity_track('${S1}', '${V1}', '{}'::jsonb, '/listas', 'listas', 99999)`);
+    const [row] = await as<{ active_seconds: number; os: string }>(JUAN, `select active_seconds, device->>'os' as os from activity_sessions where id = '${S1}'`);
+    expect(row!.active_seconds).toBe(180); // 60 + 120 (tope por latido)
+    expect(row!.os).toBe("iOS");
+  });
+
+  it("otra persona no puede escribir sobre una visita ajena", async () => {
+    await as(GUEST, `select activity_track('${S1}', '${V1}', '{}'::jsonb, '/chat', 'chat', 30)`);
+    // Sigue siendo de Camila y su página no se tocó.
+    expect(await as(JUAN, `select user_id from activity_sessions where id = '${S1}'`)).toEqual([{ user_id: CAMI }]);
+    expect(await as(JUAN, `select count(*)::int as n from activity_page_views where session_id = '${S1}' and user_id = '${GUEST}'`)).toEqual([{ n: 0 }]);
+  });
+
+  it("sólo quien tiene audit.view lee la actividad, y nadie la escribe directo", async () => {
+    expect(await as(JUAN, `select count(*)::int as n from activity_sessions where id = '${S1}'`)).toEqual([{ n: 1 }]);
+    expect(await as(CAMI, "select count(*)::int as n from activity_sessions")).toEqual([{ n: 0 }]);
+    expect(await as(GUEST, "select count(*)::int as n from activity_page_views")).toEqual([{ n: 0 }]);
+    await expect(as(CAMI, `insert into activity_sessions (id, user_id) values (gen_random_uuid(), '${CAMI}')`)).rejects.toThrow(/row-level security/);
+    await expect(as(null, `select activity_track('${S1}', '${V1}', '{}'::jsonb, '/x', 'otra', 1)`)).rejects.toThrow(/permission denied|iniciar sesión/);
+  });
+});
