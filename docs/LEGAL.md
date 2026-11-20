@@ -112,6 +112,7 @@ Inter, desde `index.html`): cada visita mandaba la IP a Google. Ahora:
 | Última conexión, vistos | `chat_reads`, `chat_participants` | «En línea» y ✓✓ | Contactos |
 | Suscripciones push | `push_subscriptions` (endpoint, claves, navegador) | Avisos en el celular | Sólo la función `send-push` |
 | Registro de cambios | `audit_log` | Revisar errores y abusos | Quien tiene `audit.view` |
+| Actividad (visitas, rutas sin IDs, tiempo, tipo de dispositivo) | `activity_sessions`, `activity_page_views` | Seguimiento de uso para el administrador | Quien tiene `audit.view` |
 | Aceptación de términos | `legal_consents` | Prueba de la autorización | La persona y quien gestiona usuarios |
 | IP (con HMAC si aplica) | Registros de Supabase y Netlify; límites de velocidad | Seguridad | Proveedores |
 

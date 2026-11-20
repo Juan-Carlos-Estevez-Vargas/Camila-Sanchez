@@ -8,14 +8,19 @@ import { EmptyState, PageLoader } from "@/ui/Feedback";
 import { Field } from "@/ui/Field";
 import { Modal } from "@/ui/Modal";
 import { Pagination } from "@/ui/Pagination";
+import { onRovingKeyDown, rovingTabIndex } from "@/ui/rovingFocus";
 import { useAsync } from "@/ui/useAsync";
 import { dateFormat, useT } from "@/i18n";
+import { ActivityPanel } from "./AuditActivity";
 
 const PAGE_SIZES = [10, 25, 50, 100] as const;
 const DEFAULT_PAGE_SIZE = 25;
 /** Cuántos meses hacia atrás ofrece el desplegable (además de "Todo el historial"). */
 const MONTHS_BACK = 24;
 const ACTIONS: AuditEntry["action"][] = ["INSERT", "UPDATE", "DELETE"];
+
+const TABS = ["changes", "activity"] as const;
+type Tab = (typeof TABS)[number];
 
 interface Filters {
   /** "AAAA-MM" o ALL_MONTHS. Por defecto, el mes actual. */
@@ -39,6 +44,28 @@ function changedKeys(entry: AuditEntry): string[] {
 const capitalize = (s: string) => s.charAt(0).toLocaleUpperCase() + s.slice(1);
 
 export default function AuditAdmin() {
+  const [tab, setTab] = useState<Tab>("changes");
+  const t = useT().superAdmin.audit;
+
+  return (
+    <AdminPage title={t.title} description={t.description}>
+      <div className="tabs" role="tablist" aria-label={t.title} onKeyDown={onRovingKeyDown} style={{ marginBottom: 16 }}>
+        {TABS.map((id) => (
+          <button key={id} id={`audit-tab-${id}`} role="tab" className="tab" aria-selected={tab === id}
+            aria-controls="audit-panel" tabIndex={rovingTabIndex(tab === id)} onClick={() => setTab(id)}>
+            {t.tabs[id]}
+          </button>
+        ))}
+      </div>
+      <div id="audit-panel" role="tabpanel" aria-labelledby={`audit-tab-${tab}`}>
+        {tab === "changes" ? <ChangesPanel /> : <ActivityPanel />}
+      </div>
+    </AdminPage>
+  );
+}
+
+/** Pestaña «Cambios»: quién creó, cambió o borró cada cosa (auditoría clásica). */
+function ChangesPanel() {
   const backend = useBackend();
   const [filters, setFilters] = useState<Filters>(defaults);
   const [page, setPage] = useState(0);
@@ -77,7 +104,7 @@ export default function AuditAdmin() {
   if (result && page > pages - 1) setPage(pages - 1);
 
   return (
-    <AdminPage title={t.title} description={t.description}>
+    <>
       <fieldset className="audit-filters">
         <legend className="visually-hidden">{t.filters}</legend>
         <Field label={t.month}>
@@ -170,6 +197,6 @@ export default function AuditAdmin() {
           </div>
         </Modal>
       )}
-    </AdminPage>
+    </>
   );
 }

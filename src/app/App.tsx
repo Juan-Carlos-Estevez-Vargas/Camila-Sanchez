@@ -5,6 +5,7 @@ import { personalTheme } from "@/domain/palettes";
 import { AuthProvider, useAuth } from "@/state/AuthContext";
 import { NotificationsProvider } from "@/state/NotificationsContext";
 import { PresenceHeartbeat } from "@/state/PresenceHeartbeat";
+import { ActivityHeartbeat } from "@/state/ActivityHeartbeat";
 import { SeoController } from "@/state/SeoController";
 import { SiteContentProvider, useSiteContent } from "@/state/SiteContentStore";
 import { SpecialDayProvider, useSpecialDay } from "@/state/SpecialDayContext";
@@ -73,6 +74,7 @@ function ThemedShell() {
       <ThemeController theme={theme} />
       <SeoController />
       <PresenceHeartbeat />
+      <ActivityHeartbeat />
       <SkipLink />
       <RouteAnnouncer />
       <AppHeader />

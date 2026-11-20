@@ -1,7 +1,7 @@
 import { FunctionsHttpError } from "@supabase/supabase-js";
 import { AppError, fromServer } from "@/core/errors";
 import type {
-  AuthGateway, Backend, ContentRepository, DedicationInput, DedicationsRepository, InvitationRepository, LegalRepository, ListsRepository, MessagingRepository, PhotoRepository,
+  ActivityRepository, AuthGateway, Backend, ContentRepository, DedicationInput, DedicationsRepository, InvitationRepository, LegalRepository, ListsRepository, MessagingRepository, PhotoRepository,
   PushRepository, RealtimeChange, RealtimeGateway, RealtimeTable, UserRepository,
 } from "@/data/ports";
 import { clearPrivateCaches, readCache, writeCache } from "@/data/localCache";
@@ -13,6 +13,7 @@ import { sanitizeColors } from "@/domain/palettes";
 import { isSurpriseFor } from "@/domain/surprises";
 import { RECOVERY_PATH } from "@/domain/recovery";
 import { normalizeCode } from "@/domain/totp";
+import { summarizeActivity } from "@/domain/activity";
 import { DEFAULT_TITLE } from "@/core/seo";
 import type { DedicationPhoto, InvitableRole, Photo, PhotoUrls, SessionUser, Uuid } from "@/domain/types";
 import { getSupabase, unwrap, type Row } from "./client";
@@ -928,6 +929,44 @@ const users: UserRepository = {
   },
 };
 
+const activity: ActivityRepository = {
+  async track({ sessionId, viewId, device, path, section, deltaSeconds }) {
+    await unwrap(sb().rpc("activity_track", {
+      p_session: sessionId, p_view: viewId, p_device: device,
+      p_path: path, p_section: section, p_delta: Math.round(deltaSeconds),
+    }));
+  },
+  async summary(filters) {
+    let sessionsQuery = sb().from("activity_sessions").select("*");
+    let viewsQuery = sb().from("activity_page_views").select("section, seconds");
+    if (filters.userId) { sessionsQuery = sessionsQuery.eq("user_id", filters.userId); viewsQuery = viewsQuery.eq("user_id", filters.userId); }
+    if (filters.from) { sessionsQuery = sessionsQuery.gte("started_at", filters.from); viewsQuery = viewsQuery.gte("started_at", filters.from); }
+    if (filters.to) { sessionsQuery = sessionsQuery.lt("started_at", filters.to); viewsQuery = viewsQuery.lt("started_at", filters.to); }
+    const sessions = (await unwrap<Row[]>(sessionsQuery)).map(map.toActivitySession);
+    const views = (await unwrap<Row[]>(viewsQuery)).map((r) => {
+      const v = map.toPageView(r);
+      return { section: v.section, seconds: v.seconds };
+    });
+    return summarizeActivity(sessions, views);
+  },
+  async listSessions({ page, pageSize, order = "desc", userId, from, to }) {
+    let query = sb().from("activity_sessions").select("*", { count: "exact" })
+      .order("started_at", { ascending: order === "asc" })
+      .range(page * pageSize, page * pageSize + pageSize - 1);
+    if (userId) query = query.eq("user_id", userId);
+    if (from) query = query.gte("started_at", from);
+    if (to) query = query.lt("started_at", to);
+    const { data, error, count } = await query;
+    if (error) throw new Error(error.message, { cause: error });
+    return { sessions: (data as Row[]).map(map.toActivitySession), total: count ?? 0 };
+  },
+  async sessionPages(sessionId) {
+    const rows = await unwrap<Row[]>(sb().from("activity_page_views").select("*")
+      .eq("session_id", sessionId).order("started_at", { ascending: true }));
+    return rows.map(map.toPageView);
+  },
+};
+
 const invitations: InvitationRepository = {
   async list() {
     const rows = await unwrap<Row[]>(sb().from("invitations").select("id, role, note, created_at, expires_at, used_at")
@@ -1014,6 +1053,7 @@ export const supabaseBackend: Backend = {
   lists,
   dedications,
   users,
+  activity,
   invitations,
   realtime,
   push,

@@ -149,3 +149,72 @@
 
   &:hover { color: var(--c-text); }
 }
+
+// Resumen de actividad (Auditoría → Actividad): tarjetas de totales y barras
+// de tiempo por sección. Sin dependencias externas: barras con <span>.
+.activity-summary {
+  display: grid;
+  gap: space(4);
+  margin: space(4) 0;
+}
+
+.activity-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: space(3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: space(3);
+    background: var(--c-surface-2);
+    border-radius: var(--radius-md);
+  }
+
+  &__num { font-size: 1.3rem; font-weight: 700; color: var(--c-text); }
+}
+
+.activity-bars {
+  display: grid;
+  gap: space(2);
+}
+
+.activity-bar {
+  display: grid;
+  grid-template-columns: minmax(90px, 160px) 1fr auto;
+  align-items: center;
+  gap: space(3);
+
+  &__label { font-weight: 600; }
+
+  &__track {
+    display: block;
+    block-size: 10px;
+    background: var(--c-surface-2);
+    border-radius: var(--radius-pill);
+    overflow: hidden;
+  }
+
+  &__fill {
+    display: block;
+    block-size: 100%;
+    background: var(--c-primary);
+    border-radius: var(--radius-pill);
+    min-inline-size: 4px;
+    transition: inline-size var(--motion-slow, 0.4s) ease;
+  }
+
+  &__value { white-space: nowrap; font-variant-numeric: tabular-nums; }
+}
+
+@media (max-width: 560px) {
+  .activity-bar {
+    grid-template-columns: 1fr auto;
+
+    &__track { grid-column: 1 / -1; order: 3; }
+  }
+}

@@ -534,7 +534,7 @@ te preparen a ti siguen siendo sorpresa.
 | 🎨 Apariencia | Colores de la página (los que ve quien entra sin cuenta y quien no eligió los suyos), tipografías, bordes, modo oscuro, efectos animados y **fechas especiales** |
 | 🧩 Secciones | Agregar, ordenar, ocultar o quitar secciones de la página |
 | ⚙️ Ajustes del sitio | Título, fecha en que empezó todo, fecha en que terminó (opcional), música y si la página es pública |
-| 📜 Auditoría | Quién cambió qué y cuándo, filtrado por mes, sección, acción y persona |
+| 📜 Auditoría | Dos pestañas: **Cambios** (quién creó, cambió o borró qué, por mes, sección, acción y persona) y **Actividad** (cuándo entra cada persona, qué mira, cuánto tiempo y desde qué dispositivo) |
 
 ### Preparar las fechas especiales
 
@@ -576,7 +576,11 @@ igual. Si se deja vacía, todo vuelve a como estaba.
 
 ### Revisar la auditoría
 
-1. **Administración → Auditoría** abre con los cambios de **este mes**.
+**Administración → Auditoría** tiene dos pestañas: **Cambios** y **Actividad**.
+
+**Cambios** (quién editó qué):
+
+1. Abre con los cambios de **este mes**.
 2. En **Mes** elige otro mes (hasta dos años atrás) o **Todo el historial**.
 3. Afina con **Sección**, **Acción** (creó, cambió o borró) y **Persona**
    (**Sistema** son cambios que no hizo ninguna cuenta). **Orden** pone primero
@@ -586,6 +590,19 @@ igual. Si se deja vacía, todo vuelve a como estaba.
    **‹ ›** para moverte de a una o toca un número. **Por página** muestra 10,
    25, 50 o 100.
 5. **Quitar filtros** vuelve a este mes y a todo lo demás por defecto.
+
+**Actividad** (seguimiento de cada persona):
+
+1. Elige el **Mes** y, si quieres, una **Persona** (por ejemplo, Camila).
+2. Arriba sale un resumen: cuántas **visitas**, el **tiempo total**, el
+   **promedio por visita** y la **última vez** que usó la app. Debajo, una
+   barra por sección muestra en qué pasa más tiempo (Inicio, Chat, Dedicatorias…).
+3. La tabla lista cada **visita**: cuándo entró, quién, desde qué dispositivo
+   (📱 celular, 📲 tablet o 💻 computador, con sistema y navegador), cuánto
+   tiempo y cuántas páginas. **Ver** abre el detalle con cada página y su tiempo.
+4. Sólo se guarda por dónde pasa y cuánto tiempo, nunca el contenido de sus
+   mensajes ni lo que escribe. A ella no le aparece ningún aviso: sólo tú, con
+   el permiso de auditoría, ves esto.
 
 ### Invitar a alguien
 
