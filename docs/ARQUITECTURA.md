@@ -198,6 +198,22 @@ cumpleaños (día y mes) y los días que faltan.
   empieza, las otras se pausan. Ese día su botón reemplaza al de la música
   de la portada. No hace falta tocar la CSP: `media-src https:` y
   `frame-src youtube-nocookie` ya estaban.
+- Ramo de flores: `domain/bouquets.ts` (puro y probado) tiene las flores de
+  cada fecha por su significado (`BOUQUETS`: forma, colores, papel y moño),
+  quién lo recibe (`isBouquetRecipient`), la ruta que deja en la actividad
+  (`bouquetPath` → `/ramo/<fecha>/<auto|boton>`, sección `ramo`) y
+  `fillBouquetMessage` para el mensaje propio. `features/bouquet/` lo muestra:
+  `BouquetHost` (dentro de `ConsentGate`) lo abre solo una vez por día y deja
+  el botón 💐; `BouquetReveal` (carga diferida) es la animación a pantalla
+  completa y la notita; `FlowerArt` dibuja en SVG gerberas, peonías, rosas,
+  girasoles, dalias, flores de Nochebuena y tulipanes. `bouquetStore` avisa a
+  toda la app que está abierto: `ActivityHeartbeat` registra esa «página» y
+  la ventana del cumpleaños y las novedades esperan. Encendido, destinataria
+  y firma van en `effects.specialDays.bouquet`; el lugar, la hora y el
+  mensaje en la tabla `bouquet_notes` (migración 031, sólo con sesión), con
+  `listBouquetNotes`/`saveBouquetNote` en `ContentRepository`.
+  `ActivityRepository.bouquetViews` alimenta **Auditoría → Actividad → 💐**.
+  No tiene entrada en `whatsNew.ts` a propósito: es sorpresa.
   `DEFAULT_DAY_SONGS` pone «El color de tus ojos» (enlace de YouTube) en el
   cumpleaños mientras `songs` no exista en lo guardado.
 - `app/SpecialDayPopup.tsx`: la ventana del cumpleaños (un `Modal`), una vez

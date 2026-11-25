@@ -25,6 +25,7 @@ directamente al abrir este archivo. La explicación de cada pieza está en
 - [Colores por persona](#colores-por-persona)
 - [Temas de fechas especiales](#temas-de-fechas-especiales)
 - [Música de las fechas especiales](#música-de-las-fechas-especiales)
+- [Ramo de flores de cada fecha](#ramo-de-flores-de-cada-fecha)
 - [Fin de la relación](#fin-de-la-relación)
 - [Perfil de cada persona](#perfil-de-cada-persona)
 - [Listas compartidas](#listas-compartidas)
@@ -1041,6 +1042,73 @@ sequenceDiagram
   C->>Y: suena el video (youtube-nocookie) y al terminar el siguiente
 ```
 
+## Ramo de flores de cada fecha
+
+En cada fecha especial, a la destinataria le sale un ramo de flores elegido por
+su significado, con una notita de invitación de Juan (`features/bouquet`). Es
+sorpresa: no se anuncia en las novedades.
+
+| Fecha | Flores | Qué significan |
+| --- | --- | --- |
+| 🎂 Cumpleaños | Gerberas | Alegría, inocencia y ganas de vivir |
+| 💍 Aniversario | Peonías | El amor que dura y un futuro feliz juntos |
+| 💘 San Valentín | Rosas rojas | El amor apasionado, un «te amo» sin palabras |
+| 💛 Amor y Amistad | Girasoles | Lealtad y admiración: siempre buscan su sol |
+| 🎃 Halloween | Dalias moradas y naranjas | Elegancia, misterio y un vínculo que no se rompe |
+| 🎄 Navidad | Flores de Nochebuena | La alegría de la Navidad y los buenos deseos |
+| 🎆 Año Nuevo | Tulipanes | Los nuevos comienzos y el amor perfecto |
+
+A quién le sale y cuándo (`BouquetHost.tsx`):
+
+```mermaid
+flowchart TD
+  D["Fecha especial de hoy"] --> E{"¿bouquet.enabled<br/>y hay sesión?"}
+  E -- "no" --> N["Sin ramo"]
+  E -- "sí" --> R{"¿Para quién es?"}
+  R -- "recipientId elegido" --> RS{"¿Es esa persona?"}
+  R -- "sin elegir" --> RT{"¿Puede editar la Apariencia?<br/>(theme.manage)"}
+  RS -- "no" --> N
+  RT -- "sí (quien lo prepara)" --> N
+  RS -- "sí" --> OK
+  RT -- "no" --> OK["Le toca el ramo"]
+  OK --> L["Pide su notita<br/>listBouquetNotes() → bouquet_notes"]
+  OK --> S{"¿Ya se abrió solo hoy<br/>en este navegador?<br/>localStorage bouquet-opened"}
+  S -- "no" --> A["Se abre solo<br/>trigger = auto"]
+  S -- "sí" --> B["Botón 💐 «Tu ramo» arriba a la derecha<br/>todo el día (no en el chat ni en las cartas)"]
+  A -- "Ahí estaré 💋 / × / Esc" --> B
+  B -- "lo toca" --> A2["Se abre de nuevo<br/>trigger = boton"]
+  A & A2 --> W["Mientras está abierto esperan<br/>la ventana del cumpleaños y las novedades"]
+  M["Medianoche"] --> C["Se cierra y el botón desaparece"]
+```
+
+La animación (`BouquetReveal.tsx`, una sola línea de tiempo en CSS):
+
+```mermaid
+sequenceDiagram
+  participant V as Pantalla
+  Note over V: 0 s · brillo y «Tengo algo para ti…» a mano
+  Note over V: 1,4 s · sube el ramo envuelto en papel
+  Note over V: 1,7 s · se dibujan los tallos · 2,2 s brotan las hojas
+  Note over V: 2,4 s · cada flor se abre a su turno (0,16 s entre flores)
+  Note over V: 3,3 s · paniculata · 3,6 s el moño
+  Note over V: 3,9 s · la notita: invitación, 📍 lugar, 🕗 hora,<br/>por qué esas flores y la firma
+  Note over V: Tocar antes la salta al final · «Reducir animaciones»: todo ya abierto
+```
+
+Dónde se guarda cada cosa y cómo queda en la actividad:
+
+```mermaid
+flowchart LR
+  J["Juan (theme.manage)<br/>Super → Apariencia → 💐"] -- "encendido · para quién · firma" --> SS["site_settings.effects<br/>.specialDays.bouquet<br/>(pública: no revela nada)"]
+  J -- "lugar · hora · mensaje<br/>(Guardar la notita)" --> BN["bouquet_notes<br/>RLS: sólo con sesión la lee,<br/>sólo theme.manage la escribe,<br/>cada cambio en audit_log"]
+  BN --> C["Camila abre el ramo"]
+  C -- "ActivityHeartbeat: la «página» es<br/>/ramo/&lt;fecha&gt;/&lt;auto|boton&gt;" --> AV["activity_page_views<br/>sección «ramo» · segundos a la vista"]
+  AV --> P["Auditoría → Actividad →<br/>💐 Ramos de flores:<br/>cuándo · quién · fecha · cómo · cuánto lo miró"]
+```
+
+La vista previa (`/?tema=birthday&ramo=1`, botón «Ver el ramo» en Apariencia)
+sólo la abre quien tiene `theme.manage` y no cuenta en la actividad.
+
 ## Fin de la relación
 
 Qué cambia cuando hay `relationship_end` (en la base real, el 31 de octubre de
@@ -1914,6 +1982,13 @@ erDiagram
     boolean recurs_yearly
     boolean only_together "se oculta si la relación terminó"
   }
+  BOUQUET_NOTES {
+    text id PK "fecha especial (birthday, valentine…)"
+    text place "lugar de la invitación"
+    text time_text "hora"
+    text message "mensaje propio (opcional)"
+    uuid updated_by FK
+  }
   INTERRUPTIONS {
     uuid id PK
     text title
@@ -2063,7 +2138,9 @@ erDiagram
 
 `ROLE` representa el tipo enumerado `app_role` (`super_admin`, `editor`,
 `viewer`), no una tabla. `SITE_SETTINGS`, `SECTIONS` e `IMPORTANT_DATES` no
-tienen relaciones fuertes: los lee cualquiera con `site.view`.
+tienen relaciones fuertes: los lee cualquiera con `site.view`. `BOUQUET_NOTES`
+(la notita del ramo de cada fecha) sólo la leen las cuentas con sesión y sólo
+la cambia `theme.manage`.
 
 ## Roles y permisos
 
@@ -2162,6 +2239,7 @@ flowchart TD
     FIL["Filtros: mes · persona"] --> SUM["Resumen:<br/>visitas · tiempo total · promedio ·<br/>última vez · tiempo por sección"]
     FIL --> LIST["Lista de visitas:<br/>cuándo · quién · dispositivo · tiempo · páginas"]
     LIST --> DET["Detalle de la visita:<br/>cada página y su tiempo"]
+    FIL --> BQ["💐 Ramos de flores:<br/>cada apertura del ramo (sección «ramo»)"]
   end
   S & P --> SUM
 ```
