@@ -15,6 +15,8 @@ import type {
   Dedication, DedicationPhoto, DedicationSong, DedicationWithMedia,
 } from "@/domain/types";
 import type { LegalConsent } from "@/domain/legal";
+import type { BouquetNote } from "@/domain/bouquets";
+import type { SpecialDayId } from "@/domain/specialDays";
 
 export type Unsubscribe = () => void;
 
@@ -98,6 +100,13 @@ export interface ContentRepository {
   listSeenInterruptions(): Promise<Uuid[]>;
 
   reorder(table: ReorderableTable, orderedIds: Uuid[]): Promise<void>;
+
+  /**
+   * Las notitas del ramo de cada fecha especial (lugar, hora, mensaje). Sólo
+   * con sesión: un anónimo recibe una lista vacía. Sólo theme.manage las guarda.
+   */
+  listBouquetNotes(): Promise<BouquetNote[]>;
+  saveBouquetNote(note: BouquetNote): Promise<BouquetNote>;
 }
 
 export interface UploadedImage {
@@ -434,6 +443,11 @@ export interface ActivityRepository {
   listSessions(query: SessionQuery): Promise<SessionPage>;
   /** Las páginas que se abrieron en una visita, en orden. */
   sessionPages(sessionId: Uuid): Promise<PageView[]>;
+  /**
+   * Las veces que se abrió el ramo de flores (páginas de la sección «ramo»),
+   * de la más reciente a la más antigua, con los mismos filtros.
+   */
+  bouquetViews(filters: ActivityFilters & { limit?: number; dayId?: SpecialDayId }): Promise<PageView[]>;
 }
 
 export interface CreatedInvitation {
@@ -467,7 +481,7 @@ export type RealtimeTable =
   | "chat_contacts" | "chat_participants" | "chat_reactions" | "chat_hidden_messages"
   | "todo_lists" | "todo_list_members" | "todo_items" | "todo_materials" | "todo_item_images"
   | "dedications" | "dedication_photos" | "dedication_songs" | "dedication_views"
-  | "activity_sessions" | "activity_page_views";
+  | "activity_sessions" | "activity_page_views" | "bouquet_notes";
 
 export interface RealtimeChange<T = Record<string, unknown>> {
   table: RealtimeTable;

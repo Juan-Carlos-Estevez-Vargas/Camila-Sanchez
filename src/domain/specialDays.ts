@@ -10,6 +10,7 @@
  */
 import { asStringArray } from "@/core/validation";
 import { parseIsoDate } from "./dates";
+import { DEFAULT_BOUQUET, normalizeBouquet, type BouquetConfig } from "./bouquets";
 import { DEFAULT_DAY_SONGS, normalizeDaySongs } from "./specialMusic";
 import type { PaletteColors } from "./palettes";
 import type { IsoDate, ThemeTokens } from "./types";
@@ -35,6 +36,8 @@ export interface SpecialDaysConfig {
   songs: Partial<Record<SpecialDayId, string[]>>;
   /** Lo que dice la ventana del cumpleaños (vacío: el texto de la app). */
   birthdayMessage: string;
+  /** El ramo de flores de cada fecha (ver bouquets.ts). */
+  bouquet: BouquetConfig;
 }
 
 /** Largo máximo del mensaje de la ventana del cumpleaños. */
@@ -48,6 +51,7 @@ export const DEFAULT_SPECIAL_DAYS: SpecialDaysConfig = {
   music: true,
   songs: DEFAULT_DAY_SONGS,
   birthdayMessage: "",
+  bouquet: DEFAULT_BOUQUET,
 };
 
 /**
@@ -218,6 +222,7 @@ export function normalizeSpecialDays(raw: unknown): SpecialDaysConfig {
     // Si nunca se guardaron canciones, suenan las de fábrica (la del cumpleaños).
     songs: o.songs === undefined ? DEFAULT_DAY_SONGS : normalizeDaySongs(o.songs, SPECIAL_DAY_IDS),
     birthdayMessage: typeof o.birthdayMessage === "string" ? o.birthdayMessage.slice(0, MAX_BIRTHDAY_MESSAGE) : "",
+    bouquet: normalizeBouquet(o.bouquet),
   };
 }
 

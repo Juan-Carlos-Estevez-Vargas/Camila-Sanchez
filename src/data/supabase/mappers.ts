@@ -6,6 +6,7 @@ import {
   normalizeAnimation, normalizeEffects, normalizeSectionContent, normalizeTheme, safeMusicUrl,
 } from "@/domain/defaults";
 import { normalizeTranslations } from "@/domain/contentTranslations";
+import { normalizeBouquetNote, type BouquetNote } from "@/domain/bouquets";
 import { sanitizeColors } from "@/domain/palettes";
 import type {
   ActivityDevice, ActivitySession, PageView,
@@ -326,6 +327,10 @@ export const toAudit = (r: Row): AuditEntry => ({
   newData: (r.new_data as Record<string, unknown> | null) ?? null,
   createdAt: str(r.created_at),
 });
+
+/** Fila de bouquet_notes (el id es el de la fecha especial). */
+export const toBouquetNote = (r: Row): BouquetNote | null =>
+  normalizeBouquetNote({ dayId: r.id, place: r.place ?? "", time: r.time_text ?? "", message: r.message ?? "" });
 
 const ACTIVITY_DEVICE_KINDS = new Set(["phone", "tablet", "computer"]);
 
