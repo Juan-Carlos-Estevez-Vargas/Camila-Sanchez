@@ -264,6 +264,20 @@ const content: ContentRepository = {
   async reorder(table, orderedIds) {
     await unwrap(sb().rpc("reorder_items", { p_table: table, p_ids: orderedIds }));
   },
+
+  async listBouquetNotes() {
+    // RLS: un anónimo no lee ninguna (devuelve una lista vacía, sin error).
+    const rows = await unwrap<Row[]>(sb().from("bouquet_notes").select("id, place, time_text, message"));
+    return rows.map(map.toBouquetNote).filter((n): n is NonNullable<typeof n> => n !== null);
+  },
+  async saveBouquetNote(note) {
+    const row = await unwrap<Row>(sb().from("bouquet_notes")
+      .upsert({ id: note.dayId, place: note.place, time_text: note.time, message: note.message })
+      .select("id, place, time_text, message").single());
+    const saved = map.toBouquetNote(row);
+    if (!saved) throw new Error("bouquet_notes: fila inesperada");
+    return saved;
+  },
 };
 
 
@@ -964,6 +978,17 @@ const activity: ActivityRepository = {
     const rows = await unwrap<Row[]>(sb().from("activity_page_views").select("*")
       .eq("session_id", sessionId).order("started_at", { ascending: true }));
     return rows.map(map.toPageView);
+  },
+  async bouquetViews({ limit = 50, dayId, userId, from, to }) {
+    let query = sb().from("activity_page_views").select("*")
+      .eq("section", "ramo")
+      .order("started_at", { ascending: false })
+      .limit(limit);
+    if (dayId) query = query.like("path", `/ramo/${dayId}/%`);
+    if (userId) query = query.eq("user_id", userId);
+    if (from) query = query.gte("started_at", from);
+    if (to) query = query.lt("started_at", to);
+    return (await unwrap<Row[]>(query)).map(map.toPageView);
   },
 };
 

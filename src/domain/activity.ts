@@ -20,13 +20,15 @@ export const ACTIVITY_RETENTION_DAYS = 180;
 
 export const ACTIVITY_SECTIONS: readonly ActivitySection[] = [
   "inicio", "para-ti", "chat", "mensajes", "listas", "dedicatorias",
-  "cuenta", "panel", "super", "legal", "instalar", "otra",
+  "cuenta", "panel", "super", "legal", "instalar", "ramo", "otra",
 ];
 
 const PREFIXES: ReadonlyArray<[string, ActivitySection]> = [
   ["/para-ti", "para-ti"], ["/despedida", "para-ti"], ["/chat", "chat"], ["/mensajes", "mensajes"],
   ["/listas", "listas"], ["/dedicatorias", "dedicatorias"], ["/cuenta", "cuenta"], ["/panel", "panel"],
   ["/super", "super"], ["/legal", "legal"], ["/instalar", "instalar"],
+  // El ramo de flores de una fecha especial (no es una página: es la ventana abierta).
+  ["/ramo", "ramo"],
 ];
 
 /** Sección de la app a la que pertenece una ruta. */

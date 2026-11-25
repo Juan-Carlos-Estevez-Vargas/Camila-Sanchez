@@ -16,6 +16,7 @@ import { sanitizeColors } from "@/domain/palettes";
 import { isSurpriseFor, isSurpriseLive, isSurpriseReceived } from "@/domain/surprises";
 import { matchesAudit } from "@/domain/audit";
 import { matchesActivity, summarizeActivity } from "@/domain/activity";
+import { normalizeBouquetNote, type BouquetNote } from "@/domain/bouquets";
 import { AppError } from "@/core/errors";
 import {
   expiryFromNow, generateInviteToken, hashInviteToken, invitationStatus, isInviteToken, MIN_PASSWORD_LENGTH,
@@ -87,6 +88,8 @@ interface DemoState extends Omit<DemoChatState, "users" | "notifications">, Demo
   audit: AuditEntry[];
   activitySessions: ActivitySession[];
   activityViews: PageView[];
+  /** Las notitas del ramo de cada fecha (tabla bouquet_notes). */
+  bouquetNotes: BouquetNote[];
 }
 
 const PERMISSION_DESCRIPTIONS: Record<Permission, string> = {
@@ -159,6 +162,7 @@ function baseState(): DemoState {
     audit: [],
     activitySessions: [],
     activityViews: [],
+    bouquetNotes: [],
   };
 }
 
@@ -923,6 +927,23 @@ export const demoBackend: Backend = {
       audit("UPDATE", table, null, null, { order: orderedIds });
       database().commit({ table, type: "UPDATE", record: null });
     },
+
+    async listBouquetNotes() {
+      // Como en Supabase: sin sesión no se lee ninguna (no se adelanta la sorpresa).
+      if (!sessionUser()) return delay([]);
+      return delay(clone(database().state.bouquetNotes));
+    },
+    async saveBouquetNote(input) {
+      require(PERMISSIONS.themeManage);
+      const note = normalizeBouquetNote(input);
+      if (!note) throw new AppError("Esa fecha especial no existe.");
+      const state = database().state;
+      const old = state.bouquetNotes.find((n) => n.dayId === note.dayId) ?? null;
+      state.bouquetNotes = [...state.bouquetNotes.filter((n) => n.dayId !== note.dayId), note];
+      audit(old ? "UPDATE" : "INSERT", "bouquet_notes", note.dayId, old, note);
+      database().commit({ table: "bouquet_notes", type: old ? "UPDATE" : "INSERT", record: note as never });
+      return delay(clone(note));
+    },
   },
 
   photos: {
@@ -1253,6 +1274,14 @@ export const demoBackend: Backend = {
       const rows = database().state.activityViews
         .filter((v) => v.sessionId === sessionId)
         .sort((a, b) => a.startedAt.localeCompare(b.startedAt));
+      return clone(rows);
+    },
+    async bouquetViews({ limit = 50, dayId, ...filters }) {
+      require(PERMISSIONS.auditView);
+      const rows = database().state.activityViews
+        .filter((v) => v.section === "ramo" && matchesActivity(v, filters) && (!dayId || v.path.startsWith(`/ramo/${dayId}/`)))
+        .sort((a, b) => b.startedAt.localeCompare(a.startedAt))
+        .slice(0, limit);
       return clone(rows);
     },
   },

@@ -528,7 +528,7 @@ export interface Invitation {
 /** Parte de la app a la que pertenece una página (para agrupar el tiempo). */
 export type ActivitySection =
   | "inicio" | "para-ti" | "chat" | "mensajes" | "listas" | "dedicatorias"
-  | "cuenta" | "panel" | "super" | "legal" | "instalar" | "otra";
+  | "cuenta" | "panel" | "super" | "legal" | "instalar" | "ramo" | "otra";
 
 /** Tipo de dispositivo, sistema y navegador; nunca la IP ni la huella del equipo. */
 export interface ActivityDevice {

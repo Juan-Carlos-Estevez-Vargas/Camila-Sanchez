@@ -83,6 +83,8 @@ Funciona en dos modos:
 | <img src="docs/capturas/dedicatoria.png" alt="Dedicatoria «Para mi persona favorita» con el mensaje, tres fotos y cuatro canciones" width="420"> | <img src="docs/capturas/playlist.png" alt="Playlist con todas las canciones de las dedicatorias, botones para reproducir, mezclar e importar" width="420"> |
 | **Su cumpleaños: toda la página de fiesta** | **Halloween** |
 | <img src="docs/capturas/fecha-cumpleanos.png" alt="Portada con el tema de cumpleaños: colores crema y fucsia, globos flotando y el saludo «¡Feliz cumpleaños, Camila!»" width="420"> | <img src="docs/capturas/fecha-halloween.png" alt="Portada con el tema de Halloween: fondo oscuro, naranja, calabazas y fantasmas flotando y el saludo «¡Feliz Halloween!»" width="420"> |
+| **Su ramo de gerberas con la notita** | **El ramo en el celular** |
+| <img src="docs/capturas/ramo-cumpleanos.png" alt="Ramo de gerberas de colores envuelto en papel rosado con moño, y al lado la notita «Para Camila» con la invitación, el lugar, la hora, por qué gerberas y la firma" width="420"> | <img src="docs/capturas/ramo-movil.png" alt="El ramo de gerberas en un celular, con el comienzo de la notita debajo" width="240"> |
 | **«Tengo algo para ti 💌» en el inicio** | |
 | <img src="docs/capturas/para-ti-invitacion.png" alt="Página principal con la tarjeta terracota «Tengo algo para ti» abajo a la derecha y los botones Ábrela y Luego" width="420"> | |
 | **«Para ti»: la carta en tarjetas** | **Y el final** |
@@ -118,6 +120,7 @@ Funciona en dos modos:
 | App de celular instalable (Android, iPhone y computador): ícono, pantalla completa, atajos, sin conexión y aviso de versión nueva | `/app` | Pública |
 | Avisos push en el celular: chat, notitas, sorpresas y listas | — | Quien los active |
 | Fechas especiales: en su cumpleaños, el aniversario, San Valentín, Amor y Amistad, Halloween, Navidad y Año Nuevo toda la app cambia de tema el día completo (colores, emojis, saludo, franja de fiesta y música suave que se apaga con 🔊). Se configuran y se previsualizan en **Super → Apariencia** | Todas | Todos (configura `theme.manage`) |
+| Ramo de flores en cada fecha especial: una animación le revela un ramo elegido por su significado (gerberas en su cumpleaños) con una notita de invitación; todo el día queda el botón 💐 para volver a abrirlo y cada apertura sale en **Auditoría → Actividad**. Sin aviso en las novedades | Todas (menos el chat y las cartas) | Su destinataria (configura `theme.manage`) |
 | Tutorial guiado según la página y los permisos de cada cuenta | Todas | Todos |
 | Novedades de cada versión: al actualizar se ve qué cambió y, si hay una función nueva, «Ver cómo funciona» lleva a su página con el tutorial. También en **✨ Novedades** del pie | Todas | Cualquier cuenta |
 | Idiomas: español, inglés y portugués. La app arranca en el idioma del dispositivo y se cambia con 🌐 en la cabecera, el pie o **Mi cuenta** | Todas | Todos |
@@ -209,10 +212,33 @@ tus ojos» (Banda MS) desde su video de YouTube. El repositorio no guarda músic
 con derechos de autor: esas canciones suenan desde YouTube
 ([diagramas](docs/DIAGRAMAS.md#música-de-las-fechas-especiales)).
 
+**Ramo de flores en cada fecha especial 💐.** Ese día, al entrar, a ella le
+sale una animación a pantalla completa: un brillo con «Tengo algo para ti…»,
+sube un ramo envuelto en papel, se dibujan los tallos, brotan las hojas, cada
+flor se abre a su turno entre pétalos que caen, y aparece una notita con una
+invitación pícara de Juan («Te espero en… Ponte linda, lleva tu mejor actitud y
+déjate atender en todos los aspectos… 😏»), el lugar y la hora, por qué esas
+flores y la firma. Las flores van por su significado: 🎂 gerberas (alegría) en
+su cumpleaños, peonías (amor que dura) en el aniversario, rosas rojas (amor
+apasionado) en San Valentín, girasoles (lealtad y admiración) en Amor y
+Amistad, dalias (misterio y compromiso) en Halloween, flores de Nochebuena en
+Navidad y tulipanes (nuevos comienzos) en Año Nuevo. Las flores están dibujadas
+en SVG, sin imágenes. Se abre sola una vez por día y por navegador, y todo el
+día queda el botón **💐 Tu ramo** arriba a la derecha para volver a abrirlo.
+Cada apertura (sola o con el botón, y cuánto tiempo lo miró) queda en
+**Auditoría → Actividad → 💐 Ramos de flores**. En **Super → Apariencia →
+Fechas especiales → 💐 Ramo de flores** se enciende, se elige para quién es (si
+no, para quien no edita la Apariencia), la firma, y en cada fecha el lugar, la
+hora y un mensaje propio (con `{lugar}`, `{hora}` y `{nombre}`); **Ver el
+ramo** lo muestra ya mismo. El lugar y el mensaje van en la tabla
+`bouquet_notes` (migración 031), que no se lee sin iniciar sesión. Es sorpresa:
+no sale en las novedades ([diagramas](docs/DIAGRAMAS.md#ramo-de-flores-de-cada-fecha)).
+
 **Ventana del cumpleaños.** Ese día, al abrir la página sale una vez una
 ventana con el saludo y el mensaje («Te amo demasiado 💖 ¡Feliz cumpleaños, mi
 reina! 👑», se cambia en Apariencia → *Mensaje de la ventana de cumpleaños*).
 Su botón *Abrir mi regalo 🎁* es también el toque que hace sonar la música.
+Si a ella le sale el ramo de gerberas, la ventana espera a que lo cierre.
 
 <p align="center">
   <img src="docs/capturas/fecha-musica.png" alt="Halloween con el aviso «Hoy suena música suave por Halloween» y los botones ¡Que suene! y Apagar música, y el botón de silencio abajo a la izquierda" width="640">

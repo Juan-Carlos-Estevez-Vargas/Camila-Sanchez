@@ -2,6 +2,7 @@
 import { admin } from "./admin";
 import { app } from "./app";
 import { auth } from "./auth";
+import { bouquet } from "./bouquet";
 import { chat } from "./chat";
 import { common } from "./common";
 import { dates } from "./dates";
@@ -22,4 +23,4 @@ import { tour } from "./tour";
 import { ui } from "./ui";
 import { whatsNew } from "./whatsNew";
 
-export default { admin, app, auth, chat, common, dates, dedications, donate, errors, forYou, goodbye, install, legal, lists, notes, site, special, superAdmin, theme, tour, ui, whatsNew };
+export default { admin, app, auth, bouquet, chat, common, dates, dedications, donate, errors, forYou, goodbye, install, legal, lists, notes, site, special, superAdmin, theme, tour, ui, whatsNew };

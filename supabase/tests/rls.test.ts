@@ -335,6 +335,19 @@ describe("auditoría", () => {
   });
 });
 
+describe("ramo de flores", () => {
+  it("las notitas del ramo no las lee un anónimo y sólo las escribe theme.manage", async () => {
+    await as(JUAN, `insert into bouquet_notes (id, place, time_text, message) values ('birthday', 'el mirador', '8:00 p. m.', 'Te espero')`);
+    expect(await as(null, "select count(*)::int as n from bouquet_notes")).toEqual([{ n: 0 }]);
+    expect(await as(CAMI, "select place from bouquet_notes")).toEqual([{ place: "el mirador" }]);
+    await expect(as(CAMI, "insert into bouquet_notes (id) values ('valentine')")).rejects.toThrow();
+    expect(await as(CAMI, "update bouquet_notes set place = 'otro' returning id")).toEqual([]);
+    await expect(as(JUAN, "insert into bouquet_notes (id) values ('pascua')")).rejects.toThrow();
+    const [audit] = await as<{ n: number }>(JUAN, "select count(*)::int as n from audit_log where table_name = 'bouquet_notes'");
+    expect(audit?.n).toBeGreaterThan(0);
+  });
+});
+
 describe("sitio público", () => {
   it("al hacerlo público un anónimo ve las secciones visibles", async () => {
     await as(JUAN, "update site_settings set is_public = true");

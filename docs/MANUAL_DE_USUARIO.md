@@ -558,7 +558,20 @@ En **🎨 Apariencia → Fechas especiales**:
 5. **Mensaje de la ventana de cumpleaños**: lo que dice la ventanita que sale
    ese día al abrir la página. Vacío: «Te amo demasiado 💖 ¡Feliz cumpleaños,
    mi reina! 👑».
-6. Pulsa **Guardar cambios**.
+6. **💐 Ramo de flores**: en cada fecha, al entrar, a ella le sale una
+   animación que le revela un ramo (gerberas en su cumpleaños, peonías en el
+   aniversario, rosas rojas en San Valentín, girasoles en Amor y Amistad,
+   dalias en Halloween, flores de Nochebuena en Navidad y tulipanes en Año
+   Nuevo) con una notita de invitación y por qué esas flores. Todo el día le
+   queda el botón **💐 Tu ramo** arriba a la derecha para volver a verlo.
+   Aquí lo enciendes, eliges **Para quién es** (si no eliges, le sale a quien
+   no puede editar la Apariencia, o sea, a ella y no a ti) y la **Firma**.
+   En cada fecha, **💐 Ramo** deja poner el **Lugar**, la **Hora** y, si
+   quieres, un **Mensaje propio** (con `{lugar}`, `{hora}` y `{nombre}`);
+   esa notita se guarda con **Guardar la notita**. **Ver el ramo 💐** te lo
+   muestra ya mismo, sin que cuente en la actividad. Es sorpresa: no sale en
+   las novedades.
+7. Pulsa **Guardar cambios**.
 
 El aniversario usa la fecha de **⚙️ Ajustes del sitio → Fecha en que empezó
 todo**. Si en **Fecha en que terminó** hay una fecha, el aniversario ya no se
@@ -600,7 +613,10 @@ igual. Si se deja vacía, todo vuelve a como estaba.
 3. La tabla lista cada **visita**: cuándo entró, quién, desde qué dispositivo
    (📱 celular, 📲 tablet o 💻 computador, con sistema y navegador), cuánto
    tiempo y cuántas páginas. **Ver** abre el detalle con cada página y su tiempo.
-4. Sólo se guarda por dónde pasa y cuánto tiempo, nunca el contenido de sus
+4. **💐 Ramos de flores** lista cada vez que abrió el ramo de una fecha
+   especial: cuándo, cuál, si se abrió solo al entrar o con el botón 💐 y
+   cuánto tiempo lo miró. En las barras sale como «Ramo de flores».
+5. Sólo se guarda por dónde pasa y cuánto tiempo, nunca el contenido de sus
    mensajes ni lo que escribe. A ella no le aparece ningún aviso: sólo tú, con
    el permiso de auditoría, ves esto.
 
