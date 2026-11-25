@@ -15,6 +15,7 @@ import { useAuth } from "@/state/AuthContext";
 import { Modal } from "@/ui/Modal";
 import { requestTour } from "@/features/tour/tourRequest";
 import { hasPageTour } from "@/features/tour/tourSteps";
+import { useOpenBouquet } from "@/features/bouquet/bouquetStore";
 import { closeWhatsNew, markReleaseSeen, readSeenRelease, useWhatsNewOpen } from "./whatsNewStore";
 import "./whatsNew.scss";
 
@@ -30,6 +31,8 @@ export function WhatsNew() {
   const t = useT().whatsNew;
   const texts = t.releases as Record<string, ReleaseText | undefined>;
   const manual = useWhatsNewOpen();
+  // El ramo de flores de una fecha especial va primero: las novedades esperan.
+  const bouquetOpen = useOpenBouquet() !== null;
   const [dismissed, setDismissed] = useState(false);
   const [showAll, setShowAll] = useState(false);
   const userId = user?.id;
@@ -58,7 +61,7 @@ export function WhatsNew() {
 
   // Las cartas («Para ti», «Hasta siempre») son a pantalla completa: las novedades esperan.
   const auto = !dismissed && pending.length > 0 && !LETTER_PATHS.includes(pathname);
-  if (!userId || (!auto && !manual)) return null;
+  if (!userId || bouquetOpen || (!auto && !manual)) return null;
   const history = manual || showAll;
   const list = history ? visible : pending;
 

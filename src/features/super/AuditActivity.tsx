@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import type { ActivitySession } from "@/domain/types";
 import { ALL_MONTHS, monthKeyOf, monthRange, recentMonths, type MonthKey } from "@/domain/audit";
 import { formatDuration, type ActivityFilters } from "@/domain/activity";
+import { BOUQUETS, parseBouquetPath } from "@/domain/bouquets";
 import { pageCount } from "@/domain/pagination";
 import { useBackend } from "@/state/BackendContext";
 import { EmptyState, PageLoader } from "@/ui/Feedback";
@@ -119,6 +120,8 @@ export function ActivityPanel() {
         </div>
       )}
 
+      <BouquetOpens filters={filters} nameOf={nameOf} />
+
       {loading && !result ? <PageLoader /> : sessions.length === 0 ? (
         <EmptyState icon="👣" title={isDefault ? t.empty : t.emptyFiltered}>
           {isDefault && <p className="muted">{t.emptyHint}</p>}
@@ -158,6 +161,49 @@ export function ActivityPanel() {
         <SessionDetail session={openSession} personName={nameOf(openSession.userId)} onClose={() => setOpenSession(null)} />
       )}
     </>
+  );
+}
+
+/**
+ * 💐 Cada vez que abrió el ramo de flores de una fecha especial: cuándo, cuál,
+ * si se abrió solo al entrar o con el botón, y cuánto tiempo lo miró. Sólo
+ * sale si alguna vez se abrió con estos filtros.
+ */
+function BouquetOpens({ filters, nameOf }: { filters: ActivityFilters; nameOf(id: string): string }) {
+  const backend = useBackend();
+  const i18n = useT();
+  const t = i18n.bouquet.activity;
+  const ta = i18n.superAdmin.audit;
+  const when = dateFormat({ dateStyle: "medium", timeStyle: "short" });
+  const { data: views = [] } = useAsync(() => backend.activity.bouquetViews({ ...filters, limit: 50 }), [backend, filters]);
+  const rows = views.flatMap((v) => {
+    const parsed = parseBouquetPath(v.path);
+    return parsed ? [{ ...v, ...parsed }] : [];
+  });
+  if (rows.length === 0) return null;
+  return (
+    <section className="card stack activity-bouquets" aria-labelledby="activity-bouquets">
+      <h3 id="activity-bouquets" style={{ margin: 0 }}>{t.title}</h3>
+      <p className="muted" style={{ margin: 0 }}>{t.hint}</p>
+      <div className="table-wrap">
+        <table className="table">
+          <thead>
+            <tr><th>{ta.when}</th><th>{ta.who}</th><th>{t.day}</th><th>{t.how}</th><th>{t.looked}</th></tr>
+          </thead>
+          <tbody>
+            {rows.map((r) => (
+              <tr key={r.id}>
+                <td className="muted" style={{ whiteSpace: "nowrap" }}>{when.format(new Date(r.startedAt))}</td>
+                <td>{nameOf(r.userId)}</td>
+                <td><span aria-hidden>{BOUQUETS[r.dayId].icon} </span>{i18n.special.names[r.dayId]} · {i18n.bouquet.flowers[r.dayId].name}</td>
+                <td>{r.trigger === "auto" ? t.auto : t.button}</td>
+                <td>{formatDuration(r.seconds)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
   );
 }
 

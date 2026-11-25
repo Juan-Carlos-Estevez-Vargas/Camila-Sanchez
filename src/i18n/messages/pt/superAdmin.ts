@@ -134,6 +134,7 @@ export const superAdmin: Messages["superAdmin"] = {
       photos: "Fotos",
       milestones: "Marcos",
       important_dates: "Datas",
+      bouquet_notes: "Buquês de flores",
       interruptions: "Surpresas",
       invitations: "Convites",
       accounts: "Contas",
@@ -186,7 +187,7 @@ export const superAdmin: Messages["superAdmin"] = {
     sections: {
       inicio: "Início", "para-ti": "Para você", chat: "Chat", mensajes: "Mensagens", listas: "Listas",
       dedicatorias: "Dedicatórias", cuenta: "Minha conta", panel: "Painel de conteúdo", super: "Super admin",
-      legal: "Legal", instalar: "Instalar", otra: "Outra",
+      legal: "Legal", instalar: "Instalar", ramo: "Buquê de flores", otra: "Outra",
     },
     sessionTitle: (name) => `Visita de ${name}`,
     sessionInfo: (pages, duration) => `${pages} página(s) · ${duration} no total`,

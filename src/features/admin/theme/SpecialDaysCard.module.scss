@@ -89,3 +89,29 @@
     font-weight: 600;
   }
 }
+
+// 💐 Ramo de flores (BouquetSettings.tsx).
+.bouquet {
+  display: grid;
+  gap: space(2);
+  padding: space(3);
+  border: 1px dashed currentColor;
+  border-radius: var(--radius-sm);
+}
+
+.bouquetTitle {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.bouquetMeaning {
+  margin: space(2) 0;
+  font-size: 0.9rem;
+}
+
+.bouquetActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: space(2);
+  margin-top: space(2);
+}

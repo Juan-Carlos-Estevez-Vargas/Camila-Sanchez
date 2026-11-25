@@ -4,6 +4,8 @@ import {
   ACTIVITY_HEARTBEAT_MS, SESSION_GAP_MS, normalizePath, parseDevice, sectionOf,
 } from "@/domain/activity";
 import type { ActivityDevice } from "@/domain/types";
+import { bouquetPath } from "@/domain/bouquets";
+import { useOpenBouquet } from "@/features/bouquet/bouquetStore";
 import { isStandalone } from "@/services/pwa/platform";
 import { useAuth } from "./AuthContext";
 import { useBackend } from "./BackendContext";
@@ -24,7 +26,12 @@ const SESSION_SEEN_KEY = "love-activity-seen";
 export function ActivityHeartbeat() {
   const backend = useBackend();
   const { user } = useAuth();
-  const { pathname } = useLocation();
+  const { pathname: route } = useLocation();
+  // Con el ramo de flores abierto, la «página» es el ramo (/ramo/<fecha>/<cómo>):
+  // así cada apertura queda en Actividad con su hora y cuánto tiempo lo miró.
+  // Las vistas previas desde Apariencia no cuentan.
+  const bouquet = useOpenBouquet();
+  const pathname = bouquet && !bouquet.preview ? bouquetPath(bouquet.dayId, bouquet.trigger) : route;
 
   // Lo que cambia en cada render se lee por ref dentro del temporizador.
   const pathRef = useRef(pathname);

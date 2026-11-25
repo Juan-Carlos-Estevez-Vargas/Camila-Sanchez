@@ -9,6 +9,9 @@ import { parseSongLines, SERENATA_SUGGESTIONS, youtubeSearchUrl } from "@/domain
 import { Field, Switch } from "@/ui/Field";
 import { dateFormat } from "@/i18n/store";
 import { useT } from "@/i18n";
+import { useBackend } from "@/state/BackendContext";
+import { useAsync } from "@/ui/useAsync";
+import { BouquetNoteEditor, BouquetSettings } from "./BouquetSettings";
 import styles from "./SpecialDaysCard.module.scss";
 
 interface Props {
@@ -89,7 +92,10 @@ const dayMonth = (iso: string) => dateFormat({ day: "numeric", month: "long" }).
  */
 export function SpecialDaysCard({ value, relationshipStart, ended = false, profiles, onChange }: Props) {
   const t = useT().special;
+  const backend = useBackend();
   const today = specialDayOn(value, relationshipStart);
+  // Las notitas del ramo se guardan aparte (no son públicas como la Apariencia).
+  const { data: notes, setData: setNotes } = useAsync(() => backend.content.listBouquetNotes(), [backend]);
   const withBirthday = profiles.filter((p) => p.birthday);
   const set = (patch: Partial<SpecialDaysConfig>) => onChange({ ...value, ...patch });
   const toggle = (id: SpecialDayId, on: boolean) =>
@@ -138,6 +144,8 @@ export function SpecialDaysCard({ value, relationshipStart, ended = false, profi
         )}
       </Field>
 
+      <BouquetSettings value={value.bouquet} profiles={profiles} onChange={(bouquet) => set({ bouquet })} />
+
       <ul className={styles.list}>
         {SPECIAL_DAY_IDS.map((id) => {
           const date = when(id);
@@ -173,6 +181,10 @@ export function SpecialDaysCard({ value, relationshipStart, ended = false, profi
                     else delete songs[id];
                     set({ songs });
                   }} />
+              )}
+              {value.bouquet.enabled && notes && (
+                <BouquetNoteEditor dayId={id} saved={notes.find((n) => n.dayId === id) ?? null}
+                  onSaved={(note) => setNotes((all = []) => [...all.filter((n) => n.dayId !== note.dayId), note])} />
               )}
             </li>
           );

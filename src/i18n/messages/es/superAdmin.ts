@@ -133,6 +133,7 @@ export const superAdmin = {
       photos: "Fotos",
       milestones: "Hitos",
       important_dates: "Fechas",
+      bouquet_notes: "Ramos de flores",
       interruptions: "Sorpresas",
       invitations: "Invitaciones",
       accounts: "Cuentas",
@@ -185,7 +186,7 @@ export const superAdmin = {
     sections: {
       inicio: "Inicio", "para-ti": "Para ti", chat: "Chat", mensajes: "Mensajes", listas: "Listas",
       dedicatorias: "Dedicatorias", cuenta: "Mi cuenta", panel: "Panel de contenido", super: "Super admin",
-      legal: "Legal", instalar: "Instalar", otra: "Otra",
+      legal: "Legal", instalar: "Instalar", ramo: "Ramo de flores", otra: "Otra",
     } as Record<string, string>,
     sessionTitle: (name: string) => `Visita de ${name}`,
     sessionInfo: (pages: number, duration: string) => `${pages} página(s) · ${duration} en total`,

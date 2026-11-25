@@ -25,6 +25,7 @@ import { AppStatus } from "@/features/install/AppStatus";
 import { InstallBanner } from "@/features/install/InstallBanner";
 import { PlayerProvider } from "@/features/player/PlayerContext";
 import { WhatsNew } from "@/features/whatsNew/WhatsNew";
+import { BouquetHost } from "@/features/bouquet/BouquetHost";
 import { INSTALL_PATH } from "@/core/seo";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { RouteAnnouncer, SkipLink } from "./RouteAnnouncer";
@@ -105,6 +106,8 @@ function ThemedShell() {
       </ErrorBoundary>
       <Footer />
       <ConsentGate>
+        {/* El ramo de flores de la fecha especial (sólo para ella, después de aceptar los términos). */}
+        <BouquetHost />
         <WhatsNew />
       </ConsentGate>
       <CookieBanner />

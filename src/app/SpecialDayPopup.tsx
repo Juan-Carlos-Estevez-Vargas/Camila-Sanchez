@@ -2,11 +2,13 @@
  * Ventana del cumpleaños: al abrir la página ese día sale una vez (por día y
  * por navegador) con el saludo y el mensaje de Apariencia («Te amo
  * demasiado… ¡Feliz cumpleaños, mi reina!»). Su botón es también el primer
- * toque que deja sonar la música (ver SpecialDayMusic).
+ * toque que deja sonar la música (ver SpecialDayMusic). Si a ella le sale el
+ * ramo de gerberas (features/bouquet), esta ventana espera a que lo cierre.
  */
 import { useState } from "react";
 import { useLocation } from "react-router-dom";
 import { musicDayKey } from "@/domain/specialMusic";
+import { useOpenBouquet } from "@/features/bouquet/bouquetStore";
 import { useT } from "@/i18n";
 import { useSiteContent } from "@/state/SiteContentStore";
 import { useSpecialDay } from "@/state/SpecialDayContext";
@@ -49,8 +51,11 @@ export function SpecialDayPopup() {
   const { day, preview } = useSpecialDay();
   const { content } = useSiteContent();
   const { pathname } = useLocation();
+  const bouquetOpen = useOpenBouquet() !== null;
   const config = content?.settings.effects.specialDays;
   if (day?.id !== "birthday" || !config) return null;
+  // Primero el ramo de gerberas; la ventana del cumpleaños sale al cerrarlo.
+  if (bouquetOpen) return null;
   if (pathname === "/chat" || pathname.startsWith("/chat/")) return null;
   const dayKey = musicDayKey(day.id, new Date(), preview);
   return <BirthdayPopup key={dayKey} dayKey={dayKey} name={config.birthdayName.trim()} message={config.birthdayMessage.trim()} />;

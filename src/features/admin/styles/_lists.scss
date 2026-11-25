@@ -152,6 +152,11 @@
 
 // Resumen de actividad (Auditoría → Actividad): tarjetas de totales y barras
 // de tiempo por sección. Sin dependencias externas: barras con <span>.
+// 💐 Las aperturas del ramo de flores (Actividad).
+.activity-bouquets {
+  margin-bottom: space(4);
+}
+
 .activity-summary {
   display: grid;
   gap: space(4);
