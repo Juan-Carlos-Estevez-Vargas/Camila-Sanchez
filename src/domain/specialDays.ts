@@ -307,6 +307,44 @@ export function specialTheme(site: ThemeTokens, day: ActiveSpecialDay): ThemeTok
   return { ...site, ...day.style.colors, darkMode: day.style.darkMode ?? site.darkMode };
 }
 
+/** El ramo que toca ahora: el de hoy o, desde la hora de la víspera, el de mañana. */
+export interface BouquetWindow {
+  day: ActiveSpecialDay;
+  /** true si es la noche anterior (la nota dice «mañana»). */
+  eve: boolean;
+  /** El día de la fecha especial (para «ya se abrió solo»). */
+  date: Date;
+}
+
+/**
+ * ¿Qué ramo se puede ver ahora? El de la fecha de hoy hasta las 11:59 p. m.;
+ * y desde `bouquet.eveHour` (9 p. m.) el de la fecha de mañana. Si hoy ya es
+ * una fecha especial, gana la de hoy hasta la medianoche.
+ */
+export function bouquetWindowAt(
+  config: SpecialDaysConfig,
+  relationshipStart: IsoDate | null,
+  now: Date = new Date(),
+): BouquetWindow | null {
+  if (!config.bouquet.enabled) return null;
+  const today = specialDayOn(config, relationshipStart, now);
+  if (today) return { day: today, eve: false, date: now };
+  const { eveHour } = config.bouquet;
+  if (eveHour === null || now.getHours() < eveHour) return null;
+  const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 12);
+  const day = specialDayOn(config, relationshipStart, tomorrow);
+  return day ? { day, eve: true, date: tomorrow } : null;
+}
+
+/** Milisegundos hasta que el ramo puede cambiar: la hora de la víspera o la medianoche. */
+export function msUntilBouquetChange(config: SpecialDaysConfig, now: Date = new Date()): number {
+  const { eveHour } = config.bouquet;
+  const midnight = msUntilMidnight(now);
+  if (eveHour === null || now.getHours() >= eveHour) return midnight;
+  const eve = new Date(now.getFullYear(), now.getMonth(), now.getDate(), eveHour);
+  return Math.min(midnight, eve.getTime() - now.getTime());
+}
+
 /** Milisegundos hasta la próxima medianoche local (para cambiar de tema justo a tiempo). */
 export function msUntilMidnight(now: Date = new Date()): number {
   const next = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);

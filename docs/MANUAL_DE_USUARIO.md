@@ -558,14 +558,17 @@ En **🎨 Apariencia → Fechas especiales**:
 5. **Mensaje de la ventana de cumpleaños**: lo que dice la ventanita que sale
    ese día al abrir la página. Vacío: «Te amo demasiado 💖 ¡Feliz cumpleaños,
    mi reina! 👑».
-6. **💐 Ramo de flores**: en cada fecha, al entrar, a ella le sale una
+6. **💐 Ramo de flores**: en cada fecha (desde la noche anterior), al entrar, a ella le sale una
    animación que le revela un ramo (gerberas en su cumpleaños, peonías en el
    aniversario, rosas rojas en San Valentín, girasoles en Amor y Amistad,
    dalias en Halloween, flores de Nochebuena en Navidad y tulipanes en Año
-   Nuevo) con una notita de invitación y por qué esas flores. Todo el día le
-   queda el botón **💐 Tu ramo** arriba a la derecha para volver a verlo.
+   Nuevo) con una notita de invitación y por qué esas flores. Hasta el final
+   del día le queda el botón **💐 Tu ramo** arriba a la derecha para volver a verlo.
    Aquí lo enciendes, eliges **Para quién es** (si no eliges, le sale a quien
-   no puede editar la Apariencia, o sea, a ella y no a ti) y la **Firma**.
+   no puede editar la Apariencia, o sea, a ella y no a ti), la **Firma** y
+   **Desde cuándo lo puede ver**: la noche anterior a las 9 p. m. (o de 6 a
+   11 p. m.), o sólo el día desde la medianoche. La víspera la notita dice
+   «mañana cumples años» y la hora sale como «Mañana, 9:00 a. m.».
    En cada fecha, **💐 Ramo** deja poner el **Lugar**, la **Hora** y, si
    quieres, un **Mensaje propio** (con `{lugar}`, `{hora}` y `{nombre}`);
    esa notita se guarda con **Guardar la notita**. **Ver el ramo 💐** te lo

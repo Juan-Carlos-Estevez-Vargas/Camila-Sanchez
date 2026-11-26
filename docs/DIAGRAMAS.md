@@ -1062,7 +1062,7 @@ A quién le sale y cuándo (`BouquetHost.tsx`):
 
 ```mermaid
 flowchart TD
-  D["Fecha especial de hoy"] --> E{"¿bouquet.enabled<br/>y hay sesión?"}
+  D["bouquetWindowAt(): la fecha de hoy hasta las 11:59 p. m.<br/>o, desde bouquet.eveHour (9 p. m.), la de mañana<br/>(eve = true: la nota dice «mañana»)"] --> E{"¿bouquet.enabled<br/>y hay sesión?"}
   E -- "no" --> N["Sin ramo"]
   E -- "sí" --> R{"¿Para quién es?"}
   R -- "recipientId elegido" --> RS{"¿Es esa persona?"}
@@ -1072,13 +1072,14 @@ flowchart TD
   RS -- "sí" --> OK
   RT -- "no" --> OK["Le toca el ramo"]
   OK --> L["Pide su notita<br/>listBouquetNotes() → bouquet_notes"]
-  OK --> S{"¿Ya se abrió solo hoy<br/>en este navegador?<br/>localStorage bouquet-opened"}
+  OK --> S{"¿Ya se abrió solo para esta fecha<br/>en este navegador? (la víspera cuenta)<br/>localStorage bouquet-opened"}
   S -- "no" --> A["Se abre solo<br/>trigger = auto"]
-  S -- "sí" --> B["Botón 💐 «Tu ramo» arriba a la derecha<br/>todo el día (no en el chat ni en las cartas)"]
+  S -- "sí" --> B["Botón 💐 «Tu ramo» arriba a la derecha<br/>hasta el final del día (no en el chat ni en las cartas)"]
   A -- "Ahí estaré 💋 / × / Esc" --> B
   B -- "lo toca" --> A2["Se abre de nuevo<br/>trigger = boton"]
   A & A2 --> W["Mientras está abierto esperan<br/>la ventana del cumpleaños y las novedades"]
-  M["Medianoche"] --> C["Se cierra y el botón desaparece"]
+  M["Medianoche del día de la fecha"] --> C["Se cierra y el botón desaparece"]
+  T["Temporizador: msUntilBouquetChange()<br/>a la hora de la víspera y a la medianoche"] --> D
 ```
 
 La animación (`BouquetReveal.tsx`, una sola línea de tiempo en CSS):

@@ -8,6 +8,8 @@ interface Invite {
   /** «en el restaurante de siempre a las 8:00 p. m.» (o la frase de «pronto te digo»). */
   where: string;
   name: string;
+  /** La noche anterior: «mañana cumples años». */
+  eve: boolean;
 }
 
 // Sin el punto final de la hora («8 p. m.»): la frase ya sigue con su propio punto.
@@ -25,6 +27,8 @@ export const bouquet = {
   placeLabel: "Dónde",
   timeLabel: "Cuándo",
   today: "Hoy ✨",
+  tomorrow: "Mañana ✨",
+  tomorrowAt: (time: string) => `Mañana, ${time}`,
   soon: "Pronto te digo 🤫",
   signedBy: (name: string) => `Con todo mi amor, ${name}`,
   defaultSignature: "Con todo mi amor, el que te espera 💋",
@@ -62,8 +66,8 @@ export const bouquet = {
     },
   },
   invites: {
-    birthday: ({ where, name }: Invite) =>
-      `${name ? `${name}, hoy` : "Hoy"} cumples años y yo cumplo el antojo de celebrarte como mereces. Te espero ${where}. Ponte linda (aunque ya lo eres), lleva tu mejor actitud y déjate atender en todos los aspectos… sí, en todos 😏. Lo demás corre por mi cuenta.`,
+    birthday: ({ where, name, eve }: Invite) =>
+      `${name ? `${name}, ${eve ? "mañana" : "hoy"}` : eve ? "Mañana" : "Hoy"} cumples años y yo cumplo el antojo de celebrarte como mereces. Te espero ${where}. Ponte linda (aunque ya lo eres), lleva tu mejor actitud y déjate atender en todos los aspectos… sí, en todos 😏. Lo demás corre por mi cuenta.`,
     anniversary: ({ where }: Invite) =>
       `Un año más a tu lado y todavía me pones nervioso. Te espero ${where}. Arréglate bonita, trae esa sonrisa que me desarma y prepárate para que te consienta de pies a cabeza… sin prisa 😏.`,
     valentine: ({ where }: Invite) =>
@@ -79,12 +83,16 @@ export const bouquet = {
   },
   admin: {
     title: "💐 Ramo de flores",
-    hint: "Ese día, al entrar, le sale una animación que le revela un ramo con su notita de invitación, y todo el día le queda un botón 💐 para volver a abrirlo. Cada vez que lo abre queda en Auditoría → Actividad. No sale en las novedades: es sorpresa.",
+    hint: "Desde la noche anterior (o ese día), al entrar, le sale una animación que le revela un ramo con su notita de invitación, y hasta el final del día le queda un botón 💐 para volver a abrirlo. Cada vez que lo abre queda en Auditoría → Actividad. No sale en las novedades: es sorpresa.",
     enabled: "Regalarle un ramo en cada fecha especial",
     recipient: "Para quién es",
     recipientAuto: "Quien entra y no edita la Apariencia",
     signature: "Firma de la notita",
     signaturePlaceholder: "Tu Juan",
+    eve: "Desde cuándo lo puede ver",
+    eveMidnight: "Sólo el día, desde la medianoche",
+    eveAt: (hour: number) => `Desde la noche anterior a las ${hour - 12} p. m.`,
+    eveHint: "Hasta las 11:59 p. m. del día. La víspera la nota dice «mañana».",
     summary: (flowers: string) => `💐 Ramo: ${flowers}`,
     place: "Lugar",
     placePlaceholder: "el restaurante de siempre",
