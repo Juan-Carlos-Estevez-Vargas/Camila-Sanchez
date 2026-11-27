@@ -3,7 +3,8 @@
  *
  * Ese día, al entrar, la destinataria ve una animación que le revela un ramo
  * elegido por lo que significan sus flores (en el cumpleaños, gerberas) junto
- * a una notita: una invitación de Juan («te espero en tal lugar…»). Todo el
+ * a una notita: una invitación de Juan («te espero en tal lugar…»). Desde la
+ * víspera (9 p. m.) hasta el final del
  * día queda un botón 💐 para volver a abrirlo, y cada apertura queda en
  * Auditoría → Actividad como la página «/ramo/<fecha>/<cómo>».
  *
@@ -100,9 +101,21 @@ export interface BouquetConfig {
   recipientId: Uuid | null;
   /** Cómo firma la nota («Tu Juan»). Vacío: la firma de la app. */
   signature: string;
+  /**
+   * Desde qué hora de la noche anterior ya se abre (21 = la víspera a las
+   * 9 p. m.). null: sólo el día mismo, desde la medianoche. Siempre termina
+   * a las 11:59 p. m. del día.
+   */
+  eveHour: number | null;
 }
 
-export const DEFAULT_BOUQUET: BouquetConfig = { enabled: true, recipientId: null, signature: "" };
+/** Horas de la víspera que se pueden elegir (6 p. m. a 11 p. m.). */
+export const BOUQUET_EVE_HOURS = [18, 19, 20, 21, 22, 23] as const;
+export const DEFAULT_BOUQUET_EVE_HOUR = 21;
+
+export const DEFAULT_BOUQUET: BouquetConfig = { enabled: true, recipientId: null, signature: "", eveHour: DEFAULT_BOUQUET_EVE_HOUR };
+
+const isEveHour = (v: unknown): v is number => (BOUQUET_EVE_HOURS as readonly unknown[]).includes(v);
 
 /** La notita de una fecha (tabla `bouquet_notes`). */
 export interface BouquetNote {
@@ -123,6 +136,8 @@ export function normalizeBouquet(raw: unknown): BouquetConfig {
     enabled: o.enabled !== false,
     recipientId: typeof o.recipientId === "string" && UUID_RE.test(o.recipientId) ? o.recipientId : null,
     signature: typeof o.signature === "string" ? o.signature.slice(0, MAX_BOUQUET_SIGNATURE) : "",
+    // Si nunca se eligió, desde la víspera a las 9 p. m.
+    eveHour: o.eveHour === null ? null : isEveHour(o.eveHour) ? o.eveHour : DEFAULT_BOUQUET_EVE_HOUR,
   };
 }
 
@@ -168,7 +183,11 @@ export function parseBouquetPath(path: string): { dayId: SpecialDayId; trigger: 
   return { dayId: m[1], trigger: m[2] as BouquetTrigger };
 }
 
-/** Clave del «ya se abrió solo hoy» (una vez por día y por navegador). */
+/**
+ * Clave del «ya se abrió solo» (una vez por fecha y por navegador). `now` es
+ * el día de la fecha especial: si se abrió la víspera, al otro día no vuelve
+ * a salir solo (queda el botón).
+ */
 export function bouquetDayKey(dayId: SpecialDayId, now: Date = new Date()): string {
   const d = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
   return `${dayId}:${d}`;

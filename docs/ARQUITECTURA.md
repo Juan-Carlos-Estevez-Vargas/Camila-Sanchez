@@ -203,8 +203,9 @@ cumpleaños (día y mes) y los días que faltan.
   quién lo recibe (`isBouquetRecipient`), la ruta que deja en la actividad
   (`bouquetPath` → `/ramo/<fecha>/<auto|boton>`, sección `ramo`) y
   `fillBouquetMessage` para el mensaje propio. `features/bouquet/` lo muestra:
-  `BouquetHost` (dentro de `ConsentGate`) lo abre solo una vez por día y deja
-  el botón 💐; `BouquetReveal` (carga diferida) es la animación a pantalla
+  `BouquetHost` (dentro de `ConsentGate`) usa `bouquetWindowAt` (en
+  `domain/specialDays.ts`: la fecha de hoy o, desde `bouquet.eveHour`, la de
+  mañana) para abrirlo solo una vez por fecha y dejar el botón 💐; `BouquetReveal` (carga diferida) es la animación a pantalla
   completa y la notita; `FlowerArt` dibuja en SVG gerberas, peonías, rosas,
   girasoles, dalias, flores de Nochebuena y tulipanes. `bouquetStore` avisa a
   toda la app que está abierto: `ActivityHeartbeat` registra esa «página» y

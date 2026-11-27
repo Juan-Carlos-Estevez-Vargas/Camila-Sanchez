@@ -28,6 +28,8 @@ const SPARKLES = 14;
 
 interface Props {
   dayId: SpecialDayId;
+  /** La noche anterior: la nota habla de «mañana». */
+  eve: boolean;
   note: BouquetNote | null;
   /** Nombre de ella para la nota («Para Camila»). */
   name: string;
@@ -41,7 +43,7 @@ const seeded = (k: number, salt: number) => {
   return x - Math.floor(x);
 };
 
-export default function BouquetReveal({ dayId, note, name, signature, onClose }: Props) {
+export default function BouquetReveal({ dayId, eve, note, name, signature, onClose }: Props) {
   const t = useT().bouquet;
   const style = BOUQUETS[dayId];
   const flowers = t.flowers[dayId];
@@ -77,7 +79,7 @@ export default function BouquetReveal({ dayId, note, name, signature, onClose }:
   const custom = note?.message.trim() ?? "";
   const message = custom
     ? fillBouquetMessage(custom, { place, time, name })
-    : t.invites[dayId]({ where: t.where({ place, time }), name });
+    : t.invites[dayId]({ where: t.where({ place, time }), name, eve });
   const sign = signature.trim() ? t.signedBy(signature.trim()) : t.defaultSignature;
 
   return createPortal(
@@ -125,7 +127,7 @@ export default function BouquetReveal({ dayId, note, name, signature, onClose }:
           <p className={styles.message}>{message}</p>
           <dl className={styles.ticket}>
             <div><dt>📍 {t.placeLabel}</dt><dd>{place || t.soon}</dd></div>
-            <div><dt>🕗 {t.timeLabel}</dt><dd>{time || t.today}</dd></div>
+            <div><dt>🕗 {t.timeLabel}</dt><dd>{eve ? (time ? t.tomorrowAt(time) : t.tomorrow) : (time || t.today)}</dd></div>
           </dl>
           <section className={styles.meaning}>
             <h3>{t.meaningTitle(flowers.name)}</h3>

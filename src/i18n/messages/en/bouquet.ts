@@ -11,6 +11,8 @@ export const bouquet: Messages["bouquet"] = {
   placeLabel: "Where",
   timeLabel: "When",
   today: "Today ✨",
+  tomorrow: "Tomorrow ✨",
+  tomorrowAt: (time) => `Tomorrow, ${time}`,
   soon: "I'll tell you soon 🤫",
   signedBy: (name) => `With all my love, ${name}`,
   defaultSignature: "With all my love, the one waiting for you 💋",
@@ -49,8 +51,8 @@ export const bouquet: Messages["bouquet"] = {
     },
   },
   invites: {
-    birthday: ({ where, name }) =>
-      `${name ? `${name}, today` : "Today"} is your birthday and I get to celebrate you the way you deserve. I'll be waiting for you ${where}. Look pretty (you already do), bring your best attitude and let me take care of you in every way… yes, every way 😏. Everything else is on me.`,
+    birthday: ({ where, name, eve }) =>
+      `${name ? `${name}, ${eve ? "tomorrow" : "today"}` : eve ? "Tomorrow" : "Today"} is your birthday and I get to celebrate you the way you deserve. I'll be waiting for you ${where}. Look pretty (you already do), bring your best attitude and let me take care of you in every way… yes, every way 😏. Everything else is on me.`,
     anniversary: ({ where }) =>
       `One more year by your side and you still make me nervous. I'll be waiting for you ${where}. Dress up, bring that smile that disarms me and get ready to be spoiled from head to toe… slowly 😏.`,
     valentine: ({ where }) =>
@@ -66,12 +68,16 @@ export const bouquet: Messages["bouquet"] = {
   },
   admin: {
     title: "💐 Flower bouquet",
-    hint: "That day, when she opens the app, an animation reveals a bouquet with its invitation note, and all day there's a 💐 button to open it again. Every time she opens it shows up in Audit → Activity. It isn't listed in What's new: it's a surprise.",
+    hint: "From the night before (or that day), when she opens the app, an animation reveals a bouquet with its invitation note, and until the end of the day there's a 💐 button to open it again. Every time she opens it shows up in Audit → Activity. It isn't listed in What's new: it's a surprise.",
     enabled: "Give her a bouquet on every special date",
     recipient: "Who it's for",
     recipientAuto: "Whoever signs in and can't edit Appearance",
     signature: "Note signature",
     signaturePlaceholder: "Your Juan",
+    eve: "When she can see it",
+    eveMidnight: "Only on the day, from midnight",
+    eveAt: (hour) => `From the night before at ${hour - 12} p.m.`,
+    eveHint: "Until 11:59 p.m. on the day. The night before, the note says “tomorrow”.",
     summary: (flowers) => `💐 Bouquet: ${flowers}`,
     place: "Place",
     placePlaceholder: "our usual restaurant",

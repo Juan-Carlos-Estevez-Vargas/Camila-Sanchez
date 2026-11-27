@@ -9,6 +9,7 @@
  *   viajan entre pestañas con BroadcastChannel, así se puede probar el chat
  *   abriendo una pestaña como Juan y otra como Camila.
  */
+import { normalizeEffects } from "@/domain/defaults";
 import { del as idbDel, get as idbGet, set as idbSet } from "idb-keyval";
 import { AccessPolicy, DEFAULT_ROLE_PERMISSIONS, PERMISSIONS, type Permission } from "@/domain/permissions";
 import { MAX_TASK_IMAGES, nextDueOf, progressOf, taskStatusOf } from "@/domain/lists";
@@ -807,7 +808,11 @@ export const demoBackend: Backend = {
   },
 
   content: {
-    getSettings: async () => delay(clone(database().state.settings)),
+    // Como en Supabase (mappers.ts): un estado guardado por una versión vieja trae efectos sin campos nuevos.
+    getSettings: async () => {
+      const settings = clone(database().state.settings);
+      return delay({ ...settings, effects: normalizeEffects(settings.effects) });
+    },
     async updateSettings(patch) {
       const user = requireUser();
       const policy = policyOf(user);

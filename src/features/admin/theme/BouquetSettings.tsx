@@ -10,7 +10,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
-  BOUQUETS, MAX_BOUQUET_MESSAGE, MAX_BOUQUET_PLACE, MAX_BOUQUET_SIGNATURE, MAX_BOUQUET_TIME,
+  BOUQUET_EVE_HOURS, BOUQUETS, MAX_BOUQUET_MESSAGE, MAX_BOUQUET_PLACE, MAX_BOUQUET_SIGNATURE, MAX_BOUQUET_TIME,
   emptyNote, type BouquetConfig, type BouquetNote,
 } from "@/domain/bouquets";
 import type { SpecialDayId } from "@/domain/specialDays";
@@ -44,6 +44,15 @@ export function BouquetSettings({ value, profiles, onChange }: { value: BouquetC
             {(id) => (
               <input id={id} className="input" maxLength={MAX_BOUQUET_SIGNATURE} placeholder={t.signaturePlaceholder}
                 value={value.signature} onChange={(e) => set({ signature: e.target.value })} />
+            )}
+          </Field>
+          <Field label={t.eve} hint={t.eveHint}>
+            {(id) => (
+              <select id={id} className="select" value={value.eveHour ?? ""}
+                onChange={(e) => set({ eveHour: e.target.value ? Number(e.target.value) : null })}>
+                <option value="">{t.eveMidnight}</option>
+                {BOUQUET_EVE_HOURS.map((h) => <option key={h} value={h}>{t.eveAt(h)}</option>)}
+              </select>
             )}
           </Field>
         </div>
@@ -93,7 +102,7 @@ export function BouquetNoteEditor({ dayId, saved, onSaved }: { dayId: SpecialDay
       </div>
       <Field label={t.message} hint={t.messageHint}>
         {(id) => <textarea id={id} className="textarea" rows={3} maxLength={MAX_BOUQUET_MESSAGE}
-          placeholder={i18n.bouquet.invites[dayId]({ where: i18n.bouquet.where({ place: note.place.trim(), time: note.time.trim() }), name: "" })}
+          placeholder={i18n.bouquet.invites[dayId]({ where: i18n.bouquet.where({ place: note.place.trim(), time: note.time.trim() }), name: "", eve: false })}
           value={note.message} onChange={(e) => set({ message: e.target.value })} />}
       </Field>
       <p className={styles.bouquetMeaning}><span aria-hidden>{BOUQUETS[dayId].icon}</span> <b>{t.meaning}:</b> {flowers.meaning}</p>

@@ -1,7 +1,9 @@
 /**
- * El ramo de flores de la fecha especial de hoy: decide a quién le sale, lo
- * abre solo la primera vez que ella entra ese día (en ese navegador) y deja
- * todo el día el botón 💐 para volver a abrirlo.
+ * El ramo de flores de la fecha especial: decide a quién le sale, lo abre
+ * solo la primera vez que ella entra (una vez por fecha, en ese navegador) y
+ * deja el botón 💐 para volver a abrirlo. Se puede ver desde la víspera a la
+ * hora elegida en Apariencia (9 p. m.) hasta las 11:59 p. m. del día; el tema
+ * de la página, en cambio, sólo cambia el día mismo.
  *
  * Mientras está abierto, la actividad lo cuenta como la página
  * «/ramo/<fecha>/<auto|boton>» (ver ActivityHeartbeat), así en Auditoría →
@@ -10,10 +12,13 @@
  * Vista previa (Apariencia → «Ver el ramo»): `/?tema=birthday&ramo=1` lo
  * abre para quien puede editar la Apariencia, sin contar en la actividad.
  */
-import { lazy, Suspense, useEffect, useLayoutEffect } from "react";
+import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { BOUQUETS, bouquetDayKey, isBouquetRecipient } from "@/domain/bouquets";
 import { LETTER_PATHS } from "@/domain/forYou";
+import { anniversaryStart } from "@/domain/relationship";
+import { bouquetWindowAt, msUntilBouquetChange, type BouquetWindow } from "@/domain/specialDays";
+import type { SiteSettings } from "@/domain/types";
 import { PERMISSIONS } from "@/domain/permissions";
 import { useT } from "@/i18n";
 import { useAuth } from "@/state/AuthContext";
@@ -45,6 +50,21 @@ function markSeen(key: string) {
   }
 }
 
+/** El ramo que toca ahora; vuelve a mirar a la hora de la víspera y a la medianoche. */
+function useBouquetWindow(settings: SiteSettings | undefined): BouquetWindow | null {
+  const [now, setNow] = useState(() => new Date());
+  const config = settings?.effects.specialDays;
+  useEffect(() => {
+    if (!config) return;
+    const timer = setTimeout(() => setNow(new Date()), msUntilBouquetChange(config, now) + 1000);
+    return () => clearTimeout(timer);
+  }, [config, now]);
+  return useMemo(
+    () => (settings && config ? bouquetWindowAt(config, anniversaryStart(settings), now) : null),
+    [settings, config, now],
+  );
+}
+
 const isChat = (path: string) => path === "/chat" || path.startsWith("/chat/");
 
 export function BouquetHost() {
@@ -58,11 +78,16 @@ export function BouquetHost() {
 
   const specialDays = content?.settings.effects.specialDays;
   const config = specialDays?.bouquet;
+  const live = useBouquetWindow(content?.settings);
+  // En la vista previa, la fecha que se está mirando; si no, la del reloj (con víspera).
+  const current = preview ? (day ? { day, eve: false, date: new Date() } : null) : live;
   const canManageTheme = policy.can(PERMISSIONS.themeManage);
-  const eligible = !!day && !!config && !!user && !twoStepPending && (preview
+  const eligible = !!current && !!config && !!user && !twoStepPending && (preview
     ? canManageTheme
     : isBouquetRecipient(config, { userId: user.id, canManageTheme }));
-  const dayId = eligible ? day.id : null;
+  const dayId = eligible ? current.day.id : null;
+  const eve = eligible && current.eve;
+  const seenKey = dayId && !preview && live ? bouquetDayKey(dayId, live.date) : null;
   const onLetter = LETTER_PATHS.includes(pathname);
 
   // La nota (lugar, hora, mensaje) sólo se pide si de verdad le toca el ramo.
@@ -79,13 +104,12 @@ export function BouquetHost() {
       if (new URLSearchParams(search).get("ramo") === "1") openBouquet({ dayId, trigger: "boton", preview: true });
       return;
     }
-    const key = bouquetDayKey(dayId);
-    if (seenToday(key)) return;
-    markSeen(key);
+    if (!seenKey || seenToday(seenKey)) return;
+    markSeen(seenKey);
     openBouquet({ dayId, trigger: "auto", preview: false });
-  }, [dayId, preview, onLetter, search]);
+  }, [dayId, seenKey, preview, onLetter, search]);
 
-  // A medianoche (o si deja de tocarle) se cierra solo.
+  // Al terminar el día (o si deja de tocarle) se cierra solo.
   useEffect(() => {
     if (open && open.dayId !== dayId) closeBouquet();
   }, [open, dayId]);
@@ -107,7 +131,7 @@ export function BouquetHost() {
       )}
       {open && (
         <Suspense fallback={null}>
-          <BouquetReveal dayId={dayId} note={note} name={name} signature={config.signature} onClose={closeBouquet} />
+          <BouquetReveal dayId={dayId} eve={eve} note={note} name={name} signature={config.signature} onClose={closeBouquet} />
         </Suspense>
       )}
     </>

@@ -11,6 +11,8 @@ export const bouquet: Messages["bouquet"] = {
   placeLabel: "Onde",
   timeLabel: "Quando",
   today: "Hoje ✨",
+  tomorrow: "Amanhã ✨",
+  tomorrowAt: (time) => `Amanhã, ${time}`,
   soon: "Logo eu te conto 🤫",
   signedBy: (name) => `Com todo o meu amor, ${name}`,
   defaultSignature: "Com todo o meu amor, quem te espera 💋",
@@ -49,8 +51,8 @@ export const bouquet: Messages["bouquet"] = {
     },
   },
   invites: {
-    birthday: ({ where, name }) =>
-      `${name ? `${name}, hoje` : "Hoje"} é seu aniversário e eu realizo a vontade de te celebrar como você merece. Te espero ${where}. Fique linda (você já é), leve sua melhor atitude e deixe-se cuidar em todos os sentidos… sim, em todos 😏. O resto é por minha conta.`,
+    birthday: ({ where, name, eve }) =>
+      `${name ? `${name}, ${eve ? "amanhã" : "hoje"}` : eve ? "Amanhã" : "Hoje"} é seu aniversário e eu realizo a vontade de te celebrar como você merece. Te espero ${where}. Fique linda (você já é), leve sua melhor atitude e deixe-se cuidar em todos os sentidos… sim, em todos 😏. O resto é por minha conta.`,
     anniversary: ({ where }) =>
       `Mais um ano ao seu lado e você ainda me deixa nervoso. Te espero ${where}. Arrume-se bonita, traga esse sorriso que me desarma e prepare-se para ser mimada da cabeça aos pés… sem pressa 😏.`,
     valentine: ({ where }) =>
@@ -66,12 +68,16 @@ export const bouquet: Messages["bouquet"] = {
   },
   admin: {
     title: "💐 Buquê de flores",
-    hint: "Nesse dia, ao entrar, uma animação revela um buquê com seu bilhete de convite, e o dia todo fica um botão 💐 para abri-lo de novo. Cada vez que ela abre fica em Auditoria → Atividade. Não aparece nas novidades: é surpresa.",
+    hint: "Desde a noite anterior (ou nesse dia), ao entrar, uma animação revela um buquê com seu bilhete de convite, e até o fim do dia fica um botão 💐 para abri-lo de novo. Cada vez que ela abre fica em Auditoria → Atividade. Não aparece nas novidades: é surpresa.",
     enabled: "Dar um buquê em cada data especial",
     recipient: "Para quem é",
     recipientAuto: "Quem entra e não edita a Aparência",
     signature: "Assinatura do bilhete",
     signaturePlaceholder: "Seu Juan",
+    eve: "Desde quando ela pode ver",
+    eveMidnight: "Só no dia, desde a meia-noite",
+    eveAt: (hour) => `Desde a noite anterior às ${hour}h`,
+    eveHint: "Até 23h59 do dia. Na véspera, o bilhete diz “amanhã”.",
     summary: (flowers) => `💐 Buquê: ${flowers}`,
     place: "Lugar",
     placePlaceholder: "o restaurante de sempre",

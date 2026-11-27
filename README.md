@@ -120,7 +120,7 @@ Funciona en dos modos:
 | App de celular instalable (Android, iPhone y computador): ícono, pantalla completa, atajos, sin conexión y aviso de versión nueva | `/app` | Pública |
 | Avisos push en el celular: chat, notitas, sorpresas y listas | — | Quien los active |
 | Fechas especiales: en su cumpleaños, el aniversario, San Valentín, Amor y Amistad, Halloween, Navidad y Año Nuevo toda la app cambia de tema el día completo (colores, emojis, saludo, franja de fiesta y música suave que se apaga con 🔊). Se configuran y se previsualizan en **Super → Apariencia** | Todas | Todos (configura `theme.manage`) |
-| Ramo de flores en cada fecha especial: una animación le revela un ramo elegido por su significado (gerberas en su cumpleaños) con una notita de invitación; todo el día queda el botón 💐 para volver a abrirlo y cada apertura sale en **Auditoría → Actividad**. Sin aviso en las novedades | Todas (menos el chat y las cartas) | Su destinataria (configura `theme.manage`) |
+| Ramo de flores en cada fecha especial: una animación le revela un ramo elegido por su significado (gerberas en su cumpleaños) con una notita de invitación, desde la víspera a las 9 p. m.; hasta el final del día queda el botón 💐 para volver a abrirlo y cada apertura sale en **Auditoría → Actividad**. Sin aviso en las novedades | Todas (menos el chat y las cartas) | Su destinataria (configura `theme.manage`) |
 | Tutorial guiado según la página y los permisos de cada cuenta | Todas | Todos |
 | Novedades de cada versión: al actualizar se ve qué cambió y, si hay una función nueva, «Ver cómo funciona» lleva a su página con el tutorial. También en **✨ Novedades** del pie | Todas | Cualquier cuenta |
 | Idiomas: español, inglés y portugués. La app arranca en el idioma del dispositivo y se cambia con 🌐 en la cabecera, el pie o **Mi cuenta** | Todas | Todos |
@@ -212,7 +212,8 @@ tus ojos» (Banda MS) desde su video de YouTube. El repositorio no guarda músic
 con derechos de autor: esas canciones suenan desde YouTube
 ([diagramas](docs/DIAGRAMAS.md#música-de-las-fechas-especiales)).
 
-**Ramo de flores en cada fecha especial 💐.** Ese día, al entrar, a ella le
+**Ramo de flores en cada fecha especial 💐.** Desde la noche anterior (a las
+9 p. m., se cambia en Apariencia) hasta las 11:59 p. m. del día, al entrar, a ella le
 sale una animación a pantalla completa: un brillo con «Tengo algo para ti…»,
 sube un ramo envuelto en papel, se dibujan los tallos, brotan las hojas, cada
 flor se abre a su turno entre pétalos que caen, y aparece una notita con una
@@ -223,12 +224,14 @@ su cumpleaños, peonías (amor que dura) en el aniversario, rosas rojas (amor
 apasionado) en San Valentín, girasoles (lealtad y admiración) en Amor y
 Amistad, dalias (misterio y compromiso) en Halloween, flores de Nochebuena en
 Navidad y tulipanes (nuevos comienzos) en Año Nuevo. Las flores están dibujadas
-en SVG, sin imágenes. Se abre sola una vez por día y por navegador, y todo el
-día queda el botón **💐 Tu ramo** arriba a la derecha para volver a abrirlo.
+en SVG, sin imágenes. Se abre sola una vez por fecha y por navegador (la
+víspera la nota dice «mañana cumples años» y «Mañana, 9:00 a. m.»), y hasta el
+final del día queda el botón **💐 Tu ramo** arriba a la derecha para volver a abrirlo.
 Cada apertura (sola o con el botón, y cuánto tiempo lo miró) queda en
 **Auditoría → Actividad → 💐 Ramos de flores**. En **Super → Apariencia →
 Fechas especiales → 💐 Ramo de flores** se enciende, se elige para quién es (si
-no, para quien no edita la Apariencia), la firma, y en cada fecha el lugar, la
+no, para quien no edita la Apariencia), la firma, desde qué hora de la víspera
+lo puede ver (o sólo el día), y en cada fecha el lugar, la
 hora y un mensaje propio (con `{lugar}`, `{hora}` y `{nombre}`); **Ver el
 ramo** lo muestra ya mismo. El lugar y el mensaje van en la tabla
 `bouquet_notes` (migración 031), que no se lee sin iniciar sesión. Es sorpresa:
